@@ -1,0 +1,38 @@
+{
+  "qualifications": {
+    "qualification_998c53693bd9": {
+      "qualification_id": "qualification_998c53693bd9",
+      "signal_id": "signal_859c2d3639a0",
+      "fit_main": true,
+      "fit_uncut": true,
+      "fit_faceless": true,
+      "content_shape": "reaction_driven",
+      "lifespan_class": "short",
+      "risk_flags": [
+        "stale_signal"
+      ],
+      "decision_hint": "watch",
+      "qualification_notes": [
+        "content_shape=reaction_driven",
+        "lifespan_class=short",
+        "decision_hint=watch",
+        "fit_main_true",
+        "fit_uncut_true",
+        "fit_faceless_true",
+        "risk_flags_present"
+      ],
+      "transcript_hints": [],
+      "multi_track_hints": [],
+      "metadata_hints": {
+        "platform": "youtube",
+        "channel_targets": [
+          "main",
+          "faceless"
+        ],
+        "source_type": "manual"
+      },
+      "created_at": "2026-04-13T00:22:42.362010+00:00",
+      "updated_at": "2026-04-13T00:22:42.362015+00:00"
+    }
+  }
+}

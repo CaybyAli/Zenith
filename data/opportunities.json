@@ -1,0 +1,30 @@
+{
+  "opportunities": {
+    "opportunity_2c926862e16a": {
+      "opportunity_id": "opportunity_2c926862e16a",
+      "signal_id": "signal_859c2d3639a0",
+      "qualification_id": "qualification_998c53693bd9",
+      "opportunity_score": 60.4,
+      "opportunity_level": "medium",
+      "primary_channel": "main",
+      "channel_scores": {
+        "main": 60.4,
+        "uncut": 54.36,
+        "faceless": 39.26
+      },
+      "upside_factors": [
+        "strong_signal_strength",
+        "high_confidence",
+        "clear_content_shape",
+        "primary_channel_main"
+      ],
+      "downside_factors": [
+        "stale_signal",
+        "qualification_watch"
+      ],
+      "opportunity_reason": "Opportunity scored 60.40 (medium). Primary channel: main. Upside: strong_signal_strength, high_confidence, clear_content_shape. Downside: stale_signal, qualification_watch.",
+      "created_at": "2026-04-13T00:35:51.753288+00:00",
+      "updated_at": "2026-04-13T00:35:51.753294+00:00"
+    }
+  }
+}

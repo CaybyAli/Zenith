@@ -1,0 +1,32 @@
+{
+  "reviews": {
+    "review_fd86f0eaaad0": {
+      "review_view_id": "review_fd86f0eaaad0",
+      "signal_id": "signal_859c2d3639a0",
+      "qualification_id": "qualification_998c53693bd9",
+      "opportunity_id": "opportunity_2c926862e16a",
+      "topic_label": "GTA 6 trailer reactions",
+      "platform": "youtube",
+      "primary_channel": "gaming_main",
+      "opportunity_score": 60.4,
+      "opportunity_level": "medium",
+      "upside_preview": [
+        "strong_signal_strength",
+        "high_confidence",
+        "clear_content_shape"
+      ],
+      "downside_preview": [
+        "stale_signal",
+        "qualification_watch"
+      ],
+      "risk_flags": [
+        "stale_signal"
+      ],
+      "lifespan_class": "short",
+      "review_status": "approved",
+      "review_summary": "GTA 6 trailer reactions | score 60.40 (medium) | primary gaming_main | lifespan short | status approved | upside strong_signal_strength, high_confidence, clear_content_shape | downside stale_signal, qualification_watch",
+      "created_at": "2026-04-13T00:47:11.833575+00:00",
+      "updated_at": "2026-04-13T00:47:11.833582+00:00"
+    }
+  }
+}

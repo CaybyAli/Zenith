@@ -1,0 +1,62 @@
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# === Virtuelle Umgebungen ===
+venv/
+env/
+.venv/
+.env
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursor/
+.claude/
+
+# === Betriebssystem ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Zenith: Rohdaten und Outputs ===
+inbox/
+output/
+output_alt/
+exports/
+example_data/
+storage/tmp/
+storage/tokens/
+tokens/
+# === Zenith: Generierte Dateien ===
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.wav
+*.mp3
+*.flac
+
+# === Zenith: Sensible Daten ===
+client.json
+*_token.json
+*_credentials.json
+secrets/
+
+# === Logs ===
+*.log
+logs/
+
+# === Temporäre Dateien ===
+tmp/
+temp/
+*.tmp
