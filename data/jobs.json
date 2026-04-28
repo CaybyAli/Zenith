@@ -198,8 +198,8 @@
       "created_at": "2026-04-27T20:00:59.803984+00:00",
       "updated_at": "2026-04-27T20:02:09.292274+00:00"
     },
-    "job_5ca9c3f63463": {
-      "job_id": "job_5ca9c3f63463",
+    "job_cd218a143650": {
+      "job_id": "job_cd218a143650",
       "job_type": "gaming",
       "channel_type": "gaming_main",
       "target_format": "longform",
@@ -261,8 +261,8 @@
           "average_percentage_viewed": null
         }
       },
-      "created_at": "2026-04-27T20:00:59.805056+00:00",
-      "updated_at": "2026-04-27T20:02:46.428020+00:00"
+      "created_at": "2026-04-28T15:08:16.225020+00:00",
+      "updated_at": "2026-04-28T15:08:56.562921+00:00"
     }
   }
 }
