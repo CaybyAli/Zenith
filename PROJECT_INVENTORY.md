@@ -402,7 +402,78 @@ Der Kern ist klar und gut strukturiert.
 Das entspricht ca. **35–40 Core-Module** (ca. 32–36% aller Module), die gebaut, getestet, aber nie in den aktiven Workflow eingebunden wurden.
 
 **Technische Schulden:**
-- `processor.py` und `assembler.py` sind wahrscheinlich Pre-Refactoring-Artefakte
-- Patch-Dateien (`patch_render_driver*.py`) statt sauberem Code-Fix
+- ~~`processor.py` und `assembler.py` sind wahrscheinlich Pre-Refactoring-Artefakte~~ → entfernt in Phase 1.5
+- Patch-Dateien (`patch_render_driver*.py`) statt sauberem Code-Fix → bereits entfernt vor Phase 1.5 (Commit 555f0b2)
 - 163 Tests ohne Runner — keine CI-Fähigkeit
 - FFmpeg-Pfad `D:\Tools\ffmpeg\bin\ffmpeg.exe` hardcoded in vielen Test-Dateien
+
+---
+
+## Cleanup-Log Phase 1.5
+
+Datum: 2026-04-28
+
+### Schritt A — `processor.py` + `assembler.py` entfernt ✅
+
+**Prüfung:** Keiner der 5 Entry-Points (`app.py`, `pipeline_runner.py`, `dashboard.py`, `publisher_worker.py`, `rerender_worker.py`) importiert `processor` oder `assembler` als Modul.
+
+**Aktion:** Beide Dateien per `git rm` entfernt (470 Zeilen insgesamt).
+
+**Commit:** `46609b3` — `Cleanup: legacy processor.py + assembler.py entfernt`
+
+---
+
+### Schritt B — `reset_all_jobs.py` NICHT gelöscht ⚠️
+
+**Befund:** Die Dateien sind **keine Duplikate** — die Inventar-Beschreibung war falsch.
+
+| Datei | Tatsächliche Funktion |
+|---|---|
+| `reset_jobs.py` | Iteriert `exports/*/job.json` und setzt `publish_status` → `pending` |
+| `reset_all_jobs.py` | Öffnet `data/jobs.json` und **löscht** zwei konkrete Jobs (`job_113e610b46f4`, `job_5c4aa2c6ee9a` — Rocket League Jobs) |
+
+**Aktion:** Keine Änderung. `reset_all_jobs.py` behalten.
+
+**Commit:** Keiner (kein Code geändert).
+
+---
+
+### Schritt C — `director_engine.py` als Backlog markiert ✅
+
+**Prüfung:** Nicht in einem der 5 Entry-Points importiert. Kein anderes Core-Modul importiert sie.
+
+**Aktion:** Zwei Kommentarzeilen oben in `core/director_engine.py` eingefügt:
+```python
+# TODO: Backlog Phase 2 — Director Engine ist aktuell nicht in Pipeline integriert.
+# Soll spaeter als pipeline stage 4 angeschlossen werden.
+```
+
+**Commit:** `3e5e4dc` — `Doc: director_engine als Backlog Phase 2 markiert`
+
+---
+
+### Schritt D — `test_rerender_worker_smoke.py` existiert nicht ⚠️
+
+**Befund:** Die Datei `test_rerender_worker_smoke.py` ist im Repo nicht vorhanden. Die Inventar-Analyse hatte sie als "1 Zeile, leer" beschrieben — offenbar war sie zum Zeitpunkt der Analyse vorhanden, wurde aber seitdem entfernt (oder der Glob-Treffer war ein Irrtum).
+
+Vorhandene `test_rerender_worker_*`-Dateien (alle mehrere Zeilen, mit echtem Inhalt):
+- `test_rerender_worker_dedup_smoke.py`
+- `test_rerender_worker_runtime_gate_smoke.py`
+- `test_rerender_worker_storage_provider_smoke.py`
+- `test_rerender_worker_vacation_gate_smoke.py`
+
+**Aktion:** Keine (nichts zu löschen).
+
+**Commit:** Keiner.
+
+---
+
+### Git-History dieser Phase
+
+```
+3e5e4dc  Doc: director_engine als Backlog Phase 2 markiert
+46609b3  Cleanup: legacy processor.py + assembler.py entfernt
+33bcfc8  Fix: tippfehler in processor.py (jsonwa -> json) korrigiert   ← Basis
+```
+
+*(Commits `555f0b2` und `f940543` waren bereits vor Phase 1.5 vorhanden.)*
