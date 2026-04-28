@@ -1,3 +1,5 @@
+# TODO: Backlog Phase 2 — Director Engine ist aktuell nicht in Pipeline integriert.
+# Soll spaeter als pipeline stage 4 angeschlossen werden.
 """
 core/director_engine.py — Zenith Auto-Director (pipeline stage 4).
 
