@@ -91,7 +91,7 @@ class LongformTimelineBuilder:
             )
 
         if weak_overlap >= 0.50:
-            score -= 0.55
+            score -= 0.
             notes.append("heavy_weak_zone_penalty")
         elif weak_overlap >= 0.20:
             score -= 0.20
@@ -118,6 +118,7 @@ class LongformTimelineBuilder:
             ),
         )
 
+
         for item in sorted_candidates:
             candidate = item["candidate"]
 
@@ -131,12 +132,26 @@ class LongformTimelineBuilder:
                     candidate.end_time,
                     existing["candidate"].start_time,
                     existing["candidate"].end_time,
-                ) >= 0.55
+                ) >= 0.05
                 for existing in selected
             )
 
             if overlaps_existing:
                 continue
+
+# Trim overlapping segments
+            for existing in selected:
+                existing_cand = existing["candidate"]
+                
+                # Check if current candidate overlaps with existing
+                if candidate.end_time > existing_cand.start_time and candidate.start_time < existing_cand.end_time:
+                    # Overlap detected - trim current candidate to start after existing ends
+                    if candidate.start_time < existing_cand.end_time:
+                        candidate.start_time = existing_cand.end_time
+                        
+                        # If trimmed segment is too short (< 3s), skip it
+                        if candidate.end_time - candidate.start_time < 3.0:
+                            break
 
             selected.append(item)
             selected_duration += candidate.end_time - candidate.start_time
