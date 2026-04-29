@@ -187,20 +187,23 @@ class MusicApplyProcessor:
             ffmpeg_cmd.extend(["-i", str(segment.source_file_path)])
 
         ffmpeg_cmd.extend(
-            [
-                "-filter_complex",
-                self._build_filter_complex(available_segments),
-                "-map",
-                "0:v",
-                "-map",
-                "[mixed]",
-                "-c:v",
-                "copy",
-                "-c:a",
-                "aac",
-                str(output_path),
-            ]
-        )
+    [
+        "-filter_complex",
+        self._build_filter_complex(available_segments),
+        "-map",
+        "0:v",
+        "-map",
+        "[mixed]",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-shortest",
+        str(output_path),
+    ]
+)
 
         result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
 
