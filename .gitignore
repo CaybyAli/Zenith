@@ -37,6 +37,7 @@ example_data/
 storage/tmp/
 storage/tokens/
 tokens/
+
 # === Zenith: Generierte Dateien ===
 *.mp4
 *.mkv

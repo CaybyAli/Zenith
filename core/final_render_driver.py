@@ -103,12 +103,15 @@ class FinalRenderDriver:
 
         # Standardfall: Gameplay = Hauptbild, Facecam = PiP oben links
         PIP_W, PIP_H = 480, 270   # 25% der Breite
-        PIP_X, PIP_Y = 32, 80     # Abstand zum oberen + linken Rand
+        PIP_X, PIP_Y = 32, 60     # Abstand zum oberen + linken Rand
+
+        # Proportionale Korrektur: Bei 1920px → -28, bei 3840px → -56
+        crop_offset = int((src_w / 1920) * 28)
 
         fc = (
             "[0:v]split=2[gp_src][fc_src];"
             f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
-            f"[fc_src]crop={src_w//2 - 28}:1068:0:2,scale={PIP_W}:{PIP_H}[fc];"
+            f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_W}:{PIP_H}[fc];"
             f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
         )
         return fc, "[out]"
