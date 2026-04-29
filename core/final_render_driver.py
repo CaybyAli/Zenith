@@ -96,19 +96,19 @@ class FinalRenderDriver:
         # Sonderfall: Facecam soll Hauptbild sein (kein PiP)
         if layout_kind == "facecam_emphasis":
             fc = (
-                "[0:v]crop=1920:1080:0:0,"
+                f"[0:v]crop={src_w//2}:1080:0:0,"
                 "scale=1920:1080[out]"
             )
             return fc, "[out]"
 
         # Standardfall: Gameplay = Hauptbild, Facecam = PiP oben links
         PIP_W, PIP_H = 480, 270   # 25% der Breite
-        PIP_X, PIP_Y = 32, 32     # Abstand zum oberen + linken Rand
+        PIP_X, PIP_Y = 32, 80     # Abstand zum oberen + linken Rand
 
         fc = (
             "[0:v]split=2[gp_src][fc_src];"
-            "[gp_src]crop=1920:1080:1920:0,scale=1920:1080[gp];"
-            f"[fc_src]crop=1920:1080:0:0,scale={PIP_W}:{PIP_H}[fc];"
+            f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
+            f"[fc_src]crop={src_w//2 - 28}:1068:0:2,scale={PIP_W}:{PIP_H}[fc];"
             f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
         )
         return fc, "[out]"
