@@ -51,9 +51,9 @@ class FacecamGameplaySeparator:
 
         elif role == "payoff":
             if candidate_kind == "speech_peak":
-                focus_kind = "facecam"
+                focus_kind = "balanced"
                 confidence = 0.82
-                notes.append("payoff_speech_peak_facecam_priority")
+                notes.append("payoff_speech_peak_balanced_priority")
             elif candidate_kind == "action_peak":
                 focus_kind = "balanced"
                 confidence = 0.75
@@ -69,10 +69,20 @@ class FacecamGameplaySeparator:
             notes.append("build_segment_balanced_priority")
 
         elif role == "bridge":
+            # KRITISCHER FIX: BRIDGE-Segmente sind IMMER balanced (Gameplay-fokussiert)
+            # Signal-Tag-Overrides werden für Bridges NICHT angewendet
             focus_kind = "balanced"
-            confidence = 0.66
-            notes.append("bridge_segment_balanced_priority")
+            confidence = 0.72
+            notes.append("bridge_segment_balanced_priority_locked")
+            
+            # Return sofort, bevor Signal-Tag-Overrides greifen
+            return {
+                "focus_kind": focus_kind,
+                "confidence": self._clamp_confidence(confidence),
+                "notes": notes,
+            }
 
+        # Signal-Tag-Overrides (gelten NICHT für bridge-Segmente)
         if "intro_zone" in signal_tags and focus_kind == "balanced":
             focus_kind = "facecam"
             confidence = max(confidence, 0.73)

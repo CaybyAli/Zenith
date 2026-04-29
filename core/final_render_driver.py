@@ -93,28 +93,45 @@ class FinalRenderDriver:
         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
         layout_kind = instr.layout_kind if instr else "full_gameplay"
 
-        # Sonderfall: Facecam soll Hauptbild sein (kein PiP)
-        if layout_kind == "facecam_emphasis":
+        # DEBUG: Zeige was passiert
+        print(f"[DEBUG] Segment {segment.segment_id[:8]} ({segment.segment_role}): layout_kind='{layout_kind}'")
+
+        # KRITISCHER FIX: Für 32:9 Videos (3840×1080) immer Gameplay zeigen,
+        # außer bei explizitem "facecam_emphasis" (z.B. Speech-Heavy Hook)
+        if src_w >= 3000:  # 32:9 Format erkannt
+            # Nur bei EXPLIZITEM facecam_emphasis → Facecam Vollbild
+            if layout_kind == "facecam_emphasis":
+                print(f"[DEBUG] → Rendering FACECAM ONLY (left half)")
+                fc = (
+                    f"[0:v]crop={src_w//2}:1080:0:0,"
+                    "scale=1920:1080[out]"
+                )
+                return fc, "[out]"
+            
+            # ALLE ANDEREN FÄLLE (inkl. balanced_split, gameplay_crop, full_gameplay)
+            # → Gameplay groß, Facecam PiP
+            print(f"[DEBUG] → Rendering GAMEPLAY + Facecam PiP (right half)")
+            
+            PIP_W, PIP_H = 480, 270   # 25% der Breite
+            PIP_X, PIP_Y = 32, 60     # Abstand zum oberen + linken Rand
+
+            # Proportionale Korrektur: Bei 1920px → -28, bei 3840px → -56
+            crop_offset = int((src_w / 1920) * 28)
+
             fc = (
-                f"[0:v]crop={src_w//2}:1080:0:0,"
-                "scale=1920:1080[out]"
+                "[0:v]split=2[gp_src][fc_src];"
+                f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
+                f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_W}:{PIP_H}[fc];"
+                f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
             )
             return fc, "[out]"
-
-        # Standardfall: Gameplay = Hauptbild, Facecam = PiP oben links
-        PIP_W, PIP_H = 480, 270   # 25% der Breite
-        PIP_X, PIP_Y = 32, 60     # Abstand zum oberen + linken Rand
-
-        # Proportionale Korrektur: Bei 1920px → -28, bei 3840px → -56
-        crop_offset = int((src_w / 1920) * 28)
-
-        fc = (
-            "[0:v]split=2[gp_src][fc_src];"
-            f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
-            f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_W}:{PIP_H}[fc];"
-            f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
-        )
-        return fc, "[out]"
+        
+        # Fallback für 16:9 Livestreams (1920×1080)
+        # Hier ist die Kamera schon fest oben links, kein Crop nötig
+        else:
+            print(f"[DEBUG] → 16:9 Livestream detected, no crop needed")
+            fc = "[0:v]scale=1920:1080[out]"
+            return fc, "[out]"
 
     # ------------------------------------------------------------------ #
     #  FFmpeg operations                                                   #
@@ -226,13 +243,32 @@ class FinalRenderDriver:
             src_w, src_h = self._get_video_dimensions(source)
 
             seg_paths: list[Path] = []
+            total_segments = len(segments)
+
+            print(f"\n{'='*60}")
+            print(f"🎬 RENDERING GESTARTET: {total_segments} Segmente")
+            print(f"{'='*60}\n")
+
             for i, seg in enumerate(segments):
+                # Fortschritt berechnen
+                current_segment = i + 1
+                progress_percent = int((current_segment / total_segments) * 100)
+    
+                print(f"📊 SEGMENT {current_segment}/{total_segments} ({progress_percent}%) - {seg.segment_role.upper()}")
+                print(f"   ⏱️  {seg.start_time:.1f}s → {seg.end_time:.1f}s ({seg.duration:.1f}s)")
+    
                 fc, label = self._build_filter_complex(
                     seg, reframe_plan, dynamic_edit_plan, src_w, src_h
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
+    
                 self._extract_segment(source, seg, fc, label, tmp_path)
                 seg_paths.append(tmp_path)
+    
+                print(f"   ✅ Segment fertig!\n")
+                print(f"{'='*60}")
+                print(f"🎉 ALLE SEGMENTE GERENDERT - Jetzt zusammenfügen...")
+                print(f"{'='*60}\n")
 
             concat_path = out_dir / f"{job.job_id}_final.mp4"
             self._concat_segments(seg_paths, concat_path)
