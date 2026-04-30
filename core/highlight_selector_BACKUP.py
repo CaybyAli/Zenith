@@ -10,21 +10,6 @@ from shared.errors import ValidationError
 
 
 class HighlightSelector:
-    """
-    OPTIMIERTE VERSION - Niedrigere Schwellwerte für mehr Highlights
-    
-    ÄNDERUNGEN:
-    - Highlight Score Threshold: 0.45 → 0.38
-    - audio_activity Score: 0.12 → 0.18 (mehr Gewicht!)
-    - motion_activity Score: 0.10 → 0.15 (mehr Gewicht!)
-    
-    EFFEKT:
-    - audio_peak ALLEIN: 0.42 → Highlight ✓ (war vorher 0.42 < 0.45 ✗)
-    - motion_peak ALLEIN: 0.34 → KEIN Highlight (zu niedrig)
-    - audio_peak + audio_activity: 0.42 + 0.18 = 0.60 → Highlight ✓✓
-    - motion_peak + motion_activity: 0.34 + 0.15 = 0.49 → Highlight ✓
-    """
-    
     def _make_candidate_id(self) -> str:
         return f"cand_{uuid.uuid4().hex[:12]}"
 
@@ -84,14 +69,12 @@ class HighlightSelector:
             score += 0.34
             notes.append("motion_peak_detected")
 
-        # GEÄNDERT: 0.12 → 0.18 (mehr Gewicht für normale Activity!)
         if "audio_activity" in signal_types:
-            score += 0.18
+            score += 0.12
             notes.append("audio_activity_present")
 
-        # GEÄNDERT: 0.10 → 0.15 (mehr Gewicht für normale Activity!)
         if "motion_activity" in signal_types:
-            score += 0.15
+            score += 0.10
             notes.append("motion_activity_present")
 
         if "audio_peak" in signal_types and "motion_peak" in signal_types:
@@ -228,8 +211,7 @@ class HighlightSelector:
                 end_time = max(signal.end_time for signal in window_signals)
                 highlight_score, notes = self._score_highlight_window(window_signals)
 
-                # GEÄNDERT: 0.45 → 0.38 (niedrigerer Threshold!)
-                if highlight_score >= 0.38:
+                if highlight_score >= 0.45:
                     signal_types = {signal.signal_type for signal in window_signals}
                     signal_tags = sorted(
                         {tag for signal in window_signals for tag in signal.tags}

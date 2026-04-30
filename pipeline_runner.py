@@ -45,6 +45,53 @@ def _copy_shorts_to_export(shorts_paths: list, export_dir: Path) -> None:
             shutil.copy2(src_path, shorts_dir / src_path.name)
 
 
+def _copy_gaming_outputs_to_export(job_id: str, export_dir: Path) -> None:
+    """Copy gaming pipeline outputs (final video, thumbnails, JSONs) to export folder."""
+    output_dir = Path("output")
+    
+    # Liste aller möglichen Output-Files
+    patterns = [
+        f"{job_id}_final.mp4",
+        f"{job_id}_final_music_applied.mp4",
+        f"{job_id}_final_music_applied_thumb*.jpg",
+        f"{job_id}_final_music_apply_context.json",
+        f"{job_id}_final_render_driver_context.json",
+    ]
+    
+    copied_count = 0
+    for pattern in patterns:
+        for src_file in output_dir.glob(pattern):
+            if src_file.exists():
+                dest_file = export_dir / src_file.name
+                shutil.copy2(src_file, dest_file)
+                copied_count += 1
+    
+    if copied_count > 0:
+        print(f"[pipeline_runner] COPIED   {copied_count} files to export")
+
+
+def _cleanup_output_files(job_id: str) -> None:
+    """Lösche Output-Files nach erfolgreichem Export."""
+    output_dir = Path("output")
+    
+    patterns = [
+        f"{job_id}_final.mp4",
+        f"{job_id}_final_music_applied.mp4",
+        f"{job_id}_final_music_applied_thumb*.jpg",
+        f"{job_id}_final_music_apply_context.json",
+        f"{job_id}_final_render_driver_context.json",
+    ]
+    
+    deleted_count = 0
+    for pattern in patterns:
+        for file_path in output_dir.glob(pattern):
+            if file_path.exists():
+                file_path.unlink()
+                deleted_count += 1
+    
+    if deleted_count > 0:
+        print(f"[pipeline_runner] CLEANUP   Deleted {deleted_count} temporary files from output/")
+
 _GAMING_CHANNELS = frozenset({
     ChannelType.GAMING_MAIN.value,
     ChannelType.GAMING_UNCUT.value,
@@ -229,7 +276,10 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
                 )
                 export_dir = _make_export_dir(channel, job.job_id)
                 _copy_shorts_to_export(result.get("shorts_paths", []), export_dir)
+                _copy_gaming_outputs_to_export(job.job_id, export_dir)
+                _cleanup_output_files(job.job_id)
                 print(f"[pipeline_runner] EXPORT    {job.job_id}  → {export_dir}")
+                
                 job.status = JobStatus.ROUTED
                 job.touch()
                 job_store.update_job(job)

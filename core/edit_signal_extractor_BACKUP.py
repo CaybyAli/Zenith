@@ -14,18 +14,6 @@ from shared.errors import ValidationError
 
 
 class EditSignalExtractor:
-    """
-    AGGRESSIVE FIX - Schwellwerte + Step-Sizes optimiert
-    
-    Ziel: 85-92% Video-Retention
-    
-    ÄNDERUNGEN:
-    - audio_peak: 0.72 → 0.50 (TOP 50%)
-    - motion_peak: 0.68 → 0.45 (TOP 55%)
-    - Audio Step: 2.0s → 1.0s (doppelte Coverage, weniger Lücken!)
-    - Video Step: 2.5s → 1.5s (bessere Coverage)
-    """
-    
     def _make_signal_id(self) -> str:
         return f"sig_{uuid.uuid4().hex[:12]}"
 
@@ -86,7 +74,7 @@ class EditSignalExtractor:
         audio_path: str,
         duration_seconds: float,
         window_size: float = 4.0,
-        step_size: float = 1.0,  # GEÄNDERT: 2.0 → 1.0s (weniger Lücken!)
+        step_size: float = 2.0,
     ) -> list[EditSignal]:
         signals: list[EditSignal] = []
 
@@ -131,8 +119,7 @@ class EditSignalExtractor:
                 for start_time, end_time, rms in window_energy_rows:
                     strength = self._safe_strength(rms / max_rms)
 
-                    # GEÄNDERT: 0.72 → 0.50 (TOP 50% werden Peaks!)
-                    if strength >= 0.50:
+                    if strength >= 0.72:
                         signal_type = "audio_peak"
                         notes = [f"High audio energy detected ({strength:.3f})"]
                     elif strength <= 0.12:
@@ -178,7 +165,7 @@ class EditSignalExtractor:
         video_path: str,
         duration_seconds: float,
         window_size: float = 5.0,
-        step_size: float = 1.5,  # GEÄNDERT: 2.5 → 1.5s (weniger Lücken!)
+        step_size: float = 2.5,
     ) -> list[EditSignal]:
         signals: list[EditSignal] = []
 
@@ -226,8 +213,7 @@ class EditSignalExtractor:
                 for start_time, end_time, motion_score in window_rows:
                     strength = self._safe_strength(motion_score / max_motion)
 
-                    # GEÄNDERT: 0.68 → 0.45 (TOP 55% werden Peaks!)
-                    if strength >= 0.45:
+                    if strength >= 0.68:
                         signal_type = "motion_peak"
                         notes = [f"High visual activity detected ({strength:.3f})"]
                     elif strength <= 0.10:

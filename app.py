@@ -763,6 +763,13 @@ def run_gaming_pipeline_for_job(
             reaction_moments=reaction_moments,
         )
 
+    if dynamic_edit_plan:
+            print("\n[DEBUG] ========== ZOOM DEBUG ==========")
+            print(f"[DEBUG] Zoom-Instructions: {len(dynamic_edit_plan.zoom_instructions)}")
+            for i, zoom in enumerate(dynamic_edit_plan.zoom_instructions):
+                print(f"[DEBUG]   Zoom {i+1}: seg={zoom.segment_id[:8]}, time={zoom.start_time:.1f}s-{zoom.end_time:.1f}s, intensity={zoom.intensity:.2f}")
+            print("[DEBUG] =====================================\n")
+
     music_cue_plan = None
     local_music_selections = []
     music_application_plan = None

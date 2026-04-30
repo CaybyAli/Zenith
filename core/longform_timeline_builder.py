@@ -41,16 +41,20 @@ class LongformTimelineBuilder:
         if duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
 
-        if duration_seconds <= 180:
-            return round(duration_seconds, 3)
-
-        return round(
-            min(
-                duration_seconds,
-                max(180.0, min(900.0, duration_seconds * 0.65)),
-            ),
-            3,
-        )
+        # KURZE Videos: Fast alles behalten
+        if duration_seconds <= 300:  # < 5 Min
+            return round(duration_seconds * 0.95, 3)  # 95% behalten
+        
+        # MITTLERE Videos: Meiste behalten
+        if duration_seconds <= 900:  # 5-15 Min
+            return round(duration_seconds * 0.85, 3)  # 85% behalten
+        
+        # LANGE Videos: Auf 10-15 Min kürzen
+        if duration_seconds <= 3600:  # 15-60 Min
+            return round(min(900.0, duration_seconds * 0.40), 3)  # Max 15 Min
+        
+        # SEHR LANGE Videos: Auf 15 Min kürzen
+        return 900.0  # Max 15 Min
 
     def _score_candidate_for_longform(
         self,
@@ -132,14 +136,14 @@ class LongformTimelineBuilder:
                     candidate.end_time,
                     existing["candidate"].start_time,
                     existing["candidate"].end_time,
-                ) >= 0.05
+                ) >= 0.70
                 for existing in selected
             )
 
             if overlaps_existing:
                 continue
-
 # Trim overlapping segments
+            trimmed_invalid = False
             for existing in selected:
                 existing_cand = existing["candidate"]
                 
@@ -149,9 +153,16 @@ class LongformTimelineBuilder:
                     if candidate.start_time < existing_cand.end_time:
                         candidate.start_time = existing_cand.end_time
                         
-                        # If trimmed segment is too short (< 3s), skip it
-                        if candidate.end_time - candidate.start_time < 3.0:
+                        # If trimmed segment is now invalid or too short, mark for skip
+                        if candidate.end_time <= candidate.start_time:
+                            trimmed_invalid = True
                             break
+                        if candidate.end_time - candidate.start_time < 3.0:
+                            trimmed_invalid = True
+                            break
+
+            if trimmed_invalid:
+                continue
 
             selected.append(item)
             selected_duration += candidate.end_time - candidate.start_time
@@ -166,7 +177,6 @@ class LongformTimelineBuilder:
             selected,
             key=lambda item: (item["candidate"].start_time, item["candidate"].end_time),
         )
-
     def _resolve_peak_index(self, selected_items: list[dict]) -> int | None:
         if len(selected_items) < 3:
             return None
@@ -196,12 +206,17 @@ class LongformTimelineBuilder:
         weak_zones = weak_zones or []
         target_duration = self._build_target_duration(analysis_result.duration_seconds)
 
-        if analysis_result.duration_seconds >= 1200:
-            max_segments = 10
-        elif analysis_result.duration_seconds >= 600:
-            max_segments = 8
+# Segment-Limits basierend auf Video-Länge
+        if analysis_result.duration_seconds >= 3600:
+            max_segments = 25  # 1h+ Videos
+        elif analysis_result.duration_seconds >= 1800:
+            max_segments = 20  # 30-60 Min Videos
+        elif analysis_result.duration_seconds >= 900:
+            max_segments = 15  # 15-30 Min Videos
+        elif analysis_result.duration_seconds >= 300:
+            max_segments = 12  # 5-15 Min Videos
         else:
-            max_segments = 6
+            max_segments = 20  # < 5 Min: VIELE Segmente (fast alles)
 
         scored_candidates: list[dict] = []
         for candidate in highlight_candidates:
