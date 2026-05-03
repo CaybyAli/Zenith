@@ -61,3 +61,14 @@ logs/
 tmp/
 temp/
 *.tmp
+# === Phase 1.5 Cleanup additions ===
+# Runtime state (kept locally, not committed)
+data/jobs.json
+data/runtime_mode.json
+data/vacation_state.json
+data/*.tmp.json
+
+# Audit artifacts
+_audit_*.txt
+_audit_*.log
+_import_*.txt
