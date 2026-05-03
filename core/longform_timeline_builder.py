@@ -37,24 +37,70 @@ class LongformTimelineBuilder:
         shorter = max(0.001, min(end_a - start_a, end_b - start_b))
         return overlap / shorter
 
-    def _build_target_duration(self, duration_seconds: float) -> float:
+    def _build_target_duration(
+        self,
+        duration_seconds: float,
+        scored_candidates: list[dict],
+    ) -> float:
+        """
+        Intelligente Timeline-Retention basierend auf Content-Qualität!
+        
+        Analysiert die Qualität der Highlights (Scores, Density) und passt
+        die Retention entsprechend an:
+        - Viel guter Content (hohe Scores, viele Highlights) → 85-95% behalten
+        - Mittlerer Content → 60-70% behalten  
+        - Viel Bullshit (niedrige Scores, wenig Highlights) → 35-45% behalten
+        """
         if duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
-
-        # KURZE Videos: Fast alles behalten
-        if duration_seconds <= 300:  # < 5 Min
-            return round(duration_seconds * 0.95, 3)  # 95% behalten
         
-        # MITTLERE Videos: Meiste behalten
-        if duration_seconds <= 900:  # 5-15 Min
-            return round(duration_seconds * 0.85, 3)  # 85% behalten
+        if not scored_candidates:
+            # Fallback: Keine Highlights → Minimum behalten
+            print("[TIMELINE-QUALITY] WARNING: No scored candidates, using minimum retention")
+            return round(duration_seconds * 0.40, 3)
         
-        # LANGE Videos: Auf 10-15 Min kürzen
-        if duration_seconds <= 3600:  # 15-60 Min
-            return round(min(900.0, duration_seconds * 0.40), 3)  # Max 15 Min
+        # 1️⃣ ANALYSIERE HIGHLIGHT-QUALITÄT
+        total_highlights = len(scored_candidates)
+        avg_score = sum(item["selection_score"] for item in scored_candidates) / total_highlights
+        highlight_density = total_highlights / (duration_seconds / 10.0)  # Highlights pro 10s
         
-        # SEHR LANGE Videos: Auf 15 Min kürzen
-        return 900.0  # Max 15 Min
+        # 2️⃣ KATEGORISIERE VIDEO-QUALITÄT
+        if avg_score >= 0.70 and highlight_density >= 0.8:
+            quality_category = "excellent"  # 🔥 Viel guter Content
+            retention_factor = 0.92
+        elif avg_score >= 0.55 and highlight_density >= 0.5:
+            quality_category = "good"  # ✅ Normaler Content
+            retention_factor = 0.75
+        elif avg_score >= 0.45 and highlight_density >= 0.3:
+            quality_category = "medium"  # 🤷 Durchschnitt
+            retention_factor = 0.60
+        else:
+            quality_category = "low"  # 💩 Viel Bullshit
+            retention_factor = 0.40
+        
+        # 3️⃣ BERECHNE TARGET DURATION (Qualität + Länge)
+        if duration_seconds <= 300:  # Kurze Videos (< 5 Min)
+            target = duration_seconds * retention_factor
+        elif duration_seconds <= 1800:  # Mittlere Videos (5-30 Min)
+            target = min(1200.0, duration_seconds * retention_factor)  # Max 20 Min
+        else:  # Lange Videos (> 30 Min)
+            # Bei langen Videos: Etwas aggressiver kürzen
+            adjusted_factor = max(0.35, retention_factor - 0.10)
+            target = min(1200.0, duration_seconds * adjusted_factor)  # Max 20 Min
+        
+        # 4️⃣ YOUTUBE-MONETARISIERUNG: Garantiere MINIMUM 8 Minuten! 💰
+        # Mid-Roll-Ads brauchen mindestens 8 Min (480s)
+        YOUTUBE_MIN_DURATION = 480.0  # 8 Minuten
+        if target < YOUTUBE_MIN_DURATION and duration_seconds >= YOUTUBE_MIN_DURATION:
+            target = YOUTUBE_MIN_DURATION
+            print(f"[TIMELINE-YOUTUBE] ⚠️ Erhöht auf {YOUTUBE_MIN_DURATION}s (8 Min) für Monetarisierung!")
+        
+        # 5️⃣ DEBUG-OUTPUT
+        print(f"[TIMELINE-QUALITY] Highlights: {total_highlights}, Avg Score: {avg_score:.2f}, Density: {highlight_density:.2f}")
+        print(f"[TIMELINE-QUALITY] Category: {quality_category}, Retention: {retention_factor*100:.0f}%")
+        print(f"[TIMELINE-QUALITY] Duration: {duration_seconds:.0f}s → Target: {target:.0f}s ({target/duration_seconds*100:.0f}%)")
+        
+        return round(target, 3)
 
     def _score_candidate_for_longform(
         self,
@@ -204,20 +250,8 @@ class LongformTimelineBuilder:
             raise ValidationError("Timeline builder needs highlight candidates")
 
         weak_zones = weak_zones or []
-        target_duration = self._build_target_duration(analysis_result.duration_seconds)
 
-# Segment-Limits basierend auf Video-Länge
-        if analysis_result.duration_seconds >= 3600:
-            max_segments = 25  # 1h+ Videos
-        elif analysis_result.duration_seconds >= 1800:
-            max_segments = 20  # 30-60 Min Videos
-        elif analysis_result.duration_seconds >= 900:
-            max_segments = 15  # 15-30 Min Videos
-        elif analysis_result.duration_seconds >= 300:
-            max_segments = 12  # 5-15 Min Videos
-        else:
-            max_segments = 20  # < 5 Min: VIELE Segmente (fast alles)
-
+        # 1️⃣ ERST SCOREN: Highlights bewerten
         scored_candidates: list[dict] = []
         for candidate in highlight_candidates:
             selection_score, notes = self._score_candidate_for_longform(
@@ -239,6 +273,21 @@ class LongformTimelineBuilder:
         if not scored_candidates:
             raise ValidationError("No usable longform candidates after scoring")
 
+        # 2️⃣ DANN TARGET DURATION: Intelligente Retention basierend auf Qualität! 🔥
+        target_duration = self._build_target_duration(
+            analysis_result.duration_seconds,
+            scored_candidates,  # Jetzt MIT Qualitäts-Analyse!
+        )
+
+        # 3️⃣ MAX SEGMENTS: Dynamisch basierend auf TARGET DURATION! 🎯
+        # Pro Segment ca. 10-14s → max_segments = target / 10s (mit Puffer)
+        # Minimum: 12 Segmente, Maximum: 100 Segmente
+        calculated_max = int(target_duration / 10.0)
+        max_segments = max(12, min(100, calculated_max))
+        
+        print(f"[TIMELINE-SEGMENTS] Target: {target_duration:.0f}s → Max Segments: {max_segments}")
+
+        # 3️⃣ SELEKTION: Beste Highlights auswählen
         selected_items = self._dedupe_and_select(
             scored_candidates,
             target_duration=target_duration,
