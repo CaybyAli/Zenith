@@ -31,8 +31,14 @@ class IntakeManager:
         target_platforms: list[str],
         mode: Mode,
     ) -> Job:
-        if get_channel_group(channel_type.value) not in {"main", "uncut"}:
-            raise ValidationError(f"Invalid gaming channel_type: {channel_type}")
+        _VALID_VIDEO_CHANNELS = {
+            ChannelType.GAMING_MAIN,
+            ChannelType.GAMING_UNCUT,
+            ChannelType.VLOG_MAIN,
+            ChannelType.FACELESS_TREND,
+        }
+        if channel_type not in _VALID_VIDEO_CHANNELS:
+            raise ValidationError(f"Invalid video channel_type: {channel_type}")
             
         video_path = Path(raw_video_path)
         if not video_path.exists() or not video_path.is_file():
@@ -115,10 +121,12 @@ class IntakeManager:
         channel_type: ChannelType,
         target_format: TargetFormat,
     ) -> AutopublishClass:
-        if job_type == JobType.GAMING and get_channel_group(channel_type.value) == "main":
+        if job_type == JobType.GAMING and channel_type in {
+            ChannelType.GAMING_MAIN, ChannelType.VLOG_MAIN
+        }:
             return AutopublishClass.MANUAL_ONLY
 
-        if job_type == JobType.GAMING and get_channel_group(channel_type.value) == "uncut":
+        if job_type == JobType.GAMING and channel_type == ChannelType.GAMING_UNCUT:
             return AutopublishClass.CONDITIONAL
 
         if job_type == JobType.FACELESS and target_format == TargetFormat.SHORT:
@@ -128,3 +136,31 @@ class IntakeManager:
             return AutopublishClass.MANUAL_ONLY
 
         return AutopublishClass.MANUAL_ONLY
+
+    def create_vlog_job(
+        self,
+        *,
+        video_path: str,
+        mode: Mode = Mode.NORMAL,
+    ) -> Job:
+        return self.create_gaming_job(
+            channel_type=ChannelType.VLOG_MAIN,
+            raw_video_path=video_path,
+            target_format=TargetFormat.LONGFORM,
+            target_platforms=["youtube"],
+            mode=mode,
+        )
+
+    def create_uncut_job(
+        self,
+        *,
+        video_path: str,
+        mode: Mode = Mode.NORMAL,
+    ) -> Job:
+        return self.create_gaming_job(
+            channel_type=ChannelType.GAMING_UNCUT,
+            raw_video_path=video_path,
+            target_format=TargetFormat.LONGFORM,
+            target_platforms=["youtube"],
+            mode=mode,
+        )

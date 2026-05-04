@@ -28,7 +28,7 @@ class Validator:
         if not metadata.description:
             blocking_issues.append("Missing description")
 
-        if not thumbnail_package.selected_thumbnail:
+        if thumbnail_package is None or not thumbnail_package.selected_thumbnail:
             blocking_issues.append("Missing thumbnail")
         elif not os.path.exists(thumbnail_package.selected_thumbnail):
             blocking_issues.append("Thumbnail file not found")

@@ -461,7 +461,12 @@ class FinalRenderDriver:
         output_dir: str | Path = "output",
     ) -> str:
 
-        from core.audio_peak_detector import AudioPeakDetector
+        try:
+            from core.audio_peak_detector import AudioPeakDetector
+        except ImportError:
+            class AudioPeakDetector:  # noqa: F811
+                def detect_peaks(self, **_kw):
+                    return []
 
         """
         Render by consuming all planning layers.  Music is NOT applied here —

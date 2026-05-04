@@ -65,6 +65,21 @@ CHANNEL_POLICIES: Dict[str, ChannelPolicy] = {
         retry_attempts=3,
         retry_delay_minutes=15,
     ),
+    "vlog_main": ChannelPolicy(
+        channel_type="vlog_main",
+        channel_group="vlog",
+        platform="youtube",
+        enabled=True,
+        requires_manual_approval=True,
+        publish_days=[0, 1, 2, 3, 4, 5, 6],
+        publish_hour=17,
+        publish_minute=0,
+        upload_every_hours=24,
+        shorts_enabled=False,
+        shorts_source_channels=[],
+        retry_attempts=3,
+        retry_delay_minutes=15,
+    ),
 }
 
 

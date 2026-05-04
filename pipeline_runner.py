@@ -1,12 +1,13 @@
 """
-pipeline_runner.py — Zenith batch dispatch loop.
+pipeline_runner.py – Zenith batch dispatch loop.
 
 Reads data/jobs.json, picks up every CREATED or STORED job and routes
-it to the correct pipeline:
+it to the correct pipeline module:
 
-  gaming_main    →  run_gaming_pipeline_for_job()  (app.py)
-  gaming_uncut   →  run_gaming_pipeline_for_job()  (app.py)
-  faceless_trend →  FacelessPipeline().run()        (core/faceless_pipeline.py)
+  gaming_main    →  core/gaming_pipeline.py
+  gaming_uncut   →  core/uncut_pipeline.py   (Phase 4 stub)
+  vlog_main      →  core/vlog_pipeline.py    (Phase 2.B stub)
+  faceless_trend →  core/faceless_pipeline.py (Phase 8 stub)
 
 Run directly:
   python pipeline_runner.py
@@ -19,10 +20,17 @@ import shutil
 import sys
 from pathlib import Path
 
-from core.faceless_pipeline import FacelessPipeline
 from core.intake_manager import IntakeManager
 from core.job_store import JobStore
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
+
+from core.gaming_pipeline import (
+    run_gaming_pipeline_for_job,
+    _build_gaming_services,
+)
+from core.vlog_pipeline import run_vlog_pipeline_for_job
+from core.uncut_pipeline import run_uncut_pipeline_for_job
+from core.faceless_pipeline import run_faceless_pipeline_for_job
 
 EXPORTS_BASE = Path("exports")
 
@@ -33,31 +41,14 @@ def _make_export_dir(channel: str, job_id: str) -> Path:
     return export_dir
 
 
-def _copy_shorts_to_export(shorts_paths: list, export_dir: Path) -> None:
-    """Copy short clip files into exports/{channel}/{job_id}/shorts/."""
-    if not shorts_paths:
-        return
-    shorts_dir = export_dir / "shorts"
-    shorts_dir.mkdir(exist_ok=True)
-    for src in shorts_paths:
-        src_path = Path(src) if src else None
-        if src_path and src_path.exists():
-            shutil.copy2(src_path, shorts_dir / src_path.name)
-
-
 def _copy_gaming_outputs_to_export(job_id: str, export_dir: Path) -> None:
-    """Copy gaming pipeline outputs (final video, thumbnails, JSONs) to export folder."""
+    """Copy gaming pipeline output (final MP4 only) to export folder."""
     output_dir = Path("output")
-    
-    # Liste aller möglichen Output-Files
+
     patterns = [
         f"{job_id}_final.mp4",
-        f"{job_id}_final_music_applied.mp4",
-        f"{job_id}_final_music_applied_thumb*.jpg",
-        f"{job_id}_final_music_apply_context.json",
-        f"{job_id}_final_render_driver_context.json",
     ]
-    
+
     copied_count = 0
     for pattern in patterns:
         for src_file in output_dir.glob(pattern):
@@ -65,44 +56,38 @@ def _copy_gaming_outputs_to_export(job_id: str, export_dir: Path) -> None:
                 dest_file = export_dir / src_file.name
                 shutil.copy2(src_file, dest_file)
                 copied_count += 1
-    
+
     if copied_count > 0:
-        print(f"[pipeline_runner] COPIED   {copied_count} files to export")
+        print(f"[pipeline_runner] COPIED   {copied_count} file(s) to export")
 
 
 def _cleanup_output_files(job_id: str) -> None:
     """Lösche Output-Files nach erfolgreichem Export."""
     output_dir = Path("output")
-    
+
     patterns = [
         f"{job_id}_final.mp4",
-        f"{job_id}_final_music_applied.mp4",
-        f"{job_id}_final_music_applied_thumb*.jpg",
-        f"{job_id}_final_music_apply_context.json",
-        f"{job_id}_final_render_driver_context.json",
     ]
-    
+
     deleted_count = 0
     for pattern in patterns:
         for file_path in output_dir.glob(pattern):
             if file_path.exists():
                 file_path.unlink()
                 deleted_count += 1
-    
-    if deleted_count > 0:
-        print(f"[pipeline_runner] CLEANUP   Deleted {deleted_count} temporary files from output/")
 
-_GAMING_CHANNELS = frozenset({
-    ChannelType.GAMING_MAIN.value,
-    ChannelType.GAMING_UNCUT.value,
-})
-_FACELESS_CHANNELS = frozenset({
-    ChannelType.FACELESS_TREND.value,
-})
+    if deleted_count > 0:
+        print(
+            f"[pipeline_runner] CLEANUP  Deleted {deleted_count} "
+            f"temporary file(s) from output/"
+        )
+
 
 _INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
-    "gaming_main": ChannelType.GAMING_MAIN,
+    "gaming_main":  ChannelType.GAMING_MAIN,
     "gaming_uncut": ChannelType.GAMING_UNCUT,
+    "vlog_main":    ChannelType.VLOG_MAIN,
+    "faceless":     ChannelType.FACELESS_TREND,
 }
 
 
@@ -111,7 +96,7 @@ _INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
 # ------------------------------------------------------------------ #
 
 def _scan_inbox_and_create_jobs(job_store: JobStore) -> None:
-    """Scan inbox folders and create a gaming job for every new MP4."""
+    """Scan inbox folders and create a job for every new MP4."""
     existing_paths = {
         str(Path(job.raw_video_path).resolve())
         for job in job_store.list_jobs()
@@ -128,10 +113,16 @@ def _scan_inbox_and_create_jobs(job_store: JobStore) -> None:
         for mp4 in sorted(inbox_dir.glob("*.mp4")):
             normalized = str(mp4.resolve())
             if normalized in existing_paths:
-                print(f"[pipeline_runner] INBOX SKIP  {mp4.name}  (job already exists)")
+                print(
+                    f"[pipeline_runner] INBOX SKIP  {mp4.name}  "
+                    f"(job already exists)"
+                )
                 continue
 
-            print(f"[pipeline_runner] INBOX NEW   {mp4.name}  channel={channel_type.value}")
+            print(
+                f"[pipeline_runner] INBOX NEW   {mp4.name}  "
+                f"channel={channel_type.value}"
+            )
             job = intake.create_gaming_job(
                 channel_type=channel_type,
                 raw_video_path=str(mp4),
@@ -144,52 +135,26 @@ def _scan_inbox_and_create_jobs(job_store: JobStore) -> None:
 
 
 # ------------------------------------------------------------------ #
-#  Service factory (lazy — only built when a gaming job is present)   #
+#  Dispatcher                                                          #
 # ------------------------------------------------------------------ #
 
-def _build_gaming_services() -> dict:
-    from core.gaming_analyzer import GamingAnalyzer
-    from core.gaming_cutter import GamingCutter
-    from core.metadata_generator import MetadataGenerator
-    from core.publish_package_builder import PublishPackageBuilder
-    from core.render_processor import RenderProcessor
-    from core.shorts_decision_engine import ShortsDecisionEngine
-    from core.subtitle_processor import SubtitleProcessor
-    from core.thumbnail_forge import ThumbnailForge
-    from core.title_generator import TitleGenerator
-    from core.validator import Validator
+def _dispatch_pipeline(job, services: dict) -> dict:
+    """Route a job to its channel-specific pipeline module."""
+    channel = job.channel_type
 
-    return {
-        "analyzer": GamingAnalyzer(),
-        "cutter": GamingCutter(),
-        "shorts_engine": ShortsDecisionEngine(),
-        "renderer": RenderProcessor(),
-        "subtitle_processor": SubtitleProcessor(),
-        "title_gen": TitleGenerator(),
-        "metadata_gen": MetadataGenerator(),
-        "thumbnail_forge": ThumbnailForge(),
-        "validator": Validator(),
-        "publish_package_builder": PublishPackageBuilder(),
-    }
+    if channel == ChannelType.GAMING_MAIN:
+        return run_gaming_pipeline_for_job(job, services)
 
+    if channel == ChannelType.VLOG_MAIN:
+        return run_vlog_pipeline_for_job(job, services)
 
-# ------------------------------------------------------------------ #
-#  Individual job runners                                              #
-# ------------------------------------------------------------------ #
+    if channel == ChannelType.GAMING_UNCUT:
+        return run_uncut_pipeline_for_job(job, services)
 
-def run_faceless_pipeline_for_job(job) -> dict:
-    """Run the full faceless pipeline for a single Job and return its result."""
-    return FacelessPipeline().run(job)
+    if channel == ChannelType.FACELESS_TREND:
+        return run_faceless_pipeline_for_job(job, services)
 
-
-def run_gaming_pipeline_for_job(job, *, gaming_services: dict) -> dict:
-    """Delegate to the gaming pipeline in app.py with the given services."""
-    from app import run_gaming_pipeline_for_job as _gaming_runner
-
-    if not job.raw_video_path:
-        raise ValueError(f"Gaming job {job.job_id} has no raw_video_path")
-
-    return _gaming_runner(job=job, **gaming_services)
+    raise ValueError(f"Unbekannter Channel-Type: {channel}")
 
 
 # ------------------------------------------------------------------ #
@@ -205,112 +170,95 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
     """
     job_store = JobStore(db_path=db_path)
     _scan_inbox_and_create_jobs(job_store)
+
     all_jobs = job_store.list_jobs()
+    pending = [
+        j for j in all_jobs
+        if j.status in (JobStatus.CREATED, JobStatus.STORED)
+    ]
+
+    # ---- Empty-state ------------------------------------------------
+    if not pending:
+        print("[pipeline_runner] Keine aktuellen Rohdateien.")
+        return []
 
     results: list[dict] = []
     gaming_services: dict | None = None
 
-    for job in all_jobs:
-        if job.status not in (JobStatus.CREATED, JobStatus.STORED):
-            continue
-
+    for job in pending:
         channel = job.channel_type.value
 
-        # ---- Faceless ------------------------------------------------
-        if channel in _FACELESS_CHANNELS:
-            print(f"[pipeline_runner] FACELESS  {job.job_id}  topic={job.topic!r}")
-            try:
-                result = run_faceless_pipeline_for_job(job)
-                export_dir = _make_export_dir(channel, job.job_id)
-                print(f"[pipeline_runner] EXPORT    {job.job_id}  → {export_dir}")
-                job.status = JobStatus.ROUTED
-                job.review_status = "waiting_for_review"
-                job.touch()
-                job_store.update_job(job)
-                results.append({
-                    "job_id": job.job_id,
-                    "channel": channel,
-                    "status": "ok",
-                    "pipeline": "faceless",
-                    "result": result,
-                })
-            except Exception as exc:
-                job.status = JobStatus.FAILED
-                job.error_message = str(exc)
-                job.touch()
-                job_store.update_job(job)
-                results.append({
-                    "job_id": job.job_id,
-                    "channel": channel,
-                    "status": "error",
-                    "pipeline": "faceless",
-                    "error": str(exc),
-                })
-
-        # ---- Gaming --------------------------------------------------
-        elif channel in _GAMING_CHANNELS:
-            if not job.raw_video_path:
-                print(
-                    f"[pipeline_runner] SKIP {job.job_id}  "
-                    f"channel={channel}  reason=no_raw_video_path"
-                )
-                results.append({
-                    "job_id": job.job_id,
-                    "channel": channel,
-                    "status": "skip",
-                    "reason": "no_raw_video_path",
-                })
-                continue
-
+        if not job.raw_video_path:
             print(
-                f"[pipeline_runner] GAMING   {job.job_id}  "
-                f"channel={channel}  video={job.raw_video_path!r}"
+                f"[pipeline_runner] SKIP {job.job_id}  "
+                f"channel={channel}  reason=no_raw_video_path"
             )
-
-            if gaming_services is None:
-                gaming_services = _build_gaming_services()
-
-            try:
-                result = run_gaming_pipeline_for_job(
-                    job, gaming_services=gaming_services
-                )
-                export_dir = _make_export_dir(channel, job.job_id)
-                _copy_shorts_to_export(result.get("shorts_paths", []), export_dir)
-                _copy_gaming_outputs_to_export(job.job_id, export_dir)
-                _cleanup_output_files(job.job_id)
-                print(f"[pipeline_runner] EXPORT    {job.job_id}  → {export_dir}")
-                
-                job.status = JobStatus.ROUTED
-                job.touch()
-                job_store.update_job(job)
-                results.append({
-                    "job_id": job.job_id,
-                    "channel": channel,
-                    "status": "ok",
-                    "pipeline": "gaming",
-                    "result": result,
-                })
-            except Exception as exc:
-                job.status = JobStatus.FAILED
-                job.error_message = str(exc)
-                job.touch()
-                job_store.update_job(job)
-                results.append({
-                    "job_id": job.job_id,
-                    "channel": channel,
-                    "status": "error",
-                    "pipeline": "gaming",
-                    "error": str(exc),
-                })
-
-        # ---- Unknown channel -----------------------------------------
-        else:
-            print(f"[pipeline_runner] UNKNOWN channel={channel!r}  job={job.job_id}")
             results.append({
                 "job_id": job.job_id,
                 "channel": channel,
                 "status": "skip",
-                "reason": "unknown_channel",
+                "reason": "no_raw_video_path",
+            })
+            continue
+
+        # Lazy-init services (only built once, reused across jobs)
+        if gaming_services is None:
+            gaming_services = _build_gaming_services()
+
+        channel_label = channel.upper().replace("_", " ")
+        print(
+            f"[pipeline_runner] {channel_label}  {job.job_id}  "
+            f"video={job.raw_video_path!r}"
+        )
+
+        try:
+            result = _dispatch_pipeline(job, gaming_services)
+
+            export_dir = _make_export_dir(channel, job.job_id)
+            _copy_gaming_outputs_to_export(job.job_id, export_dir)
+            _cleanup_output_files(job.job_id)
+            print(f"[pipeline_runner] EXPORT    {job.job_id}  → {export_dir}")
+
+            job.status = JobStatus.ROUTED
+            job.touch()
+            job_store.update_job(job)
+
+            results.append({
+                "job_id":   job.job_id,
+                "channel":  channel,
+                "status":   "ok",
+                "pipeline": channel,
+                "result":   result,
+            })
+
+        except NotImplementedError as exc:
+            # Stub-Pipeline noch nicht implementiert — kein Crash
+            print(
+                f"[pipeline_runner] AWAITING_PIPELINE  {job.job_id}  "
+                f"{channel} not yet implemented"
+            )
+            job.status = "awaiting_pipeline_implementation"
+            job.touch()
+            job_store.update_job(job)
+            results.append({
+                "job_id":   job.job_id,
+                "channel":  channel,
+                "status":   "skip",
+                "reason":   "awaiting_pipeline_implementation",
+                "error":    str(exc),
+            })
+
+        except Exception as exc:
+            job.status = JobStatus.FAILED
+            job.error_message = str(exc)
+            job.touch()
+            job_store.update_job(job)
+            results.append({
+                "job_id":   job.job_id,
+                "channel":  channel,
+                "status":   "error",
+                "pipeline": channel,
+                "error":    str(exc),
             })
 
     return results
@@ -323,16 +271,22 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
 if __name__ == "__main__":
     results = run_pending_jobs()
 
-    ok = sum(1 for r in results if r["status"] == "ok")
+    ok      = sum(1 for r in results if r["status"] == "ok")
     skipped = sum(1 for r in results if r["status"] == "skip")
-    failed = sum(1 for r in results if r["status"] == "error")
+    failed  = sum(1 for r in results if r["status"] == "error")
 
-    print(f"\n[pipeline_runner] Done — ok={ok}  skipped={skipped}  failed={failed}")
-
-    for r in results:
-        icon = {"ok": "✓", "skip": "—", "error": "✗"}.get(r["status"], "?")
-        print(f"  {icon}  {r['job_id']}  ({r.get('pipeline', r.get('reason', ''))})")
-        if r["status"] == "error":
-            print(f"       {r['error']}")
+    if results:
+        print(
+            f"\n[pipeline_runner] Done — ok={ok}  "
+            f"skipped={skipped}  failed={failed}"
+        )
+        for r in results:
+            icon = {"ok": "✓", "skip": "–", "error": "✗"}.get(r["status"], "?")
+            print(
+                f"  {icon}  {r['job_id']}  "
+                f"({r.get('pipeline', r.get('reason', ''))})"
+            )
+            if r["status"] == "error":
+                print(f"       {r['error']}")
 
     sys.exit(0 if failed == 0 else 1)

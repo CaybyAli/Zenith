@@ -10,6 +10,7 @@ class ChannelType(str, Enum):
     GAMING_MAIN = "gaming_main"
     GAMING_UNCUT = "gaming_uncut"
     FACELESS_TREND = "faceless_trend"
+    VLOG_MAIN = "vlog_main"
 
 class PlatformType(str, Enum):
     YOUTUBE = "youtube"
@@ -31,6 +32,7 @@ class Mode(str, Enum):
 class PipelineType(str, Enum):
     GAMING = "gaming_pipeline"
     FACELESS = "faceless_pipeline"
+    VLOG = "vlog_pipeline"
 
 
 class JobStatus(str, Enum):

@@ -19,7 +19,11 @@ class RoutingEngine:
 
     def _resolve_pipeline(self, job: Job) -> PipelineType:
         if job.job_type == JobType.GAMING:
-            if get_channel_group(job.channel_type.value) not in {"main", "uncut"}:
+            if job.channel_type == ChannelType.VLOG_MAIN:
+                return PipelineType.VLOG
+            if job.channel_type not in {
+                ChannelType.GAMING_MAIN, ChannelType.GAMING_UNCUT
+            }:
                 raise RoutingError(
                     f"Gaming job cannot use channel_type={job.channel_type}"
                 )
