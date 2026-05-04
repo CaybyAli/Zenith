@@ -15,6 +15,13 @@ Run directly:
 Or import run_pending_jobs() for programmatic use (e.g. from tests).
 """
 from __future__ import annotations
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 import shutil
 import sys
@@ -219,7 +226,10 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
             _cleanup_output_files(job.job_id)
             print(f"[pipeline_runner] EXPORT    {job.job_id}  → {export_dir}")
 
-            job.status = JobStatus.ROUTED
+            title_package = result.get("title_package")
+            if title_package is not None:
+                job.title = title_package.primary_title
+            job.status = JobStatus.ASSEMBLED
             job.touch()
             job_store.update_job(job)
 
@@ -290,3 +300,4 @@ if __name__ == "__main__":
                 print(f"       {r['error']}")
 
     sys.exit(0 if failed == 0 else 1)
+

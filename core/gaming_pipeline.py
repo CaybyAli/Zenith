@@ -229,7 +229,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     title_package = title_gen.generate(job)
     metadata      = metadata_gen.generate(job, title_package)
     print(f"[gaming_pipeline] META      {job.job_id}  "
-          f"title='{getattr(title_package, 'title', '')[:40]}'")
+          f"title='{getattr(title_package, 'primary_title', '')[:40]}'")
 
     # ------------------------------------------------------------------
     # 10) Validator  (kein Thumbnail → None)
