@@ -22,6 +22,7 @@ from core.subtitle_processor import SubtitleProcessor
 from core.title_generator import TitleGenerator
 from core.metadata_generator import MetadataGenerator
 from core.validator import Validator
+from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
 
 from core.edit_signal_extractor import EditSignalExtractor
 from core.highlight_selector import HighlightSelector
@@ -57,6 +58,7 @@ def _build_gaming_services() -> dict:
         "validator":         Validator(),
         "job_repo":          JobRepository(),
         "job_loader":        JobLoader(),
+        "transcript_processor": TranscriptProcessor(),
     }
 
 
@@ -94,6 +96,22 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     metadata_gen      = services["metadata_gen"]
     validator         = services["validator"]
     job_repo          = services["job_repo"]
+    transcript_processor = services.get("transcript_processor") or TranscriptProcessor()
+
+    transcript_result = None
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        if job.raw_video_path:
+            try:
+                transcript_result = transcript_processor.transcribe(str(job.raw_video_path))
+                print(
+                    f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+                    f"segments={len(transcript_result.segments)} "
+                    f"engine={transcript_result.engine}"
+                )
+            except (TranscriptUnavailableError, ImportError, FileNotFoundError, RuntimeError) as exc:
+                print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason={exc}")
+        else:
+            print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=no raw_video_path")
 
     # ------------------------------------------------------------------
     # 1) Analyse + Edit-Entscheidung
@@ -273,6 +291,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     return {
         # Analyse
+        "transcript_result":     transcript_result,
         "analysis_result":       analysis_result,
         "edit_decision":         edit_decision,
         # Highlight-Kette
