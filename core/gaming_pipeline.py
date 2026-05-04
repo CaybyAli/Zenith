@@ -129,6 +129,20 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     print(f"[gaming_pipeline] SIGNALS   {job.job_id}  "
           f"signals={len(edit_signals)}")
 
+    silence_zones = [
+        signal for signal in edit_signals
+        if signal.signal_type == "silence_zone"
+    ]
+    low_motion_zones = [
+        signal for signal in edit_signals
+        if signal.signal_type == "low_motion_zone"
+    ]
+    print(
+        f"[gaming_pipeline] SILENCE   {job.job_id}  "
+        f"silence_zones={len(silence_zones)} "
+        f"low_motion_zones={len(low_motion_zones)}"
+    )
+
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
