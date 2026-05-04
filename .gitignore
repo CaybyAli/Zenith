@@ -72,3 +72,10 @@ data/*.tmp.json
 _audit_*.txt
 _audit_*.log
 _import_*.txt
+
+# Diagnostic + repair artifacts
+_diag_*.txt
+_diag_*.py
+_repair_*.txt
+_repair_*.log
+_temp_*.py
