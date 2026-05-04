@@ -109,7 +109,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     edit_signals = EditSignalExtractor().extract(job, analysis_result)
     print(f"[gaming_pipeline] SIGNALS   {job.job_id}  "
-          f"signals={len(getattr(edit_signals, 'signals', []))}")
+          f"signals={len(edit_signals)}")
 
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
@@ -242,7 +242,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         None,   # thumbnail_package — wird in Phase 2.5 gebaut
     )
     print(f"[gaming_pipeline] VALIDATE  {job.job_id}  "
-          f"status={getattr(validator_result, 'status', '?')}")
+          f"status={getattr(validator_result, 'validator_status', '?')}")
 
     # ------------------------------------------------------------------
     # 11) Repositories speichern
