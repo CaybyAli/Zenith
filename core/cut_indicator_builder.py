@@ -337,12 +337,49 @@ class CutIndicatorBuilder:
                 },
             )
 
+    def _from_audio_roles(
+        self,
+        indicators: list[CutIndicator],
+        audio_role_result: object,
+        channel_scope: str,
+    ) -> None:
+        negative_roles = {"silence_or_dead_air", "speech_cut_risk_audio"}
+        neutral_roles = {"speech_active"}
+        for window in self._iter_items(self._get(audio_role_result, "windows", default=[])):
+            role_type = str(self._get(window, "role_type", default="") or "")
+            if not role_type:
+                continue
+            start, end = self._start_end(window)
+            polarity = "positive"
+            if role_type in negative_roles:
+                polarity = "negative"
+            elif role_type in neutral_roles:
+                polarity = "neutral"
+            metadata = dict(self._get(window, "metadata", default={}) or {})
+            metadata["source_signal_ids"] = list(
+                self._get(window, "source_signal_ids", default=[]) or []
+            )
+            self._append(
+                indicators,
+                indicator_type=role_type,
+                start_seconds=start,
+                end_seconds=end,
+                score=self._get(window, "score", default=0.0),
+                confidence=self._get(window, "confidence", default=0.0),
+                source="audio_role",
+                reason=str(self._get(window, "reason", default="audio role window") or "audio role window"),
+                polarity=polarity,
+                channel_scope=channel_scope,
+                metadata=metadata,
+            )
+
     def build(
         self,
         *,
         edit_signals: object = None,
         transcript_result: object = None,
         sentence_timeline_result: object = None,
+        audio_role_result: object = None,
         energy_curve_result: object = None,
         gameplay_vision_result: object = None,
         facecam_reaction_result: object = None,
@@ -355,6 +392,7 @@ class CutIndicatorBuilder:
         self._from_edit_signals(indicators, edit_signals, channel_scope)
         self._from_transcript(indicators, transcript_result, channel_scope)
         self._from_sentence_timeline(indicators, sentence_timeline_result, channel_scope)
+        self._from_audio_roles(indicators, audio_role_result, channel_scope)
         self._from_energy(indicators, energy_curve_result, channel_scope)
         self._from_vision(indicators, gameplay_vision_result, channel_scope)
         self._from_facecam(indicators, facecam_reaction_result, channel_scope)

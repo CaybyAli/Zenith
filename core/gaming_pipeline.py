@@ -30,6 +30,7 @@ from core.sentence_timeline_builder import SentenceTimelineBuilder
 
 from core.edit_signal_extractor import EditSignalExtractor
 from core.cut_indicator_builder import CutIndicatorBuilder
+from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
@@ -214,6 +215,28 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         f"avg={energy_curve_result.average_energy} "
         f"max={energy_curve_result.max_energy} "
         f"engine={energy_curve_result.engine}"
+    )
+
+    audio_role_result = AudioRoleIndicatorBuilder().build(
+        edit_signals=edit_signals,
+        transcript_result=transcript_result,
+        sentence_timeline_result=sentence_timeline_result,
+        energy_curve_result=energy_curve_result,
+        channel_type=job.channel_type,
+    )
+    audio_role_counts = audio_role_result.role_counts
+    print(
+        f"[gaming_pipeline] AUDIO_ROLES {job.job_id} "
+        f"total={len(audio_role_result.windows)} "
+        f"speech={audio_role_counts.get('speech_active', 0)} "
+        f"secondary={audio_role_counts.get('secondary_speech_like', 0)} "
+        f"group={audio_role_counts.get('group_reaction_like', 0)} "
+        f"laugh={audio_role_counts.get('laugh_like_audio', 0)} "
+        f"shout={audio_role_counts.get('shout_like_audio', 0)} "
+        f"game_peak={audio_role_counts.get('game_audio_peak', 0)} "
+        f"silence={audio_role_counts.get('silence_or_dead_air', 0)} "
+        f"risk={audio_role_counts.get('speech_cut_risk_audio', 0)} "
+        f"engine={audio_role_result.engine}"
     )
 
     gameplay_vision_result = None
@@ -410,6 +433,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         edit_signals=edit_signals,
         transcript_result=transcript_result,
         sentence_timeline_result=sentence_timeline_result,
+        audio_role_result=audio_role_result,
         energy_curve_result=energy_curve_result,
         gameplay_vision_result=gameplay_vision_result,
         facecam_reaction_result=facecam_reaction_result,
@@ -572,6 +596,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
         "sentence_timeline_result": sentence_timeline_result,
+        "audio_role_result":    audio_role_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
@@ -604,6 +629,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
+        "audio_role_result":    audio_role_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],

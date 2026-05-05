@@ -8,6 +8,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.cut_indicator_builder import CutIndicatorBuilder
+from models.audio_role_result import AudioRoleResult, AudioRoleWindow
 from models.edit_signal import EditSignal
 from models.edit_timeline import EditTimeline
 from models.energy_curve_result import EnergyCurvePoint, EnergyCurveResult
@@ -175,6 +176,44 @@ def _sentence_timeline() -> SentenceTimelineResult:
     )
 
 
+def _audio_roles() -> AudioRoleResult:
+    return AudioRoleResult(
+        windows=[
+            AudioRoleWindow(
+                window_id="audio_role_speech",
+                start_seconds=1.0,
+                end_seconds=2.5,
+                role_type="speech_active",
+                score=0.55,
+                confidence=0.8,
+                reason="speech smoke",
+                source_signal_ids=["sig_audio_peak"],
+            ),
+            AudioRoleWindow(
+                window_id="audio_role_silence",
+                start_seconds=6.0,
+                end_seconds=8.0,
+                role_type="silence_or_dead_air",
+                score=0.8,
+                confidence=0.85,
+                reason="silence smoke",
+                source_signal_ids=["sig_silence"],
+            ),
+            AudioRoleWindow(
+                window_id="audio_role_game_peak",
+                start_seconds=12.0,
+                end_seconds=13.0,
+                role_type="game_audio_peak",
+                score=0.72,
+                confidence=0.65,
+                reason="game peak smoke",
+                source_signal_ids=["sig_game_peak"],
+            ),
+        ],
+        engine="audio-role-indicator-builder-v1",
+    )
+
+
 def test_empty_inputs_do_not_crash() -> None:
     result = CutIndicatorBuilder().build()
 
@@ -194,6 +233,7 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
         ],
         transcript_result=_transcript(),
         sentence_timeline_result=_sentence_timeline(),
+        audio_role_result=_audio_roles(),
         energy_curve_result=_energy(),
         gameplay_vision_result=_vision(),
         facecam_reaction_result=_facecam(),
@@ -220,6 +260,12 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
     assert "filler_sentence" in indicator_types
     assert by_type["hook_sentence"].polarity == "positive"
     assert by_type["filler_sentence"].polarity == "negative"
+    assert "speech_active" in indicator_types
+    assert "silence_or_dead_air" in indicator_types
+    assert "game_audio_peak" in indicator_types
+    assert by_type["speech_active"].polarity == "neutral"
+    assert by_type["silence_or_dead_air"].polarity == "negative"
+    assert by_type["game_audio_peak"].polarity == "positive"
 
     assert result.positive_count > 0
     assert result.negative_count > 0
