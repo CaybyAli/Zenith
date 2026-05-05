@@ -12,6 +12,7 @@ from models.job import Job
 from models.timeline_segment import TimelineSegment
 from models.transcript_result import TranscriptResult
 from core.final_timeline_guard import FinalTimelineGuard
+from core.final_cut_safety_guard import FinalCutSafetyGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -506,6 +507,25 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after final timeline guard")
 
+        selected_segments, cut_safety_summary = FinalCutSafetyGuard().apply(
+            selected_segments,
+            transcript_result,
+        )
+        print(
+            "[TIMELINE-CUT-SAFETY] "
+            f"adjusted_start={cut_safety_summary.adjusted_start} "
+            f"adjusted_end={cut_safety_summary.adjusted_end} "
+            f"skipped_start={cut_safety_summary.skipped_start} "
+            f"skipped_end={cut_safety_summary.skipped_end} "
+            f"duration_before={cut_safety_summary.duration_before:.3f}s "
+            f"duration_after={cut_safety_summary.duration_after:.3f}s"
+        )
+        if cut_safety_summary.examples:
+            print(f"[TIMELINE-CUT-SAFETY] examples={'; '.join(cut_safety_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after final cut safety guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -549,6 +569,13 @@ class LongformTimelineBuilder:
             f"removed={final_guard_summary.removed} "
             f"duration_before={final_guard_summary.duration_before:.3f}s "
             f"duration_after={final_guard_summary.duration_after:.3f}s",
+            "Final cut safety: "
+            f"adjusted_start={cut_safety_summary.adjusted_start} "
+            f"adjusted_end={cut_safety_summary.adjusted_end} "
+            f"skipped_start={cut_safety_summary.skipped_start} "
+            f"skipped_end={cut_safety_summary.skipped_end} "
+            f"duration_before={cut_safety_summary.duration_before:.3f}s "
+            f"duration_after={cut_safety_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

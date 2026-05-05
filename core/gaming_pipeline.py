@@ -313,6 +313,36 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"adjusted_end={boundary_counts['adjusted_end']} "
             f"skipped={boundary_counts['skipped']}"
         )
+        cut_safety_counts = {
+            "adjusted_start": sum(
+                any(note.startswith("final_cut_safety_start=") for note in segment.notes)
+                for segment in edit_timeline.selected_segments
+            ),
+            "adjusted_end": sum(
+                any(
+                    note.startswith("final_cut_safety_end=")
+                    or note.startswith("final_cut_safety_end_fallback=")
+                    for note in segment.notes
+                )
+                for segment in edit_timeline.selected_segments
+            ),
+            "skipped_start": sum(
+                "final_cut_safety_start_skipped" in segment.notes
+                for segment in edit_timeline.selected_segments
+            ),
+            "skipped_end": sum(
+                "final_cut_safety_end_skipped" in segment.notes
+                or any(note.startswith("final_cut_safety_end_fallback=") for note in segment.notes)
+                for segment in edit_timeline.selected_segments
+            ),
+        }
+        print(
+            f"[gaming_pipeline] CUT_SAFETY {job.job_id} "
+            f"adjusted_start={cut_safety_counts['adjusted_start']} "
+            f"adjusted_end={cut_safety_counts['adjusted_end']} "
+            f"skipped_start={cut_safety_counts['skipped_start']} "
+            f"skipped_end={cut_safety_counts['skipped_end']}"
+        )
         boost_counts = {
             "energy": sum("energy_boost" in segment.notes for segment in edit_timeline.selected_segments),
             "vision": sum("vision_boost" in segment.notes for segment in edit_timeline.selected_segments),
