@@ -111,8 +111,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
+        # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
         if os.environ.get("ZENITH_SKIP_TRANSCRIPT") == "1":
-            print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=env skip")
+            print(
+                f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+                "skipped reason=env skip (ZENITH_SKIP_TRANSCRIPT test-only bypass)"
+            )
         elif job.raw_video_path:
             try:
                 transcript_result = transcript_processor.transcribe(str(job.raw_video_path))

@@ -49,7 +49,11 @@ class TranscriptProcessor:
     def _transcribe_with_faster_whisper(self, source_path: str) -> TranscriptResult:
         from faster_whisper import WhisperModel
 
-        model = WhisperModel(self.model_name)
+        model = WhisperModel(
+            self.model_name,
+            device=os.getenv("ZENITH_FASTER_WHISPER_DEVICE", "cpu"),
+            compute_type=os.getenv("ZENITH_FASTER_WHISPER_COMPUTE_TYPE", "int8"),
+        )
         raw_segments, info = model.transcribe(source_path, vad_filter=True)
 
         segments = self._sanitize_segments(
