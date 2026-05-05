@@ -13,6 +13,7 @@ from models.edit_timeline import EditTimeline
 from models.energy_curve_result import EnergyCurvePoint, EnergyCurveResult
 from models.facecam_reaction_result import FacecamReactionResult, FacecamReactionWindow
 from models.gameplay_vision_result import GameplayVisionResult, GameplayVisionWindow
+from models.sentence_timeline import SentenceItem, SentenceTimelineResult
 from models.timeline_segment import TimelineSegment
 from models.transcript_result import TranscriptResult, TranscriptSegment
 
@@ -142,6 +143,38 @@ def _timeline() -> EditTimeline:
     )
 
 
+def _sentence_timeline() -> SentenceTimelineResult:
+    return SentenceTimelineResult(
+        sentences=[
+            SentenceItem(
+                sentence_id="sentence_hook",
+                text="Wir waren komplett tot, aber dann kam Nils mit dem Save!",
+                start_seconds=1.0,
+                end_seconds=4.0,
+                duration_seconds=3.0,
+                score=0.86,
+                confidence=0.9,
+                sentence_kind="hook",
+                source_segment_ids=["segment_000000", "segment_000001"],
+                metadata={"word_count": 10},
+            ),
+            SentenceItem(
+                sentence_id="sentence_filler",
+                text="okay ja ähm",
+                start_seconds=5.0,
+                end_seconds=6.0,
+                duration_seconds=1.0,
+                score=0.18,
+                confidence=0.8,
+                sentence_kind="filler",
+                source_segment_ids=["segment_000002"],
+                metadata={"word_count": 3},
+            ),
+        ],
+        engine="sentence-timeline-builder-v1",
+    )
+
+
 def test_empty_inputs_do_not_crash() -> None:
     result = CutIndicatorBuilder().build()
 
@@ -160,6 +193,7 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
             _signal("low_motion_zone", 4.0, 5.0, 0.2),
         ],
         transcript_result=_transcript(),
+        sentence_timeline_result=_sentence_timeline(),
         energy_curve_result=_energy(),
         gameplay_vision_result=_vision(),
         facecam_reaction_result=_facecam(),
@@ -182,6 +216,10 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
     assert "gameplay_action" in indicator_types
     assert "facecam_reaction" in indicator_types
     assert "selected_segment" in indicator_types
+    assert "hook_sentence" in indicator_types
+    assert "filler_sentence" in indicator_types
+    assert by_type["hook_sentence"].polarity == "positive"
+    assert by_type["filler_sentence"].polarity == "negative"
 
     assert result.positive_count > 0
     assert result.negative_count > 0

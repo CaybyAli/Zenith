@@ -295,11 +295,54 @@ class CutIndicatorBuilder:
                 },
             )
 
+    def _from_sentence_timeline(
+        self,
+        indicators: list[CutIndicator],
+        sentence_timeline_result: object,
+        channel_scope: str,
+    ) -> None:
+        mapping = {
+            "hook": ("hook_sentence", "positive"),
+            "exclamation": ("exclamation_sentence", "positive"),
+            "question": ("question_sentence", "positive"),
+            "filler": ("filler_sentence", "negative"),
+            "incomplete": ("incomplete_sentence", "negative"),
+            "normal": ("speech_sentence", "neutral"),
+        }
+        sentences = self._get(sentence_timeline_result, "sentences", default=[])
+        for sentence in self._iter_items(sentences):
+            text = str(self._get(sentence, "text", default="") or "").strip()
+            if not text:
+                continue
+            sentence_kind = str(self._get(sentence, "sentence_kind", default="normal") or "normal")
+            indicator_type, polarity = mapping.get(sentence_kind, ("speech_sentence", "neutral"))
+            start, end = self._start_end(sentence)
+            self._append(
+                indicators,
+                indicator_type=indicator_type,
+                start_seconds=start,
+                end_seconds=end,
+                score=self._get(sentence, "score", default=0.0),
+                confidence=self._get(sentence, "confidence", default=0.75),
+                source="sentence_timeline",
+                reason=f"sentence timeline {sentence_kind}",
+                polarity=polarity,
+                channel_scope=channel_scope,
+                metadata={
+                    "sentence_kind": sentence_kind,
+                    "text_preview": " ".join(text.split())[:100],
+                    "source_segment_ids": list(
+                        self._get(sentence, "source_segment_ids", default=[]) or []
+                    ),
+                },
+            )
+
     def build(
         self,
         *,
         edit_signals: object = None,
         transcript_result: object = None,
+        sentence_timeline_result: object = None,
         energy_curve_result: object = None,
         gameplay_vision_result: object = None,
         facecam_reaction_result: object = None,
@@ -311,6 +354,7 @@ class CutIndicatorBuilder:
 
         self._from_edit_signals(indicators, edit_signals, channel_scope)
         self._from_transcript(indicators, transcript_result, channel_scope)
+        self._from_sentence_timeline(indicators, sentence_timeline_result, channel_scope)
         self._from_energy(indicators, energy_curve_result, channel_scope)
         self._from_vision(indicators, gameplay_vision_result, channel_scope)
         self._from_facecam(indicators, facecam_reaction_result, channel_scope)

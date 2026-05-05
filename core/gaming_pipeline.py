@@ -26,6 +26,7 @@ from core.metadata_generator import MetadataGenerator
 from core.validator import Validator
 from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
 from core.hook_keyword_extractor import HookKeywordExtractor
+from core.sentence_timeline_builder import SentenceTimelineBuilder
 
 from core.edit_signal_extractor import EditSignalExtractor
 from core.cut_indicator_builder import CutIndicatorBuilder
@@ -146,6 +147,23 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             )
         else:
             print(f"[gaming_pipeline] HOOKS     {job.job_id} skipped reason=no transcript")
+
+    sentence_timeline_result = None
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        if transcript_result is not None:
+            sentence_timeline_result = SentenceTimelineBuilder().build(transcript_result)
+            print(
+                f"[gaming_pipeline] SENTENCES {job.job_id} "
+                f"total={sentence_timeline_result.total_sentences} "
+                f"hooks={sentence_timeline_result.hook_sentence_count} "
+                f"fillers={sentence_timeline_result.filler_sentence_count} "
+                f"incomplete={sentence_timeline_result.incomplete_sentence_count} "
+                f"avg={sentence_timeline_result.average_score} "
+                f"max={sentence_timeline_result.max_score} "
+                f"engine={sentence_timeline_result.engine}"
+            )
+        else:
+            print(f"[gaming_pipeline] SENTENCES {job.job_id} skipped reason=no transcript")
 
     # ------------------------------------------------------------------
     # 1) Analyse + Edit-Entscheidung
@@ -391,6 +409,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     cut_indicator_result = CutIndicatorBuilder().build(
         edit_signals=edit_signals,
         transcript_result=transcript_result,
+        sentence_timeline_result=sentence_timeline_result,
         energy_curve_result=energy_curve_result,
         gameplay_vision_result=gameplay_vision_result,
         facecam_reaction_result=facecam_reaction_result,
@@ -552,6 +571,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
+        "sentence_timeline_result": sentence_timeline_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
@@ -577,6 +597,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         # Analyse
         "transcript_result":     transcript_result,
         "hook_keyword_result":   hook_keyword_result,
+        "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,
         "edit_decision":         edit_decision,
         # Highlight-Kette
