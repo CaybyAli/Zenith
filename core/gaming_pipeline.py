@@ -1,9 +1,9 @@
-"""Gaming Pipeline — core/gaming_pipeline.py
+﻿"""Gaming Pipeline â€” core/gaming_pipeline.py
 
-Isoliertes Pipeline-Modul für gaming_main und gaming_uncut.
+Isoliertes Pipeline-Modul fÃ¼r gaming_main und gaming_uncut.
 Output: <export_dir>/<job_id>/<job_id>_final.mp4
 
-Entfernt gegenüber app.py (werden in späteren Phasen separat gebaut):
+Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
   - Music: MusicCueEngine, AudioMixPlanner, MusicApplyProcessor, etc.
   - Thumbnails: ThumbnailForge, AIThumbnailForge
   - Shorts: ShortsDecisionEngine, ShortsGenerator
@@ -26,6 +26,7 @@ from core.transcript_processor import TranscriptProcessor, TranscriptUnavailable
 from core.hook_keyword_extractor import HookKeywordExtractor
 
 from core.edit_signal_extractor import EditSignalExtractor
+from core.energy_curve_builder import EnergyCurveBuilder
 from core.highlight_selector import HighlightSelector
 from core.longform_timeline_builder import LongformTimelineBuilder
 from core.reframing_core import ReframingCore
@@ -43,9 +44,9 @@ from core.job_store import JobStore
 
 
 def _build_gaming_services() -> dict:
-    """Dependency-Container für die Gaming-Pipeline.
+    """Dependency-Container fÃ¼r die Gaming-Pipeline.
 
-    Gibt ein Dict mit allen benötigten Service-Instanzen zurück.
+    Gibt ein Dict mit allen benÃ¶tigten Service-Instanzen zurÃ¼ck.
     Wird einmal in pipeline_runner.py aufgerufen und an
     run_gaming_pipeline_for_job() weitergegeben.
     """
@@ -65,22 +66,22 @@ def _build_gaming_services() -> dict:
 
 
 def run_gaming_pipeline_for_job(job, services: dict) -> dict:
-    """Führt die vollständige Gaming-Render-Pipeline für einen Job aus.
+    """FÃ¼hrt die vollstÃ¤ndige Gaming-Render-Pipeline fÃ¼r einen Job aus.
 
     Pipeline-Schritte:
-      1) GamingAnalyzer + GamingCutter  → analysis + edit_decision
-      2) EditSignalExtractor            → edit_signals
-      3) HighlightSelector              → highlights
-      4) LongformTimelineBuilder        → edit_timeline  (wenn longform)
-      5) ReframingCore                  → reframe_plan
+      1) GamingAnalyzer + GamingCutter  â†’ analysis + edit_decision
+      2) EditSignalExtractor            â†’ edit_signals
+      3) HighlightSelector              â†’ highlights
+      4) LongformTimelineBuilder        â†’ edit_timeline  (wenn longform)
+      5) ReframingCore                  â†’ reframe_plan
       6) ReactionMomentDetector
-         + ZoomPacingEngine             → dynamic_edit_plan
-      7) FinalRenderDriver / RenderProcessor → final_video_path
-      8) SubtitleProcessor              → subtitles
-      9) TitleGenerator + MetadataGenerator → title + metadata
-     10) Validator                      → validator_result
+         + ZoomPacingEngine             â†’ dynamic_edit_plan
+      7) FinalRenderDriver / RenderProcessor â†’ final_video_path
+      8) SubtitleProcessor              â†’ subtitles
+      9) TitleGenerator + MetadataGenerator â†’ title + metadata
+     10) Validator                      â†’ validator_result
      11) Repositories speichern        (highlight, timeline, reframe, zoom)
-     12) Job-Status → "rendered"
+     12) Job-Status â†’ "rendered"
 
     Args:
         job:      Job-Objekt (bereits geroutet)
@@ -160,6 +161,26 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         f"low_motion_zones={len(low_motion_zones)}"
     )
 
+
+    energy_curve_result = EnergyCurveBuilder().build(
+        job_id=job.job_id,
+        edit_signals=edit_signals,
+        duration_seconds=getattr(
+            analysis_result,
+            "duration_seconds",
+            getattr(job, "duration_seconds", None),
+        ),
+        window_seconds=5.0,
+        max_peaks=5,
+    )
+    print(
+        f"[gaming_pipeline] ENERGY   {job.job_id} "
+        f"points={len(energy_curve_result.points)} "
+        f"peaks={len(energy_curve_result.peak_points)} "
+        f"avg={energy_curve_result.average_energy} "
+        f"max={energy_curve_result.max_energy} "
+        f"engine={energy_curve_result.engine}"
+    )
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
@@ -172,7 +193,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
           f"candidates={len(highlight_result.get('highlight_candidates', []))}")
 
     # ------------------------------------------------------------------
-    # 4) Longform-Timeline  (nur wenn Voraussetzungen erfüllt)
+    # 4) Longform-Timeline  (nur wenn Voraussetzungen erfÃ¼llt)
     # ------------------------------------------------------------------
     edit_timeline = None
     if (
@@ -240,7 +261,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(f"[DEBUG] =====================================\n")
 
     # ------------------------------------------------------------------
-    # 7) Render — FinalRenderDriver wenn Timeline vorhanden,
+    # 7) Render â€” FinalRenderDriver wenn Timeline vorhanden,
     #             sonst RenderProcessor als Fallback
     # ------------------------------------------------------------------
     if edit_timeline is not None and job.raw_video_path:
@@ -264,7 +285,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         active_renderer = renderer
 
     final_video_path = active_renderer.render(job, edit_decision)
-    print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")
+    print(f"[gaming_pipeline] RENDER    {job.job_id}  â†’ {final_video_path}")
 
     # ------------------------------------------------------------------
     # 8) Untertitel
@@ -281,14 +302,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
           f"title='{getattr(title_package, 'primary_title', '')[:40]}'")
 
     # ------------------------------------------------------------------
-    # 10) Validator  (kein Thumbnail → None)
+    # 10) Validator  (kein Thumbnail â†’ None)
     # ------------------------------------------------------------------
     validator_result = validator.validate(
         job,
         final_video_path,
         title_package,
         metadata,
-        None,   # thumbnail_package — wird in Phase 2.5 gebaut
+        None,   # thumbnail_package â€” wird in Phase 2.5 gebaut
     )
     print(f"[gaming_pipeline] VALIDATE  {job.job_id}  "
           f"status={getattr(validator_result, 'validator_status', '?')}")
@@ -296,10 +317,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     # 11) Repositories speichern
     # ------------------------------------------------------------------
-    # Highlight-Daten werden export_path-los gespeichert —
-    # pipeline_runner übergibt export_path nach Rückkehr.
+    # Highlight-Daten werden export_path-los gespeichert â€”
+    # pipeline_runner Ã¼bergibt export_path nach RÃ¼ckkehr.
     _highlight_repo_data = {
         "edit_signals":          edit_signals,
+        "energy_curve_result":   energy_curve_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "summary":               highlight_result["summary"],
@@ -316,7 +338,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     try:
         job_repo.save_job(job=job, export_path=None, publish_package=None, shorts_paths=[])
     except Exception:
-        pass  # pipeline_runner kümmert sich ums finale Speichern
+        pass  # pipeline_runner kÃ¼mmert sich ums finale Speichern
 
     print(f"[gaming_pipeline] DONE      {job.job_id}  status=rendered")
 
@@ -328,6 +350,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "edit_decision":         edit_decision,
         # Highlight-Kette
         "edit_signals":          edit_signals,
+        "energy_curve_result":   energy_curve_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "highlight_summary":     highlight_result["summary"],
@@ -343,9 +366,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "metadata":              metadata,
         # Validierung
         "validator_result":      validator_result,
-        # Repo-Daten (für pipeline_runner zum Speichern)
+        # Repo-Daten (fÃ¼r pipeline_runner zum Speichern)
         "_highlight_repo_data":  _highlight_repo_data,
         "_timeline_to_save":     _timeline_to_save,
         "_reframe_to_save":      _reframe_to_save,
         "_dynamic_plan_to_save": _dynamic_plan_to_save,
     }
+
+
+
