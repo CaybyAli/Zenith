@@ -42,6 +42,7 @@ class JobStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
     ASSEMBLED = "assembled"
+    RENDERED = "rendered"
     PUBLISHED = "published"
     FAILED = "failed"
 

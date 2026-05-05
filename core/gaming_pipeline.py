@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import os
 
-from shared.enums import ChannelType, TargetFormat
+from shared.enums import ChannelType, JobStatus, TargetFormat
 
 from core.gaming_analyzer import GamingAnalyzer
 from core.gaming_cutter import GamingCutter
@@ -87,7 +87,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
       9) TitleGenerator + MetadataGenerator â†’ title + metadata
      10) Validator                      â†’ validator_result
      11) Repositories speichern        (highlight, timeline, reframe, zoom)
-     12) Job-Status â†’ "rendered"
+     12) Job-Status -> JobStatus.RENDERED
 
     Args:
         job:      Job-Objekt (bereits geroutet)
@@ -407,7 +407,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     # 12) Job-Status setzen
     # ------------------------------------------------------------------
-    job.status = "rendered"
+    job.status = JobStatus.RENDERED
     try:
         job_repo.save_job(job=job, export_path=None, publish_package=None, shorts_paths=[])
     except Exception:
