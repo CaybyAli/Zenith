@@ -284,10 +284,24 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             analysis_result=analysis_result,
             highlight_candidates=highlight_result["highlight_candidates"],
             weak_zones=highlight_result["weak_zones"],
+            energy_curve_result=energy_curve_result,
+            gameplay_vision_result=gameplay_vision_result,
+            facecam_reaction_result=facecam_reaction_result,
         )
         print(f"[gaming_pipeline] TIMELINE  {job.job_id}  "
               f"segments={len(edit_timeline.selected_segments)}  "
               f"score={edit_timeline.timeline_score}")
+        boost_counts = {
+            "energy": sum("energy_boost" in segment.notes for segment in edit_timeline.selected_segments),
+            "vision": sum("vision_boost" in segment.notes for segment in edit_timeline.selected_segments),
+            "facecam": sum("facecam_boost" in segment.notes for segment in edit_timeline.selected_segments),
+        }
+        print(
+            f"[gaming_pipeline] SCORING_BOOSTS {job.job_id} "
+            f"energy={boost_counts['energy']} "
+            f"vision={boost_counts['vision']} "
+            f"facecam={boost_counts['facecam']}"
+        )
 
     # ------------------------------------------------------------------
     # 5) Reframe-Plan

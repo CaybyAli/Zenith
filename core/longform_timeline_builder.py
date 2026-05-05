@@ -3,6 +3,9 @@ from __future__ import annotations
 import uuid
 
 from models.analysis_result import AnalysisResult
+from models.energy_curve_result import EnergyCurveResult
+from models.facecam_reaction_result import FacecamReactionResult
+from models.gameplay_vision_result import GameplayVisionResult
 from models.edit_timeline import EditTimeline
 from models.highlight_candidate import HighlightCandidate
 from models.job import Job
@@ -106,6 +109,10 @@ class LongformTimelineBuilder:
         self,
         candidate: HighlightCandidate,
         weak_zones: list[HighlightCandidate],
+        *,
+        energy_curve_result: EnergyCurveResult | None = None,
+        gameplay_vision_result: GameplayVisionResult | None = None,
+        facecam_reaction_result: FacecamReactionResult | None = None,
     ) -> tuple[float, list[str]]:
         score = 0.0
         notes: list[str] = []
@@ -147,7 +154,96 @@ class LongformTimelineBuilder:
             score -= 0.20
             notes.append("partial_weak_zone_penalty")
 
+        energy_overlap = self._max_energy_peak_overlap(candidate, energy_curve_result)
+        if energy_overlap >= 0.30:
+            score += 0.10
+            notes.append("energy_boost")
+
+        vision_overlap = self._max_gameplay_action_overlap(candidate, gameplay_vision_result)
+        if vision_overlap >= 0.30:
+            score += 0.10
+            notes.append("vision_boost")
+
+        facecam_overlap = self._max_facecam_reaction_overlap(candidate, facecam_reaction_result)
+        if facecam_overlap >= 0.30:
+            score += 0.10
+            notes.append("facecam_boost")
+
+        boost_count = sum(
+            note in notes
+            for note in ("energy_boost", "vision_boost", "facecam_boost")
+        )
+        if boost_count >= 2:
+            score += 0.04
+            notes.append("multi_analysis_boost")
+
         return self._clamp_score(score), notes
+
+    def _max_energy_peak_overlap(
+        self,
+        candidate: HighlightCandidate,
+        energy_curve_result: EnergyCurveResult | None,
+    ) -> float:
+        if energy_curve_result is None:
+            return 0.0
+
+        return max(
+            (
+                self._overlap_ratio(
+                    candidate.start_time,
+                    candidate.end_time,
+                    point.start_seconds,
+                    point.end_seconds,
+                )
+                for point in energy_curve_result.peak_points
+                if point.energy_score >= 0.65
+            ),
+            default=0.0,
+        )
+
+    def _max_gameplay_action_overlap(
+        self,
+        candidate: HighlightCandidate,
+        gameplay_vision_result: GameplayVisionResult | None,
+    ) -> float:
+        if gameplay_vision_result is None:
+            return 0.0
+
+        return max(
+            (
+                self._overlap_ratio(
+                    candidate.start_time,
+                    candidate.end_time,
+                    window.start_seconds,
+                    window.end_seconds,
+                )
+                for window in gameplay_vision_result.action_windows
+                if window.action_score >= 0.55
+            ),
+            default=0.0,
+        )
+
+    def _max_facecam_reaction_overlap(
+        self,
+        candidate: HighlightCandidate,
+        facecam_reaction_result: FacecamReactionResult | None,
+    ) -> float:
+        if facecam_reaction_result is None:
+            return 0.0
+
+        return max(
+            (
+                self._overlap_ratio(
+                    candidate.start_time,
+                    candidate.end_time,
+                    window.start_seconds,
+                    window.end_seconds,
+                )
+                for window in facecam_reaction_result.reaction_windows
+                if window.reaction_score >= 0.55
+            ),
+            default=0.0,
+        )
 
     def _dedupe_and_select(
         self,
@@ -242,6 +338,9 @@ class LongformTimelineBuilder:
         analysis_result: AnalysisResult,
         highlight_candidates: list[HighlightCandidate],
         weak_zones: list[HighlightCandidate] | None = None,
+        energy_curve_result: EnergyCurveResult | None = None,
+        gameplay_vision_result: GameplayVisionResult | None = None,
+        facecam_reaction_result: FacecamReactionResult | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -257,6 +356,9 @@ class LongformTimelineBuilder:
             selection_score, notes = self._score_candidate_for_longform(
                 candidate,
                 weak_zones,
+                energy_curve_result=energy_curve_result,
+                gameplay_vision_result=gameplay_vision_result,
+                facecam_reaction_result=facecam_reaction_result,
             )
 
             if selection_score < 0.45:
@@ -345,6 +447,35 @@ class LongformTimelineBuilder:
             f"Weak zones considered: {len(weak_zones)}",
         ]
 
+        boost_counts = self._count_analysis_boosts(selected_segments)
+        timeline_notes.append(
+            "Analysis boosts: "
+            f"energy={boost_counts['energy_boost']} "
+            f"vision={boost_counts['vision_boost']} "
+            f"facecam={boost_counts['facecam_boost']}"
+        )
+        boosted_segments = sum(
+            any(
+                note in segment.notes
+                for note in ("energy_boost", "vision_boost", "facecam_boost")
+            )
+            for segment in selected_segments
+        )
+        top_boosts = [
+            f"{segment.segment_id}:{'+'.join(note for note in segment.notes if note.endswith('_boost'))}"
+            for segment in selected_segments
+            if any(note.endswith("_boost") for note in segment.notes)
+        ][:5]
+        print(
+            "[TIMELINE-SCORING] "
+            f"boosted_segments={boosted_segments} "
+            f"energy={boost_counts['energy_boost']} "
+            f"vision={boost_counts['vision_boost']} "
+            f"facecam={boost_counts['facecam_boost']}"
+        )
+        if top_boosts:
+            print(f"[TIMELINE-SCORING] top_boosts={','.join(top_boosts)}")
+
         return EditTimeline(
             timeline_id=self._make_timeline_id(),
             job_id=job.job_id,
@@ -356,3 +487,10 @@ class LongformTimelineBuilder:
             timeline_score=timeline_score,
             timeline_notes=timeline_notes,
         )
+
+    def _count_analysis_boosts(self, selected_segments: list[TimelineSegment]) -> dict[str, int]:
+        return {
+            "energy_boost": sum("energy_boost" in segment.notes for segment in selected_segments),
+            "vision_boost": sum("vision_boost" in segment.notes for segment in selected_segments),
+            "facecam_boost": sum("facecam_boost" in segment.notes for segment in selected_segments),
+        }
