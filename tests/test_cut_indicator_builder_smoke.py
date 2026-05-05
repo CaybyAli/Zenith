@@ -13,6 +13,7 @@ from models.edit_signal import EditSignal
 from models.edit_timeline import EditTimeline
 from models.energy_curve_result import EnergyCurvePoint, EnergyCurveResult
 from models.facecam_reaction_result import FacecamReactionResult, FacecamReactionWindow
+from models.gameplay_event_result import GameplayEventResult, GameplayEventWindow
 from models.gameplay_vision_result import GameplayVisionResult, GameplayVisionWindow
 from models.sentence_timeline import SentenceItem, SentenceTimelineResult
 from models.timeline_segment import TimelineSegment
@@ -214,6 +215,34 @@ def _audio_roles() -> AudioRoleResult:
     )
 
 
+def _gameplay_events() -> GameplayEventResult:
+    return GameplayEventResult(
+        windows=[
+            GameplayEventWindow(
+                event_id="gameplay_event_high_action",
+                start_seconds=12.0,
+                end_seconds=13.0,
+                event_type="high_action_burst",
+                score=0.72,
+                confidence=0.68,
+                reason="high action smoke",
+                source_window_ids=["vision_000001"],
+            ),
+            GameplayEventWindow(
+                event_id="gameplay_event_round_dead",
+                start_seconds=18.0,
+                end_seconds=20.0,
+                event_type="round_end_dead_time",
+                score=0.78,
+                confidence=0.58,
+                reason="dead time smoke",
+                source_signal_ids=["sig_low_motion"],
+            ),
+        ],
+        engine="gameplay-event-indicator-builder-v1",
+    )
+
+
 def test_empty_inputs_do_not_crash() -> None:
     result = CutIndicatorBuilder().build()
 
@@ -234,6 +263,7 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
         transcript_result=_transcript(),
         sentence_timeline_result=_sentence_timeline(),
         audio_role_result=_audio_roles(),
+        gameplay_event_result=_gameplay_events(),
         energy_curve_result=_energy(),
         gameplay_vision_result=_vision(),
         facecam_reaction_result=_facecam(),
@@ -266,6 +296,10 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
     assert by_type["speech_active"].polarity == "neutral"
     assert by_type["silence_or_dead_air"].polarity == "negative"
     assert by_type["game_audio_peak"].polarity == "positive"
+    assert "high_action_burst" in indicator_types
+    assert "round_end_dead_time" in indicator_types
+    assert by_type["high_action_burst"].polarity == "positive"
+    assert by_type["round_end_dead_time"].polarity == "negative"
 
     assert result.positive_count > 0
     assert result.negative_count > 0

@@ -373,6 +373,45 @@ class CutIndicatorBuilder:
                 metadata=metadata,
             )
 
+    def _from_gameplay_events(
+        self,
+        indicators: list[CutIndicator],
+        gameplay_event_result: object,
+        channel_scope: str,
+    ) -> None:
+        positive_events = {"high_action_burst", "sustained_action", "goal_or_save_like_flash"}
+        negative_events = {"round_end_dead_time", "menu_or_idle", "low_gameplay_value"}
+        for window in self._iter_items(self._get(gameplay_event_result, "windows", default=[])):
+            event_type = str(self._get(window, "event_type", default="") or "")
+            if not event_type:
+                continue
+            start, end = self._start_end(window)
+            polarity = "neutral"
+            if event_type in positive_events:
+                polarity = "positive"
+            elif event_type in negative_events:
+                polarity = "negative"
+            metadata = dict(self._get(window, "metadata", default={}) or {})
+            metadata["source_window_ids"] = list(
+                self._get(window, "source_window_ids", default=[]) or []
+            )
+            metadata["source_signal_ids"] = list(
+                self._get(window, "source_signal_ids", default=[]) or []
+            )
+            self._append(
+                indicators,
+                indicator_type=event_type,
+                start_seconds=start,
+                end_seconds=end,
+                score=self._get(window, "score", default=0.0),
+                confidence=self._get(window, "confidence", default=0.0),
+                source="gameplay_event",
+                reason=str(self._get(window, "reason", default="gameplay event window") or "gameplay event window"),
+                polarity=polarity,
+                channel_scope=channel_scope,
+                metadata=metadata,
+            )
+
     def build(
         self,
         *,
@@ -380,6 +419,7 @@ class CutIndicatorBuilder:
         transcript_result: object = None,
         sentence_timeline_result: object = None,
         audio_role_result: object = None,
+        gameplay_event_result: object = None,
         energy_curve_result: object = None,
         gameplay_vision_result: object = None,
         facecam_reaction_result: object = None,
@@ -393,6 +433,7 @@ class CutIndicatorBuilder:
         self._from_transcript(indicators, transcript_result, channel_scope)
         self._from_sentence_timeline(indicators, sentence_timeline_result, channel_scope)
         self._from_audio_roles(indicators, audio_role_result, channel_scope)
+        self._from_gameplay_events(indicators, gameplay_event_result, channel_scope)
         self._from_energy(indicators, energy_curve_result, channel_scope)
         self._from_vision(indicators, gameplay_vision_result, channel_scope)
         self._from_facecam(indicators, facecam_reaction_result, channel_scope)

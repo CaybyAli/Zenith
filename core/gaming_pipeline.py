@@ -31,6 +31,7 @@ from core.sentence_timeline_builder import SentenceTimelineBuilder
 from core.edit_signal_extractor import EditSignalExtractor
 from core.cut_indicator_builder import CutIndicatorBuilder
 from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
+from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
@@ -269,6 +270,28 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"[gaming_pipeline] VISION   {job.job_id} "
                 f"skipped reason={gameplay_vision_result.skipped_reason}"
             )
+    gameplay_event_result = GameplayEventIndicatorBuilder().build(
+        gameplay_vision_result=gameplay_vision_result,
+        energy_curve_result=energy_curve_result,
+        edit_signals=edit_signals,
+        audio_role_result=audio_role_result,
+        sentence_timeline_result=sentence_timeline_result,
+        channel_type=job.channel_type,
+    )
+    gameplay_event_counts = gameplay_event_result.event_counts
+    print(
+        f"[gaming_pipeline] GAMEPLAY_EVENTS {job.job_id} "
+        f"total={len(gameplay_event_result.windows)} "
+        f"high_action={gameplay_event_counts.get('high_action_burst', 0)} "
+        f"sustained={gameplay_event_counts.get('sustained_action', 0)} "
+        f"flash={gameplay_event_counts.get('goal_or_save_like_flash', 0)} "
+        f"round_dead={gameplay_event_counts.get('round_end_dead_time', 0)} "
+        f"replay={gameplay_event_counts.get('replay_like_moment', 0)} "
+        f"kickoff={gameplay_event_counts.get('kickoff_like', 0)} "
+        f"idle="
+        f"{gameplay_event_counts.get('menu_or_idle', 0) + gameplay_event_counts.get('low_gameplay_value', 0)} "
+        f"engine={gameplay_event_result.engine}"
+    )
     facecam_reaction_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
         facecam_reaction_analyzer = services.get("facecam_reaction_analyzer") or FacecamReactionAnalyzer()
@@ -434,6 +457,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         transcript_result=transcript_result,
         sentence_timeline_result=sentence_timeline_result,
         audio_role_result=audio_role_result,
+        gameplay_event_result=gameplay_event_result,
         energy_curve_result=energy_curve_result,
         gameplay_vision_result=gameplay_vision_result,
         facecam_reaction_result=facecam_reaction_result,
@@ -597,6 +621,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_vision_result": gameplay_vision_result,
         "sentence_timeline_result": sentence_timeline_result,
         "audio_role_result":    audio_role_result,
+        "gameplay_event_result": gameplay_event_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
@@ -630,6 +655,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
         "audio_role_result":    audio_role_result,
+        "gameplay_event_result": gameplay_event_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
