@@ -11,6 +11,7 @@ from models.highlight_candidate import HighlightCandidate
 from models.job import Job
 from models.timeline_segment import TimelineSegment
 from models.transcript_result import TranscriptResult
+from core.final_timeline_guard import FinalTimelineGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -488,6 +489,23 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after story dedupe")
 
+        selected_segments, final_guard_summary = FinalTimelineGuard().apply(selected_segments)
+        print(
+            "[TIMELINE-FINAL-GUARD] "
+            f"backjumps_fixed={final_guard_summary.backjumps_fixed} "
+            f"overlaps_removed={final_guard_summary.overlaps_removed} "
+            f"near_duplicates_removed={final_guard_summary.near_duplicates_removed} "
+            f"trimmed={final_guard_summary.trimmed} "
+            f"removed={final_guard_summary.removed} "
+            f"duration_before={final_guard_summary.duration_before:.3f}s "
+            f"duration_after={final_guard_summary.duration_after:.3f}s"
+        )
+        if final_guard_summary.examples:
+            print(f"[TIMELINE-FINAL-GUARD] examples={'; '.join(final_guard_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after final timeline guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -523,6 +541,14 @@ class LongformTimelineBuilder:
             f"payoff={story_summary.payoff_segment_id or 'none'} "
             f"duplicates_removed={story_summary.duplicates_removed} "
             f"near_duplicates_removed={story_summary.near_duplicates_removed}",
+            "Final guard: "
+            f"backjumps_fixed={final_guard_summary.backjumps_fixed} "
+            f"overlaps_removed={final_guard_summary.overlaps_removed} "
+            f"near_duplicates_removed={final_guard_summary.near_duplicates_removed} "
+            f"trimmed={final_guard_summary.trimmed} "
+            f"removed={final_guard_summary.removed} "
+            f"duration_before={final_guard_summary.duration_before:.3f}s "
+            f"duration_after={final_guard_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)
