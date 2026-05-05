@@ -315,13 +315,14 @@ class FinalRenderDriver:
             enable_small = []
             
             for peak in audio_peaks:
-                rel_start = peak["start"] - seg_start
-                rel_end = peak["end"] - seg_start
                 duration = peak["end"] - peak["start"]
                 
                 if duration < 0.8:
                     print(f"[DEBUG]     -> [-] Skipped (too short: {duration:.1f}s, {peak['peak_db']:.1f}dB)")
                     continue
+
+                rel_start = max(0.0, peak["start"] - seg_start)
+                rel_end = max(rel_start + 0.05, peak["end"] - seg_start)
                 
                 # 4-STUFEN-SYSTEM
                 if peak["peak_db"] > -13.0:
