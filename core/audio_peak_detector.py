@@ -4,11 +4,13 @@ import re
 import subprocess
 from pathlib import Path
 
+from core.ffmpeg_helper import get_ffmpeg_path
+
 
 class AudioPeakDetector:
     """Findet genaue Audio-Peaks f├╝r reactive Zooms."""
     
-    _FFMPEG = r"D:\Tools\ffmpeg\bin\ffmpeg.exe"
+    _FFMPEG = get_ffmpeg_path()
     _normalization_cache = {}  # Cache f├╝r Video-Normalisierung
     
     def detect_peaks(

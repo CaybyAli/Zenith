@@ -11,6 +11,7 @@ from models.job import Job
 from models.reframe_plan import ReframePlan
 from models.timeline_segment import TimelineSegment
 from models.zoom_instruction import ZoomInstruction
+from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
 from shared.errors import ValidationError
 
 from typing import Literal
@@ -204,8 +205,8 @@ class FinalRenderDriver:
     Video is encoded with h264_nvenc (RTX 4090 NVENC) + AAC audio.
     """
 
-    _FFMPEG = r"D:\Tools\ffmpeg\bin\ffmpeg.exe"
-    _FFPROBE = r"D:\Tools\ffmpeg\bin\ffprobe.exe"
+    _FFMPEG = get_ffmpeg_path()
+    _FFPROBE = get_ffprobe_path()
 
     # ------------------------------------------------------------------ #
     #  Helpers                                                             #

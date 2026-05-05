@@ -37,6 +37,7 @@ from core.reframing_core import ReframingCore
 from core.reaction_moment_detector import ReactionMomentDetector
 from core.zoom_pacing_engine import ZoomPacingEngine
 from core.final_render_driver import FinalRenderDriver
+from core.ffmpeg_helper import ensure_ffmpeg_on_path
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -109,6 +110,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
+        ensure_ffmpeg_on_path()
         if os.environ.get("ZENITH_SKIP_TRANSCRIPT") == "1":
             print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=env skip")
         elif job.raw_video_path:

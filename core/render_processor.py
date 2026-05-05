@@ -7,6 +7,7 @@ from pathlib import Path
 from models.edit_decision import EditDecision
 from models.job import Job
 from models.music_application_plan import MusicApplicationPlan
+from core.ffmpeg_helper import get_ffmpeg_path
 from shared.errors import ValidationError
 
 
@@ -150,7 +151,7 @@ class RenderProcessor:
         context_path = output_dir / f"{job.job_id}_final_render_context.json"
 
         ffmpeg_cmd = [
-            r"D:\Tools\ffmpeg\bin\ffmpeg.exe",
+            get_ffmpeg_path(),
             "-y",
             "-ss",
             str(render_start),
