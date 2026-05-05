@@ -29,6 +29,7 @@ from pathlib import Path
 
 from core.intake_manager import IntakeManager
 from core.job_store import JobStore
+from core.render_versioning import next_render_version, versioned_final_path
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
 
 from core.gaming_pipeline import (
@@ -48,24 +49,27 @@ def _make_export_dir(channel: str, job_id: str) -> Path:
     return export_dir
 
 
-def _copy_gaming_outputs_to_export(job_id: str, export_dir: Path) -> None:
-    """Copy gaming pipeline output (final MP4 only) to export folder."""
+def _copy_gaming_outputs_to_export(job_id: str, export_dir: Path) -> dict | None:
+    """Copy gaming pipeline output to a versioned final MP4 in export folder."""
     output_dir = Path("output")
+    src_file = output_dir / f"{job_id}_final.mp4"
 
-    patterns = [
-        f"{job_id}_final.mp4",
-    ]
+    if not src_file.exists():
+        return None
 
-    copied_count = 0
-    for pattern in patterns:
-        for src_file in output_dir.glob(pattern):
-            if src_file.exists():
-                dest_file = export_dir / src_file.name
-                shutil.copy2(src_file, dest_file)
-                copied_count += 1
-
-    if copied_count > 0:
-        print(f"[pipeline_runner] COPIED   {copied_count} file(s) to export")
+    render_version = next_render_version(export_dir, job_id)
+    dest_file = versioned_final_path(export_dir, job_id, render_version)
+    shutil.copy2(src_file, dest_file)
+    print(
+        f"[pipeline_runner] EXPORT_VERSION {job_id} "
+        f"version={render_version} file={dest_file.name}"
+    )
+    print("[pipeline_runner] COPIED   1 file(s) to export")
+    return {
+        "render_version": render_version,
+        "exported_video_path": str(dest_file),
+        "exported_video_name": dest_file.name,
+    }
 
 
 def _cleanup_output_files(job_id: str) -> None:
@@ -222,9 +226,14 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
             result = _dispatch_pipeline(job, gaming_services)
 
             export_dir = _make_export_dir(channel, job.job_id)
-            _copy_gaming_outputs_to_export(job.job_id, export_dir)
+            export_info = _copy_gaming_outputs_to_export(job.job_id, export_dir)
             _cleanup_output_files(job.job_id)
             print(f"[pipeline_runner] EXPORT    {job.job_id}  → {export_dir}")
+            if export_info is not None:
+                result["render_version"] = export_info["render_version"]
+                result["exported_video_path"] = export_info["exported_video_path"]
+                job.render_version = export_info["render_version"]
+                job.video_path = export_info["exported_video_path"]
 
             title_package = result.get("title_package")
             if title_package is not None:

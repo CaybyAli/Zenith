@@ -68,6 +68,7 @@ class Job:
 
     thumbnail_path: str | None = None
     video_path: str | None = None    
+    render_version: int | None = None
 
     quality_score: float | None = None
     hook_score: float | None = None
@@ -158,6 +159,11 @@ class Job:
 
 thumbnail_path=data.get("thumbnail_path"),
 video_path=data.get("video_path"),
+render_version=(
+    int(data["render_version"])
+    if data.get("render_version") is not None
+    else None
+),
 shorts=[
     {
         "short_id": (
