@@ -13,6 +13,7 @@ from models.timeline_segment import TimelineSegment
 from models.transcript_result import TranscriptResult
 from core.final_timeline_guard import FinalTimelineGuard
 from core.final_cut_safety_guard import FinalCutSafetyGuard
+from core.final_timeline_quality_guard import FinalTimelineQualityGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -526,6 +527,27 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after final cut safety guard")
 
+        selected_segments, quality_summary = FinalTimelineQualityGuard().apply(
+            selected_segments,
+            transcript_result=transcript_result,
+            weak_zones=weak_zones,
+        )
+        print(
+            "[TIMELINE-QUALITY-GUARD] "
+            f"micro_removed={quality_summary.micro_removed} "
+            f"peak_micro_allowed={quality_summary.peak_micro_allowed} "
+            f"speech_start_adjusted={quality_summary.speech_start_adjusted} "
+            f"speech_end_adjusted={quality_summary.speech_end_adjusted} "
+            f"silence_edge_trimmed={quality_summary.silence_edge_trimmed} "
+            f"duration_before={quality_summary.duration_before:.3f}s "
+            f"duration_after={quality_summary.duration_after:.3f}s"
+        )
+        if quality_summary.examples:
+            print(f"[TIMELINE-QUALITY-GUARD] examples={'; '.join(quality_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after final quality guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -576,6 +598,14 @@ class LongformTimelineBuilder:
             f"skipped_end={cut_safety_summary.skipped_end} "
             f"duration_before={cut_safety_summary.duration_before:.3f}s "
             f"duration_after={cut_safety_summary.duration_after:.3f}s",
+            "Final quality guard: "
+            f"micro_removed={quality_summary.micro_removed} "
+            f"peak_micro_allowed={quality_summary.peak_micro_allowed} "
+            f"speech_start_adjusted={quality_summary.speech_start_adjusted} "
+            f"speech_end_adjusted={quality_summary.speech_end_adjusted} "
+            f"silence_edge_trimmed={quality_summary.silence_edge_trimmed} "
+            f"duration_before={quality_summary.duration_before:.3f}s "
+            f"duration_after={quality_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

@@ -113,14 +113,17 @@ def test_transcript_boundary_guard_smoke() -> None:
     end_segment = by_candidate["end_mid_word"]
     skipped_segment = by_candidate["skip_far_boundary"]
 
-    assert start_segment.start_time == 10.0
+    assert start_segment.start_time == 9.75
     assert any(note.startswith("boundary_adjusted_start=") for note in start_segment.notes)
+    assert any(note.startswith("quality_speech_start_adjusted=") for note in start_segment.notes)
 
-    assert end_segment.end_time == 35.0
+    assert end_segment.end_time == 35.35
     assert any(note.startswith("boundary_adjusted_end=") for note in end_segment.notes)
+    assert any(note.startswith("quality_speech_end_adjusted=") for note in end_segment.notes)
 
-    assert skipped_segment.start_time == skipped_start
+    assert skipped_segment.start_time == 39.75
     assert "boundary_skipped_start_no_safe_point" in skipped_segment.notes
+    assert any(note.startswith("quality_speech_start_adjusted=") for note in skipped_segment.notes)
 
     for segment in timeline.selected_segments:
         assert segment.start_time >= 0.0

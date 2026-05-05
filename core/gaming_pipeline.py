@@ -342,6 +342,39 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"skipped_start={cut_safety_counts['skipped_start']} "
             f"skipped_end={cut_safety_counts['skipped_end']}"
         )
+        quality_note = next(
+            (
+                note for note in edit_timeline.timeline_notes
+                if note.startswith("Final quality guard:")
+            ),
+            "",
+        )
+
+        def _quality_note_int(key: str) -> int:
+            prefix = f"{key}="
+            for part in quality_note.split():
+                if part.startswith(prefix):
+                    try:
+                        return int(part.split("=", 1)[1])
+                    except ValueError:
+                        return 0
+            return 0
+
+        quality_counts = {
+            "micro_removed": _quality_note_int("micro_removed"),
+            "peak_micro_allowed": _quality_note_int("peak_micro_allowed"),
+            "speech_start_adjusted": _quality_note_int("speech_start_adjusted"),
+            "speech_end_adjusted": _quality_note_int("speech_end_adjusted"),
+            "silence_edge_trimmed": _quality_note_int("silence_edge_trimmed"),
+        }
+        print(
+            f"[gaming_pipeline] QUALITY_GUARD {job.job_id} "
+            f"micro_removed={quality_counts['micro_removed']} "
+            f"peak_micro_allowed={quality_counts['peak_micro_allowed']} "
+            f"speech_adjusted="
+            f"{quality_counts['speech_start_adjusted'] + quality_counts['speech_end_adjusted']} "
+            f"silence_edge_trimmed={quality_counts['silence_edge_trimmed']}"
+        )
         boost_counts = {
             "energy": sum("energy_boost" in segment.notes for segment in edit_timeline.selected_segments),
             "vision": sum("vision_boost" in segment.notes for segment in edit_timeline.selected_segments),
