@@ -93,12 +93,12 @@ class LongformTimelineBuilder:
         YOUTUBE_MIN_DURATION = 480.0  # 8 Minuten
         if target < YOUTUBE_MIN_DURATION and duration_seconds >= YOUTUBE_MIN_DURATION:
             target = YOUTUBE_MIN_DURATION
-            print(f"[TIMELINE-YOUTUBE] ⚠️ Erhöht auf {YOUTUBE_MIN_DURATION}s (8 Min) für Monetarisierung!")
+            print(f"[TIMELINE-YOUTUBE] WARNING: Erhoehen auf {YOUTUBE_MIN_DURATION}s (8 Min) fuer Monetarisierung!")
         
         # 5️⃣ DEBUG-OUTPUT
         print(f"[TIMELINE-QUALITY] Highlights: {total_highlights}, Avg Score: {avg_score:.2f}, Density: {highlight_density:.2f}")
         print(f"[TIMELINE-QUALITY] Category: {quality_category}, Retention: {retention_factor*100:.0f}%")
-        print(f"[TIMELINE-QUALITY] Duration: {duration_seconds:.0f}s → Target: {target:.0f}s ({target/duration_seconds*100:.0f}%)")
+        print(f"[TIMELINE-QUALITY] Duration: {duration_seconds:.0f}s -> Target: {target:.0f}s ({target/duration_seconds*100:.0f}%)")
         
         return round(target, 3)
 
@@ -285,7 +285,7 @@ class LongformTimelineBuilder:
         calculated_max = int(target_duration / 10.0)
         max_segments = max(12, min(100, calculated_max))
         
-        print(f"[TIMELINE-SEGMENTS] Target: {target_duration:.0f}s → Max Segments: {max_segments}")
+        print(f"[TIMELINE-SEGMENTS] Target: {target_duration:.0f}s -> Max Segments: {max_segments}")
 
         # 3️⃣ SELEKTION: Beste Highlights auswählen
         selected_items = self._dedupe_and_select(
