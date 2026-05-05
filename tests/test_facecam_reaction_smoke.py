@@ -1,4 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
 from models.facecam_reaction_result import FacecamReactionResult, FacecamReactionWindow

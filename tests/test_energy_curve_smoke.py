@@ -1,6 +1,12 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import inspect
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from core.energy_curve_builder import EnergyCurveBuilder
 from models.edit_signal import EditSignal

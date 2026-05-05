@@ -3,8 +3,13 @@
 from dataclasses import MISSING, fields, is_dataclass
 from datetime import datetime, timezone
 from enum import Enum
+import sys
 from pathlib import Path
 from typing import Any, get_args, get_origin, get_type_hints
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from core.longform_timeline_builder import LongformTimelineBuilder
 from models.analysis_result import AnalysisResult
