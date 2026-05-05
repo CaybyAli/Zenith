@@ -204,7 +204,6 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         if job.raw_video_path:
             gameplay_vision_result = gameplay_vision_analyzer.analyze_video(
                 video_path=str(job.raw_video_path),
-                sample_every_seconds=1.0,
                 max_frames=160,
             )
 

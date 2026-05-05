@@ -7,7 +7,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
+from core.gameplay_vision_analyzer import (
+    DEFAULT_ACTION_THRESHOLD,
+    DEFAULT_HEIGHT,
+    DEFAULT_SAMPLE_EVERY_SECONDS,
+    DEFAULT_SCENE_CHANGE_THRESHOLD,
+    DEFAULT_WIDTH,
+    GameplayVisionAnalyzer,
+)
 from models.gameplay_vision_result import GameplayVisionResult, GameplayVisionWindow
 
 
@@ -29,6 +36,16 @@ def make_moving_frame(offset: int, width: int = 8, height: int = 6) -> list[list
                 row.append(20)
         frame.append(row)
 
+    return frame
+
+
+def make_small_object_frame(offset: int, width: int = 64, height: int = 36) -> list[list[int]]:
+    frame = [[35 for _ in range(width)] for _ in range(height)]
+    x_start = min(width - 6, max(0, offset))
+    y_start = height // 2 - 2
+    for y in range(y_start, y_start + 4):
+        for x in range(x_start, x_start + 6):
+            frame[y][x] = 245
     return frame
 
 
@@ -115,6 +132,27 @@ def test_action_scene_scores_higher_than_calm_scene() -> None:
         assert_valid_window(window)
 
 
+def test_small_fast_object_motion_creates_action_window() -> None:
+    analyzer = GameplayVisionAnalyzer()
+
+    result = analyzer.analyze_frames(
+        [
+            make_small_object_frame(2),
+            make_small_object_frame(14),
+            make_small_object_frame(28),
+            make_small_object_frame(42),
+        ],
+        fps=2.0,
+    )
+
+    assert len(result.windows) == 3
+    assert len(result.action_windows) >= 1
+    assert result.max_action_score > 0.05
+
+    for window in result.windows:
+        assert_valid_window(window)
+
+
 def test_scene_change_is_detected() -> None:
     analyzer = GameplayVisionAnalyzer()
 
@@ -134,7 +172,7 @@ def test_scene_change_is_detected() -> None:
     scene_windows = [
         window
         for window in result.windows
-        if window.scene_change_score >= 0.45
+        if window.scene_change_score >= analyzer.scene_change_threshold
     ]
 
     assert scene_windows
@@ -149,9 +187,19 @@ def main() -> None:
     test_empty_input_does_not_crash()
     test_calm_scene_scores_low()
     test_action_scene_scores_higher_than_calm_scene()
+    test_small_fast_object_motion_creates_action_window()
     test_scene_change_is_detected()
 
     analyzer = GameplayVisionAnalyzer()
+    calm = analyzer.analyze_frames([make_frame(40), make_frame(40), make_frame(41)], fps=2.0)
+    moving = analyzer.analyze_frames(
+        [
+            make_small_object_frame(2),
+            make_small_object_frame(14),
+            make_small_object_frame(28),
+        ],
+        fps=2.0,
+    )
     preview = analyzer.analyze_frames(
         [
             make_frame(0),
@@ -163,6 +211,13 @@ def main() -> None:
     )
 
     print("GAMEPLAY VISION SMOKE TEST PASSED")
+    print(f"default_resolution={DEFAULT_WIDTH}x{DEFAULT_HEIGHT}")
+    print(f"default_sample_seconds={DEFAULT_SAMPLE_EVERY_SECONDS}")
+    print(f"default_action_threshold={DEFAULT_ACTION_THRESHOLD}")
+    print(f"default_scene_change_threshold={DEFAULT_SCENE_CHANGE_THRESHOLD}")
+    print(f"calm_score={calm.max_action_score}")
+    print(f"moving_object_score={moving.max_action_score}")
+    print(f"moving_object_action_windows={len(moving.action_windows)}")
     print(f"windows={len(preview.windows)}")
     print(f"action_windows={len(preview.action_windows)}")
     print(f"average_action_score={preview.average_action_score}")

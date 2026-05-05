@@ -1,9 +1,18 @@
 ﻿from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Iterable
 
 from models.gameplay_vision_result import GameplayVisionResult, GameplayVisionWindow
+
+
+DEFAULT_WIDTH = 64
+DEFAULT_HEIGHT = 36
+DEFAULT_SAMPLE_EVERY_SECONDS = 0.5
+DEFAULT_ACTION_THRESHOLD = 0.12
+DEFAULT_SCENE_CHANGE_THRESHOLD = 0.18
+HIGH_MOTION_DIFF_THRESHOLD = 0.08
 
 
 class GameplayVisionAnalyzer:
@@ -11,11 +20,26 @@ class GameplayVisionAnalyzer:
 
     def __init__(
         self,
-        action_threshold: float = 0.28,
-        scene_change_threshold: float = 0.45,
+        action_threshold: float | None = None,
+        scene_change_threshold: float | None = None,
+        width: int | None = None,
+        height: int | None = None,
+        sample_every_seconds: float | None = None,
     ) -> None:
-        self.action_threshold = float(action_threshold)
-        self.scene_change_threshold = float(scene_change_threshold)
+        self.action_threshold = self._float_from_env(
+            "ZENITH_VISION_ACTION_THRESHOLD",
+            DEFAULT_ACTION_THRESHOLD if action_threshold is None else action_threshold,
+        )
+        self.scene_change_threshold = self._float_from_env(
+            "ZENITH_VISION_SCENE_CHANGE_THRESHOLD",
+            DEFAULT_SCENE_CHANGE_THRESHOLD if scene_change_threshold is None else scene_change_threshold,
+        )
+        self.width = self._int_from_env("ZENITH_VISION_WIDTH", DEFAULT_WIDTH if width is None else width)
+        self.height = self._int_from_env("ZENITH_VISION_HEIGHT", DEFAULT_HEIGHT if height is None else height)
+        self.sample_every_seconds = self._float_from_env(
+            "ZENITH_VISION_SAMPLE_SECONDS",
+            DEFAULT_SAMPLE_EVERY_SECONDS if sample_every_seconds is None else sample_every_seconds,
+        )
 
     def analyze_frames(
         self,
@@ -36,15 +60,16 @@ class GameplayVisionAnalyzer:
 
         for index, frame in enumerate(frame_list[1:], start=1):
             current_signature = self._frame_signature(frame)
-            motion_score = self._signature_difference(previous_signature, current_signature)
-
-            scene_change_score = (
-                motion_score
-                if motion_score >= self.scene_change_threshold
-                else round(motion_score * 0.45, 3)
+            motion_score, high_motion_ratio, scene_change_score = self._motion_features(
+                previous_signature,
+                current_signature,
             )
 
-            action_score = round((motion_score * 0.75) + (scene_change_score * 0.25), 3)
+            action_score = self._clamp(
+                (motion_score * 0.55)
+                + (high_motion_ratio * 0.30)
+                + (scene_change_score * 0.15)
+            )
 
             start_seconds = round((index - 1) / safe_fps, 3)
             end_seconds = round(index / safe_fps, 3)
@@ -102,7 +127,7 @@ class GameplayVisionAnalyzer:
     def analyze_video(
         self,
         video_path: str | Path | None,
-        sample_every_seconds: float = 1.0,
+        sample_every_seconds: float | None = None,
         max_frames: int = 160,
     ) -> GameplayVisionResult:
         if not video_path:
@@ -134,10 +159,14 @@ class GameplayVisionAnalyzer:
             )
 
         frames: list[Any] = []
+        effective_sample_seconds = max(
+            0.1,
+            float(self.sample_every_seconds if sample_every_seconds is None else sample_every_seconds),
+        )
 
         try:
             fps = float(capture.get(cv2.CAP_PROP_FPS) or 25.0)
-            sample_step = max(1, int(round(fps * max(0.1, float(sample_every_seconds)))))
+            sample_step = max(1, int(round(fps * effective_sample_seconds)))
             frame_index = 0
 
             while len(frames) < max(1, int(max_frames)):
@@ -146,7 +175,7 @@ class GameplayVisionAnalyzer:
                     break
 
                 if frame_index % sample_step == 0:
-                    resized = cv2.resize(frame, (32, 18))
+                    resized = cv2.resize(frame, (self.width, self.height))
                     gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
                     frames.append(gray)
 
@@ -154,20 +183,28 @@ class GameplayVisionAnalyzer:
         finally:
             capture.release()
 
-        return self.analyze_frames(
+        result = self.analyze_frames(
             frames=frames,
-            fps=1.0 / max(0.1, float(sample_every_seconds)),
+            fps=1.0 / effective_sample_seconds,
         )
+        print(
+            "[GAMEPLAY-VISION] "
+            f"threshold={self.action_threshold:.3f} "
+            f"scene_threshold={self.scene_change_threshold:.3f} "
+            f"sample_seconds={effective_sample_seconds:.3f} "
+            f"resolution={self.width}x{self.height} "
+            f"windows={len(result.windows)} "
+            f"action_windows={len(result.action_windows)} "
+            f"avg={result.average_action_score} "
+            f"max={result.max_action_score}"
+        )
+        return result
 
     def _frame_signature(self, frame: Any) -> list[float]:
         values = self._flatten_numeric_values(frame)
 
         if not values:
             return [0.0]
-
-        if len(values) > 576:
-            step = max(1, len(values) // 576)
-            values = values[::step][:576]
 
         max_value = max(max(values), 1.0)
         if max_value > 1.0:
@@ -220,3 +257,41 @@ class GameplayVisionAnalyzer:
         ) / length
 
         return round(max(0.0, min(1.0, difference)), 3)
+
+    def _motion_features(
+        self,
+        previous_signature: list[float],
+        current_signature: list[float],
+    ) -> tuple[float, float, float]:
+        length = min(len(previous_signature), len(current_signature))
+        if length <= 0:
+            return 0.0, 0.0, 0.0
+
+        diffs = [
+            abs(previous_signature[index] - current_signature[index])
+            for index in range(length)
+        ]
+        motion_score = self._clamp(sum(diffs) / length)
+        high_motion_count = sum(diff >= HIGH_MOTION_DIFF_THRESHOLD for diff in diffs)
+        high_motion_ratio = self._clamp(high_motion_count / length)
+        strong_motion_average = (
+            sum(diff for diff in diffs if diff >= HIGH_MOTION_DIFF_THRESHOLD)
+            / max(1, high_motion_count)
+        )
+        scene_change_score = self._clamp((motion_score * 0.60) + (strong_motion_average * 0.40))
+        return motion_score, high_motion_ratio, scene_change_score
+
+    def _clamp(self, value: float) -> float:
+        return round(max(0.0, min(1.0, float(value))), 3)
+
+    def _float_from_env(self, name: str, fallback: float) -> float:
+        try:
+            return float(os.environ.get(name, fallback))
+        except (TypeError, ValueError):
+            return float(fallback)
+
+    def _int_from_env(self, name: str, fallback: int) -> int:
+        try:
+            return max(1, int(os.environ.get(name, fallback)))
+        except (TypeError, ValueError):
+            return max(1, int(fallback))
