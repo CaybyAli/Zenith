@@ -32,6 +32,7 @@ from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
 from core.highlight_selector import HighlightSelector
+from core.facecam_intro_guard import FacecamIntroGuard
 from core.longform_timeline_builder import LongformTimelineBuilder
 from core.reframing_core import ReframingCore
 from core.reaction_moment_detector import ReactionMomentDetector
@@ -337,6 +338,24 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             primary_target_aspect_ratio="16:9",
             secondary_target_aspect_ratio="9:16",
         )
+        facecam_guard_summary = FacecamIntroGuard().apply(
+            timeline=edit_timeline,
+            reframe_plan=reframe_plan,
+            facecam_reaction_result=facecam_reaction_result,
+        )
+        print(
+            f"[gaming_pipeline] FACECAM_GUARD {job.job_id} "
+            f"converted={facecam_guard_summary.converted} "
+            f"intro_blocked={facecam_guard_summary.intro_blocked} "
+            f"limited={facecam_guard_summary.limited} "
+            f"no_reaction_blocked={facecam_guard_summary.no_reaction_blocked} "
+            f"allowed_short_reactions={facecam_guard_summary.allowed_short_reactions}"
+        )
+        if facecam_guard_summary.examples:
+            print(
+                f"[gaming_pipeline] FACECAM_GUARD_EXAMPLES {job.job_id} "
+                f"{'; '.join(facecam_guard_summary.examples)}"
+            )
         print(f"[gaming_pipeline] REFRAME   {job.job_id}  "
               f"instructions={len(reframe_plan.instructions)}")
 
