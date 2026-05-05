@@ -11,6 +11,7 @@ from models.highlight_candidate import HighlightCandidate
 from models.job import Job
 from models.timeline_segment import TimelineSegment
 from models.transcript_result import TranscriptResult
+from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from shared.errors import ValidationError
 
@@ -450,6 +451,30 @@ class LongformTimelineBuilder:
         if boundary_summary.examples:
             print(f"[TIMELINE-BOUNDARY] examples={'; '.join(boundary_summary.examples)}")
 
+        selected_segments, silence_summary = SilenceTimelineTrimmer().apply(
+            selected_segments,
+            weak_zones,
+        )
+        print(
+            "[TIMELINE-SILENCE] "
+            f"removed={silence_summary.removed} "
+            f"trimmed_start={silence_summary.trimmed_start} "
+            f"trimmed_end={silence_summary.trimmed_end} "
+            f"skipped_middle={silence_summary.skipped_middle} "
+            f"duration_before={silence_summary.duration_before:.3f}s "
+            f"duration_after={silence_summary.duration_after:.3f}s"
+        )
+        if silence_summary.examples:
+            print(f"[TIMELINE-SILENCE] examples={'; '.join(silence_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after silence trimming")
+
+        peak_segment_ids = [
+            segment.segment_id
+            for segment in selected_segments
+            if segment.segment_role == "peak"
+        ]
         hook_segment_id = selected_segments[0].segment_id if selected_segments else None
         payoff_segment_id = selected_segments[-1].segment_id if selected_segments else None
         timeline_score = round(
@@ -465,6 +490,13 @@ class LongformTimelineBuilder:
             f"adjusted_start={boundary_summary.adjusted_start} "
             f"adjusted_end={boundary_summary.adjusted_end} "
             f"skipped={boundary_summary.skipped}",
+            "Silence trim: "
+            f"removed={silence_summary.removed} "
+            f"trimmed_start={silence_summary.trimmed_start} "
+            f"trimmed_end={silence_summary.trimmed_end} "
+            f"skipped_middle={silence_summary.skipped_middle} "
+            f"duration_before={silence_summary.duration_before:.3f}s "
+            f"duration_after={silence_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)
