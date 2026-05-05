@@ -27,6 +27,7 @@ from core.hook_keyword_extractor import HookKeywordExtractor
 
 from core.edit_signal_extractor import EditSignalExtractor
 from core.energy_curve_builder import EnergyCurveBuilder
+from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.highlight_selector import HighlightSelector
 from core.longform_timeline_builder import LongformTimelineBuilder
 from core.reframing_core import ReframingCore
@@ -62,6 +63,7 @@ def _build_gaming_services() -> dict:
         "job_loader":        JobLoader(),
         "transcript_processor": TranscriptProcessor(),
         "hook_keyword_extractor": HookKeywordExtractor(),
+        "gameplay_vision_analyzer": GameplayVisionAnalyzer(),
     }
 
 
@@ -181,6 +183,38 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         f"max={energy_curve_result.max_energy} "
         f"engine={energy_curve_result.engine}"
     )
+
+    gameplay_vision_result = None
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        gameplay_vision_analyzer = services.get("gameplay_vision_analyzer") or GameplayVisionAnalyzer()
+
+        if job.raw_video_path:
+            gameplay_vision_result = gameplay_vision_analyzer.analyze_video(
+                video_path=str(job.raw_video_path),
+                sample_every_seconds=1.0,
+                max_frames=160,
+            )
+
+            if gameplay_vision_result.skipped_reason:
+                print(
+                    f"[gaming_pipeline] VISION   {job.job_id} "
+                    f"skipped reason={gameplay_vision_result.skipped_reason}"
+                )
+            else:
+                print(
+                    f"[gaming_pipeline] VISION   {job.job_id} "
+                    f"windows={len(gameplay_vision_result.windows)} "
+                    f"action_windows={len(gameplay_vision_result.action_windows)} "
+                    f"avg={gameplay_vision_result.average_action_score} "
+                    f"max={gameplay_vision_result.max_action_score} "
+                    f"engine={gameplay_vision_result.engine}"
+                )
+        else:
+            gameplay_vision_result = gameplay_vision_analyzer.analyze_video(None)
+            print(
+                f"[gaming_pipeline] VISION   {job.job_id} "
+                f"skipped reason={gameplay_vision_result.skipped_reason}"
+            )
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
@@ -322,6 +356,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     _highlight_repo_data = {
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
+        "gameplay_vision_result": gameplay_vision_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "summary":               highlight_result["summary"],
@@ -351,6 +386,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         # Highlight-Kette
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
+        "gameplay_vision_result": gameplay_vision_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "highlight_summary":     highlight_result["summary"],
