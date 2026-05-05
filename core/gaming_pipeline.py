@@ -44,6 +44,7 @@ from core.reaction_moment_detector import ReactionMomentDetector
 from core.zoom_pacing_engine import ZoomPacingEngine
 from core.final_render_driver import FinalRenderDriver
 from core.ffmpeg_helper import ensure_ffmpeg_on_path
+from core.channel_cut_profile_provider import ChannelCutProfileProvider
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -167,6 +168,33 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             )
         else:
             print(f"[gaming_pipeline] SENTENCES {job.job_id} skipped reason=no transcript")
+
+    # ------------------------------------------------------------------
+    # Profile laden (channel-specific cut scoring)
+    # ------------------------------------------------------------------
+    channel_str = getattr(job.channel_type, "value", str(job.channel_type))
+    target_str = (
+        getattr(job.target_format, "value", str(job.target_format))
+        if job.target_format else None
+    )
+    cut_profile = ChannelCutProfileProvider().get_profile(channel_str, target_str)
+    print(
+        f"[gaming_pipeline] CUT_PROFILE {job.job_id} "
+        f"channel={channel_str} "
+        f"profile={cut_profile.profile_name} "
+        f"target_pacing={cut_profile.target_pacing} "
+        f"min_seg={cut_profile.min_segment_duration_seconds} "
+        f"max_seg={cut_profile.max_segment_duration_seconds}"
+    )
+    _top_weights = sorted(
+        cut_profile.indicator_weights.items(),
+        key=lambda kv: -abs(kv[1]),
+    )[:8]
+    if _top_weights:
+        print(
+            f"[gaming_pipeline] CUT_PROFILE_TOP {job.job_id} "
+            + " ".join(f"{k}={v}" for k, v in _top_weights)
+        )
 
     # ------------------------------------------------------------------
     # 1) Analyse + Edit-Entscheidung
@@ -650,6 +678,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_event_result": gameplay_event_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
+        "cut_profile":           cut_profile,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "summary":               highlight_result["summary"],
@@ -685,6 +714,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_event_result": gameplay_event_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
+        "cut_profile":           cut_profile,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "highlight_summary":     highlight_result["summary"],
