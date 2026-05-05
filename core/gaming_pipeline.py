@@ -28,6 +28,7 @@ from core.transcript_processor import TranscriptProcessor, TranscriptUnavailable
 from core.hook_keyword_extractor import HookKeywordExtractor
 
 from core.edit_signal_extractor import EditSignalExtractor
+from core.cut_indicator_builder import CutIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
@@ -387,6 +388,40 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"facecam={boost_counts['facecam']}"
         )
 
+    cut_indicator_result = CutIndicatorBuilder().build(
+        edit_signals=edit_signals,
+        transcript_result=transcript_result,
+        energy_curve_result=energy_curve_result,
+        gameplay_vision_result=gameplay_vision_result,
+        facecam_reaction_result=facecam_reaction_result,
+        edit_timeline=edit_timeline,
+        channel_type=job.channel_type,
+    )
+    print(
+        f"[gaming_pipeline] INDICATORS {job.job_id} "
+        f"total={len(cut_indicator_result.indicators)} "
+        f"positive={cut_indicator_result.positive_count} "
+        f"negative={cut_indicator_result.negative_count} "
+        f"neutral={cut_indicator_result.neutral_count} "
+        f"avg={cut_indicator_result.average_score} "
+        f"max={cut_indicator_result.max_score} "
+        f"engine={cut_indicator_result.engine}"
+    )
+    indicator_type_counts: dict[str, int] = {}
+    for indicator in cut_indicator_result.indicators:
+        indicator_type_counts[indicator.indicator_type] = (
+            indicator_type_counts.get(indicator.indicator_type, 0) + 1
+        )
+    if indicator_type_counts:
+        top_items = sorted(
+            indicator_type_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:8]
+        print(
+            f"[gaming_pipeline] INDICATOR_TOP {job.job_id} "
+            + " ".join(f"{name}={count}" for name, count in top_items)
+        )
+
     # ------------------------------------------------------------------
     # 5) Reframe-Plan
     # ------------------------------------------------------------------
@@ -517,6 +552,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
+        "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "summary":               highlight_result["summary"],
@@ -547,6 +583,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
+        "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "highlight_summary":     highlight_result["summary"],
