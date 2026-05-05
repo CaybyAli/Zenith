@@ -18,14 +18,14 @@ from typing import Literal
 ZoomSize = Literal["tiny", "small", "medium", "large"]
 
 class ZoomTimelineBuilder:
-    """Baut eine kontinuierliche Timeline für smooth zoom transitions."""
+    """Baut eine kontinuierliche Timeline fuer smooth zoom transitions."""
     
     def __init__(self, segment_duration: float):
         self.segment_duration = segment_duration
         self.events: list[dict] = []  # {"time": float, "size": ZoomSize}
     
     def add_peak(self, rel_start: float, rel_end: float, size: ZoomSize) -> None:
-        """Füge einen Peak hinzu (relative Zeit im Segment)."""
+        """Fuege einen Peak hinzu (relative Zeit im Segment)."""
         # Start-Event: Zoom beginnt
         self.events.append({"time": rel_start, "size": size, "type": "start"})
         # End-Event: Zoom endet
@@ -50,7 +50,7 @@ class ZoomTimelineBuilder:
         for event in sorted_events:
             target_size = event["size"]
             
-            # Nur wenn sich Größe ändert
+            # Nur wenn sich Groesse aendert
             if target_size != current_size:
                 timeline.append({
                     "time": event["time"],
@@ -60,7 +60,7 @@ class ZoomTimelineBuilder:
                 })
                 current_size = target_size
         
-        # Falls Timeline leer, füge Default hinzu
+        # Falls Timeline leer, fuege Default hinzu
         if not timeline:
             timeline.append({"time": 0.0, "size": "tiny", "target": "tiny", "transition_end": 0.0})
         
@@ -82,7 +82,7 @@ def ease_in_out_cubic(t: float) -> float:
         return 1 + p * p * p / 2
 def generate_zoom_expression(timeline: list[dict], segment_duration: float) -> str:
     """
-    Generiert FFmpeg zoompan Expression für smooth transitions.
+    Generiert FFmpeg zoompan Expression fuer smooth transitions.
     
     Timeline Format:
     [
@@ -91,9 +91,9 @@ def generate_zoom_expression(timeline: list[dict], segment_duration: float) -> s
       ...
     ]
     
-    Returns: FFmpeg Expression String für width/height
+    Returns: FFmpeg Expression String fuer width/height
     """
-    # Größen
+    # Groessen
     sizes = {
         "tiny": (480, 270),
         "small": (540, 304),
@@ -101,7 +101,7 @@ def generate_zoom_expression(timeline: list[dict], segment_duration: float) -> s
         "large": (800, 450),
     }
     
-    # Baue IF-ELSE Chain für WIDTH
+    # Baue IF-ELSE Chain fuer WIDTH
     width_expr_parts = []
     height_expr_parts = []
     
@@ -162,16 +162,16 @@ def generate_zoom_expression(timeline: list[dict], segment_duration: float) -> s
 
 def interpolate_size(from_size: ZoomSize, to_size: ZoomSize, progress: float) -> tuple[int, int]:
     """
-    Interpoliert zwischen zwei PiP-Größen mit ease-in-out.
+    Interpoliert zwischen zwei PiP-Groessen mit ease-in-out.
     
     Args:
-        from_size: Start-Größe
-        to_size: Ziel-Größe
+        from_size: Start-Groesse
+        to_size: Ziel-Groesse
         progress: 0.0 (start) bis 1.0 (end)
     Returns:
-        (width, height) für aktuellen Progress
+        (width, height) fuer aktuellen Progress
     """
-    # Größen-Definition
+    # Groessen-Definition
     sizes = {
         "tiny": (480, 270),
         "small": (540, 304),
@@ -199,7 +199,7 @@ class FinalRenderDriver:
       - DynamicEditPlan: zoom instructions mapped to segments
       - MusicApplyTimeline: delegated to MusicApplyProcessor after concat
 
-    The output has the ACTUAL duration derived from the selected segments —
+    The output has the ACTUAL duration derived from the selected segments --
     not a hardcoded 60-second window.
     Video is encoded with h264_nvenc (RTX 4090 NVENC) + AAC audio.
     """
@@ -265,9 +265,9 @@ class FinalRenderDriver:
     ) -> tuple[str, str]:
 
         """
-        Baut den filter_complex für 32:9 Source -> 16:9 Output.
+        Baut den filter_complex fuer 32:9 Source -> 16:9 Output.
         Layout: Gameplay als Hauptbild, Facecam als PiP oben links.
-        ZOOM: PiP vergrößert sich bei lustigen Momenten (3 Stufen)!
+        ZOOM: PiP vergroessert sich bei lustigen Momenten (3 Stufen)!
         Returns: (filter_complex_string, output_label)
         """
         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
@@ -277,17 +277,17 @@ class FinalRenderDriver:
 
         if src_w >= 3000:  # 32:9 Format
             if layout_kind == "facecam_emphasis":
-                print(f"[DEBUG] → Rendering FACECAM ONLY (left half)")
+                print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
                 fc = (
                     f"[0:v]crop={src_w//2}:1080:0:0,"
                     "scale=1920:1080[out]"
                 )
                 return fc, "[out]"
             
-# ZOOM-FEATURE: Finde Zoom-Momente für dieses Segment
+# ZOOM-FEATURE: Finde Zoom-Momente fuer dieses Segment
             zoom_instructions = self._find_zoom_instructions(segment, dynamic_edit_plan)
             
-            # Basis-Größen - 4 STUFEN für feinere Kontrolle (ANGEPASST: größer)
+            # Basis-Groessen - 4 STUFEN fuer feinere Kontrolle (ANGEPASST: groesser)
             PIP_TINY_W, PIP_TINY_H = 480, 270       # Sehr klein
             PIP_SMALL_W, PIP_SMALL_H = 540, 304     # Normal
             PIP_MEDIUM_W, PIP_MEDIUM_H = 600, 338   # Laut reden (kleiner)
@@ -297,8 +297,8 @@ class FinalRenderDriver:
             crop_offset = int((src_w / 1920) * 28)
             
             if not zoom_instructions:
-                # Keine Zooms → immer kleine Größe
-                print(f"[DEBUG] → Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
+                # Keine Zooms -> immer kleine Groesse
+                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
                 fc = (
                     "[0:v]split=2[gp_src][fc_src];"
                     f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
@@ -306,7 +306,7 @@ class FinalRenderDriver:
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
                 )
                 return fc, "[out]"
-            
+
             # MIT ZOOMS: INSTANT switching zwischen 4 Stufen
             seg_start = segment.start_time
             
@@ -320,25 +320,25 @@ class FinalRenderDriver:
                 duration = peak["end"] - peak["start"]
                 
                 if duration < 0.8:
-                    print(f"[DEBUG]     → ⏭️  Skipped (too short: {duration:.1f}s, {peak['peak_db']:.1f}dB)")
+                    print(f"[DEBUG]     -> [-] Skipped (too short: {duration:.1f}s, {peak['peak_db']:.1f}dB)")
                     continue
                 
                 # 4-STUFEN-SYSTEM
                 if peak["peak_db"] > -13.0:
                     enable_large.append(f"between(t,{rel_start:.1f},{rel_end:.1f})")
-                    print(f"[DEBUG]     → 🔴 LARGE zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
+                    print(f"[DEBUG]     -> [RED] LARGE zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
                 elif peak["peak_db"] > -16.5:
                     enable_medium.append(f"between(t,{rel_start:.1f},{rel_end:.1f})")
-                    print(f"[DEBUG]     → 🟡 MEDIUM zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
+                    print(f"[DEBUG]     -> [YEL] MEDIUM zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
                 elif peak["peak_db"] > -18.5:
                     enable_small.append(f"between(t,{rel_start:.1f},{rel_end:.1f})")
-                    print(f"[DEBUG]     → 🟢 SMALL zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
+                    print(f"[DEBUG]     -> [GRN] SMALL zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
                 else:
-                    print(f"[DEBUG]     → ⚪ TINY (quiet: {peak['peak_db']:.1f}dB)")
+                    print(f"[DEBUG]     -> [-] TINY (quiet: {peak['peak_db']:.1f}dB)")
             
             if not enable_large and not enable_medium and not enable_small:
-                print(f"[DEBUG] → Found {len(zoom_instructions)} zoom(s), but all low intensity")
-                print(f"[DEBUG] → Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
+                print(f"[DEBUG] -> Found {len(zoom_instructions)} zoom(s), but all low intensity")
+                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
                 fc = (
                     "[0:v]split=2[gp_src][fc_src];"
                     f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
@@ -351,10 +351,10 @@ class FinalRenderDriver:
             enable_medium_str = "+".join(enable_medium) if enable_medium else "0"
             enable_small_str = "+".join(enable_small) if enable_small else "0"
             
-            print(f"[DEBUG] → 🎬 4-STUFEN AUDIO-REACTIVE ZOOM:")
+            print(f"[DEBUG] -> [CUT] 4-STUFEN AUDIO-REACTIVE ZOOM:")
             print(f"[DEBUG]    LARGE={len(enable_large)} | MEDIUM={len(enable_medium)} | SMALL={len(enable_small)}")
             
-            # Vier PiP-Größen, INSTANT switching mit enable-Conditions
+            # Vier PiP-Groessen, INSTANT switching mit enable-Conditions
             fc = (
                 "[0:v]split=5[gp_src][fc_tiny_src][fc_small_src][fc_medium_src][fc_large_src];"
                 f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
@@ -371,7 +371,7 @@ class FinalRenderDriver:
                 # LARGE PiP (schreien)
                 f"[fc_large_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_LARGE_W}:{PIP_LARGE_H}[fc_large];"
                 
-                # Overlays: TINY (default), dann SMALL, MEDIUM, LARGE (Priorität steigend)
+                # Overlays: TINY (default), dann SMALL, MEDIUM, LARGE (Prioritaet steigend)
                 f"[gp][fc_tiny]overlay={PIP_X}:{PIP_Y}:enable='not(({enable_small_str})+({enable_medium_str})+({enable_large_str}))':shortest=1[tmp1];"
                 f"[tmp1][fc_small]overlay={PIP_X}:{PIP_Y}:enable='{enable_small_str}':shortest=1[tmp2];"
                 f"[tmp2][fc_medium]overlay={PIP_X}:{PIP_Y}:enable='{enable_medium_str}':shortest=1[tmp3];"
@@ -464,7 +464,7 @@ class FinalRenderDriver:
         from core.audio_peak_detector import AudioPeakDetector
 
         """
-        Render by consuming all planning layers.  Music is NOT applied here —
+        Render by consuming all planning layers.  Music is NOT applied here --
         it is left to MusicApplyProcessor in build_publish_artifacts so that
         the existing post-render audio pipeline is unchanged.
 
@@ -496,11 +496,11 @@ class FinalRenderDriver:
             total_segments = len(segments)
 
             print(f"\n{'='*60}")
-            print(f"🎬 RENDERING GESTARTET: {total_segments} Segmente")
+            print(f"[CUT] RENDERING GESTARTET: {total_segments} Segmente")
             print(f"{'='*60}\n")
 
             for i, seg in enumerate(segments):
-                # AUDIO-PEAK DETECTION für reactive zoom
+                # AUDIO-PEAK DETECTION fuer reactive zoom
                 audio_peaks = AudioPeakDetector().detect_peaks(
                     video_path=source_path,
                     segment_start=seg.start_time,
@@ -510,19 +510,19 @@ class FinalRenderDriver:
                 )
                 
                 if audio_peaks:
-                    print(f"[DEBUG] 🔊 Found {len(audio_peaks)} audio peaks in segment:")
+                    print(f"[DEBUG] [AUDIO] Found {len(audio_peaks)} audio peaks in segment:")
                     for idx, peak in enumerate(audio_peaks, 1):
                         duration = peak['end'] - peak['start']
                         print(f"[DEBUG]   Peak {idx}: {peak['start']:.1f}s-{peak['end']:.1f}s ({duration:.1f}s duration, {peak['peak_db']:.1f}dB)")
                 else:
-                    print(f"[DEBUG] 🔇 No audio peaks detected (segment too quiet)")
+                    print(f"[DEBUG] [MUTE] No audio peaks detected (segment too quiet)")
                 
                 # Fortschritt berechnen
                 current_segment = i + 1
                 progress_percent = int((current_segment / total_segments) * 100)
                 
-                print(f"📊 SEGMENT {current_segment}/{total_segments} ({progress_percent}%) - {seg.segment_role.upper()}")
-                print(f"   ⏱️  {seg.start_time:.1f}s → {seg.end_time:.1f}s ({seg.duration:.1f}s)")
+                print(f"[SEG] SEGMENT {current_segment}/{total_segments} ({progress_percent}%) - {seg.segment_role.upper()}")
+                print(f"   [TIME] {seg.start_time:.1f}s -> {seg.end_time:.1f}s ({seg.duration:.1f}s)")
                 
                 fc, label = self._build_filter_complex(
                     seg, reframe_plan, dynamic_edit_plan, audio_peaks, src_w, src_h
@@ -532,9 +532,9 @@ class FinalRenderDriver:
                 self._extract_segment(source, seg, fc, label, tmp_path)
                 seg_paths.append(tmp_path)
                 
-                print(f"   ✅ Segment fertig!\n")
+                print(f"   [OK] Segment fertig!\n")
                 print(f"{'='*60}")
-                print(f"🎉 ALLE SEGMENTE GERENDERT - Jetzt zusammenfügen...")
+                print(f"[DONE] ALLE SEGMENTE GERENDERT - Jetzt zusammenfuegen...")
                 print(f"{'='*60}\n")
 
             concat_path = out_dir / f"{job.job_id}_final.mp4"
