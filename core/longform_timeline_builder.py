@@ -10,6 +10,8 @@ from models.edit_timeline import EditTimeline
 from models.highlight_candidate import HighlightCandidate
 from models.job import Job
 from models.timeline_segment import TimelineSegment
+from models.transcript_result import TranscriptResult
+from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from shared.errors import ValidationError
 
 
@@ -341,6 +343,7 @@ class LongformTimelineBuilder:
         energy_curve_result: EnergyCurveResult | None = None,
         gameplay_vision_result: GameplayVisionResult | None = None,
         facecam_reaction_result: FacecamReactionResult | None = None,
+        transcript_result: TranscriptResult | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -434,6 +437,19 @@ class LongformTimelineBuilder:
             if segment_role == "peak":
                 peak_segment_ids.append(segment.segment_id)
 
+        boundary_summary = TranscriptBoundaryGuard().apply(
+            selected_segments,
+            transcript_result,
+        )
+        print(
+            "[TIMELINE-BOUNDARY] "
+            f"adjusted_start={boundary_summary.adjusted_start} "
+            f"adjusted_end={boundary_summary.adjusted_end} "
+            f"skipped={boundary_summary.skipped}"
+        )
+        if boundary_summary.examples:
+            print(f"[TIMELINE-BOUNDARY] examples={'; '.join(boundary_summary.examples)}")
+
         hook_segment_id = selected_segments[0].segment_id if selected_segments else None
         payoff_segment_id = selected_segments[-1].segment_id if selected_segments else None
         timeline_score = round(
@@ -445,6 +461,10 @@ class LongformTimelineBuilder:
             f"Selected {len(selected_segments)} segments from {len(highlight_candidates)} candidates",
             f"Target duration: {target_duration:.2f}s",
             f"Weak zones considered: {len(weak_zones)}",
+            "Boundary guard: "
+            f"adjusted_start={boundary_summary.adjusted_start} "
+            f"adjusted_end={boundary_summary.adjusted_end} "
+            f"skipped={boundary_summary.skipped}",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

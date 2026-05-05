@@ -287,10 +287,31 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             energy_curve_result=energy_curve_result,
             gameplay_vision_result=gameplay_vision_result,
             facecam_reaction_result=facecam_reaction_result,
+            transcript_result=transcript_result,
         )
         print(f"[gaming_pipeline] TIMELINE  {job.job_id}  "
               f"segments={len(edit_timeline.selected_segments)}  "
               f"score={edit_timeline.timeline_score}")
+        boundary_counts = {
+            "adjusted_start": sum(
+                any(note.startswith("boundary_adjusted_start=") for note in segment.notes)
+                for segment in edit_timeline.selected_segments
+            ),
+            "adjusted_end": sum(
+                any(note.startswith("boundary_adjusted_end=") for note in segment.notes)
+                for segment in edit_timeline.selected_segments
+            ),
+            "skipped": sum(
+                any(note.startswith("boundary_skipped") for note in segment.notes)
+                for segment in edit_timeline.selected_segments
+            ),
+        }
+        print(
+            f"[gaming_pipeline] BOUNDARY  {job.job_id} "
+            f"adjusted_start={boundary_counts['adjusted_start']} "
+            f"adjusted_end={boundary_counts['adjusted_end']} "
+            f"skipped={boundary_counts['skipped']}"
+        )
         boost_counts = {
             "energy": sum("energy_boost" in segment.notes for segment in edit_timeline.selected_segments),
             "vision": sum("vision_boost" in segment.notes for segment in edit_timeline.selected_segments),
