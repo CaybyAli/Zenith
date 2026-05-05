@@ -32,6 +32,7 @@ from core.edit_signal_extractor import EditSignalExtractor
 from core.cut_indicator_builder import CutIndicatorBuilder
 from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
 from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
+from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
@@ -324,6 +325,30 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"skipped reason={facecam_reaction_result.skipped_reason}"
             )
 
+    facecam_emotion_result = FacecamEmotionIndicatorBuilder().build(
+        facecam_reaction_result=facecam_reaction_result,
+        audio_role_result=audio_role_result,
+        sentence_timeline_result=sentence_timeline_result,
+        gameplay_event_result=gameplay_event_result,
+        channel_type="gaming_main",
+    )
+    facecam_emotion_counts = facecam_emotion_result.emotion_counts
+    print(
+        f"[gaming_pipeline] FACECAM_EMOTIONS {job.job_id} "
+        f"total={len(facecam_emotion_result.windows)} "
+        f"reaction={facecam_emotion_counts.get('facecam_reaction_spike', 0)} "
+        f"motion={facecam_emotion_counts.get('facecam_motion_spike', 0)} "
+        f"expression={facecam_emotion_counts.get('expression_change_like', 0)} "
+        f"mouth={facecam_emotion_counts.get('mouth_open_like', 0)} "
+        f"smile={facecam_emotion_counts.get('smile_like', 0)} "
+        f"shock={facecam_emotion_counts.get('shock_like', 0)} "
+        f"laugh={facecam_emotion_counts.get('laugh_like_face', 0)} "
+        f"head={facecam_emotion_counts.get('head_movement_like', 0)} "
+        f"thumbnail={facecam_emotion_counts.get('thumbnail_face_candidate', 0)} "
+        f"low={facecam_emotion_counts.get('low_facecam_value', 0)} "
+        f"engine={facecam_emotion_result.engine}"
+    )
+
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
@@ -461,6 +486,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         energy_curve_result=energy_curve_result,
         gameplay_vision_result=gameplay_vision_result,
         facecam_reaction_result=facecam_reaction_result,
+        facecam_emotion_result=facecam_emotion_result,
         edit_timeline=edit_timeline,
         channel_type=job.channel_type,
     )
@@ -622,6 +648,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "sentence_timeline_result": sentence_timeline_result,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
+        "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
@@ -656,6 +683,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_vision_result": gameplay_vision_result,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
+        "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],

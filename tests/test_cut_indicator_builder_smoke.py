@@ -12,6 +12,7 @@ from models.audio_role_result import AudioRoleResult, AudioRoleWindow
 from models.edit_signal import EditSignal
 from models.edit_timeline import EditTimeline
 from models.energy_curve_result import EnergyCurvePoint, EnergyCurveResult
+from models.facecam_emotion_result import FacecamEmotionResult, FacecamEmotionWindow
 from models.facecam_reaction_result import FacecamReactionResult, FacecamReactionWindow
 from models.gameplay_event_result import GameplayEventResult, GameplayEventWindow
 from models.gameplay_vision_result import GameplayVisionResult, GameplayVisionWindow
@@ -122,6 +123,37 @@ def _facecam() -> FacecamReactionResult:
         reaction_windows=[reaction],
         average_reaction_score=0.77,
         max_reaction_score=0.77,
+    )
+
+
+def _facecam_emotions() -> FacecamEmotionResult:
+    reaction = FacecamEmotionWindow(
+        emotion_id="facecam_emotion_reaction",
+        start_seconds=14.0,
+        end_seconds=15.0,
+        emotion_type="facecam_reaction_spike",
+        score=0.78,
+        confidence=0.70,
+        reason="high facecam reaction score",
+        source_window_ids=["facecam_window_000000"],
+        source_signal_ids=[],
+        metadata={"reaction_score": 0.77},
+    )
+    thumbnail = FacecamEmotionWindow(
+        emotion_id="facecam_emotion_thumbnail",
+        start_seconds=14.0,
+        end_seconds=15.0,
+        emotion_type="thumbnail_face_candidate",
+        score=0.78,
+        confidence=0.65,
+        reason="strong facecam moment suitable for thumbnail candidate",
+        source_window_ids=["facecam_window_000000", "facecam_emotion_reaction"],
+        source_signal_ids=[],
+        metadata={"source_emotion_type": "facecam_reaction_spike"},
+    )
+    return FacecamEmotionResult(
+        windows=[reaction, thumbnail],
+        engine="facecam-emotion-indicator-builder-v1",
     )
 
 
@@ -267,6 +299,7 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
         energy_curve_result=_energy(),
         gameplay_vision_result=_vision(),
         facecam_reaction_result=_facecam(),
+        facecam_emotion_result=_facecam_emotions(),
         edit_timeline=_timeline(),
         channel_type="gaming_main",
     )
@@ -285,6 +318,8 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
     assert 0.0 <= by_type["energy_peak"].score <= 1.0
     assert "gameplay_action" in indicator_types
     assert "facecam_reaction" in indicator_types
+    assert "facecam_reaction_spike" in indicator_types
+    assert "thumbnail_face_candidate" in indicator_types
     assert "selected_segment" in indicator_types
     assert "hook_sentence" in indicator_types
     assert "filler_sentence" in indicator_types
@@ -300,6 +335,9 @@ def test_builder_maps_existing_signals_to_cut_indicators() -> None:
     assert "round_end_dead_time" in indicator_types
     assert by_type["high_action_burst"].polarity == "positive"
     assert by_type["round_end_dead_time"].polarity == "negative"
+    assert by_type["facecam_reaction_spike"].source == "facecam_emotion"
+    assert by_type["thumbnail_face_candidate"].source == "facecam_emotion"
+    assert by_type["thumbnail_face_candidate"].polarity == "positive"
 
     assert result.positive_count > 0
     assert result.negative_count > 0

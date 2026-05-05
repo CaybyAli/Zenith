@@ -269,6 +269,38 @@ class CutIndicatorBuilder:
                 },
             )
 
+    def _from_facecam_emotions(
+        self,
+        indicators: list[CutIndicator],
+        facecam_emotion_result: object,
+        channel_scope: str,
+    ) -> None:
+        for window in self._iter_items(self._get(facecam_emotion_result, "windows", default=[])):
+            emotion_type = str(self._get(window, "emotion_type", default="") or "")
+            if not emotion_type:
+                continue
+            start, end = self._start_end(window)
+            metadata = dict(self._get(window, "metadata", default={}) or {})
+            metadata["source_window_ids"] = list(
+                self._get(window, "source_window_ids", default=[]) or []
+            )
+            metadata["source_signal_ids"] = list(
+                self._get(window, "source_signal_ids", default=[]) or []
+            )
+            self._append(
+                indicators,
+                indicator_type=emotion_type,
+                start_seconds=start,
+                end_seconds=end,
+                score=self._get(window, "score", default=0.0),
+                confidence=self._get(window, "confidence", default=0.0),
+                source="facecam_emotion",
+                reason=str(self._get(window, "reason", default="facecam emotion window") or "facecam emotion window"),
+                polarity="negative" if emotion_type == "low_facecam_value" else "positive",
+                channel_scope=channel_scope,
+                metadata=metadata,
+            )
+
     def _from_timeline(
         self,
         indicators: list[CutIndicator],
@@ -423,6 +455,7 @@ class CutIndicatorBuilder:
         energy_curve_result: object = None,
         gameplay_vision_result: object = None,
         facecam_reaction_result: object = None,
+        facecam_emotion_result: object = None,
         edit_timeline: object = None,
         channel_type: object = "gaming_main",
     ) -> CutIndicatorResult:
@@ -437,6 +470,7 @@ class CutIndicatorBuilder:
         self._from_energy(indicators, energy_curve_result, channel_scope)
         self._from_vision(indicators, gameplay_vision_result, channel_scope)
         self._from_facecam(indicators, facecam_reaction_result, channel_scope)
+        self._from_facecam_emotions(indicators, facecam_emotion_result, channel_scope)
         self._from_timeline(indicators, edit_timeline, channel_scope)
 
         indicators.sort(
