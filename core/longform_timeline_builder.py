@@ -12,6 +12,7 @@ from models.job import Job
 from models.timeline_segment import TimelineSegment
 from models.transcript_result import TranscriptResult
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
+from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from shared.errors import ValidationError
 
@@ -470,6 +471,23 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after silence trimming")
 
+        selected_segments, story_summary = StoryTimelineOrganizer().apply(selected_segments)
+        print(
+            "[TIMELINE-STORY] "
+            f"hook={story_summary.hook_segment_id or 'none'} "
+            f"peaks={len(story_summary.peak_segment_ids)} "
+            f"bridges={story_summary.bridge_count} "
+            f"builds={story_summary.build_count} "
+            f"payoff={story_summary.payoff_segment_id or 'none'} "
+            f"duplicates_removed={story_summary.duplicates_removed} "
+            f"near_duplicates_removed={story_summary.near_duplicates_removed}"
+        )
+        if story_summary.examples:
+            print(f"[TIMELINE-STORY] examples={'; '.join(story_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after story dedupe")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -497,6 +515,14 @@ class LongformTimelineBuilder:
             f"skipped_middle={silence_summary.skipped_middle} "
             f"duration_before={silence_summary.duration_before:.3f}s "
             f"duration_after={silence_summary.duration_after:.3f}s",
+            "Story order: "
+            f"hook={story_summary.hook_segment_id or 'none'} "
+            f"peaks={len(story_summary.peak_segment_ids)} "
+            f"bridges={story_summary.bridge_count} "
+            f"builds={story_summary.build_count} "
+            f"payoff={story_summary.payoff_segment_id or 'none'} "
+            f"duplicates_removed={story_summary.duplicates_removed} "
+            f"near_duplicates_removed={story_summary.near_duplicates_removed}",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)
