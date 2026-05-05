@@ -13,6 +13,8 @@ Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
 
 from __future__ import annotations
 
+import os
+
 from shared.enums import ChannelType, TargetFormat
 
 from core.gaming_analyzer import GamingAnalyzer
@@ -28,6 +30,7 @@ from core.hook_keyword_extractor import HookKeywordExtractor
 from core.edit_signal_extractor import EditSignalExtractor
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
+from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
 from core.highlight_selector import HighlightSelector
 from core.longform_timeline_builder import LongformTimelineBuilder
 from core.reframing_core import ReframingCore
@@ -64,6 +67,7 @@ def _build_gaming_services() -> dict:
         "transcript_processor": TranscriptProcessor(),
         "hook_keyword_extractor": HookKeywordExtractor(),
         "gameplay_vision_analyzer": GameplayVisionAnalyzer(),
+        "facecam_reaction_analyzer": FacecamReactionAnalyzer(),
     }
 
 
@@ -105,7 +109,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
-        if job.raw_video_path:
+        if os.environ.get("ZENITH_SKIP_TRANSCRIPT") == "1":
+            print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=env skip")
+        elif job.raw_video_path:
             try:
                 transcript_result = transcript_processor.transcribe(str(job.raw_video_path))
                 print(
@@ -215,6 +221,38 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"[gaming_pipeline] VISION   {job.job_id} "
                 f"skipped reason={gameplay_vision_result.skipped_reason}"
             )
+    facecam_reaction_result = None
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        facecam_reaction_analyzer = services.get("facecam_reaction_analyzer") or FacecamReactionAnalyzer()
+
+        if job.raw_video_path:
+            facecam_reaction_result = facecam_reaction_analyzer.analyze_video(
+                video_path=str(job.raw_video_path),
+                sample_every_seconds=1.0,
+                max_frames=160,
+            )
+
+            if facecam_reaction_result.skipped_reason:
+                print(
+                    f"[gaming_pipeline] FACECAM  {job.job_id} "
+                    f"skipped reason={facecam_reaction_result.skipped_reason}"
+                )
+            else:
+                print(
+                    f"[gaming_pipeline] FACECAM  {job.job_id} "
+                    f"windows={len(facecam_reaction_result.windows)} "
+                    f"reactions={len(facecam_reaction_result.reaction_windows)} "
+                    f"avg={facecam_reaction_result.average_reaction_score} "
+                    f"max={facecam_reaction_result.max_reaction_score} "
+                    f"engine={facecam_reaction_result.engine}"
+                )
+        else:
+            facecam_reaction_result = facecam_reaction_analyzer.analyze_video(None)
+            print(
+                f"[gaming_pipeline] FACECAM  {job.job_id} "
+                f"skipped reason={facecam_reaction_result.skipped_reason}"
+            )
+
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
