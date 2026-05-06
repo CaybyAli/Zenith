@@ -15,6 +15,8 @@ from core.final_timeline_guard import FinalTimelineGuard
 from core.final_cut_safety_guard import FinalCutSafetyGuard
 from core.final_timeline_quality_guard import FinalTimelineQualityGuard
 from core.final_cut_seam_guard import FinalCutSeamGuard
+from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
+from core.pre_action_context_guard import PreActionContextGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -626,6 +628,24 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after seam guard")
 
+        selected_segments, round_wait_summary = RoundWaitDeadtimeGuard().apply(
+            selected_segments,
+            cut_indicator_result=cut_indicator_result,
+            audio_role_result=audio_role_result,
+        )
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after round-wait guard")
+
+        selected_segments, pre_action_summary = PreActionContextGuard().apply(
+            selected_segments,
+            cut_indicator_result=cut_indicator_result,
+            audio_role_result=audio_role_result,
+        )
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after pre-action context guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -694,6 +714,22 @@ class LongformTimelineBuilder:
             f"menu_dead_time_removed={seam_summary.menu_dead_time_removed} "
             f"duration_before={seam_summary.duration_before:.3f}s "
             f"duration_after={seam_summary.duration_after:.3f}s",
+            "Round wait guard: "
+            f"removed={round_wait_summary.removed} "
+            f"trimmed={round_wait_summary.trimmed} "
+            f"kept_action={round_wait_summary.kept_action} "
+            f"kept_speech={round_wait_summary.kept_speech} "
+            f"duration_before={round_wait_summary.duration_before:.3f}s "
+            f"duration_after={round_wait_summary.duration_after:.3f}s",
+            "Pre action context: "
+            f"expanded={pre_action_summary.expanded} "
+            f"shout={pre_action_summary.shout} "
+            f"goal={pre_action_summary.goal} "
+            f"action={pre_action_summary.action} "
+            f"skipped_overlap={pre_action_summary.skipped_overlap} "
+            f"skipped_silence={pre_action_summary.skipped_silence} "
+            f"duration_before={pre_action_summary.duration_before:.3f}s "
+            f"duration_after={pre_action_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

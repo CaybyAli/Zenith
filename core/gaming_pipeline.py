@@ -42,6 +42,7 @@ from core.longform_timeline_builder import LongformTimelineBuilder
 from core.reframing_core import ReframingCore
 from core.reaction_moment_detector import ReactionMomentDetector
 from core.zoom_pacing_engine import ZoomPacingEngine
+from core.facecam_zoom_smoothness_guard import FacecamZoomSmoothnessGuard
 from core.final_render_driver import FinalRenderDriver
 from core.ffmpeg_helper import ensure_ffmpeg_on_path
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
@@ -583,6 +584,42 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"menu_dead_time_removed={_seam_int('menu_dead_time_removed')}"
         )
 
+        _round_wait_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Round wait guard:")),
+            "",
+        )
+        _pre_action_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Pre action context:")),
+            "",
+        )
+
+        def _note_int(note: str, key: str) -> int:
+            prefix = f"{key}="
+            for part in note.split():
+                if part.startswith(prefix):
+                    try:
+                        return int(part.split("=", 1)[1])
+                    except ValueError:
+                        return 0
+            return 0
+
+        print(
+            f"[gaming_pipeline] ROUND_WAIT_GUARD {job.job_id} "
+            f"removed={_note_int(_round_wait_note, 'removed')} "
+            f"trimmed={_note_int(_round_wait_note, 'trimmed')} "
+            f"kept_action={_note_int(_round_wait_note, 'kept_action')} "
+            f"kept_speech={_note_int(_round_wait_note, 'kept_speech')}"
+        )
+        print(
+            f"[gaming_pipeline] PRE_ACTION_CONTEXT {job.job_id} "
+            f"expanded={_note_int(_pre_action_note, 'expanded')} "
+            f"shout={_note_int(_pre_action_note, 'shout')} "
+            f"goal={_note_int(_pre_action_note, 'goal')} "
+            f"action={_note_int(_pre_action_note, 'action')} "
+            f"skipped_overlap={_note_int(_pre_action_note, 'skipped_overlap')} "
+            f"skipped_silence={_note_int(_pre_action_note, 'skipped_silence')}"
+        )
+
     # ------------------------------------------------------------------
     # 5) Reframe-Plan
     # ------------------------------------------------------------------
@@ -634,6 +671,21 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             timeline=edit_timeline,
             reframe_plan=reframe_plan,
             reaction_moments=reaction_moments,
+        )
+
+        zoom_smooth_summary = FacecamZoomSmoothnessGuard().apply(
+            edit_timeline,
+            dynamic_edit_plan,
+            facecam_reaction_result=facecam_reaction_result,
+            reframe_plan=reframe_plan,
+        )
+        print(
+            f"[gaming_pipeline] FACECAM_ZOOM_SMOOTHNESS {job.job_id} "
+            f"removed={zoom_smooth_summary.removed} "
+            f"shifted={zoom_smooth_summary.shifted} "
+            f"edge_blocked={zoom_smooth_summary.edge_blocked} "
+            f"short_removed={zoom_smooth_summary.short_removed} "
+            f"weak_reaction_removed={zoom_smooth_summary.weak_reaction_removed}"
         )
 
         print(f"[gaming_pipeline] ZOOM      {job.job_id}  "
