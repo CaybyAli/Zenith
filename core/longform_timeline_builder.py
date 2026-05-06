@@ -17,6 +17,7 @@ from core.final_timeline_quality_guard import FinalTimelineQualityGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
+from core.multi_indicator_score_fusion import MultiIndicatorScoreFusion
 from shared.errors import ValidationError
 
 
@@ -349,6 +350,8 @@ class LongformTimelineBuilder:
         gameplay_vision_result: GameplayVisionResult | None = None,
         facecam_reaction_result: FacecamReactionResult | None = None,
         transcript_result: TranscriptResult | None = None,
+        cut_indicator_result=None,
+        cut_scoring_profile=None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -360,6 +363,13 @@ class LongformTimelineBuilder:
 
         # 1️⃣ ERST SCOREN: Highlights bewerten
         scored_candidates: list[dict] = []
+        _fusion_engine = (
+            MultiIndicatorScoreFusion()
+            if (cut_indicator_result is not None and cut_scoring_profile is not None)
+            else None
+        )
+        _fusion_stats: list[dict] = []
+
         for candidate in highlight_candidates:
             selection_score, notes = self._score_candidate_for_longform(
                 candidate,
@@ -368,6 +378,18 @@ class LongformTimelineBuilder:
                 gameplay_vision_result=gameplay_vision_result,
                 facecam_reaction_result=facecam_reaction_result,
             )
+
+            if _fusion_engine is not None:
+                fusion_result = _fusion_engine.fuse(
+                    start=candidate.start_time,
+                    end=candidate.end_time,
+                    base_score=selection_score,
+                    cut_indicator_result=cut_indicator_result,
+                    cut_scoring_profile=cut_scoring_profile,
+                )
+                selection_score = fusion_result["fused_score"]
+                notes = notes + fusion_result["notes"]
+                _fusion_stats.append(fusion_result)
 
             if selection_score < 0.45:
                 continue
@@ -379,6 +401,31 @@ class LongformTimelineBuilder:
                     "notes": notes,
                 }
             )
+
+        if _fusion_stats:
+            _f_boosted = sum(1 for r in _fusion_stats if r["positive_delta"] > 0)
+            _f_penalized = sum(1 for r in _fusion_stats if r["negative_delta"] < 0)
+            _f_avg = round(
+                sum(r["indicator_delta"] for r in _fusion_stats) / len(_fusion_stats), 4
+            )
+            _f_max_pos = round(max(r["positive_delta"] for r in _fusion_stats), 4)
+            _f_max_neg = round(min(r["negative_delta"] for r in _fusion_stats), 4)
+            print(
+                f"[TIMELINE-INDICATOR-FUSION] "
+                f"boosted={_f_boosted} penalized={_f_penalized} "
+                f"avg_delta={_f_avg:+.4f} "
+                f"max_positive={_f_max_pos:.4f} "
+                f"max_negative={_f_max_neg:.4f}"
+            )
+            _fusion_note = (
+                f"Indicator fusion: "
+                f"boosted={_f_boosted} penalized={_f_penalized} "
+                f"avg_delta={_f_avg:+.4f} "
+                f"max_positive={_f_max_pos:.4f} "
+                f"max_negative={_f_max_neg:.4f}"
+            )
+        else:
+            _fusion_note = None
 
         if not scored_candidates:
             raise ValidationError("No usable longform candidates after scoring")
@@ -615,6 +662,8 @@ class LongformTimelineBuilder:
             f"vision={boost_counts['vision_boost']} "
             f"facecam={boost_counts['facecam_boost']}"
         )
+        if _fusion_note:
+            timeline_notes.append(_fusion_note)
         boosted_segments = sum(
             any(
                 note in segment.notes

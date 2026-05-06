@@ -388,10 +388,49 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     print(f"[gaming_pipeline] HIGHLIGHTS {job.job_id}  "
           f"candidates={len(highlight_result.get('highlight_candidates', []))}")
 
+    cut_indicator_result = CutIndicatorBuilder().build(
+        edit_signals=edit_signals,
+        transcript_result=transcript_result,
+        sentence_timeline_result=sentence_timeline_result,
+        audio_role_result=audio_role_result,
+        gameplay_event_result=gameplay_event_result,
+        energy_curve_result=energy_curve_result,
+        gameplay_vision_result=gameplay_vision_result,
+        facecam_reaction_result=facecam_reaction_result,
+        facecam_emotion_result=facecam_emotion_result,
+        edit_timeline=None,
+        channel_type=job.channel_type,
+    )
+    print(
+        f"[gaming_pipeline] INDICATORS {job.job_id} "
+        f"total={len(cut_indicator_result.indicators)} "
+        f"positive={cut_indicator_result.positive_count} "
+        f"negative={cut_indicator_result.negative_count} "
+        f"neutral={cut_indicator_result.neutral_count} "
+        f"avg={cut_indicator_result.average_score} "
+        f"max={cut_indicator_result.max_score} "
+        f"engine={cut_indicator_result.engine}"
+    )
+    indicator_type_counts: dict[str, int] = {}
+    for indicator in cut_indicator_result.indicators:
+        indicator_type_counts[indicator.indicator_type] = (
+            indicator_type_counts.get(indicator.indicator_type, 0) + 1
+        )
+    if indicator_type_counts:
+        top_items = sorted(
+            indicator_type_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:8]
+        print(
+            f"[gaming_pipeline] INDICATOR_TOP {job.job_id} "
+            + " ".join(f"{name}={count}" for name, count in top_items)
+        )
+
     # ------------------------------------------------------------------
     # 4) Longform-Timeline  (nur wenn Voraussetzungen erfÃ¼llt)
     # ------------------------------------------------------------------
     edit_timeline = None
+    _fusion_timeline_note = None
     if (
         job.target_format == TargetFormat.LONGFORM
         and analysis_result.usable_for_longform
@@ -406,7 +445,18 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             gameplay_vision_result=gameplay_vision_result,
             facecam_reaction_result=facecam_reaction_result,
             transcript_result=transcript_result,
+            cut_indicator_result=cut_indicator_result,
+            cut_scoring_profile=cut_profile,
         )
+        _fusion_timeline_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Indicator fusion:")),
+            None,
+        )
+        if _fusion_timeline_note:
+            print(
+                f"[gaming_pipeline] INDICATOR_FUSION {job.job_id} "
+                + _fusion_timeline_note[len("Indicator fusion: "):]
+            )
         print(f"[gaming_pipeline] TIMELINE  {job.job_id}  "
               f"segments={len(edit_timeline.selected_segments)}  "
               f"score={edit_timeline.timeline_score}")
@@ -503,44 +553,6 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"energy={boost_counts['energy']} "
             f"vision={boost_counts['vision']} "
             f"facecam={boost_counts['facecam']}"
-        )
-
-    cut_indicator_result = CutIndicatorBuilder().build(
-        edit_signals=edit_signals,
-        transcript_result=transcript_result,
-        sentence_timeline_result=sentence_timeline_result,
-        audio_role_result=audio_role_result,
-        gameplay_event_result=gameplay_event_result,
-        energy_curve_result=energy_curve_result,
-        gameplay_vision_result=gameplay_vision_result,
-        facecam_reaction_result=facecam_reaction_result,
-        facecam_emotion_result=facecam_emotion_result,
-        edit_timeline=edit_timeline,
-        channel_type=job.channel_type,
-    )
-    print(
-        f"[gaming_pipeline] INDICATORS {job.job_id} "
-        f"total={len(cut_indicator_result.indicators)} "
-        f"positive={cut_indicator_result.positive_count} "
-        f"negative={cut_indicator_result.negative_count} "
-        f"neutral={cut_indicator_result.neutral_count} "
-        f"avg={cut_indicator_result.average_score} "
-        f"max={cut_indicator_result.max_score} "
-        f"engine={cut_indicator_result.engine}"
-    )
-    indicator_type_counts: dict[str, int] = {}
-    for indicator in cut_indicator_result.indicators:
-        indicator_type_counts[indicator.indicator_type] = (
-            indicator_type_counts.get(indicator.indicator_type, 0) + 1
-        )
-    if indicator_type_counts:
-        top_items = sorted(
-            indicator_type_counts.items(),
-            key=lambda item: (-item[1], item[0]),
-        )[:8]
-        print(
-            f"[gaming_pipeline] INDICATOR_TOP {job.job_id} "
-            + " ".join(f"{name}={count}" for name, count in top_items)
         )
 
     # ------------------------------------------------------------------
@@ -679,6 +691,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
         "cut_profile":           cut_profile,
+        "indicator_fusion_note": _fusion_timeline_note,
         "highlight_candidates":  highlight_result["highlight_candidates"],
         "weak_zones":            highlight_result["weak_zones"],
         "summary":               highlight_result["summary"],
