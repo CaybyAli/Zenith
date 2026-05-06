@@ -17,6 +17,7 @@ from core.final_cut_safety_guard import FinalCutSafetyGuard
 from core.final_timeline_quality_guard import FinalTimelineQualityGuard
 from core.final_cut_seam_guard import FinalCutSeamGuard
 from core.hard_speech_lock_guard import HardSpeechLockGuard
+from core.speech_safe_pacing_guard import SpeechSafePacingGuard
 from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
 from core.pre_action_context_guard import PreActionContextGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
@@ -690,6 +691,36 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after hard speech lock guard")
 
+        selected_segments, pacing_summary = SpeechSafePacingGuard().apply(
+            selected_segments,
+            gameplay_state_result=gameplay_state_result,
+            round_phase_result=round_phase_result,
+            cut_indicator_result=cut_indicator_result,
+            audio_role_result=audio_role_result,
+            transcript_result=transcript_result,
+            sentence_timeline_result=sentence_timeline_result,
+        )
+        print(
+            "[TIMELINE-PACING-GUARD] "
+            f"micro_closed={pacing_summary.micro_gaps_closed} "
+            f"micro_spaced={pacing_summary.micro_gaps_spaced} "
+            f"micro_removed={pacing_summary.micro_segments_removed} "
+            f"boring_removed={pacing_summary.boring_wait_removed} "
+            f"boring_trimmed={pacing_summary.boring_wait_trimmed} "
+            f"neutral_speech_ignored={pacing_summary.neutral_speech_ignored} "
+            f"round_start_trimmed={pacing_summary.round_start_wait_trimmed} "
+            f"round_start_removed={pacing_summary.round_start_wait_removed} "
+            f"round_end_expanded={pacing_summary.round_end_context_expanded} "
+            f"action_expanded={pacing_summary.action_context_expanded} "
+            f"duration_before={pacing_summary.duration_before:.3f}s "
+            f"duration_after={pacing_summary.duration_after:.3f}s"
+        )
+        if pacing_summary.examples:
+            print(f"[TIMELINE-PACING-GUARD] examples={'; '.join(pacing_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after speech-safe pacing guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -820,6 +851,21 @@ class LongformTimelineBuilder:
             f"shout_preroll_locked={hard_speech_summary.shout_preroll_locked} "
             f"duration_before={hard_speech_summary.duration_before:.3f}s "
             f"duration_after={hard_speech_summary.duration_after:.3f}s",
+            "Pacing guard: "
+            f"micro_gaps_closed={pacing_summary.micro_gaps_closed} "
+            f"micro_gaps_spaced={pacing_summary.micro_gaps_spaced} "
+            f"micro_segments_removed={pacing_summary.micro_segments_removed} "
+            f"micro_fixed={pacing_summary.micro_fixed} "
+            f"boring_wait_removed={pacing_summary.boring_wait_removed} "
+            f"boring_wait_trimmed={pacing_summary.boring_wait_trimmed} "
+            f"neutral_speech_ignored={pacing_summary.neutral_speech_ignored} "
+            f"round_start_wait_trimmed={pacing_summary.round_start_wait_trimmed} "
+            f"round_start_wait_removed={pacing_summary.round_start_wait_removed} "
+            f"round_end_context_expanded={pacing_summary.round_end_context_expanded} "
+            f"round_end_protected={pacing_summary.round_end_protected} "
+            f"action_context_expanded={pacing_summary.action_context_expanded} "
+            f"duration_before={pacing_summary.duration_before:.3f}s "
+            f"duration_after={pacing_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

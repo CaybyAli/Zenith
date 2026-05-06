@@ -755,6 +755,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             (n for n in edit_timeline.timeline_notes if n.startswith("Hard speech lock:")),
             "",
         )
+        _pacing_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Pacing guard:")),
+            "",
+        )
 
         def _note_int(note: str, key: str) -> int:
             prefix = f"{key}="
@@ -804,6 +808,16 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"secondary_locked={_note_int(_hard_speech_note, 'secondary_locked')} "
             f"micro_fixed={_note_int(_hard_speech_note, 'micro_fixed')} "
             f"short_removed={_note_int(_hard_speech_note, 'short_useless_removed')}"
+        )
+        print(
+            f"[gaming_pipeline] PACING_GUARD {job.job_id} "
+            f"micro_fixed={_note_int(_pacing_note, 'micro_fixed')} "
+            f"boring_removed={_note_int(_pacing_note, 'boring_wait_removed')} "
+            f"boring_trimmed={_note_int(_pacing_note, 'boring_wait_trimmed')} "
+            f"neutral_speech_ignored={_note_int(_pacing_note, 'neutral_speech_ignored')} "
+            f"round_start_trimmed={_note_int(_pacing_note, 'round_start_wait_trimmed')} "
+            f"round_end_expanded={_note_int(_pacing_note, 'round_end_context_expanded')} "
+            f"action_expanded={_note_int(_pacing_note, 'action_context_expanded')}"
         )
 
     # ------------------------------------------------------------------
