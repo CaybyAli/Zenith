@@ -23,7 +23,7 @@ from models.cut_indicator import CutIndicator, CutIndicatorResult
 
 # ── Factories ─────────────────────────────────────────────────────────────────
 
-def _seg(seg_id: str, start: float, end: float, role: str = "build", score: float = 0.6) -> TimelineSegment:
+def _seg(seg_id: str, start: float, end: float, role: str = "build", score: float = 0.65) -> TimelineSegment:
     return TimelineSegment(
         segment_id=seg_id,
         job_id="test_job",
@@ -80,7 +80,7 @@ def _audio_window(wid: str, role_type: str, start: float, end: float, score: flo
     )
 
 
-# ── Tests ─────────────────────────────────────────────────────────────────────
+# ── Existing Tests ─────────────────────────────────────────────────────────────
 
 def test_word_cut_start_protected() -> None:
     """Segment start falls inside a transcript word → pulled back by WORD_CUT_PROTECTION_SECONDS."""
@@ -93,24 +93,25 @@ def test_word_cut_start_protected() -> None:
     result, summary = FinalCutSeamGuard().apply(segments, transcript_result=transcript)
 
     assert len(result) == 1
-    # preferred = max(0, 10.0 - 0.25) = 9.75 < 10.5 → start should be pulled back
+    # preferred = max(0, 10.0 - 0.25) = 9.75 < 10.5 → start pulled back
     assert result[0].start_time < 10.5, f"Expected start_time < 10.5, got {result[0].start_time}"
     assert summary.speech_start_adjusted >= 1
     print("  PASS: test_word_cut_start_protected")
 
 
 def test_word_cut_end_protected() -> None:
-    """Segment end falls inside a transcript word → pushed forward by WORD_CUT_PROTECTION_SECONDS."""
+    """Segment end falls inside a short transcript word → pushed forward (within cap)."""
     segments = [_seg("s1", 5.0, 14.5)]
+    # transcript 14.0-14.9: expansion = (14.9+0.25)-14.5 = 0.65 < 1.20 cap → extend
     transcript = TranscriptResult(
         source_path="test", language=None,
-        segments=[_transcript_seg(14.0, 15.5, "goodbye")],
+        segments=[_transcript_seg(14.0, 14.9, "goodbye")],
         full_text="goodbye", engine="test",
     )
     result, summary = FinalCutSeamGuard().apply(segments, transcript_result=transcript)
 
     assert len(result) == 1
-    # preferred = 15.5 + 0.25 = 15.75 > 14.5 → end should be pushed forward
+    # preferred = 14.9 + 0.25 = 15.15 > 14.5 → end pushed forward
     assert result[0].end_time > 14.5, f"Expected end_time > 14.5, got {result[0].end_time}"
     assert summary.speech_end_adjusted >= 1
     print("  PASS: test_word_cut_end_protected")
@@ -119,12 +120,12 @@ def test_word_cut_end_protected() -> None:
 def test_mini_seam_fixed() -> None:
     """Gap between two segments < MIN_SEAM_GAP_SECONDS → second segment start pushed forward."""
     s1 = _seg("s1", 0.0, 10.0)
-    s2 = _seg("s2", 10.05, 15.0)  # gap = 0.05 < 0.15
+    s2 = _seg("s2", 10.05, 15.0)  # gap = 0.05 < 0.20 target
     result, summary = FinalCutSeamGuard().apply([s1, s2])
 
     assert summary.mini_seams_fixed >= 1
     s2_out = next(s for s in result if s.segment_id == "s2")
-    # required_start = 10.0 + 0.15 = 10.15
+    # required_start = 10.0 + 0.20 = 10.20
     assert s2_out.start_time >= 10.15 - 0.001, f"Expected start_time >= 10.15, got {s2_out.start_time}"
     print("  PASS: test_mini_seam_fixed")
 
@@ -138,7 +139,6 @@ def test_reaction_context_expanded() -> None:
     result, summary = FinalCutSeamGuard().apply(segments, cut_indicator_result=indicators)
 
     assert summary.reaction_context_expanded >= 1
-    # preferred = max(0, max(0, 9.1 - 0.20)) = 8.9
     assert result[0].start_time < 10.0, f"Expected start_time < 10.0, got {result[0].start_time}"
     print("  PASS: test_reaction_context_expanded")
 
@@ -152,16 +152,16 @@ def test_secondary_speech_protected() -> None:
     result, summary = FinalCutSeamGuard().apply(segments, audio_role_result=audio)
 
     assert summary.secondary_speech_protected >= 1
-    # preferred_end = 13.0 + 0.35 = 13.35
+    # preferred_end = 13.0 + 0.35 = 13.35; cap = 12.5 + 1.00 = 13.5 → 13.35 OK
     assert result[0].end_time > 12.5, f"Expected end_time > 12.5, got {result[0].end_time}"
     print("  PASS: test_secondary_speech_protected")
 
 
 def test_low_value_bridge_removed() -> None:
-    """Long bridge with low score + negative indicator → removed; protected roles survive."""
+    """Long bridge with low score + no strong positive → removed; protected roles survive."""
     segments = [
         _seg("s1",  0.0,  5.0, role="hook",   score=0.9),
-        _seg("s2",  6.0, 20.0, role="bridge",  score=0.3),  # > 8s, score < 0.5
+        _seg("s2",  6.0, 20.0, role="bridge",  score=0.3),  # > 8s, score < 0.62, no strong positive
         _seg("s3", 25.0, 35.0, role="payoff",  score=0.9),
     ]
     indicators = CutIndicatorResult(
@@ -204,11 +204,9 @@ def test_final_invariants() -> None:
     ]
     result, _ = FinalCutSeamGuard().apply(segments)
 
-    # Sorted by start_time
     starts = [s.start_time for s in result]
     assert starts == sorted(starts), f"Result not sorted: {starts}"
 
-    # No overlaps (allow tiny float tolerance)
     for i in range(len(result) - 1):
         gap = round(result[i + 1].start_time - result[i].end_time, 6)
         assert gap >= -0.001, (
@@ -216,7 +214,6 @@ def test_final_invariants() -> None:
             f"{result[i+1].segment_id} starts {result[i+1].start_time}"
         )
 
-    # No too-short non-protected segments
     protected = {"hook", "payoff", "peak"}
     for s in result:
         if s.segment_role not in protected:
@@ -249,6 +246,113 @@ def test_empty_segments_no_crash() -> None:
     print("  PASS: test_empty_segments_no_crash")
 
 
+# ── New Tests ──────────────────────────────────────────────────────────────────
+
+def test_speech_end_expansion_capped_trim_back() -> None:
+    """Segment end inside very long transcript → expansion > 1.20s cap → trim back before word."""
+    segments = [_seg("s1", 5.0, 12.0)]
+    # transcript 10.0-30.0: expansion = (30.25 - 12.0) = 18.25 > 1.20 → trim back to 10.0 - 0.25 = 9.75
+    transcript = TranscriptResult(
+        source_path="test", language=None,
+        segments=[_transcript_seg(10.0, 30.0, "very long sentence")],
+        full_text="very long sentence", engine="test",
+    )
+    result, summary = FinalCutSeamGuard().apply(segments, transcript_result=transcript)
+
+    assert len(result) == 1
+    assert result[0].end_time < 12.0, f"Expected end trimmed back, got {result[0].end_time}"
+    assert summary.speech_end_trimmed_back >= 1
+    assert summary.speech_end_adjusted == 0
+    print("  PASS: test_speech_end_expansion_capped_trim_back")
+
+
+def test_long_bridge_low_score_no_positive_removed() -> None:
+    """Long bridge with score < 0.62 and no strong positive indicator → removed."""
+    segments = [
+        _seg("s1",   0.0,   5.0, role="hook",   score=0.9),
+        _seg("s2", 100.0, 125.0, role="bridge",  score=0.60),  # 25s, score < 0.62
+        _seg("s3", 130.0, 140.0, role="payoff",  score=0.9),
+    ]
+    # Only negative indicator, no strong positive
+    indicators = CutIndicatorResult(
+        indicators=[_indicator("i1", "round_end_dead_time", 100.0, 125.0, "negative", 0.8)],
+    )
+    result, summary = FinalCutSeamGuard().apply(segments, cut_indicator_result=indicators)
+
+    ids = [s.segment_id for s in result]
+    assert "s2" not in ids, f"Expected s2 removed (low score, no strong positive), got ids={ids}"
+    assert summary.low_value_segments_removed >= 1
+    print("  PASS: test_long_bridge_low_score_no_positive_removed")
+
+
+def test_menu_dead_time_removed() -> None:
+    """Bridge with menu/idle indicators and no strong positive → removed by menu pruner."""
+    segments = [
+        _seg("s1",   0.0,   5.0, role="hook",   score=0.9),
+        _seg("s2", 200.0, 240.0, role="bridge",  score=0.65),  # 40s, score >= 0.62 (survives low_value pruner)
+        _seg("s3", 245.0, 260.0, role="payoff",  score=0.9),
+    ]
+    indicators = CutIndicatorResult(
+        indicators=[
+            _indicator("i1", "menu_or_idle",      200.0, 240.0, "negative", 0.9),
+            _indicator("i2", "low_gameplay_value", 200.0, 240.0, "negative", 0.9),
+        ],
+    )
+    result, summary = FinalCutSeamGuard().apply(segments, cut_indicator_result=indicators)
+
+    ids = [s.segment_id for s in result]
+    assert "s2" not in ids, f"Expected s2 removed (menu/dead-time), got ids={ids}"
+    assert summary.menu_dead_time_removed >= 1
+    print("  PASS: test_menu_dead_time_removed")
+
+
+def test_strong_action_bridge_kept() -> None:
+    """Bridge with high_action_burst is kept even if menu/idle indicator also present."""
+    segments = [
+        _seg("s1",   0.0,   5.0, role="hook",   score=0.9),
+        _seg("s2", 300.0, 320.0, role="bridge",  score=0.5),   # 20s, has action
+        _seg("s3", 325.0, 335.0, role="payoff",  score=0.9),
+    ]
+    indicators = CutIndicatorResult(
+        indicators=[
+            _indicator("i1", "high_action_burst", 305.0, 315.0, "positive", 0.9),
+            _indicator("i2", "menu_or_idle",      300.0, 320.0, "negative", 0.7),
+        ],
+    )
+    result, summary = FinalCutSeamGuard().apply(segments, cut_indicator_result=indicators)
+
+    ids = [s.segment_id for s in result]
+    assert "s2" in ids, f"Expected s2 kept (has strong action), got ids={ids}"
+    print("  PASS: test_strong_action_bridge_kept")
+
+
+def test_mini_seam_small_gap_pushed_to_target() -> None:
+    """Gap of 0.10s (< 0.20 target) is pushed forward to achieve target gap."""
+    s1 = _seg("s1",  0.0, 10.0)
+    s2 = _seg("s2", 10.10, 20.0)  # gap = 0.10 < MINI_SEAM_TARGET_GAP_SECONDS (0.20)
+    result, summary = FinalCutSeamGuard().apply([s1, s2])
+
+    assert summary.mini_seams_fixed >= 1
+    s2_out = next(s for s in result if s.segment_id == "s2")
+    # target = 10.0 + 0.20 = 10.20
+    assert s2_out.start_time >= 10.20 - 0.001, f"Expected start >= 10.20, got {s2_out.start_time}"
+    print("  PASS: test_mini_seam_small_gap_pushed_to_target")
+
+
+def test_mini_seam_wide_threshold_detects_030() -> None:
+    """Gap of 0.30s (< new 0.45 threshold, > old 0.15) is detected but not pushed if already >= 0.20."""
+    s1 = _seg("s1",  0.0, 10.0)
+    s2 = _seg("s2", 10.30, 20.0)  # gap = 0.30 → detected by new threshold; already >= 0.20 target
+    result, summary = FinalCutSeamGuard().apply([s1, s2])
+
+    # Gap 0.30 >= 0.20 target → no push needed
+    s2_out = next(s for s in result if s.segment_id == "s2")
+    assert s2_out.start_time == 10.30, f"Expected start unchanged at 10.30, got {s2_out.start_time}"
+    # mini_seams_fixed should be 0 since no fix was applied
+    assert summary.mini_seams_fixed == 0
+    print("  PASS: test_mini_seam_wide_threshold_detects_030")
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -265,6 +369,13 @@ if __name__ == "__main__":
         test_low_value_bridge_removed,
         test_hook_peak_not_removed,
         test_final_invariants,
+        # New tests
+        test_speech_end_expansion_capped_trim_back,
+        test_long_bridge_low_score_no_positive_removed,
+        test_menu_dead_time_removed,
+        test_strong_action_bridge_kept,
+        test_mini_seam_small_gap_pushed_to_target,
+        test_mini_seam_wide_threshold_detects_030,
     ]
 
     passed = 0

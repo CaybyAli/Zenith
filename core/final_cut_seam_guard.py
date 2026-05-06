@@ -17,9 +17,18 @@ WORD_CUT_PROTECTION_SECONDS = 0.25
 REACTION_CONTEXT_PREROLL_SECONDS = 1.00
 SECONDARY_SPEECH_HOLD_SECONDS = 0.35
 LOW_VALUE_BRIDGE_MAX_SECONDS = 8.0
-LOW_VALUE_BRIDGE_SCORE_THRESHOLD = 0.50
+LOW_VALUE_BRIDGE_SCORE_THRESHOLD = 0.62
 MAX_CONTEXT_EXPAND_SECONDS = 1.50
 MIN_SEGMENT_DURATION_SECONDS = 2.5
+
+MAX_SPEECH_EDGE_EXPAND_SECONDS = 1.20
+MAX_SECONDARY_SPEECH_EXPAND_SECONDS = 1.00
+MAX_REACTION_CONTEXT_EXPAND_SECONDS = 1.00
+MAX_SEGMENT_DURATION_AFTER_SEAM_SECONDS = 22.0
+MAX_BRIDGE_DURATION_AFTER_SEAM_SECONDS = 14.0
+MINI_SEAM_DETECT_THRESHOLD = 0.45
+MINI_SEAM_TARGET_GAP_SECONDS = 0.20
+MENU_DEAD_TIME_MIN_SECONDS = 10.0
 
 _NEGATIVE_INDICATOR_TYPES = frozenset({
     "round_end_dead_time", "silence_or_dead_air", "low_gameplay_value",
@@ -27,6 +36,14 @@ _NEGATIVE_INDICATOR_TYPES = frozenset({
 })
 _STRONG_POSITIVE_INDICATOR_TYPES = frozenset({
     "goal_or_save_like_flash", "high_action_burst", "hook_sentence", "group_reaction_like",
+})
+_STRONG_POSITIVE_FOR_MENU = frozenset({
+    "goal_or_save_like_flash", "high_action_burst", "hook_sentence", "group_reaction_like",
+    "sustained_action",
+})
+_MENU_DEAD_TIME_INDICATOR_TYPES = frozenset({
+    "menu_or_idle", "low_gameplay_value", "round_end_dead_time",
+    "silence_or_dead_air", "filler_sentence",
 })
 _REACTION_INDICATOR_TYPES = frozenset({
     "goal_or_save_like_flash", "high_action_burst", "facecam_reaction_spike",
@@ -43,10 +60,13 @@ class FinalCutSeamSummary:
     mini_seams_fixed: int = 0
     speech_start_adjusted: int = 0
     speech_end_adjusted: int = 0
+    speech_end_trimmed_back: int = 0
     reaction_context_expanded: int = 0
     secondary_speech_protected: int = 0
     low_value_segments_removed: int = 0
     important_context_expanded: int = 0
+    menu_dead_time_removed: int = 0
+    menu_dead_time_trimmed: int = 0
     duration_before: float = 0.0
     duration_after: float = 0.0
     examples: list[str] = field(default_factory=list)
@@ -61,7 +81,7 @@ def _overlap_seconds(a_start: float, a_end: float, b_start: float, b_end: float)
 
 
 class FinalCutSeamGuard:
-    engine = "final-cut-seam-guard-v1"
+    engine = "final-cut-seam-guard-v2"
 
     def apply(
         self,
@@ -86,8 +106,14 @@ class FinalCutSeamGuard:
         audio_windows = _sorted_audio_windows(audio_role_result)
         indicators = _sorted_indicators(cut_indicator_result)
 
-        # E) Low-Value Bridge Pruner — remove unwanted segments first
+        # E) Low-Value Bridge Pruner
         ordered = self._prune_low_value_bridges(ordered, indicators, summary)
+        if not ordered:
+            summary.duration_after = 0.0
+            return ordered, summary
+
+        # C) Menu / Dead-Time Pruner
+        ordered = self._prune_menu_dead_time(ordered, indicators, summary)
         if not ordered:
             summary.duration_after = 0.0
             return ordered, summary
@@ -95,7 +121,7 @@ class FinalCutSeamGuard:
         # A) Word-Cut / Sentence-Seam Protection
         self._apply_seam_speech_protection(ordered, transcripts, sentences, summary)
 
-        # C) Reaction Context Guard
+        # Reaction Context Guard
         self._apply_reaction_context(ordered, indicators, audio_windows, summary)
 
         # F) Important Context Protection
@@ -105,7 +131,10 @@ class FinalCutSeamGuard:
         self._apply_secondary_speech_hold(ordered, audio_windows, summary)
 
         # B) Mini-Seam Gap Guard
-        self._fix_mini_seams(ordered, summary)
+        self._fix_mini_seams(ordered, summary, transcripts, sentences)
+
+        # Post-seam: prune long bridges that are still too long without strong action
+        ordered = self._post_seam_duration_prune(ordered, indicators, summary)
 
         # G) Final cleanup — enforce invariants
         ordered = self._final_cleanup(ordered)
@@ -136,15 +165,7 @@ class FinalCutSeamGuard:
                 kept.append(seg)
                 continue
 
-            has_negative = any(
-                ind.indicator_type in _NEGATIVE_INDICATOR_TYPES
-                and _overlap_seconds(seg.start_time, seg.end_time, ind.start_seconds, ind.end_seconds) > 0
-                for ind in indicators
-            )
-            if not has_negative:
-                kept.append(seg)
-                continue
-
+            # duration > 8s and score < 0.62: keep only if strong positive action present
             has_strong_positive = any(
                 ind.indicator_type in _STRONG_POSITIVE_INDICATOR_TYPES
                 and _overlap_seconds(seg.start_time, seg.end_time, ind.start_seconds, ind.end_seconds) > 0
@@ -156,7 +177,55 @@ class FinalCutSeamGuard:
 
             seg.notes.append("seam_low_value_bridge_removed")
             summary.low_value_segments_removed += 1
-            summary.add_example(f"{seg.segment_id} removed low_value_bridge {seg.start_time:.2f}-{seg.end_time:.2f}")
+            summary.add_example(
+                f"{seg.segment_id} removed low_value_bridge {seg.start_time:.2f}-{seg.end_time:.2f}"
+            )
+
+        return kept
+
+    # ── C) Menu / Dead-Time Pruner ────────────────────────────────────────────
+
+    def _prune_menu_dead_time(
+        self,
+        segments: list[TimelineSegment],
+        indicators: list[CutIndicator],
+        summary: FinalCutSeamSummary,
+    ) -> list[TimelineSegment]:
+        kept: list[TimelineSegment] = []
+        for seg in segments:
+            if seg.segment_role in _PROTECTED_ROLES:
+                kept.append(seg)
+                continue
+            if seg.segment_role not in ("build", "bridge"):
+                kept.append(seg)
+                continue
+            if seg.duration <= MENU_DEAD_TIME_MIN_SECONDS:
+                kept.append(seg)
+                continue
+
+            has_menu_negative = any(
+                ind.indicator_type in _MENU_DEAD_TIME_INDICATOR_TYPES
+                and _overlap_seconds(seg.start_time, seg.end_time, ind.start_seconds, ind.end_seconds) > 0
+                for ind in indicators
+            )
+            if not has_menu_negative:
+                kept.append(seg)
+                continue
+
+            has_strong_positive = any(
+                ind.indicator_type in _STRONG_POSITIVE_FOR_MENU
+                and _overlap_seconds(seg.start_time, seg.end_time, ind.start_seconds, ind.end_seconds) > 0
+                for ind in indicators
+            )
+            if has_strong_positive:
+                kept.append(seg)
+                continue
+
+            seg.notes.append("seam_menu_dead_time_removed")
+            summary.menu_dead_time_removed += 1
+            summary.add_example(
+                f"{seg.segment_id} removed menu_dead_time {seg.start_time:.2f}-{seg.end_time:.2f}"
+            )
 
         return kept
 
@@ -192,11 +261,13 @@ class FinalCutSeamGuard:
         src = _find_containing_transcript(boundary, transcripts) or _find_containing_sentence(boundary, sentences)
         if src is None:
             return
-        src_start = src.start_seconds if isinstance(src, TranscriptSegment) else src.start_seconds
+        src_start = src.start_seconds
         preferred = round(max(0.0, src_start - WORD_CUT_PROTECTION_SECONDS), 3)
         if preferred >= seg.start_time:
             seg.notes.append("seam_start_skipped_already_before")
             return
+        # Cap expansion
+        preferred = round(max(preferred, seg.start_time - MAX_SPEECH_EDGE_EXPAND_SECONDS), 3)
         prev_limit = round(prev.end_time + MIN_SEAM_GAP_SECONDS, 3) if prev else 0.0
         if preferred < prev_limit:
             seg.notes.append("seam_start_skipped_overlap")
@@ -222,11 +293,27 @@ class FinalCutSeamGuard:
         src = _find_containing_transcript(boundary, transcripts) or _find_containing_sentence(boundary, sentences)
         if src is None:
             return
-        src_end = src.end_seconds if isinstance(src, TranscriptSegment) else src.end_seconds
+        src_end = src.end_seconds
+        src_start = src.start_seconds
         preferred = round(src_end + WORD_CUT_PROTECTION_SECONDS, 3)
         if preferred <= seg.end_time:
             seg.notes.append("seam_end_skipped_already_after")
             return
+
+        expansion = preferred - seg.end_time
+        if expansion > MAX_SPEECH_EDGE_EXPAND_SECONDS:
+            # Cut before the word starts instead of extending past it
+            trim_back = round(src_start - WORD_CUT_PROTECTION_SECONDS, 3)
+            if trim_back > seg.start_time + MIN_SEGMENT_DURATION_SECONDS:
+                old = seg.end_time
+                seg.end_time = trim_back
+                seg.notes.append(f"seam_speech_end_trimmed_back={old:.3f}->{trim_back:.3f}")
+                summary.speech_end_trimmed_back += 1
+                summary.add_example(f"{seg.segment_id} end {old:.2f}->{trim_back:.2f} trim_back")
+            else:
+                seg.notes.append("seam_end_skipped_expansion_too_large")
+            return
+
         nxt_limit = round(nxt.start_time - MIN_SEAM_GAP_SECONDS, 3) if nxt else None
         if nxt_limit is not None and preferred > nxt_limit:
             seg.notes.append("seam_end_skipped_overlap")
@@ -240,7 +327,7 @@ class FinalCutSeamGuard:
         summary.speech_end_adjusted += 1
         summary.add_example(f"{seg.segment_id} end {old:.2f}->{preferred:.2f} speech_post_roll")
 
-    # ── C) Reaction Context Guard ─────────────────────────────────────────────
+    # ── Reaction Context Guard ────────────────────────────────────────────────
 
     def _apply_reaction_context(
         self,
@@ -275,7 +362,11 @@ class FinalCutSeamGuard:
             if seg.end_time - preferred < MIN_SEGMENT_DURATION_SECONDS:
                 continue
 
-            # Guard: don't pull into strong dead-air
+            # Cap expansion
+            max_start = round(seg.start_time - MAX_REACTION_CONTEXT_EXPAND_SECONDS, 3)
+            if preferred < max_start:
+                preferred = max_start
+
             dead_overlap = any(
                 w.role_type == "silence_or_dead_air"
                 and w.score >= 0.65
@@ -302,7 +393,6 @@ class FinalCutSeamGuard:
         summary: FinalCutSeamSummary,
     ) -> None:
         for idx, seg in enumerate(segments):
-            # Segment has strong action in its first 2s
             has_action_start = any(
                 ind.indicator_type in _STRONG_POSITIVE_INDICATOR_TYPES
                 and ind.start_seconds < seg.start_time + 2.0
@@ -318,7 +408,6 @@ class FinalCutSeamGuard:
 
             look_start = max(prev_limit, seg.start_time - MAX_CONTEXT_EXPAND_SECONDS)
 
-            # Find positive indicator just before the segment
             context_ind = [
                 ind for ind in indicators
                 if ind.polarity == "positive"
@@ -358,10 +447,10 @@ class FinalCutSeamGuard:
         for idx, seg in enumerate(segments):
             nxt = segments[idx + 1] if idx + 1 < len(segments) else None
 
-            # Check if end is inside a secondary speech window
             end_window = _find_containing_audio_window(seg.end_time, speech_windows)
             if end_window is not None:
                 preferred_end = round(end_window.end_seconds + SECONDARY_SPEECH_HOLD_SECONDS, 3)
+                preferred_end = min(preferred_end, seg.end_time + MAX_SECONDARY_SPEECH_EXPAND_SECONDS)
                 if preferred_end > seg.end_time:
                     nxt_limit = round(nxt.start_time - MIN_SEAM_GAP_SECONDS, 3) if nxt else None
                     if (
@@ -375,11 +464,11 @@ class FinalCutSeamGuard:
                         summary.secondary_speech_protected += 1
                         summary.add_example(f"{seg.segment_id} end {old:.2f}->{preferred_end:.2f} secondary_speech_hold")
 
-            # Check if start is inside a secondary speech window
             prev = segments[idx - 1] if idx > 0 else None
             start_window = _find_containing_audio_window(seg.start_time, speech_windows)
             if start_window is not None:
                 preferred_start = round(max(0.0, start_window.start_seconds - SECONDARY_SPEECH_HOLD_SECONDS), 3)
+                preferred_start = max(preferred_start, seg.start_time - MAX_SECONDARY_SPEECH_EXPAND_SECONDS)
                 if preferred_start < seg.start_time:
                     prev_limit = round(prev.end_time + MIN_SEAM_GAP_SECONDS, 3) if prev else 0.0
                     if (
@@ -399,28 +488,88 @@ class FinalCutSeamGuard:
         self,
         segments: list[TimelineSegment],
         summary: FinalCutSeamSummary,
+        transcripts: list[TranscriptSegment] | None = None,
+        sentences: list[SentenceItem] | None = None,
     ) -> None:
+        transcripts = transcripts or []
+        sentences = sentences or []
         for idx in range(len(segments) - 1):
             seg_a = segments[idx]
             seg_b = segments[idx + 1]
             gap = round(seg_b.start_time - seg_a.end_time, 4)
-            if gap >= MIN_SEAM_GAP_SECONDS:
+            if gap >= MINI_SEAM_DETECT_THRESHOLD:
                 continue
 
-            required_start = round(seg_a.end_time + MIN_SEAM_GAP_SECONDS, 3)
-            if seg_b.end_time - required_start < MIN_SEGMENT_DURATION_SECONDS:
-                # Would make seg_b too short — mark for removal in final cleanup
-                seg_b.notes.append(f"seam_mini_too_short_after_fix_{seg_a.segment_id}")
-                summary.mini_seams_fixed += 1
-                summary.add_example(f"{seg_b.segment_id} mini_seam too_short gap={gap:.3f}")
+            # Try sentence-aligned start for seg_b
+            preferred: float | None = None
+            src = (
+                _find_containing_transcript(seg_b.start_time, transcripts)
+                or _find_containing_sentence(seg_b.start_time, sentences)
+            )
+            if src is not None:
+                src_start = src.start_seconds
+                sentence_start = round(max(0.0, src_start - WORD_CUT_PROTECTION_SECONDS), 3)
+                if sentence_start > seg_a.end_time + MIN_SEAM_GAP_SECONDS:
+                    preferred = sentence_start
+
+            target = round(seg_a.end_time + MINI_SEAM_TARGET_GAP_SECONDS, 3)
+            if preferred is None or preferred < target:
+                preferred = target
+
+            # Skip if no adjustment needed
+            if preferred <= seg_b.start_time:
+                continue
+
+            if seg_b.end_time - preferred < MIN_SEGMENT_DURATION_SECONDS:
+                if seg_b.segment_role not in _PROTECTED_ROLES:
+                    seg_b.notes.append(f"seam_mini_too_short_after_fix_{seg_a.segment_id}")
+                    summary.mini_seams_fixed += 1
+                    summary.add_example(f"{seg_b.segment_id} mini_seam too_short gap={gap:.3f}")
                 continue
 
             old = seg_b.start_time
-            seg_b.start_time = required_start
-            seg_b.notes.append(f"seam_mini_gap_fixed={old:.3f}->{required_start:.3f}")
+            seg_b.start_time = preferred
+            seg_b.notes.append(f"seam_mini_gap_fixed={old:.3f}->{preferred:.3f}")
             seg_b.touch()
             summary.mini_seams_fixed += 1
-            summary.add_example(f"{seg_b.segment_id} start {old:.2f}->{required_start:.2f} mini_seam_fix")
+            summary.add_example(f"{seg_b.segment_id} start {old:.2f}->{preferred:.2f} mini_seam_fix")
+
+    # ── Post-Seam Duration Prune ──────────────────────────────────────────────
+
+    def _post_seam_duration_prune(
+        self,
+        segments: list[TimelineSegment],
+        indicators: list[CutIndicator],
+        summary: FinalCutSeamSummary,
+    ) -> list[TimelineSegment]:
+        kept: list[TimelineSegment] = []
+        for seg in segments:
+            if seg.segment_role in _PROTECTED_ROLES:
+                kept.append(seg)
+                continue
+            if seg.segment_role not in ("build", "bridge"):
+                kept.append(seg)
+                continue
+            if seg.duration <= MAX_BRIDGE_DURATION_AFTER_SEAM_SECONDS:
+                kept.append(seg)
+                continue
+
+            has_strong_positive = any(
+                ind.indicator_type in _STRONG_POSITIVE_INDICATOR_TYPES
+                and _overlap_seconds(seg.start_time, seg.end_time, ind.start_seconds, ind.end_seconds) > 0
+                for ind in indicators
+            )
+            if has_strong_positive:
+                kept.append(seg)
+                continue
+
+            seg.notes.append("seam_long_bridge_post_seam_removed")
+            summary.low_value_segments_removed += 1
+            summary.add_example(
+                f"{seg.segment_id} removed long_bridge_post_seam {seg.duration:.1f}s"
+            )
+
+        return kept
 
     # ── G) Final Cleanup ──────────────────────────────────────────────────────
 
@@ -431,20 +580,16 @@ class FinalCutSeamGuard:
         )
         kept: list[TimelineSegment] = []
         for seg in ordered:
-            # Remove if flagged as too-short after mini-seam fix
             if any("seam_mini_too_short_after_fix" in n for n in seg.notes):
                 if seg.duration < MIN_SEGMENT_DURATION_SECONDS:
                     continue
 
-            # Remove negative-duration / zero-duration segments
             if seg.end_time <= seg.start_time:
                 continue
 
-            # Remove segments that are now too short (unless protected role)
             if seg.duration < MIN_SEGMENT_DURATION_SECONDS and seg.segment_role not in _PROTECTED_ROLES:
                 continue
 
-            # Resolve overlaps with previous
             if kept:
                 prev = kept[-1]
                 if seg.start_time < prev.end_time + MIN_SEAM_GAP_SECONDS:

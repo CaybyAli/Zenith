@@ -611,9 +611,11 @@ class LongformTimelineBuilder:
             "[TIMELINE-SEAM-GUARD] "
             f"mini_fixed={seam_summary.mini_seams_fixed} "
             f"speech_adjusted={seam_summary.speech_start_adjusted + seam_summary.speech_end_adjusted} "
+            f"speech_end_trimmed_back={seam_summary.speech_end_trimmed_back} "
             f"reaction_context={seam_summary.reaction_context_expanded} "
             f"secondary_speech={seam_summary.secondary_speech_protected} "
             f"low_value_removed={seam_summary.low_value_segments_removed} "
+            f"menu_dead_time_removed={seam_summary.menu_dead_time_removed} "
             f"important_context={seam_summary.important_context_expanded} "
             f"duration_before={seam_summary.duration_before:.3f}s "
             f"duration_after={seam_summary.duration_after:.3f}s"
@@ -685,9 +687,11 @@ class LongformTimelineBuilder:
             "Seam guard: "
             f"mini_fixed={seam_summary.mini_seams_fixed} "
             f"speech_adjusted={seam_summary.speech_start_adjusted + seam_summary.speech_end_adjusted} "
+            f"speech_end_trimmed_back={seam_summary.speech_end_trimmed_back} "
             f"reaction_context={seam_summary.reaction_context_expanded} "
             f"secondary_speech={seam_summary.secondary_speech_protected} "
             f"low_value_removed={seam_summary.low_value_segments_removed} "
+            f"menu_dead_time_removed={seam_summary.menu_dead_time_removed} "
             f"duration_before={seam_summary.duration_before:.3f}s "
             f"duration_after={seam_summary.duration_after:.3f}s",
         ]

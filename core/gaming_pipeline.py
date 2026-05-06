@@ -576,9 +576,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"[gaming_pipeline] SEAM_GUARD {job.job_id} "
             f"mini_fixed={_seam_int('mini_fixed')} "
             f"speech_adjusted={_seam_int('speech_adjusted')} "
+            f"speech_end_trimmed_back={_seam_int('speech_end_trimmed_back')} "
             f"reaction_context={_seam_int('reaction_context')} "
             f"secondary_speech={_seam_int('secondary_speech')} "
-            f"low_value_removed={_seam_int('low_value_removed')}"
+            f"low_value_removed={_seam_int('low_value_removed')} "
+            f"menu_dead_time_removed={_seam_int('menu_dead_time_removed')}"
         )
 
     # ------------------------------------------------------------------
