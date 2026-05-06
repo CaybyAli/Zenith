@@ -8,6 +8,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.facecam_zoom_smoothness_guard import FacecamZoomSmoothnessGuard
+from models.audio_role_result import AudioRoleResult, AudioRoleWindow
+from models.cut_indicator import CutIndicator, CutIndicatorResult
 from models.dynamic_edit_plan import DynamicEditPlan
 from models.edit_timeline import EditTimeline
 from models.timeline_segment import TimelineSegment
@@ -18,13 +20,13 @@ JOB_ID = "job_facecam_zoom_smoothness_smoke"
 TIMELINE_ID = "timeline_facecam_zoom_smoothness_smoke"
 
 
-def _segment() -> TimelineSegment:
+def _segment(start: float = 10.0, end: float = 20.0) -> TimelineSegment:
     return TimelineSegment(
         segment_id="seg_zoom",
         job_id=JOB_ID,
         candidate_id="cand_zoom",
-        start_time=10.0,
-        end_time=20.0,
+        start_time=start,
+        end_time=end,
         segment_role="peak",
         selection_score=0.9,
     )
@@ -56,8 +58,35 @@ def _timeline(segment: TimelineSegment) -> EditTimeline:
     )
 
 
+def _audio(role_type: str, start: float, end: float, score: float = 0.85) -> AudioRoleWindow:
+    return AudioRoleWindow(
+        window_id=f"audio_{role_type}_{start}",
+        start_seconds=start,
+        end_seconds=end,
+        role_type=role_type,
+        score=score,
+        confidence=0.85,
+        reason="synthetic",
+    )
+
+
+def _indicator(indicator_type: str, start: float, end: float, score: float = 0.85) -> CutIndicator:
+    return CutIndicator(
+        indicator_id=f"ind_{indicator_type}_{start}",
+        indicator_type=indicator_type,
+        start_seconds=start,
+        end_seconds=end,
+        score=score,
+        confidence=0.85,
+        source="facecam_zoom_smoothness_smoke",
+        reason="synthetic",
+        polarity="positive",
+        channel_scope="all",
+    )
+
+
 def test_facecam_zoom_smoothness_smoke() -> None:
-    segment = _segment()
+    segment = _segment(10.0, 20.0)
     plan = DynamicEditPlan(
         plan_id="dynamic_facecam_zoom_smoothness_smoke",
         job_id=JOB_ID,
@@ -65,7 +94,7 @@ def test_facecam_zoom_smoothness_smoke() -> None:
         zoom_instructions=[
             _zoom("zoom_start_edge", 10.1, 12.1),
             _zoom("zoom_end_edge", 17.8, 19.8),
-            _zoom("zoom_short", 13.0, 13.8),
+            _zoom("zoom_short", 13.0, 13.8, intensity=0.75),
             _zoom("zoom_strong", 14.0, 15.4),
             _zoom("zoom_weak", 15.8, 17.2, intensity=0.55),
         ],
@@ -75,9 +104,9 @@ def test_facecam_zoom_smoothness_smoke() -> None:
     by_id = {zoom.instruction_id: zoom for zoom in plan.zoom_instructions}
 
     assert "zoom_start_edge" in by_id
-    assert by_id["zoom_start_edge"].start_time >= segment.start_time + 0.6
+    assert by_id["zoom_start_edge"].start_time >= segment.start_time + 0.9
     assert "zoom_end_edge" in by_id
-    assert by_id["zoom_end_edge"].end_time <= segment.end_time - 0.6
+    assert by_id["zoom_end_edge"].end_time <= segment.end_time - 0.9
     assert "zoom_short" not in by_id
     assert "zoom_weak" not in by_id
     assert "zoom_strong" in by_id
@@ -91,10 +120,71 @@ def test_facecam_zoom_smoothness_smoke() -> None:
         assert zoom.end_time <= segment.end_time
         assert zoom.start_time >= 0.0
         assert zoom.end_time > zoom.start_time
-        assert zoom.duration >= 1.2
+        assert zoom.duration >= 1.4 or zoom.intensity >= 0.85
 
     print("FACECAM ZOOM SMOOTHNESS SMOKE TEST PASSED")
 
 
+def test_zoom_without_speech_or_reaction_removed() -> None:
+    segment = _segment()
+    plan = DynamicEditPlan(
+        plan_id="dynamic_silence_zoom_smoke",
+        job_id=JOB_ID,
+        timeline_id=TIMELINE_ID,
+        zoom_instructions=[_zoom("zoom_silence", 12.0, 14.0, intensity=0.9)],
+    )
+    audio = AudioRoleResult(windows=[_audio("silence_or_dead_air", 12.0, 14.0)])
+
+    summary = FacecamZoomSmoothnessGuard().apply(_timeline(segment), plan, audio_role_result=audio)
+    assert plan.zoom_instructions == []
+    assert summary.silence_removed == 1
+    print("FACECAM ZOOM SILENCE REMOVAL PASSED")
+
+
+def test_zoom_after_goal_tail_trimmed() -> None:
+    segment = _segment(10.0, 25.0)
+    plan = DynamicEditPlan(
+        plan_id="dynamic_tail_zoom_smoke",
+        job_id=JOB_ID,
+        timeline_id=TIMELINE_ID,
+        zoom_instructions=[_zoom("zoom_goal_tail", 16.0, 21.0, intensity=0.9)],
+    )
+    audio = AudioRoleResult(windows=[_audio("shout_like_audio", 16.0, 17.0)])
+    indicators = CutIndicatorResult(indicators=[_indicator("goal_or_save_like_flash", 16.0, 17.0)])
+
+    summary = FacecamZoomSmoothnessGuard().apply(
+        _timeline(segment),
+        plan,
+        audio_role_result=audio,
+        cut_indicator_result=indicators,
+    )
+    assert len(plan.zoom_instructions) == 1
+    assert plan.zoom_instructions[0].end_time <= 18.2
+    assert summary.tail_trimmed == 1
+    print("FACECAM ZOOM TAIL TRIM PASSED")
+
+
+def test_close_zooms_are_deconflicted() -> None:
+    segment = _segment(10.0, 25.0)
+    plan = DynamicEditPlan(
+        plan_id="dynamic_buffer_zoom_smoke",
+        job_id=JOB_ID,
+        timeline_id=TIMELINE_ID,
+        zoom_instructions=[
+            _zoom("zoom_close_strong", 14.0, 15.6, intensity=0.86),
+            _zoom("zoom_close_weak", 16.0, 17.6, intensity=0.74),
+        ],
+    )
+    audio = AudioRoleResult(windows=[_audio("speech_active", 14.0, 17.6)])
+
+    summary = FacecamZoomSmoothnessGuard().apply(_timeline(segment), plan, audio_role_result=audio)
+    assert [zoom.instruction_id for zoom in plan.zoom_instructions] == ["zoom_close_strong"]
+    assert summary.smooth_buffer_removed == 1
+    print("FACECAM ZOOM SMOOTH BUFFER PASSED")
+
+
 if __name__ == "__main__":
     test_facecam_zoom_smoothness_smoke()
+    test_zoom_without_speech_or_reaction_removed()
+    test_zoom_after_goal_tail_trimmed()
+    test_close_zooms_are_deconflicted()

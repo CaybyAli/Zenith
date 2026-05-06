@@ -52,6 +52,18 @@ def _silence(start: float, end: float) -> AudioRoleWindow:
     )
 
 
+def _speech(start: float, end: float) -> AudioRoleWindow:
+    return AudioRoleWindow(
+        window_id=f"speech_{start}",
+        start_seconds=start,
+        end_seconds=end,
+        role_type="speech_active",
+        score=0.75,
+        confidence=0.85,
+        reason="synthetic neutral speech",
+    )
+
+
 def test_long_menu_bridge_removed() -> None:
     segments = [_seg("hook", 0, 5, "hook"), _seg("wait", 10, 40), _seg("payoff", 50, 55, "payoff")]
     indicators = CutIndicatorResult(indicators=[
@@ -106,6 +118,48 @@ def test_shout_protects_segment() -> None:
     print("  PASS: test_shout_protects_segment")
 
 
+def test_menu_with_neutral_speech_removed() -> None:
+    segments = [_seg("menu_talk", 400, 430)]
+    indicators = CutIndicatorResult(indicators=[_indicator("menu_or_idle", 400, 430)])
+    audio = AudioRoleResult(windows=[_speech(402, 424)])
+
+    result, summary = RoundWaitDeadtimeGuard().apply(
+        segments,
+        cut_indicator_result=indicators,
+        audio_role_result=audio,
+    )
+    assert result == []
+    assert summary.removed == 1
+    assert summary.menu_speech_ignored == 1
+    print("  PASS: test_menu_with_neutral_speech_removed")
+
+
+def test_menu_with_hook_or_shout_stays() -> None:
+    segments = [_seg("menu_hook", 500, 530)]
+    indicators = CutIndicatorResult(indicators=[
+        _indicator("menu_or_idle", 500, 530),
+        _indicator("hook_sentence", 512, 515, polarity="positive", score=0.9),
+    ])
+
+    result, summary = RoundWaitDeadtimeGuard().apply(segments, cut_indicator_result=indicators)
+    assert [segment.segment_id for segment in result] == ["menu_hook"]
+    assert summary.kept_action == 1
+    assert result[0].start_time <= 512.0
+    assert result[0].end_time >= 515.0
+    print("  PASS: test_menu_with_hook_or_shout_stays")
+
+
+def test_after_goal_tail_trimmed() -> None:
+    segments = [_seg("goal_tail", 600, 610)]
+    indicators = CutIndicatorResult(indicators=[_indicator("goal_or_save_like_flash", 602, 603, polarity="positive", score=0.9)])
+
+    result, summary = RoundWaitDeadtimeGuard().apply(segments, cut_indicator_result=indicators)
+    assert len(result) == 1
+    assert result[0].end_time == 604.2
+    assert summary.after_goal_tail_trimmed == 1
+    print("  PASS: test_after_goal_tail_trimmed")
+
+
 def test_protected_roles_never_removed_and_invariants() -> None:
     segments = [
         _seg("hook", 0, 8, "hook", 0.2),
@@ -129,6 +183,9 @@ def test_round_wait_deadtime_guard_smoke() -> None:
     test_silence_filler_bridge_removed()
     test_high_action_protects_segment()
     test_shout_protects_segment()
+    test_menu_with_neutral_speech_removed()
+    test_menu_with_hook_or_shout_stays()
+    test_after_goal_tail_trimmed()
     test_protected_roles_never_removed_and_invariants()
     print("ROUND WAIT DEADTIME GUARD SMOKE TEST PASSED")
 

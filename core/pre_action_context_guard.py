@@ -7,10 +7,11 @@ from models.cut_indicator import CutIndicator, CutIndicatorResult
 from models.timeline_segment import TimelineSegment
 
 
-PRE_ACTION_CONTEXT_SECONDS = 0.90
+PRE_ACTION_CONTEXT_SECONDS = 1.50
 PRE_SHOUT_CONTEXT_SECONDS = 1.20
-PRE_GOAL_CONTEXT_SECONDS = 1.00
-MAX_PRE_CONTEXT_EXPAND_SECONDS = 1.20
+PRE_GOAL_CONTEXT_SECONDS = 1.50
+STRONG_ACTION_CONTEXT_SECONDS = 2.00
+MAX_PRE_CONTEXT_EXPAND_SECONDS = 2.00
 MIN_SEGMENT_DURATION_SECONDS = 2.5
 MIN_GAP_SECONDS = 0.15
 
@@ -29,6 +30,7 @@ class PreActionContextSummary:
     shout: int = 0
     goal: int = 0
     action: int = 0
+    strong_action_context: int = 0
     skipped_overlap: int = 0
     skipped_silence: int = 0
     duration_before: float = 0.0
@@ -72,12 +74,9 @@ class PreActionContextGuard:
             preferred = round(max(0.0, segment.start_time - context_seconds), 3)
 
             if preferred < previous_limit:
-                if segment.start_time - previous_limit < 0.35:
-                    preferred = previous_limit
-                else:
-                    summary.skipped_overlap += 1
-                    segment.notes.append("pre_action_context_skipped_overlap")
-                    continue
+                summary.skipped_overlap += 1
+                segment.notes.append("pre_action_context_skipped_overlap")
+                continue
 
             if preferred >= segment.start_time:
                 continue
@@ -99,6 +98,9 @@ class PreActionContextGuard:
                 summary.shout += 1
             elif trigger_kind == "goal":
                 summary.goal += 1
+            elif trigger_kind == "strong_action":
+                summary.strong_action_context += 1
+                summary.action += 1
             else:
                 summary.action += 1
             summary.add_example(
@@ -113,6 +115,7 @@ class PreActionContextGuard:
             f"shout={summary.shout} "
             f"goal={summary.goal} "
             f"action={summary.action} "
+            f"strong_action_context={summary.strong_action_context} "
             f"skipped_overlap={summary.skipped_overlap} "
             f"skipped_silence={summary.skipped_silence} "
             f"duration_before={summary.duration_before:.3f}s "
@@ -133,7 +136,7 @@ class PreActionContextGuard:
             if indicator.indicator_type in (_ACTION_TYPES | _GOAL_TYPES | _SHOUT_TYPES)
             and indicator.score >= 0.55
             and indicator.start_seconds <= segment.start_time + 0.45
-            and indicator.end_seconds >= segment.start_time
+            and indicator.end_seconds >= segment.start_time - 2.0
         ]
         if not candidates:
             return None
@@ -155,6 +158,8 @@ class PreActionContextGuard:
             return PRE_SHOUT_CONTEXT_SECONDS, "shout"
         if indicator.indicator_type in _GOAL_TYPES:
             return PRE_GOAL_CONTEXT_SECONDS, "goal"
+        if indicator.score >= 0.85:
+            return STRONG_ACTION_CONTEXT_SECONDS, "strong_action"
         return PRE_ACTION_CONTEXT_SECONDS, "action"
 
     def _has_blocking_silence(

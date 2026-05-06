@@ -54,10 +54,10 @@ def _silence(start: float, end: float) -> AudioRoleWindow:
 
 def test_high_action_expands_start() -> None:
     segment = _seg("action", 10.0, 16.0)
-    indicators = CutIndicatorResult(indicators=[_indicator("high_action_burst", 10.0, 12.0)])
+    indicators = CutIndicatorResult(indicators=[_indicator("high_action_burst", 10.0, 12.0, score=0.7)])
 
     result, summary = PreActionContextGuard().apply([segment], cut_indicator_result=indicators)
-    assert result[0].start_time == 9.1
+    assert result[0].start_time == 8.5
     assert summary.action == 1
     print("  PASS: test_high_action_expands_start")
 
@@ -67,9 +67,19 @@ def test_goal_expands_one_second() -> None:
     indicators = CutIndicatorResult(indicators=[_indicator("goal_or_save_like_flash", 30.0, 31.0)])
 
     result, summary = PreActionContextGuard().apply([segment], cut_indicator_result=indicators)
-    assert result[0].start_time == 29.0
+    assert result[0].start_time == 28.5
     assert summary.goal == 1
     print("  PASS: test_goal_expands_one_second")
+
+
+def test_strong_action_expands_two_seconds() -> None:
+    segment = _seg("strong_action", 40.0, 47.0)
+    indicators = CutIndicatorResult(indicators=[_indicator("high_action_burst", 40.0, 42.0, score=0.9)])
+
+    result, summary = PreActionContextGuard().apply([segment], cut_indicator_result=indicators)
+    assert result[0].start_time == 38.0
+    assert summary.strong_action_context == 1
+    print("  PASS: test_strong_action_expands_two_seconds")
 
 
 def test_shout_expands_one_point_two_seconds() -> None:
@@ -91,8 +101,9 @@ def test_overlap_with_previous_prevented() -> None:
     current_out = next(segment for segment in result if segment.segment_id == "current")
     previous_out = next(segment for segment in result if segment.segment_id == "previous")
     assert current_out.start_time >= previous_out.end_time + 0.15
-    assert current_out.start_time < 70.0
-    assert summary.expanded == 1
+    assert current_out.start_time == 70.0
+    assert summary.expanded == 0
+    assert summary.skipped_overlap == 1
     print("  PASS: test_overlap_with_previous_prevented")
 
 
@@ -115,6 +126,7 @@ def test_silence_blocks_expansion_and_segment_survives() -> None:
 def test_pre_action_context_guard_smoke() -> None:
     test_high_action_expands_start()
     test_goal_expands_one_second()
+    test_strong_action_expands_two_seconds()
     test_shout_expands_one_point_two_seconds()
     test_overlap_with_previous_prevented()
     test_silence_blocks_expansion_and_segment_survives()

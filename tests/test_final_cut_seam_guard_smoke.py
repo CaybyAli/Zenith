@@ -39,10 +39,10 @@ def _transcript_seg(start: float, end: float, text: str = "test") -> TranscriptS
     return TranscriptSegment(start_seconds=start, end_seconds=end, text=text)
 
 
-def _sentence(sid: str, start: float, end: float) -> SentenceItem:
+def _sentence(sid: str, start: float, end: float, text: str = "test sentence") -> SentenceItem:
     return SentenceItem(
         sentence_id=sid,
-        text="test sentence",
+        text=text,
         start_seconds=start,
         end_seconds=end,
         duration_seconds=round(end - start, 3),
@@ -353,6 +353,82 @@ def test_mini_seam_wide_threshold_detects_030() -> None:
     print("  PASS: test_mini_seam_wide_threshold_detects_030")
 
 
+def test_speech_end_lock_extends_near_sentence_end() -> None:
+    segments = [_seg("s1", 5.0, 12.8)]
+    transcript = TranscriptResult(
+        source_path="test",
+        language=None,
+        segments=[_transcript_seg(12.0, 13.4, "finish this thought")],
+        full_text="finish this thought",
+        engine="test",
+    )
+
+    result, summary = FinalCutSeamGuard().apply(segments, transcript_result=transcript)
+    assert result[0].end_time >= 13.9
+    assert summary.speech_end_locked >= 1
+    print("  PASS: test_speech_end_lock_extends_near_sentence_end")
+
+
+def test_shout_end_lock_extends_segment() -> None:
+    segments = [_seg("s1", 20.0, 25.0)]
+    indicators = CutIndicatorResult(
+        indicators=[_indicator("i1", "shout_like_audio", 24.8, 25.5, "positive", 0.9)],
+    )
+
+    result, summary = FinalCutSeamGuard().apply(segments, cut_indicator_result=indicators)
+    assert result[0].end_time >= 26.1
+    assert summary.shout_end_locked >= 1
+    print("  PASS: test_shout_end_lock_extends_segment")
+
+
+def test_phrase_end_lock_protects_alles_gut() -> None:
+    segments = [_seg("s1", 30.0, 34.5)]
+    transcript = TranscriptResult(
+        source_path="test",
+        language=None,
+        segments=[_transcript_seg(33.0, 35.0, "alles gut alles gut alles geplant")],
+        full_text="alles gut alles gut alles geplant",
+        engine="test",
+    )
+
+    result, summary = FinalCutSeamGuard().apply(segments, transcript_result=transcript)
+    assert result[0].end_time >= 35.7
+    assert summary.phrase_end_locked >= 1
+    print("  PASS: test_phrase_end_lock_protects_alles_gut")
+
+
+def test_speech_end_lock_long_expansion_still_trims_back() -> None:
+    segments = [_seg("s1", 40.0, 45.0)]
+    transcript = TranscriptResult(
+        source_path="test",
+        language=None,
+        segments=[_transcript_seg(44.0, 60.0, "very long sentence")],
+        full_text="very long sentence",
+        engine="test",
+    )
+
+    result, summary = FinalCutSeamGuard().apply(segments, transcript_result=transcript)
+    assert result[0].end_time < 45.0
+    assert summary.speech_end_trimmed_back >= 1
+    print("  PASS: test_speech_end_lock_long_expansion_still_trims_back")
+
+
+def test_speech_end_lock_shifts_next_without_overlap() -> None:
+    s1 = _seg("s1", 70.0, 75.0)
+    s2 = _seg("s2", 75.4, 81.0)
+    indicators = CutIndicatorResult(
+        indicators=[_indicator("i1", "shout_like_audio", 74.8, 75.5, "positive", 0.9)],
+    )
+
+    result, summary = FinalCutSeamGuard().apply([s1, s2], cut_indicator_result=indicators)
+    first = next(segment for segment in result if segment.segment_id == "s1")
+    second = next(segment for segment in result if segment.segment_id == "s2")
+    assert first.end_time >= 76.1
+    assert second.start_time >= first.end_time + 0.15
+    assert summary.shout_end_locked >= 1
+    print("  PASS: test_speech_end_lock_shifts_next_without_overlap")
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -376,6 +452,11 @@ if __name__ == "__main__":
         test_strong_action_bridge_kept,
         test_mini_seam_small_gap_pushed_to_target,
         test_mini_seam_wide_threshold_detects_030,
+        test_speech_end_lock_extends_near_sentence_end,
+        test_shout_end_lock_extends_segment,
+        test_phrase_end_lock_protects_alles_gut,
+        test_speech_end_lock_long_expansion_still_trims_back,
+        test_speech_end_lock_shifts_next_without_overlap,
     ]
 
     passed = 0

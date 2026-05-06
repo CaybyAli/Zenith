@@ -580,6 +580,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"speech_end_trimmed_back={_seam_int('speech_end_trimmed_back')} "
             f"reaction_context={_seam_int('reaction_context')} "
             f"secondary_speech={_seam_int('secondary_speech')} "
+            f"speech_end_locked={_seam_int('speech_end_locked')} "
+            f"shout_end_locked={_seam_int('shout_end_locked')} "
+            f"phrase_end_locked={_seam_int('phrase_end_locked')} "
             f"low_value_removed={_seam_int('low_value_removed')} "
             f"menu_dead_time_removed={_seam_int('menu_dead_time_removed')}"
         )
@@ -604,9 +607,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             return 0
 
         print(
-            f"[gaming_pipeline] ROUND_WAIT_GUARD {job.job_id} "
+            f"[gaming_pipeline] ROUND_WAIT {job.job_id} "
             f"removed={_note_int(_round_wait_note, 'removed')} "
             f"trimmed={_note_int(_round_wait_note, 'trimmed')} "
+            f"after_goal_tail_trimmed={_note_int(_round_wait_note, 'after_goal_tail_trimmed')} "
+            f"menu_speech_ignored={_note_int(_round_wait_note, 'menu_speech_ignored')} "
             f"kept_action={_note_int(_round_wait_note, 'kept_action')} "
             f"kept_speech={_note_int(_round_wait_note, 'kept_speech')}"
         )
@@ -616,6 +621,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"shout={_note_int(_pre_action_note, 'shout')} "
             f"goal={_note_int(_pre_action_note, 'goal')} "
             f"action={_note_int(_pre_action_note, 'action')} "
+            f"strong_action_context={_note_int(_pre_action_note, 'strong_action_context')} "
             f"skipped_overlap={_note_int(_pre_action_note, 'skipped_overlap')} "
             f"skipped_silence={_note_int(_pre_action_note, 'skipped_silence')}"
         )
@@ -677,6 +683,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             edit_timeline,
             dynamic_edit_plan,
             facecam_reaction_result=facecam_reaction_result,
+            audio_role_result=audio_role_result,
+            cut_indicator_result=cut_indicator_result,
             reframe_plan=reframe_plan,
         )
         print(
@@ -685,7 +693,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"shifted={zoom_smooth_summary.shifted} "
             f"edge_blocked={zoom_smooth_summary.edge_blocked} "
             f"short_removed={zoom_smooth_summary.short_removed} "
-            f"weak_reaction_removed={zoom_smooth_summary.weak_reaction_removed}"
+            f"weak_reaction_removed={zoom_smooth_summary.weak_reaction_removed} "
+            f"silence_removed={zoom_smooth_summary.silence_removed} "
+            f"tail_trimmed={zoom_smooth_summary.tail_trimmed}"
         )
 
         print(f"[gaming_pipeline] ZOOM      {job.job_id}  "

@@ -16,6 +16,11 @@ MAX_NATURAL_PREROLL_SECONDS = 0.35
 WORD_CUT_PROTECTION_SECONDS = 0.25
 REACTION_CONTEXT_PREROLL_SECONDS = 1.00
 SECONDARY_SPEECH_HOLD_SECONDS = 0.35
+SPEECH_END_LOCK_HOLD_SECONDS = 0.50
+SHOUT_END_LOCK_HOLD_SECONDS = 0.60
+PHRASE_END_LOCK_HOLD_SECONDS = 0.70
+MAX_SPEECH_END_LOCK_EXPAND_SECONDS = 1.50
+SPEECH_END_LOCK_NEAR_SECONDS = 0.25
 LOW_VALUE_BRIDGE_MAX_SECONDS = 8.0
 LOW_VALUE_BRIDGE_SCORE_THRESHOLD = 0.62
 MAX_CONTEXT_EXPAND_SECONDS = 1.50
@@ -36,6 +41,7 @@ _NEGATIVE_INDICATOR_TYPES = frozenset({
 })
 _STRONG_POSITIVE_INDICATOR_TYPES = frozenset({
     "goal_or_save_like_flash", "high_action_burst", "hook_sentence", "group_reaction_like",
+    "laugh_like_audio",
 })
 _STRONG_POSITIVE_FOR_MENU = frozenset({
     "goal_or_save_like_flash", "high_action_burst", "hook_sentence", "group_reaction_like",
@@ -47,12 +53,20 @@ _MENU_DEAD_TIME_INDICATOR_TYPES = frozenset({
 })
 _REACTION_INDICATOR_TYPES = frozenset({
     "goal_or_save_like_flash", "high_action_burst", "facecam_reaction_spike",
-    "shock_like", "group_reaction_like", "shout_like_audio",
+    "shock_like", "group_reaction_like", "shout_like_audio", "laugh_like_audio",
 })
 _SECONDARY_SPEECH_ROLES = frozenset({
     "secondary_speech_like", "speech_active",
 })
 _PROTECTED_ROLES = frozenset({"hook", "payoff", "peak"})
+_SHOUT_END_TYPES = frozenset({"shout_like_audio", "group_reaction_like", "laugh_like_audio"})
+_PHRASE_LOCK_TEXT = (
+    "alles gut",
+    "oh gott",
+    "nein",
+    "warte",
+    "wichtig",
+)
 
 
 @dataclass
@@ -67,6 +81,9 @@ class FinalCutSeamSummary:
     important_context_expanded: int = 0
     menu_dead_time_removed: int = 0
     menu_dead_time_trimmed: int = 0
+    speech_end_locked: int = 0
+    shout_end_locked: int = 0
+    phrase_end_locked: int = 0
     duration_before: float = 0.0
     duration_after: float = 0.0
     examples: list[str] = field(default_factory=list)
@@ -129,6 +146,16 @@ class FinalCutSeamGuard:
 
         # D) Secondary Speech Hold
         self._apply_secondary_speech_hold(ordered, audio_windows, summary)
+
+        # H) Stronger speech / shout / phrase end locks
+        self._apply_speech_end_locks(
+            ordered,
+            transcripts,
+            sentences,
+            audio_windows,
+            indicators,
+            summary,
+        )
 
         # B) Mini-Seam Gap Guard
         self._fix_mini_seams(ordered, summary, transcripts, sentences)
@@ -482,6 +509,115 @@ class FinalCutSeamGuard:
                         summary.secondary_speech_protected += 1
                         summary.add_example(f"{seg.segment_id} start {old:.2f}->{preferred_start:.2f} secondary_speech_hold")
 
+    def _apply_speech_end_locks(
+        self,
+        segments: list[TimelineSegment],
+        transcripts: list[TranscriptSegment],
+        sentences: list[SentenceItem],
+        audio_windows: list[AudioRoleWindow],
+        indicators: list[CutIndicator],
+        summary: FinalCutSeamSummary,
+    ) -> None:
+        for idx, seg in enumerate(segments):
+            nxt = segments[idx + 1] if idx + 1 < len(segments) else None
+
+            source = (
+                _find_containing_transcript(seg.end_time, transcripts)
+                or _find_near_end_transcript(seg.end_time, transcripts)
+                or _find_containing_sentence(seg.end_time, sentences)
+                or _find_near_end_sentence(seg.end_time, sentences)
+            )
+            if source is not None:
+                hold = PHRASE_END_LOCK_HOLD_SECONDS if _has_phrase_lock_text(getattr(source, "text", "")) else SPEECH_END_LOCK_HOLD_SECONDS
+                counter = "phrase" if hold == PHRASE_END_LOCK_HOLD_SECONDS else "speech"
+                preferred = round(source.end_seconds + hold, 3)
+                self._lock_segment_end(
+                    seg,
+                    nxt,
+                    preferred,
+                    counter,
+                    indicators,
+                    summary,
+                )
+
+            audio_source = _find_containing_audio_window(seg.end_time, [
+                window for window in audio_windows if window.role_type in _SECONDARY_SPEECH_ROLES
+            ])
+            if audio_source is not None:
+                preferred = round(audio_source.end_seconds + SPEECH_END_LOCK_HOLD_SECONDS, 3)
+                self._lock_segment_end(seg, nxt, preferred, "speech", indicators, summary)
+
+            shout_windows = [
+                indicator
+                for indicator in indicators
+                if indicator.indicator_type in _SHOUT_END_TYPES
+                and indicator.start_seconds <= seg.end_time + SPEECH_END_LOCK_NEAR_SECONDS
+                and indicator.end_seconds >= seg.end_time - 1.0
+            ]
+            if shout_windows:
+                preferred = round(max(ind.end_seconds for ind in shout_windows) + SHOUT_END_LOCK_HOLD_SECONDS, 3)
+                self._lock_segment_end(seg, nxt, preferred, "shout", indicators, summary)
+
+    def _lock_segment_end(
+        self,
+        seg: TimelineSegment,
+        nxt: TimelineSegment | None,
+        preferred: float,
+        lock_kind: str,
+        indicators: list[CutIndicator],
+        summary: FinalCutSeamSummary,
+    ) -> None:
+        if preferred <= seg.end_time:
+            return
+        max_preferred = round(seg.end_time + MAX_SPEECH_END_LOCK_EXPAND_SECONDS, 3)
+        if preferred > max_preferred:
+            trim_back = self._safe_trim_back_for_long_speech(seg, indicators)
+            if trim_back is not None:
+                old = seg.end_time
+                seg.end_time = trim_back
+                seg.notes.append(f"seam_speech_lock_trim_back={old:.3f}->{trim_back:.3f}")
+                summary.speech_end_trimmed_back += 1
+                summary.add_example(f"{seg.segment_id} end {old:.2f}->{trim_back:.2f} lock_trim_back")
+            return
+        if preferred - seg.start_time < MIN_SEGMENT_DURATION_SECONDS:
+            return
+        if nxt is not None:
+            required_next = round(preferred + MIN_SEAM_GAP_SECONDS, 3)
+            if nxt.start_time < required_next:
+                if nxt.end_time - required_next < MIN_SEGMENT_DURATION_SECONDS:
+                    return
+                nxt.start_time = required_next
+                nxt.notes.append(f"seam_lock_next_start_shifted={required_next:.3f}")
+                nxt.touch()
+        old = seg.end_time
+        seg.end_time = preferred
+        seg.notes.append(f"seam_{lock_kind}_end_locked={old:.3f}->{preferred:.3f}")
+        seg.touch()
+        if lock_kind == "shout":
+            summary.shout_end_locked += 1
+        elif lock_kind == "phrase":
+            summary.phrase_end_locked += 1
+        else:
+            summary.speech_end_locked += 1
+        summary.add_example(f"{seg.segment_id} end {old:.2f}->{preferred:.2f} {lock_kind}_lock")
+
+    def _safe_trim_back_for_long_speech(
+        self,
+        seg: TimelineSegment,
+        indicators: list[CutIndicator],
+    ) -> float | None:
+        trim_back = round(seg.end_time - 0.20, 3)
+        if trim_back <= seg.start_time + MIN_SEGMENT_DURATION_SECONDS:
+            return None
+        has_action = any(
+            indicator.indicator_type in _STRONG_POSITIVE_FOR_MENU
+            and _overlap_seconds(trim_back, seg.end_time, indicator.start_seconds, indicator.end_seconds) > 0
+            for indicator in indicators
+        )
+        if has_action:
+            return None
+        return trim_back
+
     # ── B) Mini-Seam Gap Guard ────────────────────────────────────────────────
 
     def _fix_mini_seams(
@@ -654,6 +790,17 @@ def _find_containing_transcript(
     return None
 
 
+def _find_near_end_transcript(
+    t: float,
+    transcripts: list[TranscriptSegment],
+) -> TranscriptSegment | None:
+    for seg in transcripts:
+        if seg.start_seconds <= t <= seg.end_seconds + SPEECH_END_LOCK_NEAR_SECONDS:
+            if abs(seg.end_seconds - t) <= SPEECH_END_LOCK_NEAR_SECONDS:
+                return seg
+    return None
+
+
 def _find_containing_sentence(
     t: float,
     sentences: list[SentenceItem],
@@ -661,6 +808,17 @@ def _find_containing_sentence(
     for s in sentences:
         if s.start_seconds < t < s.end_seconds:
             return s
+    return None
+
+
+def _find_near_end_sentence(
+    t: float,
+    sentences: list[SentenceItem],
+) -> SentenceItem | None:
+    for s in sentences:
+        if s.start_seconds <= t <= s.end_seconds + SPEECH_END_LOCK_NEAR_SECONDS:
+            if abs(s.end_seconds - t) <= SPEECH_END_LOCK_NEAR_SECONDS:
+                return s
     return None
 
 
@@ -672,3 +830,8 @@ def _find_containing_audio_window(
         if w.start_seconds < t < w.end_seconds:
             return w
     return None
+
+
+def _has_phrase_lock_text(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(phrase in lowered for phrase in _PHRASE_LOCK_TEXT)

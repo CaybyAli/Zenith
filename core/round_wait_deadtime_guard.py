@@ -28,6 +28,7 @@ _POSITIVE_TYPES = frozenset({
     "sustained_action",
     "group_reaction_like",
     "shout_like_audio",
+    "laugh_like_audio",
     "hook_sentence",
     "facecam_reaction_spike",
 })
@@ -38,6 +39,8 @@ _SPEECH_TYPES = frozenset({"speech_active", "secondary_speech_like"})
 class RoundWaitDeadtimeSummary:
     removed: int = 0
     trimmed: int = 0
+    after_goal_tail_trimmed: int = 0
+    menu_speech_ignored: int = 0
     kept_action: int = 0
     kept_speech: int = 0
     duration_before: float = 0.0
@@ -77,11 +80,32 @@ class RoundWaitDeadtimeGuard:
             if segment.segment_role not in _TARGET_ROLES or segment.duration <= ROUND_WAIT_MIN_DURATION:
                 kept.append(segment)
                 continue
-            if self._has_positive(segment.start_time, segment.end_time, indicators):
+
+            self._trim_after_goal_tail(segment, indicators, audio_windows, summary)
+
+            has_hard_wait_signal = self._has_hard_wait_signal(segment, indicators)
+            has_positive = self._has_positive(segment.start_time, segment.end_time, indicators)
+            if has_hard_wait_signal:
+                if has_positive:
+                    if self._soft_trim_around_positive(segment, indicators, summary):
+                        segment.touch()
+                    summary.kept_action += 1
+                    kept.append(segment)
+                    continue
+                if self._has_neutral_speech(segment, audio_windows):
+                    summary.menu_speech_ignored += 1
+                segment.notes.append("round_wait_menu_speech_ignored_removed")
+                summary.removed += 1
+                summary.add_example(
+                    f"{segment.segment_id} removed hard_wait {segment.start_time:.2f}-{segment.end_time:.2f}"
+                )
+                continue
+
+            if has_positive:
                 summary.kept_action += 1
                 kept.append(segment)
                 continue
-            if self._has_valuable_speech(segment, indicators, audio_windows):
+            if self._has_valuable_speech(segment, indicators, audio_windows, menu_context=False):
                 summary.kept_speech += 1
                 kept.append(segment)
                 continue
@@ -109,6 +133,8 @@ class RoundWaitDeadtimeGuard:
             "[TIMELINE-ROUND-WAIT-GUARD] "
             f"removed={summary.removed} "
             f"trimmed={summary.trimmed} "
+            f"after_goal_tail_trimmed={summary.after_goal_tail_trimmed} "
+            f"menu_speech_ignored={summary.menu_speech_ignored} "
             f"kept_action={summary.kept_action} "
             f"kept_speech={summary.kept_speech} "
             f"duration_before={summary.duration_before:.3f}s "
@@ -183,6 +209,84 @@ class RoundWaitDeadtimeGuard:
                     summary.add_example(f"{segment.segment_id} trim_end {old:.2f}->{segment.end_time:.2f}")
                     changed = True
         return changed
+
+    def _soft_trim_around_positive(
+        self,
+        segment: TimelineSegment,
+        indicators: list[CutIndicator],
+        summary: RoundWaitDeadtimeSummary,
+    ) -> bool:
+        windows = [
+            indicator
+            for indicator in indicators
+            if indicator.indicator_type in _POSITIVE_TYPES
+            and indicator.score >= 0.55
+            and _overlap_seconds(
+                segment.start_time,
+                segment.end_time,
+                indicator.start_seconds,
+                indicator.end_seconds,
+            ) >= 0.25
+        ]
+        if not windows:
+            return False
+        old_start = segment.start_time
+        old_end = segment.end_time
+        keep_start = round(max(segment.start_time, min(w.start_seconds for w in windows) - 1.0), 3)
+        keep_end = round(min(segment.end_time, max(w.end_seconds for w in windows) + 1.5), 3)
+        if keep_end - keep_start < MIN_SEGMENT_DURATION_SECONDS:
+            center = (keep_start + keep_end) / 2.0
+            keep_start = round(max(segment.start_time, center - MIN_SEGMENT_DURATION_SECONDS / 2.0), 3)
+            keep_end = round(min(segment.end_time, keep_start + MIN_SEGMENT_DURATION_SECONDS), 3)
+        if keep_start <= old_start and keep_end >= old_end:
+            return False
+        segment.start_time = keep_start
+        segment.end_time = keep_end
+        segment.notes.append(
+            f"round_wait_soft_trim_action={old_start:.3f}-{old_end:.3f}->{keep_start:.3f}-{keep_end:.3f}"
+        )
+        summary.trimmed += 1
+        summary.add_example(
+            f"{segment.segment_id} soft_trim {old_start:.2f}-{old_end:.2f}->{keep_start:.2f}-{keep_end:.2f}"
+        )
+        return True
+
+    def _trim_after_goal_tail(
+        self,
+        segment: TimelineSegment,
+        indicators: list[CutIndicator],
+        audio_windows: list[AudioRoleWindow],
+        summary: RoundWaitDeadtimeSummary,
+    ) -> bool:
+        action_windows = [
+            indicator
+            for indicator in indicators
+            if indicator.indicator_type in {"goal_or_save_like_flash", "high_action_burst"}
+            and _overlap_seconds(
+                segment.start_time,
+                segment.end_time,
+                indicator.start_seconds,
+                indicator.end_seconds,
+            ) > 0
+        ]
+        if not action_windows:
+            return False
+        action_end = max(indicator.end_seconds for indicator in action_windows)
+        proposed_end = round(action_end + 1.2, 3)
+        if proposed_end >= segment.end_time:
+            return False
+        if proposed_end - segment.start_time < MIN_SEGMENT_DURATION_SECONDS:
+            return False
+        if self._has_meaningful_activity_after(proposed_end, segment.end_time, indicators, audio_windows):
+            return False
+        old_end = segment.end_time
+        segment.end_time = proposed_end
+        segment.notes.append(f"round_wait_after_goal_tail_trim={old_end:.3f}->{segment.end_time:.3f}")
+        summary.trimmed += 1
+        summary.after_goal_tail_trimmed += 1
+        summary.add_example(f"{segment.segment_id} after_goal_tail {old_end:.2f}->{segment.end_time:.2f}")
+        segment.touch()
+        return True
 
     def _negative_score(
         self,
@@ -263,6 +367,8 @@ class RoundWaitDeadtimeGuard:
         segment: TimelineSegment,
         indicators: list[CutIndicator],
         audio_windows: list[AudioRoleWindow],
+        *,
+        menu_context: bool,
     ) -> bool:
         if any(
             indicator.indicator_type == "hook_sentence"
@@ -275,6 +381,8 @@ class RoundWaitDeadtimeGuard:
             for indicator in indicators
         ):
             return True
+        if menu_context:
+            return False
 
         speech_overlap = sum(
             _overlap_seconds(
@@ -297,6 +405,59 @@ class RoundWaitDeadtimeGuard:
             if indicator.indicator_type == "filler_sentence"
         )
         return speech_overlap > ROUND_WAIT_MAX_KEEP_IF_SPEECH and filler_overlap < speech_overlap * 0.5
+
+    def _has_hard_wait_signal(
+        self,
+        segment: TimelineSegment,
+        indicators: list[CutIndicator],
+    ) -> bool:
+        if segment.duration <= 8.0:
+            return False
+        return any(
+            indicator.indicator_type in {"menu_or_idle", "low_gameplay_value", "round_end_dead_time"}
+            and _overlap_seconds(
+                segment.start_time,
+                segment.end_time,
+                indicator.start_seconds,
+                indicator.end_seconds,
+            ) >= 0.5
+            for indicator in indicators
+        )
+
+    def _has_neutral_speech(
+        self,
+        segment: TimelineSegment,
+        audio_windows: list[AudioRoleWindow],
+    ) -> bool:
+        return any(
+            window.role_type in _SPEECH_TYPES
+            and _overlap_seconds(
+                segment.start_time,
+                segment.end_time,
+                window.start_seconds,
+                window.end_seconds,
+            ) > 0.25
+            for window in audio_windows
+        )
+
+    def _has_meaningful_activity_after(
+        self,
+        start: float,
+        end: float,
+        indicators: list[CutIndicator],
+        audio_windows: list[AudioRoleWindow],
+    ) -> bool:
+        return any(
+            indicator.indicator_type in _POSITIVE_TYPES
+            and indicator.indicator_type not in {"goal_or_save_like_flash", "high_action_burst"}
+            and _overlap_seconds(start, end, indicator.start_seconds, indicator.end_seconds) >= 0.25
+            for indicator in indicators
+        ) or any(
+            window.role_type in {"speech_active", "secondary_speech_like", "shout_like_audio", "group_reaction_like", "laugh_like_audio"}
+            and window.score >= 0.55
+            and _overlap_seconds(start, end, window.start_seconds, window.end_seconds) >= 0.3
+            for window in audio_windows
+        )
 
     def _cleanup(self, segments: list[TimelineSegment]) -> list[TimelineSegment]:
         kept: list[TimelineSegment] = []
