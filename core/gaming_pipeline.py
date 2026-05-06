@@ -33,6 +33,7 @@ from core.cut_indicator_builder import CutIndicatorBuilder
 from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
 from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
 from core.gameplay_state_analyzer import GameplayStateAnalyzer
+from core.universal_moment_brain import UniversalMomentBrain
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
@@ -561,6 +562,35 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             + " ".join(f"{name}={count}" for name, count in top_items)
         )
 
+    universal_moment_result = UniversalMomentBrain().analyze(
+        duration_seconds=getattr(
+            analysis_result,
+            "duration_seconds",
+            getattr(job, "duration_seconds", None),
+        ),
+        transcript_result=transcript_result,
+        sentence_timeline_result=sentence_timeline_result,
+        audio_role_result=audio_role_result,
+        gameplay_vision_result=gameplay_vision_result,
+        gameplay_event_result=gameplay_event_result,
+        gameplay_state_result=gameplay_state_result,
+        facecam_reaction_result=facecam_reaction_result,
+        facecam_emotion_result=facecam_emotion_result,
+        cut_indicator_result=cut_indicator_result,
+        round_phase_result=round_phase_result,
+    )
+    print(
+        f"[gaming_pipeline] UNIVERSAL_MOMENTS {job.job_id} "
+        f"windows={universal_moment_result.total_windows} "
+        f"keep={universal_moment_result.keep_windows} "
+        f"remove={universal_moment_result.remove_windows} "
+        f"cut_risk={universal_moment_result.cut_risk_windows} "
+        f"zoom_risk={universal_moment_result.zoom_risk_windows} "
+        f"avg={universal_moment_result.avg_moment_score} "
+        f"max={universal_moment_result.max_moment_score} "
+        f"engine={universal_moment_result.engine}"
+    )
+
     filtered_highlights, phase_filter_stats = _filter_highlights_by_round_phase(
         highlight_result["highlight_candidates"],
         round_phase_result,
@@ -605,6 +635,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             audio_role_result=audio_role_result,
             round_phase_result=round_phase_result,
             gameplay_state_result=gameplay_state_result,
+            universal_moment_result=universal_moment_result,
         )
         _fusion_timeline_note = next(
             (n for n in edit_timeline.timeline_notes if n.startswith("Indicator fusion:")),
@@ -1024,6 +1055,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             if gameplay_state_result is not None
             else None
         ),
+        "universal_moment_result": universal_moment_result.to_dict(),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -1063,6 +1095,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": gameplay_state_result,
+        "universal_moment_result": universal_moment_result,
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -1088,6 +1121,5 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "_reframe_to_save":      _reframe_to_save,
         "_dynamic_plan_to_save": _dynamic_plan_to_save,
     }
-
 
 

@@ -7,6 +7,7 @@ from models.energy_curve_result import EnergyCurveResult
 from models.facecam_reaction_result import FacecamReactionResult
 from models.gameplay_state_result import GameplayStateResult
 from models.gameplay_vision_result import GameplayVisionResult
+from models.universal_moment_result import UniversalMomentResult
 from models.edit_timeline import EditTimeline
 from models.highlight_candidate import HighlightCandidate
 from models.job import Job
@@ -352,6 +353,24 @@ class LongformTimelineBuilder:
             key=lambda index: selected_items[index]["selection_score"],
         )
 
+    def _universal_moment_stats(
+        self,
+        universal_moment_result: UniversalMomentResult | dict | None,
+    ) -> dict[str, float | int] | None:
+        if universal_moment_result is None:
+            return None
+        if isinstance(universal_moment_result, dict):
+            universal_moment_result = UniversalMomentResult.from_dict(universal_moment_result)
+        return {
+            "windows": int(getattr(universal_moment_result, "total_windows", 0) or 0),
+            "keep_windows": int(getattr(universal_moment_result, "keep_windows", 0) or 0),
+            "remove_windows": int(getattr(universal_moment_result, "remove_windows", 0) or 0),
+            "cut_risk_windows": int(getattr(universal_moment_result, "cut_risk_windows", 0) or 0),
+            "zoom_risk_windows": int(getattr(universal_moment_result, "zoom_risk_windows", 0) or 0),
+            "avg_moment_score": float(getattr(universal_moment_result, "avg_moment_score", 0.0) or 0.0),
+            "max_moment_score": float(getattr(universal_moment_result, "max_moment_score", 0.0) or 0.0),
+        }
+
     def build(
         self,
         job: Job,
@@ -368,6 +387,7 @@ class LongformTimelineBuilder:
         audio_role_result: AudioRoleResult | None = None,
         round_phase_result: RoundPhaseResult | None = None,
         gameplay_state_result: GameplayStateResult | None = None,
+        universal_moment_result: UniversalMomentResult | dict | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -376,6 +396,16 @@ class LongformTimelineBuilder:
             raise ValidationError("Timeline builder needs highlight candidates")
 
         weak_zones = weak_zones or []
+        universal_moment_stats = self._universal_moment_stats(universal_moment_result)
+        if universal_moment_stats is not None:
+            print(
+                "[TIMELINE-UNIVERSAL-MOMENTS] "
+                f"windows={universal_moment_stats['windows']} "
+                f"keep={universal_moment_stats['keep_windows']} "
+                f"remove={universal_moment_stats['remove_windows']} "
+                f"cut_risk={universal_moment_stats['cut_risk_windows']} "
+                f"zoom_risk={universal_moment_stats['zoom_risk_windows']}"
+            )
 
         # 1️⃣ ERST SCOREN: Highlights bewerten
         scored_candidates: list[dict] = []
@@ -976,6 +1006,18 @@ class LongformTimelineBuilder:
             f"duration_before={round_lifecycle_summary.duration_before:.3f}s "
             f"duration_after={round_lifecycle_summary.duration_after:.3f}s",
         ]
+
+        if universal_moment_stats is not None:
+            timeline_notes.append(
+                "Universal moment brain: "
+                f"windows={universal_moment_stats['windows']} "
+                f"keep_windows={universal_moment_stats['keep_windows']} "
+                f"remove_windows={universal_moment_stats['remove_windows']} "
+                f"cut_risk_windows={universal_moment_stats['cut_risk_windows']} "
+                f"zoom_risk_windows={universal_moment_stats['zoom_risk_windows']} "
+                f"avg_moment_score={universal_moment_stats['avg_moment_score']:.3f} "
+                f"max_moment_score={universal_moment_stats['max_moment_score']:.3f}"
+            )
 
         boost_counts = self._count_analysis_boosts(selected_segments)
         timeline_notes.append(
