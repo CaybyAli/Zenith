@@ -61,7 +61,9 @@ class RoundWaitDeadtimeGuard:
         *,
         cut_indicator_result: CutIndicatorResult | None = None,
         audio_role_result: AudioRoleResult | None = None,
+        gameplay_state_result=None,
     ) -> tuple[list[TimelineSegment], RoundWaitDeadtimeSummary]:
+        del gameplay_state_result
         ordered = sorted(
             (segment for segment in segments if segment.end_time > segment.start_time),
             key=lambda segment: (segment.start_time, segment.end_time, segment.segment_id),

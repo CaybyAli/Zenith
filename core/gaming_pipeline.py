@@ -32,6 +32,7 @@ from core.edit_signal_extractor import EditSignalExtractor
 from core.cut_indicator_builder import CutIndicatorBuilder
 from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
 from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
+from core.gameplay_state_analyzer import GameplayStateAnalyzer
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
@@ -488,6 +489,29 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"engine={round_phase_result.engine}"
         )
 
+    gameplay_state_result = None
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        gameplay_state_result = GameplayStateAnalyzer().analyze(
+            video_path=job.raw_video_path,
+            gameplay_vision_result=gameplay_vision_result,
+            gameplay_event_result=gameplay_event_result,
+            round_phase_result=round_phase_result,
+        )
+        state_counts = gameplay_state_result.state_counts
+        print(
+            f"[gaming_pipeline] GAMEPLAY_STATE {job.job_id} "
+            f"total={gameplay_state_result.total_windows} "
+            f"active={state_counts.get('active_gameplay', 0)} "
+            f"menu_wait={state_counts.get('menu_wait', 0)} "
+            f"round_end={state_counts.get('round_end', 0)} "
+            f"replay={state_counts.get('replay_like', 0)} "
+            f"low_wait={state_counts.get('low_motion_wait', 0)} "
+            f"high_action={state_counts.get('high_motion_action', 0)} "
+            f"pre_context={state_counts.get('possible_pre_action_context', 0)} "
+            f"dead_after_goal={state_counts.get('possible_dead_time_after_goal', 0)} "
+            f"engine={gameplay_state_result.engine}"
+        )
+
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
@@ -580,6 +604,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             sentence_timeline_result=sentence_timeline_result,
             audio_role_result=audio_role_result,
             round_phase_result=round_phase_result,
+            gameplay_state_result=gameplay_state_result,
         )
         _fusion_timeline_note = next(
             (n for n in edit_timeline.timeline_notes if n.startswith("Indicator fusion:")),
@@ -912,6 +937,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "sentence_timeline_result": sentence_timeline_result,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
+        "gameplay_state_result": (
+            gameplay_state_result.to_dict()
+            if gameplay_state_result is not None
+            else None
+        ),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -950,6 +980,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_vision_result": gameplay_vision_result,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
+        "gameplay_state_result": gameplay_state_result,
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,

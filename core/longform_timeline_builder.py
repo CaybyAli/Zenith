@@ -5,6 +5,7 @@ import uuid
 from models.analysis_result import AnalysisResult
 from models.energy_curve_result import EnergyCurveResult
 from models.facecam_reaction_result import FacecamReactionResult
+from models.gameplay_state_result import GameplayStateResult
 from models.gameplay_vision_result import GameplayVisionResult
 from models.edit_timeline import EditTimeline
 from models.highlight_candidate import HighlightCandidate
@@ -361,6 +362,7 @@ class LongformTimelineBuilder:
         sentence_timeline_result: SentenceTimelineResult | None = None,
         audio_role_result: AudioRoleResult | None = None,
         round_phase_result: RoundPhaseResult | None = None,
+        gameplay_state_result: GameplayStateResult | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -637,6 +639,7 @@ class LongformTimelineBuilder:
             selected_segments,
             cut_indicator_result=cut_indicator_result,
             audio_role_result=audio_role_result,
+            gameplay_state_result=gameplay_state_result,
         )
 
         if not selected_segments:
@@ -648,6 +651,7 @@ class LongformTimelineBuilder:
             audio_role_result=audio_role_result,
             weak_zones=weak_zones,
             round_phase_result=round_phase_result,
+            gameplay_state_result=gameplay_state_result,
         )
 
         if not selected_segments:
