@@ -25,6 +25,9 @@ MAX_WAIT_START_EXPAND_SECONDS = 1.25
 MAX_SENTENCE_END_EXPAND_SECONDS = 1.50
 MAX_ACTION_LEAD_SEARCH_SECONDS = 8.0
 MAX_ROUND_START_ACTION_LOOKAHEAD_SECONDS = 8.0
+MAX_TOTAL_DURATION_DROP_RATIO = 0.08
+MAX_SEGMENT_COUNT_DROP = 1
+FIRST_CONTEXT_PROTECTION_SECONDS = 30.0
 
 _PROTECTED_ROLES = frozenset({"hook", "peak", "payoff"})
 _WAIT_STATES = frozenset({
@@ -116,6 +119,9 @@ class SentenceAtomicitySummary:
     micro_segments_merged: int = 0
     action_lead_trimmed: int = 0
     round_start_action_protected: int = 0
+    partial_kept_budget: int = 0
+    first_context_kept: int = 0
+    budget_restored: int = 0
     duration_before: float = 0.0
     duration_after: float = 0.0
     examples: list[str] = field(default_factory=list)
@@ -135,6 +141,9 @@ class SentenceAtomicitySummary:
             "micro_segments_merged": self.micro_segments_merged,
             "action_lead_trimmed": self.action_lead_trimmed,
             "round_start_action_protected": self.round_start_action_protected,
+            "partial_kept_budget": self.partial_kept_budget,
+            "first_context_kept": self.first_context_kept,
+            "budget_restored": self.budget_restored,
             "duration_before": self.duration_before,
             "duration_after": self.duration_after,
             "examples": list(self.examples),
@@ -162,6 +171,11 @@ class SentenceAtomicityGuard:
         summary = SentenceAtomicitySummary(
             duration_before=round(sum(segment.duration for segment in ordered), 3)
         )
+        self._r2_max_duration_drop: float = round(
+            summary.duration_before * MAX_TOTAL_DURATION_DROP_RATIO, 3
+        )
+        self._r2_duration_dropped: float = 0.0
+        self._r2_segment_drops: int = 0
 
         transcripts = self._transcripts(transcript_result)
         sentences = self._sentences(sentence_timeline_result)
@@ -309,6 +323,19 @@ class SentenceAtomicityGuard:
             indicators,
             audio_windows,
         ):
+            if segment.segment_role in _PROTECTED_ROLES:
+                segment.notes.append("atomicity_protected_role_kept")
+                summary.partial_kept_budget += 1
+                return
+            if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS:
+                segment.notes.append("atomicity_first_context_kept")
+                summary.first_context_kept += 1
+                return
+            if not self._r2_can_kill(segment.duration):
+                segment.notes.append("atomicity_removal_skipped_budget")
+                summary.partial_kept_budget += 1
+                return
+            self._r2_record_kill(segment.duration)
             segment.notes.append("sentence_atomicity_partial_start_removed")
             segment.end_time = segment.start_time
             summary.sentence_partial_removed += 1
@@ -354,10 +381,20 @@ class SentenceAtomicityGuard:
 
         trim_end = round(max(segment.start_time, source.start_seconds - SENTENCE_START_PREROLL_SECONDS), 3)
         if trim_end < segment.end_time and trim_end - segment.start_time >= MIN_SEGMENT_DURATION_SECONDS:
+            trim_amount = round(segment.end_time - trim_end, 3)
+            if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS and trim_amount > 1.5:
+                segment.notes.append("atomicity_first_context_kept")
+                summary.first_context_kept += 1
+                return
+            if not self._r2_can_trim(trim_amount):
+                segment.notes.append("atomicity_removal_skipped_budget")
+                summary.partial_kept_budget += 1
+                return
             old = segment.end_time
             segment.end_time = trim_end
             segment.notes.append(f"sentence_atomicity_partial_end_trim={old:.3f}->{trim_end:.3f}")
             segment.touch()
+            self._r2_record_trim(trim_amount)
             summary.sentence_partial_removed += 1
             summary.add_example(f"{segment.segment_id} end {old:.2f}->{trim_end:.2f} partial_sentence_removed")
             return
@@ -368,6 +405,19 @@ class SentenceAtomicityGuard:
             indicators,
             audio_windows,
         ):
+            if segment.segment_role in _PROTECTED_ROLES:
+                segment.notes.append("atomicity_protected_role_kept")
+                summary.partial_kept_budget += 1
+                return
+            if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS:
+                segment.notes.append("atomicity_first_context_kept")
+                summary.first_context_kept += 1
+                return
+            if not self._r2_can_kill(segment.duration):
+                segment.notes.append("atomicity_removal_skipped_budget")
+                summary.partial_kept_budget += 1
+                return
+            self._r2_record_kill(segment.duration)
             segment.notes.append("sentence_atomicity_partial_end_removed")
             segment.end_time = segment.start_time
             summary.sentence_partial_removed += 1
@@ -414,6 +464,19 @@ class SentenceAtomicityGuard:
             indicators,
             audio_windows,
         ):
+            if segment.segment_role in _PROTECTED_ROLES:
+                segment.notes.append("atomicity_protected_role_kept")
+                summary.partial_kept_budget += 1
+                return
+            if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS:
+                segment.notes.append("atomicity_first_context_kept")
+                summary.first_context_kept += 1
+                return
+            if not self._r2_can_kill(segment.duration):
+                segment.notes.append("atomicity_removal_skipped_budget")
+                summary.partial_kept_budget += 1
+                return
+            self._r2_record_kill(segment.duration)
             segment.notes.append("sentence_atomicity_secondary_start_removed")
             segment.end_time = segment.start_time
             summary.secondary_sentence_removed += 1
@@ -444,10 +507,20 @@ class SentenceAtomicityGuard:
 
         trim_end = round(max(segment.start_time, window.start_seconds - SECONDARY_START_PREROLL_SECONDS), 3)
         if trim_end < segment.end_time and trim_end - segment.start_time >= MIN_SEGMENT_DURATION_SECONDS:
+            trim_amount = round(segment.end_time - trim_end, 3)
+            if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS and trim_amount > 1.5:
+                segment.notes.append("atomicity_first_context_kept")
+                summary.first_context_kept += 1
+                return
+            if not self._r2_can_trim(trim_amount):
+                segment.notes.append("atomicity_removal_skipped_budget")
+                summary.partial_kept_budget += 1
+                return
             old = segment.end_time
             segment.end_time = trim_end
             segment.notes.append(f"sentence_atomicity_secondary_end_trim={old:.3f}->{trim_end:.3f}")
             segment.touch()
+            self._r2_record_trim(trim_amount)
             summary.secondary_sentence_removed += 1
             summary.add_example(f"{segment.segment_id} end {old:.2f}->{trim_end:.2f} secondary_partial_removed")
             return
@@ -458,6 +531,19 @@ class SentenceAtomicityGuard:
             indicators,
             audio_windows,
         ):
+            if segment.segment_role in _PROTECTED_ROLES:
+                segment.notes.append("atomicity_protected_role_kept")
+                summary.partial_kept_budget += 1
+                return
+            if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS:
+                segment.notes.append("atomicity_first_context_kept")
+                summary.first_context_kept += 1
+                return
+            if not self._r2_can_kill(segment.duration):
+                segment.notes.append("atomicity_removal_skipped_budget")
+                summary.partial_kept_budget += 1
+                return
+            self._r2_record_kill(segment.duration)
             segment.notes.append("sentence_atomicity_secondary_end_removed")
             segment.end_time = segment.start_time
             summary.secondary_sentence_removed += 1
@@ -611,6 +697,21 @@ class SentenceAtomicityGuard:
                 kept.append(segment)
         return kept
 
+    def _r2_can_kill(self, duration: float) -> bool:
+        if self._r2_segment_drops >= MAX_SEGMENT_COUNT_DROP:
+            return False
+        return self._r2_duration_dropped + duration <= self._r2_max_duration_drop
+
+    def _r2_record_kill(self, duration: float) -> None:
+        self._r2_duration_dropped = round(self._r2_duration_dropped + duration, 3)
+        self._r2_segment_drops += 1
+
+    def _r2_can_trim(self, amount: float) -> bool:
+        return self._r2_duration_dropped + amount <= self._r2_max_duration_drop
+
+    def _r2_record_trim(self, amount: float) -> None:
+        self._r2_duration_dropped = round(self._r2_duration_dropped + amount, 3)
+
     def _can_move_start(
         self,
         segment: TimelineSegment,
@@ -673,6 +774,8 @@ class SentenceAtomicityGuard:
         audio_windows: list[AudioRoleWindow],
         summary: SentenceAtomicitySummary,
     ) -> bool:
+        if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS:
+            return False
         clean_start = round(source.end_seconds + SENTENCE_END_POSTROLL_SECONDS, 3)
         if clean_start <= segment.start_time:
             return False
@@ -680,10 +783,16 @@ class SentenceAtomicityGuard:
             return False
         if self._has_strong_protection(source.start_seconds, source.end_seconds, states, indicators, audio_windows):
             return False
+        trim_amount = round(clean_start - segment.start_time, 3)
+        if not self._r2_can_trim(trim_amount):
+            segment.notes.append("atomicity_removal_skipped_budget")
+            summary.partial_kept_budget += 1
+            return False
         old = segment.start_time
         segment.start_time = clean_start
         segment.notes.append(f"sentence_atomicity_partial_start_skip={old:.3f}->{clean_start:.3f}")
         segment.touch()
+        self._r2_record_trim(trim_amount)
         summary.sentence_partial_removed += 1
         summary.add_example(f"{segment.segment_id} start {old:.2f}->{clean_start:.2f} partial_sentence_removed")
         return True
@@ -704,10 +813,18 @@ class SentenceAtomicityGuard:
             return False
         if self._has_strong_protection(window.start_seconds, window.end_seconds, states, indicators, audio_windows):
             return False
+        if segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS:
+            return False
+        trim_amount = round(clean_start - segment.start_time, 3)
+        if not self._r2_can_trim(trim_amount):
+            segment.notes.append("atomicity_removal_skipped_budget")
+            summary.partial_kept_budget += 1
+            return False
         old = segment.start_time
         segment.start_time = clean_start
         segment.notes.append(f"sentence_atomicity_secondary_start_skip={old:.3f}->{clean_start:.3f}")
         segment.touch()
+        self._r2_record_trim(trim_amount)
         summary.secondary_sentence_removed += 1
         summary.add_example(f"{segment.segment_id} start {old:.2f}->{clean_start:.2f} secondary_partial_removed")
         return True
