@@ -738,6 +738,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"speech_end_locked={_seam_int('speech_end_locked')} "
             f"shout_end_locked={_seam_int('shout_end_locked')} "
             f"phrase_end_locked={_seam_int('phrase_end_locked')} "
+            f"seam_state_protected={_seam_int('seam_state_protected')} "
             f"low_value_removed={_seam_int('low_value_removed')} "
             f"menu_dead_time_removed={_seam_int('menu_dead_time_removed')}"
         )
@@ -768,7 +769,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"after_goal_tail_trimmed={_note_int(_round_wait_note, 'after_goal_tail_trimmed')} "
             f"menu_speech_ignored={_note_int(_round_wait_note, 'menu_speech_ignored')} "
             f"kept_action={_note_int(_round_wait_note, 'kept_action')} "
-            f"kept_speech={_note_int(_round_wait_note, 'kept_speech')}"
+            f"kept_speech={_note_int(_round_wait_note, 'kept_speech')} "
+            f"gameplay_state_removed={_note_int(_round_wait_note, 'gameplay_state_removed')} "
+            f"gameplay_state_trimmed={_note_int(_round_wait_note, 'gameplay_state_trimmed')} "
+            f"protected_by_action_state={_note_int(_round_wait_note, 'protected_by_action_state')}"
         )
         print(
             f"[gaming_pipeline] PRE_ACTION_CONTEXT {job.job_id} "
@@ -782,7 +786,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"boundary_stop={_note_int(_pre_action_note, 'boundary_stop')} "
             f"phase_stop={_note_int(_pre_action_note, 'phase_stop')} "
             f"skipped_overlap={_note_int(_pre_action_note, 'skipped_overlap')} "
-            f"skipped_silence={_note_int(_pre_action_note, 'skipped_silence')}"
+            f"skipped_silence={_note_int(_pre_action_note, 'skipped_silence')} "
+            f"gameplay_state_backfilled={_note_int(_pre_action_note, 'gameplay_state_backfilled')} "
+            f"goal_state_backfilled={_note_int(_pre_action_note, 'goal_state_backfilled')} "
+            f"action_state_backfilled={_note_int(_pre_action_note, 'action_state_backfilled')}"
         )
 
     # ------------------------------------------------------------------
@@ -845,6 +852,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             audio_role_result=audio_role_result,
             cut_indicator_result=cut_indicator_result,
             reframe_plan=reframe_plan,
+            gameplay_state_result=gameplay_state_result,
         )
         print(
             f"[gaming_pipeline] FACECAM_ZOOM_SMOOTHNESS {job.job_id} "
@@ -854,7 +862,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"short_removed={zoom_smooth_summary.short_removed} "
             f"weak_reaction_removed={zoom_smooth_summary.weak_reaction_removed} "
             f"silence_removed={zoom_smooth_summary.silence_removed} "
-            f"tail_trimmed={zoom_smooth_summary.tail_trimmed}"
+            f"tail_trimmed={zoom_smooth_summary.tail_trimmed} "
+            f"state_zoom_removed={zoom_smooth_summary.state_zoom_removed} "
+            f"state_zoom_trimmed={zoom_smooth_summary.state_zoom_trimmed} "
+            f"state_zoom_protected={zoom_smooth_summary.state_zoom_protected}"
         )
 
         print(f"[gaming_pipeline] ZOOM      {job.job_id}  "

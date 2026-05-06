@@ -67,6 +67,12 @@ _PHRASE_LOCK_TEXT = (
     "warte",
     "wichtig",
 )
+_GOOD_ACTION_STATES = frozenset({
+    "active_gameplay",
+    "high_motion_action",
+    "possible_goal_or_flash",
+    "possible_pre_action_context",
+})
 
 
 @dataclass
@@ -84,6 +90,7 @@ class FinalCutSeamSummary:
     speech_end_locked: int = 0
     shout_end_locked: int = 0
     phrase_end_locked: int = 0
+    seam_state_protected: int = 0
     duration_before: float = 0.0
     duration_after: float = 0.0
     examples: list[str] = field(default_factory=list)
@@ -109,7 +116,9 @@ class FinalCutSeamGuard:
         audio_role_result: AudioRoleResult | None = None,
         cut_indicator_result: CutIndicatorResult | None = None,
         cut_scoring_profile=None,
+        gameplay_state_result=None,
     ) -> tuple[list[TimelineSegment], FinalCutSeamSummary]:
+        del cut_scoring_profile
         ordered = sorted(
             (s for s in segments if s.end_time > s.start_time),
             key=lambda s: (s.start_time, s.end_time, s.segment_id),
@@ -122,6 +131,7 @@ class FinalCutSeamGuard:
         sentences = _sorted_sentences(sentence_timeline_result)
         audio_windows = _sorted_audio_windows(audio_role_result)
         indicators = _sorted_indicators(cut_indicator_result)
+        state_windows = _sorted_state_windows(gameplay_state_result)
 
         # E) Low-Value Bridge Pruner
         ordered = self._prune_low_value_bridges(ordered, indicators, summary)
@@ -136,7 +146,7 @@ class FinalCutSeamGuard:
             return ordered, summary
 
         # A) Word-Cut / Sentence-Seam Protection
-        self._apply_seam_speech_protection(ordered, transcripts, sentences, summary)
+        self._apply_seam_speech_protection(ordered, transcripts, sentences, indicators, state_windows, summary)
 
         # Reaction Context Guard
         self._apply_reaction_context(ordered, indicators, audio_windows, summary)
@@ -154,6 +164,7 @@ class FinalCutSeamGuard:
             sentences,
             audio_windows,
             indicators,
+            state_windows,
             summary,
         )
 
@@ -263,6 +274,8 @@ class FinalCutSeamGuard:
         segments: list[TimelineSegment],
         transcripts: list[TranscriptSegment],
         sentences: list[SentenceItem],
+        indicators: list[CutIndicator],
+        state_windows: list[object],
         summary: FinalCutSeamSummary,
     ) -> None:
         if not transcripts and not sentences:
@@ -271,7 +284,7 @@ class FinalCutSeamGuard:
             prev = segments[idx - 1] if idx > 0 else None
             nxt = segments[idx + 1] if idx + 1 < len(segments) else None
             self._protect_segment_start(seg, prev, transcripts, sentences, summary)
-            self._protect_segment_end(seg, nxt, transcripts, sentences, summary)
+            self._protect_segment_end(seg, nxt, transcripts, sentences, indicators, state_windows, summary)
             seg.start_time = round(max(0.0, seg.start_time), 3)
             seg.end_time = round(seg.end_time, 3)
             seg.touch()
@@ -314,6 +327,8 @@ class FinalCutSeamGuard:
         nxt: TimelineSegment | None,
         transcripts: list[TranscriptSegment],
         sentences: list[SentenceItem],
+        indicators: list[CutIndicator],
+        state_windows: list[object],
         summary: FinalCutSeamSummary,
     ) -> None:
         boundary = seg.end_time
@@ -329,6 +344,23 @@ class FinalCutSeamGuard:
 
         expansion = preferred - seg.end_time
         if expansion > MAX_SPEECH_EDGE_EXPAND_SECONDS:
+            if _has_state_or_shout_protection(
+                seg.end_time,
+                min(preferred, seg.end_time + MAX_SPEECH_EDGE_EXPAND_SECONDS),
+                indicators,
+                state_windows,
+            ):
+                capped = round(seg.end_time + MAX_SPEECH_EDGE_EXPAND_SECONDS, 3)
+                nxt_limit = round(nxt.start_time - MIN_SEAM_GAP_SECONDS, 3) if nxt else None
+                if nxt_limit is None or capped <= nxt_limit:
+                    old = seg.end_time
+                    seg.end_time = capped
+                    seg.notes.append(f"seam_state_protected_end={old:.3f}->{capped:.3f}")
+                    seg.touch()
+                    summary.speech_end_adjusted += 1
+                    summary.seam_state_protected += 1
+                    summary.add_example(f"{seg.segment_id} end {old:.2f}->{capped:.2f} state_protected")
+                return
             # Cut before the word starts instead of extending past it
             trim_back = round(src_start - WORD_CUT_PROTECTION_SECONDS, 3)
             if trim_back > seg.start_time + MIN_SEGMENT_DURATION_SECONDS:
@@ -516,6 +548,7 @@ class FinalCutSeamGuard:
         sentences: list[SentenceItem],
         audio_windows: list[AudioRoleWindow],
         indicators: list[CutIndicator],
+        state_windows: list[object],
         summary: FinalCutSeamSummary,
     ) -> None:
         for idx, seg in enumerate(segments):
@@ -537,6 +570,7 @@ class FinalCutSeamGuard:
                     preferred,
                     counter,
                     indicators,
+                    state_windows,
                     summary,
                 )
 
@@ -545,7 +579,7 @@ class FinalCutSeamGuard:
             ])
             if audio_source is not None:
                 preferred = round(audio_source.end_seconds + SPEECH_END_LOCK_HOLD_SECONDS, 3)
-                self._lock_segment_end(seg, nxt, preferred, "speech", indicators, summary)
+                self._lock_segment_end(seg, nxt, preferred, "speech", indicators, state_windows, summary)
 
             shout_windows = [
                 indicator
@@ -556,7 +590,7 @@ class FinalCutSeamGuard:
             ]
             if shout_windows:
                 preferred = round(max(ind.end_seconds for ind in shout_windows) + SHOUT_END_LOCK_HOLD_SECONDS, 3)
-                self._lock_segment_end(seg, nxt, preferred, "shout", indicators, summary)
+                self._lock_segment_end(seg, nxt, preferred, "shout", indicators, state_windows, summary)
 
     def _lock_segment_end(
         self,
@@ -565,20 +599,25 @@ class FinalCutSeamGuard:
         preferred: float,
         lock_kind: str,
         indicators: list[CutIndicator],
+        state_windows: list[object],
         summary: FinalCutSeamSummary,
     ) -> None:
         if preferred <= seg.end_time:
             return
         max_preferred = round(seg.end_time + MAX_SPEECH_END_LOCK_EXPAND_SECONDS, 3)
         if preferred > max_preferred:
-            trim_back = self._safe_trim_back_for_long_speech(seg, indicators)
-            if trim_back is not None:
-                old = seg.end_time
-                seg.end_time = trim_back
-                seg.notes.append(f"seam_speech_lock_trim_back={old:.3f}->{trim_back:.3f}")
-                summary.speech_end_trimmed_back += 1
-                summary.add_example(f"{seg.segment_id} end {old:.2f}->{trim_back:.2f} lock_trim_back")
-            return
+            if _has_state_or_shout_protection(seg.end_time, max_preferred, indicators, state_windows):
+                preferred = max_preferred
+                summary.seam_state_protected += 1
+            else:
+                trim_back = self._safe_trim_back_for_long_speech(seg, indicators)
+                if trim_back is not None:
+                    old = seg.end_time
+                    seg.end_time = trim_back
+                    seg.notes.append(f"seam_speech_lock_trim_back={old:.3f}->{trim_back:.3f}")
+                    summary.speech_end_trimmed_back += 1
+                    summary.add_example(f"{seg.segment_id} end {old:.2f}->{trim_back:.2f} lock_trim_back")
+                return
         if preferred - seg.start_time < MIN_SEGMENT_DURATION_SECONDS:
             return
         if nxt is not None:
@@ -777,6 +816,52 @@ def _sorted_indicators(cut_indicator_result: CutIndicatorResult | None) -> list[
     return sorted(
         (i for i in cut_indicator_result.indicators if i.end_seconds > i.start_seconds),
         key=lambda i: (i.start_seconds, i.end_seconds),
+    )
+
+
+def _sorted_state_windows(gameplay_state_result) -> list[object]:
+    if gameplay_state_result is None:
+        return []
+    windows = (
+        gameplay_state_result.get("windows", [])
+        if isinstance(gameplay_state_result, dict)
+        else getattr(gameplay_state_result, "windows", [])
+    )
+    return sorted(
+        [window for window in windows or [] if _state_end(window) > _state_start(window)],
+        key=lambda window: (_state_start(window), _state_end(window), _state_type(window)),
+    )
+
+
+def _state_type(state: object) -> str:
+    return str(state.get("state_type", "") if isinstance(state, dict) else getattr(state, "state_type", ""))
+
+
+def _state_start(state: object) -> float:
+    value = state.get("start_seconds", 0.0) if isinstance(state, dict) else getattr(state, "start_seconds", 0.0)
+    return float(value or 0.0)
+
+
+def _state_end(state: object) -> float:
+    value = state.get("end_seconds", 0.0) if isinstance(state, dict) else getattr(state, "end_seconds", 0.0)
+    return float(value or 0.0)
+
+
+def _has_state_or_shout_protection(
+    start: float,
+    end: float,
+    indicators: list[CutIndicator],
+    state_windows: list[object],
+) -> bool:
+    protection_start = max(0.0, start - 1.0)
+    return any(
+        _state_type(state) in _GOOD_ACTION_STATES
+        and _overlap_seconds(protection_start, end, _state_start(state), _state_end(state)) > 0.0
+        for state in state_windows
+    ) or any(
+        indicator.indicator_type in _SHOUT_END_TYPES
+        and _overlap_seconds(protection_start, end, indicator.start_seconds, indicator.end_seconds) > 0.0
+        for indicator in indicators
     )
 
 

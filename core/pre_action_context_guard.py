@@ -28,6 +28,32 @@ _ACTION_TYPES = frozenset({
 })
 _GOAL_TYPES = frozenset({"goal_or_save_like_flash"})
 _SHOUT_TYPES = frozenset({"shout_like_audio", "group_reaction_like"})
+_BAD_WAIT_STATES = frozenset({
+    "menu_wait",
+    "low_motion_wait",
+    "possible_dead_time_after_goal",
+    "round_end",
+    "replay_like",
+    "scoreboard_like",
+})
+_GOOD_ACTION_STATES = frozenset({
+    "active_gameplay",
+    "high_motion_action",
+    "possible_goal_or_flash",
+    "possible_pre_action_context",
+})
+_STATE_CONTEXT_SECONDS = {
+    "possible_goal_or_flash": 3.0,
+    "high_motion_action": 2.0,
+    "possible_pre_action_context": 2.5,
+    "active_gameplay": 1.5,
+}
+MAX_STATE_BACKFILL_DURATION = {
+    "build": 28.0,
+    "bridge": 28.0,
+    "peak": 35.0,
+    "payoff": 35.0,
+}
 
 
 @dataclass
@@ -43,6 +69,11 @@ class PreActionContextSummary:
     phase_stop: int = 0
     skipped_overlap: int = 0
     skipped_silence: int = 0
+    gameplay_state_backfilled: int = 0
+    goal_state_backfilled: int = 0
+    action_state_backfilled: int = 0
+    skipped_state_silence: int = 0
+    skipped_state_overlap: int = 0
     duration_before: float = 0.0
     duration_after: float = 0.0
     examples: list[str] = field(default_factory=list)
@@ -65,7 +96,6 @@ class PreActionContextGuard:
         round_phase_result: RoundPhaseResult | None = None,
         gameplay_state_result=None,
     ) -> tuple[list[TimelineSegment], PreActionContextSummary]:
-        del gameplay_state_result
         ordered = sorted(
             (segment for segment in segments if segment.end_time > segment.start_time),
             key=lambda segment: (segment.start_time, segment.end_time, segment.segment_id),
@@ -76,6 +106,15 @@ class PreActionContextGuard:
         indicators = self._indicators(cut_indicator_result)
         audio_windows = self._audio_windows(audio_role_result)
         silence_zones = self._silence_zones(weak_zones)
+        state_windows = self._state_windows(gameplay_state_result)
+
+        self._apply_gameplay_state_backfill(
+            ordered,
+            state_windows,
+            audio_windows,
+            silence_zones,
+            summary,
+        )
 
         for index, segment in enumerate(ordered):
             previous = ordered[index - 1] if index > 0 else None
@@ -165,12 +204,74 @@ class PreActionContextGuard:
             f"phase_stop={summary.phase_stop} "
             f"skipped_overlap={summary.skipped_overlap} "
             f"skipped_silence={summary.skipped_silence} "
+            f"gameplay_state_backfilled={summary.gameplay_state_backfilled} "
+            f"goal_state_backfilled={summary.goal_state_backfilled} "
+            f"action_state_backfilled={summary.action_state_backfilled} "
+            f"skipped_state_silence={summary.skipped_state_silence} "
+            f"skipped_state_overlap={summary.skipped_state_overlap} "
             f"duration_before={summary.duration_before:.3f}s "
             f"duration_after={summary.duration_after:.3f}s"
         )
         if summary.examples:
             print(f"[TIMELINE-PRE-ACTION-CONTEXT] examples={'; '.join(summary.examples)}")
         return ordered, summary
+
+    def _apply_gameplay_state_backfill(
+        self,
+        ordered: list[TimelineSegment],
+        state_windows: list[object],
+        audio_windows: list[AudioRoleWindow],
+        silence_zones: list[tuple[float, float]],
+        summary: PreActionContextSummary,
+    ) -> None:
+        if not state_windows:
+            return
+
+        for index, segment in enumerate(ordered):
+            previous = ordered[index - 1] if index > 0 else None
+            previous_limit = round(previous.end_time + MIN_GAP_SECONDS, 3) if previous else 0.0
+            state = self._state_trigger_near_start(segment, state_windows)
+            if state is None:
+                continue
+
+            state_type = self._state_type(state)
+            context_seconds = _STATE_CONTEXT_SECONDS[state_type]
+            preferred = round(max(0.0, self._state_start(state) - context_seconds), 3)
+            preferred = max(preferred, previous_limit)
+
+            if preferred >= segment.start_time:
+                continue
+            if preferred > previous_limit and previous is not None and preferred < previous_limit:
+                summary.skipped_state_overlap += 1
+                continue
+            if preferred == previous_limit and previous is not None and previous_limit > self._state_start(state) - context_seconds:
+                summary.skipped_state_overlap += 1
+            if self._bad_state_or_silence_dominates(preferred, segment.start_time, state_windows, audio_windows, silence_zones):
+                summary.skipped_state_silence += 1
+                segment.notes.append("pre_action_state_backfill_skipped_wait_or_silence")
+                continue
+
+            max_duration = MAX_STATE_BACKFILL_DURATION.get(segment.segment_role, 28.0)
+            if segment.end_time - preferred > max_duration:
+                preferred = round(max(segment.start_time - context_seconds, segment.end_time - max_duration, previous_limit), 3)
+                if preferred >= segment.start_time:
+                    continue
+            if segment.end_time - preferred < MIN_SEGMENT_DURATION_SECONDS:
+                continue
+
+            old = segment.start_time
+            segment.start_time = preferred
+            segment.notes.append(f"pre_action_state_{state_type}={old:.3f}->{preferred:.3f}")
+            segment.touch()
+            summary.expanded += 1
+            summary.gameplay_state_backfilled += 1
+            if state_type == "possible_goal_or_flash":
+                summary.goal_state_backfilled += 1
+                summary.goal += 1
+            else:
+                summary.action_state_backfilled += 1
+                summary.action += 1
+            summary.add_example(f"{segment.segment_id} state_{state_type} start {old:.2f}->{preferred:.2f}")
 
     def _smart_backfill_start(
         self,
@@ -325,6 +426,67 @@ class PreActionContextGuard:
             if max(start, phase.start_seconds) < min(end, phase.end_seconds):
                 return phase
         return None
+
+    def _state_trigger_near_start(self, segment: TimelineSegment, state_windows: list[object]) -> object | None:
+        candidates = [
+            state for state in state_windows
+            if self._state_type(state) in _GOOD_ACTION_STATES
+            and 0.0 <= segment.start_time - self._state_start(state) <= 1.0
+        ]
+        if not candidates:
+            return None
+        priority = {
+            "possible_goal_or_flash": 0,
+            "high_motion_action": 1,
+            "possible_pre_action_context": 2,
+            "active_gameplay": 3,
+        }
+        return sorted(candidates, key=lambda state: (priority.get(self._state_type(state), 9), self._state_start(state)))[0]
+
+    def _bad_state_or_silence_dominates(
+        self,
+        start: float,
+        end: float,
+        state_windows: list[object],
+        audio_windows: list[AudioRoleWindow],
+        silence_zones: list[tuple[float, float]],
+    ) -> bool:
+        duration = max(0.001, end - start)
+        bad_state = sum(
+            _overlap_seconds(start, end, self._state_start(state), self._state_end(state))
+            for state in state_windows
+            if self._state_type(state) in _BAD_WAIT_STATES
+        )
+        audio_silence = sum(
+            _overlap_seconds(start, end, window.start_seconds, window.end_seconds)
+            for window in audio_windows
+            if window.role_type == "silence_or_dead_air" and window.score >= 0.65
+        )
+        weak_silence = sum(
+            _overlap_seconds(start, end, zone_start, zone_end)
+            for zone_start, zone_end in silence_zones
+        )
+        return (bad_state + audio_silence + weak_silence) / duration >= 0.50
+
+    def _state_windows(self, result) -> list[object]:
+        if result is None:
+            return []
+        windows = result.get("windows", []) if isinstance(result, dict) else getattr(result, "windows", [])
+        return sorted(
+            [window for window in windows or [] if self._state_end(window) > self._state_start(window)],
+            key=lambda window: (self._state_start(window), self._state_end(window), self._state_type(window)),
+        )
+
+    def _state_type(self, state: object) -> str:
+        return str(state.get("state_type", "") if isinstance(state, dict) else getattr(state, "state_type", ""))
+
+    def _state_start(self, state: object) -> float:
+        value = state.get("start_seconds", 0.0) if isinstance(state, dict) else getattr(state, "start_seconds", 0.0)
+        return float(value or 0.0)
+
+    def _state_end(self, state: object) -> float:
+        value = state.get("end_seconds", 0.0) if isinstance(state, dict) else getattr(state, "end_seconds", 0.0)
+        return float(value or 0.0)
 
 
 def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float) -> float:

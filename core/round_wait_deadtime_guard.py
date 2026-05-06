@@ -33,6 +33,20 @@ _POSITIVE_TYPES = frozenset({
     "facecam_reaction_spike",
 })
 _SPEECH_TYPES = frozenset({"speech_active", "secondary_speech_like"})
+_BAD_WAIT_STATES = frozenset({
+    "menu_wait",
+    "low_motion_wait",
+    "possible_dead_time_after_goal",
+    "round_end",
+    "replay_like",
+    "scoreboard_like",
+})
+_GOOD_ACTION_STATES = frozenset({
+    "active_gameplay",
+    "high_motion_action",
+    "possible_goal_or_flash",
+    "possible_pre_action_context",
+})
 
 
 @dataclass
@@ -43,6 +57,11 @@ class RoundWaitDeadtimeSummary:
     menu_speech_ignored: int = 0
     kept_action: int = 0
     kept_speech: int = 0
+    gameplay_state_removed: int = 0
+    gameplay_state_trimmed: int = 0
+    state_menu_wait_seconds: float = 0.0
+    state_dead_wait_seconds: float = 0.0
+    protected_by_action_state: int = 0
     duration_before: float = 0.0
     duration_after: float = 0.0
     examples: list[str] = field(default_factory=list)
@@ -63,7 +82,6 @@ class RoundWaitDeadtimeGuard:
         audio_role_result: AudioRoleResult | None = None,
         gameplay_state_result=None,
     ) -> tuple[list[TimelineSegment], RoundWaitDeadtimeSummary]:
-        del gameplay_state_result
         ordered = sorted(
             (segment for segment in segments if segment.end_time > segment.start_time),
             key=lambda segment: (segment.start_time, segment.end_time, segment.segment_id),
@@ -73,13 +91,24 @@ class RoundWaitDeadtimeGuard:
         )
         indicators = self._indicators(cut_indicator_result)
         audio_windows = self._audio_windows(audio_role_result)
+        state_windows = self._state_windows(gameplay_state_result)
 
         kept: list[TimelineSegment] = []
         for segment in ordered:
             if segment.segment_role in _PROTECTED_ROLES:
                 kept.append(segment)
                 continue
-            if segment.segment_role not in _TARGET_ROLES or segment.duration <= ROUND_WAIT_MIN_DURATION:
+            if segment.segment_role not in _TARGET_ROLES:
+                kept.append(segment)
+                continue
+
+            state_removed = self._apply_gameplay_state_wait(segment, state_windows, summary)
+            if state_removed:
+                continue
+            if segment.end_time <= segment.start_time:
+                continue
+
+            if segment.duration <= ROUND_WAIT_MIN_DURATION:
                 kept.append(segment)
                 continue
 
@@ -139,12 +168,124 @@ class RoundWaitDeadtimeGuard:
             f"menu_speech_ignored={summary.menu_speech_ignored} "
             f"kept_action={summary.kept_action} "
             f"kept_speech={summary.kept_speech} "
+            f"gameplay_state_removed={summary.gameplay_state_removed} "
+            f"gameplay_state_trimmed={summary.gameplay_state_trimmed} "
+            f"protected_by_action_state={summary.protected_by_action_state} "
+            f"state_menu_wait_seconds={summary.state_menu_wait_seconds:.3f}s "
+            f"state_dead_wait_seconds={summary.state_dead_wait_seconds:.3f}s "
             f"duration_before={summary.duration_before:.3f}s "
             f"duration_after={summary.duration_after:.3f}s"
         )
         if summary.examples:
             print(f"[TIMELINE-ROUND-WAIT-GUARD] examples={'; '.join(summary.examples)}")
         return kept, summary
+
+    def _apply_gameplay_state_wait(
+        self,
+        segment: TimelineSegment,
+        state_windows: list[object],
+        summary: RoundWaitDeadtimeSummary,
+    ) -> bool:
+        if not state_windows or segment.duration <= 0:
+            return False
+
+        bad_windows = self._state_overlap_windows(segment, state_windows, _BAD_WAIT_STATES)
+        good_overlap = self._state_overlap_seconds(segment, state_windows, _GOOD_ACTION_STATES)
+        bad_overlap = sum(end - start for start, end in bad_windows)
+        if bad_overlap <= 0.0 and good_overlap <= 0.0:
+            return False
+
+        bad_ratio = bad_overlap / max(segment.duration, 0.001)
+        good_ratio = good_overlap / max(segment.duration, 0.001)
+        summary.state_menu_wait_seconds = round(
+            summary.state_menu_wait_seconds
+            + self._state_overlap_seconds(segment, state_windows, {"menu_wait", "scoreboard_like"}),
+            3,
+        )
+        summary.state_dead_wait_seconds = round(
+            summary.state_dead_wait_seconds
+            + self._state_overlap_seconds(
+                segment,
+                state_windows,
+                {"possible_dead_time_after_goal", "round_end", "replay_like", "low_motion_wait"},
+            ),
+            3,
+        )
+
+        if good_ratio >= 0.20:
+            summary.protected_by_action_state += 1
+            segment.notes.append(f"round_wait_state_protected_action={good_ratio:.3f}")
+            return False
+
+        if bad_ratio >= 0.45:
+            segment.notes.append(f"round_wait_state_removed_bad={bad_ratio:.3f}")
+            summary.removed += 1
+            summary.gameplay_state_removed += 1
+            summary.add_example(
+                f"{segment.segment_id} removed gameplay_state bad={bad_ratio:.2f} good={good_ratio:.2f}"
+            )
+            return True
+
+        if bad_ratio >= 0.30 and self._trim_state_wait_edges(segment, bad_windows, summary):
+            segment.touch()
+        return False
+
+    def _trim_state_wait_edges(
+        self,
+        segment: TimelineSegment,
+        bad_windows: list[tuple[float, float]],
+        summary: RoundWaitDeadtimeSummary,
+    ) -> bool:
+        changed = False
+        for start, end in bad_windows:
+            if start <= segment.start_time + 0.2:
+                proposed_start = round(min(end, segment.end_time - MIN_SEGMENT_DURATION_SECONDS), 3)
+                if proposed_start > segment.start_time and segment.end_time - proposed_start >= MIN_SEGMENT_DURATION_SECONDS:
+                    old = segment.start_time
+                    segment.start_time = proposed_start
+                    segment.notes.append(f"round_wait_state_trim_start={old:.3f}->{segment.start_time:.3f}")
+                    summary.trimmed += 1
+                    summary.gameplay_state_trimmed += 1
+                    summary.add_example(f"{segment.segment_id} state_trim_start {old:.2f}->{segment.start_time:.2f}")
+                    changed = True
+            if end >= segment.end_time - 0.2:
+                proposed_end = round(max(start, segment.start_time + MIN_SEGMENT_DURATION_SECONDS), 3)
+                if proposed_end < segment.end_time and proposed_end - segment.start_time >= MIN_SEGMENT_DURATION_SECONDS:
+                    old = segment.end_time
+                    segment.end_time = proposed_end
+                    segment.notes.append(f"round_wait_state_trim_end={old:.3f}->{segment.end_time:.3f}")
+                    summary.trimmed += 1
+                    summary.gameplay_state_trimmed += 1
+                    summary.add_example(f"{segment.segment_id} state_trim_end {old:.2f}->{segment.end_time:.2f}")
+                    changed = True
+        return changed
+
+    def _state_overlap_windows(
+        self,
+        segment: TimelineSegment,
+        state_windows: list[object],
+        state_types: frozenset[str] | set[str],
+    ) -> list[tuple[float, float]]:
+        windows: list[tuple[float, float]] = []
+        for state in state_windows:
+            if self._state_type(state) not in state_types:
+                continue
+            start = max(segment.start_time, self._state_start(state))
+            end = min(segment.end_time, self._state_end(state))
+            if end > start:
+                windows.append((start, end))
+        return _merge_windows(windows)
+
+    def _state_overlap_seconds(
+        self,
+        segment: TimelineSegment,
+        state_windows: list[object],
+        state_types: frozenset[str] | set[str],
+    ) -> float:
+        return round(
+            sum(end - start for start, end in self._state_overlap_windows(segment, state_windows, state_types)),
+            3,
+        )
 
     def _should_remove(
         self,
@@ -495,6 +636,26 @@ class RoundWaitDeadtimeGuard:
             (window for window in result.windows if window.end_seconds > window.start_seconds),
             key=lambda window: (window.start_seconds, window.end_seconds),
         )
+
+    def _state_windows(self, result) -> list[object]:
+        if result is None:
+            return []
+        windows = result.get("windows", []) if isinstance(result, dict) else getattr(result, "windows", [])
+        return sorted(
+            [window for window in windows or [] if self._state_end(window) > self._state_start(window)],
+            key=lambda window: (self._state_start(window), self._state_end(window), self._state_type(window)),
+        )
+
+    def _state_type(self, state: object) -> str:
+        return str(state.get("state_type", "") if isinstance(state, dict) else getattr(state, "state_type", ""))
+
+    def _state_start(self, state: object) -> float:
+        value = state.get("start_seconds", 0.0) if isinstance(state, dict) else getattr(state, "start_seconds", 0.0)
+        return float(value or 0.0)
+
+    def _state_end(self, state: object) -> float:
+        value = state.get("end_seconds", 0.0) if isinstance(state, dict) else getattr(state, "end_seconds", 0.0)
+        return float(value or 0.0)
 
 
 def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float) -> float:

@@ -612,6 +612,7 @@ class LongformTimelineBuilder:
             sentence_timeline_result=sentence_timeline_result,
             audio_role_result=audio_role_result,
             cut_indicator_result=cut_indicator_result,
+            gameplay_state_result=gameplay_state_result,
         )
         print(
             "[TIMELINE-SEAM-GUARD] "
@@ -623,6 +624,7 @@ class LongformTimelineBuilder:
             f"speech_end_locked={seam_summary.speech_end_locked} "
             f"shout_end_locked={seam_summary.shout_end_locked} "
             f"phrase_end_locked={seam_summary.phrase_end_locked} "
+            f"seam_state_protected={seam_summary.seam_state_protected} "
             f"low_value_removed={seam_summary.low_value_segments_removed} "
             f"menu_dead_time_removed={seam_summary.menu_dead_time_removed} "
             f"important_context={seam_summary.important_context_expanded} "
@@ -724,6 +726,7 @@ class LongformTimelineBuilder:
             f"speech_end_locked={seam_summary.speech_end_locked} "
             f"shout_end_locked={seam_summary.shout_end_locked} "
             f"phrase_end_locked={seam_summary.phrase_end_locked} "
+            f"seam_state_protected={seam_summary.seam_state_protected} "
             f"low_value_removed={seam_summary.low_value_segments_removed} "
             f"menu_dead_time_removed={seam_summary.menu_dead_time_removed} "
             f"duration_before={seam_summary.duration_before:.3f}s "
@@ -735,6 +738,11 @@ class LongformTimelineBuilder:
             f"menu_speech_ignored={round_wait_summary.menu_speech_ignored} "
             f"kept_action={round_wait_summary.kept_action} "
             f"kept_speech={round_wait_summary.kept_speech} "
+            f"gameplay_state_removed={round_wait_summary.gameplay_state_removed} "
+            f"gameplay_state_trimmed={round_wait_summary.gameplay_state_trimmed} "
+            f"protected_by_action_state={round_wait_summary.protected_by_action_state} "
+            f"state_menu_wait_seconds={round_wait_summary.state_menu_wait_seconds:.3f} "
+            f"state_dead_wait_seconds={round_wait_summary.state_dead_wait_seconds:.3f} "
             f"duration_before={round_wait_summary.duration_before:.3f}s "
             f"duration_after={round_wait_summary.duration_after:.3f}s",
             "Pre action context: "
@@ -749,6 +757,11 @@ class LongformTimelineBuilder:
             f"phase_stop={pre_action_summary.phase_stop} "
             f"skipped_overlap={pre_action_summary.skipped_overlap} "
             f"skipped_silence={pre_action_summary.skipped_silence} "
+            f"gameplay_state_backfilled={pre_action_summary.gameplay_state_backfilled} "
+            f"goal_state_backfilled={pre_action_summary.goal_state_backfilled} "
+            f"action_state_backfilled={pre_action_summary.action_state_backfilled} "
+            f"skipped_state_silence={pre_action_summary.skipped_state_silence} "
+            f"skipped_state_overlap={pre_action_summary.skipped_state_overlap} "
             f"duration_before={pre_action_summary.duration_before:.3f}s "
             f"duration_after={pre_action_summary.duration_after:.3f}s",
         ]

@@ -42,6 +42,20 @@ _MEANINGFUL_INDICATOR_TYPES = frozenset({
     "high_action_burst",
     "goal_or_save_like_flash",
 })
+_BAD_WAIT_STATES = frozenset({
+    "menu_wait",
+    "low_motion_wait",
+    "possible_dead_time_after_goal",
+    "round_end",
+    "replay_like",
+    "scoreboard_like",
+})
+_GOOD_ACTION_STATES = frozenset({
+    "active_gameplay",
+    "high_motion_action",
+    "possible_goal_or_flash",
+    "possible_pre_action_context",
+})
 
 
 @dataclass
@@ -55,6 +69,10 @@ class FacecamZoomSmoothnessSummary:
     tail_trimmed: int = 0
     smooth_buffer_removed: int = 0
     layout_converted: int = 0
+    state_zoom_removed: int = 0
+    state_zoom_trimmed: int = 0
+    state_zoom_protected: int = 0
+    zoom_edge_hard_dropped: int = 0
     examples: list[str] = field(default_factory=list)
 
     def add_example(self, text: str) -> None:
@@ -74,6 +92,7 @@ class FacecamZoomSmoothnessGuard:
         audio_role_result: AudioRoleResult | None = None,
         cut_indicator_result: CutIndicatorResult | None = None,
         reframe_plan: ReframePlan | None = None,
+        gameplay_state_result=None,
     ) -> FacecamZoomSmoothnessSummary:
         summary = FacecamZoomSmoothnessSummary()
         raw_zoom_count = len(dynamic_edit_plan.zoom_instructions)
@@ -84,6 +103,7 @@ class FacecamZoomSmoothnessGuard:
         }
         audio_windows = self._audio_windows(audio_role_result)
         indicators = self._indicators(cut_indicator_result)
+        state_windows = self._state_windows(gameplay_state_result)
 
         kept: list[ZoomInstruction] = []
         for zoom in sorted(
@@ -101,6 +121,7 @@ class FacecamZoomSmoothnessGuard:
                 facecam_reaction_result,
                 audio_windows,
                 indicators,
+                state_windows,
                 summary,
             )
             if adjusted is not None:
@@ -116,7 +137,11 @@ class FacecamZoomSmoothnessGuard:
             f"short_removed={summary.short_removed} "
             f"weak_reaction_removed={summary.weak_reaction_removed} "
             f"silence_removed={summary.silence_removed} "
-            f"tail_trimmed={summary.tail_trimmed}"
+            f"tail_trimmed={summary.tail_trimmed} "
+            f"state_zoom_removed={summary.state_zoom_removed} "
+            f"state_zoom_trimmed={summary.state_zoom_trimmed} "
+            f"state_zoom_protected={summary.state_zoom_protected} "
+            f"zoom_edge_hard_dropped={summary.zoom_edge_hard_dropped}"
         )
         dynamic_edit_plan.touch()
 
@@ -154,6 +179,7 @@ class FacecamZoomSmoothnessGuard:
         facecam_reaction_result: FacecamReactionResult | None,
         audio_windows: list[AudioRoleWindow],
         indicators: list[CutIndicator],
+        state_windows: list[object],
         summary: FacecamZoomSmoothnessSummary,
     ) -> ZoomInstruction | None:
         zoom.start_time = round(max(segment.start_time, zoom.start_time), 3)
@@ -161,6 +187,26 @@ class FacecamZoomSmoothnessGuard:
 
         if zoom.end_time <= zoom.start_time:
             self._remove(summary, "edge_blocked", zoom, "outside_segment")
+            return None
+
+        safe_start = round(segment.start_time + FACE_CAM_EDGE_SAFE_SECONDS, 3)
+        safe_end = round(segment.end_time - FACE_CAM_EDGE_SAFE_SECONDS, 3)
+        if safe_end <= safe_start:
+            self._remove(summary, "edge_blocked", zoom, "segment_too_short_for_safe_zoom")
+            summary.zoom_edge_hard_dropped += 1
+            return None
+        if zoom.start_time < safe_start:
+            self._remove(summary, "edge_blocked", zoom, "start_edge")
+            summary.zoom_edge_hard_dropped += 1
+            return None
+        if zoom.end_time > safe_end:
+            self._remove(summary, "edge_blocked", zoom, "end_edge")
+            summary.zoom_edge_hard_dropped += 1
+            return None
+
+        if self._state_protects_zoom(zoom, state_windows, audio_windows, indicators):
+            summary.state_zoom_protected += 1
+        elif self._remove_or_trim_wait_state_zoom(zoom, state_windows, summary):
             return None
 
         if not self._has_strong_reaction(zoom, segment, facecam_reaction_result):
@@ -186,20 +232,6 @@ class FacecamZoomSmoothnessGuard:
             self._remove(summary, "short_removed", zoom, "very_short_zoom")
             return None
 
-        safe_start = round(segment.start_time + FACE_CAM_EDGE_SAFE_SECONDS, 3)
-        safe_end = round(segment.end_time - FACE_CAM_EDGE_SAFE_SECONDS, 3)
-        if safe_end <= safe_start:
-            self._remove(summary, "edge_blocked", zoom, "segment_too_short_for_safe_zoom")
-            return None
-
-        if zoom.start_time < safe_start:
-            self._remove(summary, "edge_blocked", zoom, "start_edge")
-            return None
-
-        if zoom.end_time > safe_end:
-            self._remove(summary, "edge_blocked", zoom, "end_edge")
-            return None
-
         self._trim_post_action_tail(zoom, indicators, audio_windows, facecam_reaction_result, summary)
         if (
             zoom.duration < MIN_FACECAM_ZOOM_DURATION_SECONDS
@@ -209,6 +241,86 @@ class FacecamZoomSmoothnessGuard:
             return None
 
         return zoom
+
+    def _remove_or_trim_wait_state_zoom(
+        self,
+        zoom: ZoomInstruction,
+        state_windows: list[object],
+        summary: FacecamZoomSmoothnessSummary,
+    ) -> bool:
+        if not state_windows or zoom.duration <= 0:
+            return False
+        bad = self._state_overlap_windows(zoom.start_time, zoom.end_time, state_windows, _BAD_WAIT_STATES)
+        bad_overlap = sum(end - start for start, end in bad)
+        if bad_overlap <= 0:
+            return False
+        bad_ratio = bad_overlap / max(zoom.duration, 0.001)
+        if bad_ratio >= 0.50:
+            self._remove(summary, "state_zoom_removed", zoom, f"gameplay_state_wait {bad_ratio:.2f}")
+            return True
+        changed = False
+        for start, end in bad:
+            if start <= zoom.start_time + 0.1:
+                proposed_start = round(end, 3)
+                if zoom.end_time - proposed_start >= MIN_FACECAM_ZOOM_DURATION_SECONDS:
+                    old = zoom.start_time
+                    zoom.start_time = proposed_start
+                    zoom.notes.append(f"state_zoom_trim_start={old:.3f}->{zoom.start_time:.3f}")
+                    summary.state_zoom_trimmed += 1
+                    summary.removed += 0
+                    changed = True
+            if end >= zoom.end_time - 0.1:
+                proposed_end = round(start, 3)
+                if proposed_end - zoom.start_time >= MIN_FACECAM_ZOOM_DURATION_SECONDS:
+                    old = zoom.end_time
+                    zoom.end_time = proposed_end
+                    zoom.notes.append(f"state_zoom_trim_end={old:.3f}->{zoom.end_time:.3f}")
+                    summary.state_zoom_trimmed += 1
+                    changed = True
+        if changed:
+            zoom.touch()
+            summary.add_example(f"{zoom.segment_id} state_zoom_trimmed {zoom.start_time:.2f}-{zoom.end_time:.2f}")
+        if zoom.duration < MIN_FACECAM_ZOOM_DURATION_SECONDS:
+            self._remove(summary, "state_zoom_removed", zoom, "state_trim_too_short")
+            return True
+        return False
+
+    def _state_protects_zoom(
+        self,
+        zoom: ZoomInstruction,
+        state_windows: list[object],
+        audio_windows: list[AudioRoleWindow],
+        indicators: list[CutIndicator],
+    ) -> bool:
+        good_overlap = sum(
+            end - start
+            for start, end in self._state_overlap_windows(
+                zoom.start_time,
+                zoom.end_time,
+                state_windows,
+                _GOOD_ACTION_STATES,
+            )
+        )
+        if good_overlap / max(zoom.duration, 0.001) < 0.20:
+            return False
+        return self._has_reaction_audio_or_indicator(zoom.start_time, zoom.end_time, audio_windows, indicators)
+
+    def _has_reaction_audio_or_indicator(
+        self,
+        start: float,
+        end: float,
+        audio_windows: list[AudioRoleWindow],
+        indicators: list[CutIndicator],
+    ) -> bool:
+        return any(
+            window.role_type in {"shout_like_audio", "group_reaction_like", "laugh_like_audio"}
+            and self._overlap_seconds(start, end, window.start_seconds, window.end_seconds) >= 0.2
+            for window in audio_windows
+        ) or any(
+            indicator.indicator_type in {"shout_like_audio", "group_reaction_like", "laugh_like_audio"}
+            and self._overlap_seconds(start, end, indicator.start_seconds, indicator.end_seconds) >= 0.2
+            for indicator in indicators
+        )
 
     def _has_strong_reaction(
         self,
@@ -436,6 +548,8 @@ class FacecamZoomSmoothnessGuard:
             summary.weak_reaction_removed += 1
         elif reason_counter == "silence_removed":
             summary.silence_removed += 1
+        elif reason_counter == "state_zoom_removed":
+            summary.state_zoom_removed += 1
         summary.add_example(f"{zoom.segment_id} removed {reason} {zoom.start_time:.2f}-{zoom.end_time:.2f}")
 
     def _audio_windows(self, result: AudioRoleResult | None) -> list[AudioRoleWindow]:
@@ -471,3 +585,51 @@ class FacecamZoomSmoothnessGuard:
         end_b: float,
     ) -> float:
         return max(0.0, min(end_a, end_b) - max(start_a, start_b))
+
+    def _state_overlap_windows(
+        self,
+        start: float,
+        end: float,
+        state_windows: list[object],
+        state_types: frozenset[str] | set[str],
+    ) -> list[tuple[float, float]]:
+        windows: list[tuple[float, float]] = []
+        for state in state_windows:
+            if self._state_type(state) not in state_types:
+                continue
+            overlap_start = max(start, self._state_start(state))
+            overlap_end = min(end, self._state_end(state))
+            if overlap_end > overlap_start:
+                windows.append((overlap_start, overlap_end))
+        return _merge_windows(windows)
+
+    def _state_windows(self, result) -> list[object]:
+        if result is None:
+            return []
+        windows = result.get("windows", []) if isinstance(result, dict) else getattr(result, "windows", [])
+        return sorted(
+            [window for window in windows or [] if self._state_end(window) > self._state_start(window)],
+            key=lambda window: (self._state_start(window), self._state_end(window), self._state_type(window)),
+        )
+
+    def _state_type(self, state: object) -> str:
+        return str(state.get("state_type", "") if isinstance(state, dict) else getattr(state, "state_type", ""))
+
+    def _state_start(self, state: object) -> float:
+        value = state.get("start_seconds", 0.0) if isinstance(state, dict) else getattr(state, "start_seconds", 0.0)
+        return float(value or 0.0)
+
+    def _state_end(self, state: object) -> float:
+        value = state.get("end_seconds", 0.0) if isinstance(state, dict) else getattr(state, "end_seconds", 0.0)
+        return float(value or 0.0)
+
+
+def _merge_windows(windows: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    merged: list[tuple[float, float]] = []
+    for start, end in sorted(windows):
+        if not merged or start > merged[-1][1]:
+            merged.append((start, end))
+            continue
+        previous_start, previous_end = merged[-1]
+        merged[-1] = (previous_start, max(previous_end, end))
+    return merged
