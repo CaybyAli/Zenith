@@ -13,6 +13,7 @@ Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
 
 from __future__ import annotations
 
+import json
 import os
 
 from shared.enums import ChannelType, JobStatus, TargetFormat
@@ -34,6 +35,7 @@ from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
 from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
 from core.gameplay_state_analyzer import GameplayStateAnalyzer
 from core.universal_moment_brain import UniversalMomentBrain
+from core.universal_moment_debug_reporter import UniversalMomentDebugReporter
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
@@ -84,6 +86,32 @@ _PHASE_FILTER_IMPORTANT_WORDS = {
 
 def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float) -> float:
     return max(0.0, min(end_a, end_b) - max(start_a, start_b))
+
+
+def _compact_log_value(value: object, fallback: str = "none", limit: int = 260) -> str:
+    text = " ".join(str(value or fallback).split())
+    return (text[:limit] if text else fallback)
+
+
+def _write_universal_debug_report(job, report) -> list[str]:
+    if report is None:
+        return []
+
+    payload = report.to_dict()
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{job.job_id}_universal_moment_debug.json")
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+    export_path = os.path.join(export_dir, "universal_moment_debug.json")
+
+    paths = [output_path, export_path]
+    for path in paths:
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=False)
+    return paths
 
 
 def _transcript_text_for_window(transcript_result, start: float, end: float) -> str:
@@ -202,6 +230,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     validator         = services["validator"]
     job_repo          = services["job_repo"]
     transcript_processor = services.get("transcript_processor") or TranscriptProcessor()
+
+    universal_moment_debug_report = None
+    universal_moment_debug_paths: list[str] = []
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
@@ -908,6 +939,30 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"zoom_risk={_note_int(_universal_assist_note, 'zoom_risk_marked')} "
             f"private={_note_int(_universal_assist_note, 'private_menu_supported')}"
         )
+        universal_moment_debug_report = UniversalMomentDebugReporter().build(
+            job_id=job.job_id,
+            timeline_segments=edit_timeline.selected_segments,
+            universal_moment_result=universal_moment_result,
+        )
+        universal_moment_debug_paths = _write_universal_debug_report(
+            job,
+            universal_moment_debug_report,
+        )
+        print(
+            f"[gaming_pipeline] UNIVERSAL_DEBUG {job.job_id} "
+            f"segments={universal_moment_debug_report.total_segments} "
+            f"keep={universal_moment_debug_report.segments_with_keep_signal} "
+            f"remove={universal_moment_debug_report.segments_with_remove_signal} "
+            f"cut_risk={universal_moment_debug_report.segments_with_cut_risk} "
+            f"zoom_risk={universal_moment_debug_report.segments_with_zoom_risk} "
+            f"private={universal_moment_debug_report.segments_with_private_risk} "
+            f"avg={universal_moment_debug_report.avg_segment_moment_score}"
+        )
+        if universal_moment_debug_paths:
+            print(
+                f"[gaming_pipeline] UNIVERSAL_DEBUG_FILE {job.job_id} "
+                f"path={universal_moment_debug_paths[-1]}"
+            )
 
     # ------------------------------------------------------------------
     # 5) Reframe-Plan
@@ -1052,6 +1107,15 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
     print(f"[gaming_pipeline] VALIDATE  {job.job_id}  "
           f"status={getattr(validator_result, 'validator_status', '?')}")
+    _validator_reason = getattr(validator_result, "reason", "")
+    if not _validator_reason:
+        _blocking_issues = getattr(validator_result, "blocking_issues", []) or []
+        _validator_reason = "; ".join(str(issue) for issue in _blocking_issues) or "not provided"
+    print(
+        f"[gaming_pipeline] VALIDATE_DETAIL {job.job_id} "
+        f"status={getattr(validator_result, 'validator_status', '?')} "
+        f"reason={_compact_log_value(_validator_reason)}"
+    )
 
     # ------------------------------------------------------------------
     # 11) Repositories speichern
@@ -1071,6 +1135,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             else None
         ),
         "universal_moment_result": universal_moment_result.to_dict(),
+        "universal_moment_debug_report": (
+            universal_moment_debug_report.to_dict()
+            if universal_moment_debug_report is not None
+            else None
+        ),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -1111,6 +1180,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": gameplay_state_result,
         "universal_moment_result": universal_moment_result,
+        "universal_moment_debug_report": universal_moment_debug_report,
+        "universal_moment_debug_paths": list(universal_moment_debug_paths),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,

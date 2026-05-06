@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from typing import Any, List
 
 
 @dataclass
@@ -9,3 +9,5 @@ class ValidatorResult:
     blocking_issues: List[str]
     warnings: List[str]
     ready_for_publish: bool
+    reason: str = ""
+    details: dict[str, Any] = field(default_factory=dict)
