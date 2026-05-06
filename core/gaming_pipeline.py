@@ -849,6 +849,20 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"round_action_protected={_note_int(_sentence_atomicity_note, 'round_start_action_protected')}"
         )
 
+        _round_lifecycle_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Round lifecycle:")),
+            "",
+        )
+        print(
+            f"[gaming_pipeline] ROUND_LIFECYCLE {job.job_id} "
+            f"menu_removed={_note_int(_round_lifecycle_note, 'menu_removed')} "
+            f"round_start_shifted={_note_int(_round_lifecycle_note, 'round_start_shifted')} "
+            f"pre_goal_expanded={_note_int(_round_lifecycle_note, 'pre_goal_expanded')} "
+            f"post_goal_extended={_note_int(_round_lifecycle_note, 'post_goal_extended')} "
+            f"boring_removed={_note_int(_round_lifecycle_note, 'boring_removed')} "
+            f"boring_trimmed={_note_int(_round_lifecycle_note, 'boring_trimmed')}"
+        )
+
     # ------------------------------------------------------------------
     # 5) Reframe-Plan
     # ------------------------------------------------------------------

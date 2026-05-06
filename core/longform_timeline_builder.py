@@ -22,6 +22,7 @@ from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
 from core.private_menu_speech_guard import PrivateMenuSpeechGuard
 from core.sentence_atomicity_guard import SentenceAtomicityGuard
 from core.pre_action_context_guard import PreActionContextGuard
+from core.round_lifecycle_guard import RoundLifecycleGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -781,6 +782,19 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after sentence atomicity guard")
 
+        selected_segments, round_lifecycle_summary = RoundLifecycleGuard().apply(
+            selected_segments,
+            gameplay_state_result=gameplay_state_result,
+            round_phase_result=round_phase_result,
+            cut_indicator_result=cut_indicator_result,
+            audio_role_result=audio_role_result,
+            sentence_timeline_result=sentence_timeline_result,
+            transcript_result=transcript_result,
+        )
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after round lifecycle guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -952,6 +966,15 @@ class LongformTimelineBuilder:
             f"round_start_action_protected={sentence_atomicity_summary.round_start_action_protected} "
             f"duration_before={sentence_atomicity_summary.duration_before:.3f}s "
             f"duration_after={sentence_atomicity_summary.duration_after:.3f}s",
+            "Round lifecycle: "
+            f"menu_removed={round_lifecycle_summary.menu_removed} "
+            f"round_start_shifted={round_lifecycle_summary.round_start_shifted} "
+            f"pre_goal_expanded={round_lifecycle_summary.pre_goal_expanded} "
+            f"post_goal_extended={round_lifecycle_summary.post_goal_extended} "
+            f"boring_removed={round_lifecycle_summary.boring_removed} "
+            f"boring_trimmed={round_lifecycle_summary.boring_trimmed} "
+            f"duration_before={round_lifecycle_summary.duration_before:.3f}s "
+            f"duration_after={round_lifecycle_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)
