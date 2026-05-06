@@ -19,6 +19,7 @@ from core.final_cut_seam_guard import FinalCutSeamGuard
 from core.hard_speech_lock_guard import HardSpeechLockGuard
 from core.speech_safe_pacing_guard import SpeechSafePacingGuard
 from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
+from core.private_menu_speech_guard import PrivateMenuSpeechGuard
 from core.pre_action_context_guard import PreActionContextGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
@@ -721,6 +722,32 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after speech-safe pacing guard")
 
+        selected_segments, private_menu_summary = PrivateMenuSpeechGuard().apply(
+            selected_segments,
+            gameplay_state_result=gameplay_state_result,
+            round_phase_result=round_phase_result,
+            audio_role_result=audio_role_result,
+            cut_indicator_result=cut_indicator_result,
+            transcript_result=transcript_result,
+            sentence_timeline_result=sentence_timeline_result,
+        )
+        print(
+            "[TIMELINE-PRIVATE-MENU-SPEECH] "
+            f"removed={private_menu_summary.removed} "
+            f"trimmed={private_menu_summary.trimmed} "
+            f"round_start_shifted={private_menu_summary.round_start_shifted} "
+            f"menu_sentences_removed={private_menu_summary.menu_sentences_removed} "
+            f"active_speech_kept={private_menu_summary.active_speech_kept} "
+            f"round_end_protected={private_menu_summary.round_end_protected} "
+            f"duration_before={private_menu_summary.duration_before:.3f}s "
+            f"duration_after={private_menu_summary.duration_after:.3f}s"
+        )
+        if private_menu_summary.examples:
+            print(f"[TIMELINE-PRIVATE-MENU-SPEECH] examples={'; '.join(private_menu_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after private menu speech guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -866,6 +893,17 @@ class LongformTimelineBuilder:
             f"action_context_expanded={pacing_summary.action_context_expanded} "
             f"duration_before={pacing_summary.duration_before:.3f}s "
             f"duration_after={pacing_summary.duration_after:.3f}s",
+            "Private menu speech: "
+            f"removed={private_menu_summary.removed} "
+            f"trimmed={private_menu_summary.trimmed} "
+            f"round_start_shifted={private_menu_summary.round_start_shifted} "
+            f"menu_sentences_removed={private_menu_summary.menu_sentences_removed} "
+            f"active_speech_kept={private_menu_summary.active_speech_kept} "
+            f"round_end_protected={private_menu_summary.round_end_protected} "
+            f"overlap_fixed={private_menu_summary.overlap_fixed} "
+            f"short_removed={private_menu_summary.short_removed} "
+            f"duration_before={private_menu_summary.duration_before:.3f}s "
+            f"duration_after={private_menu_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

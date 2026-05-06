@@ -759,6 +759,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             (n for n in edit_timeline.timeline_notes if n.startswith("Pacing guard:")),
             "",
         )
+        _private_menu_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Private menu speech:")),
+            "",
+        )
 
         def _note_int(note: str, key: str) -> int:
             prefix = f"{key}="
@@ -818,6 +822,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"round_start_trimmed={_note_int(_pacing_note, 'round_start_wait_trimmed')} "
             f"round_end_expanded={_note_int(_pacing_note, 'round_end_context_expanded')} "
             f"action_expanded={_note_int(_pacing_note, 'action_context_expanded')}"
+        )
+        print(
+            f"[gaming_pipeline] PRIVATE_MENU_SPEECH {job.job_id} "
+            f"removed={_note_int(_private_menu_note, 'removed')} "
+            f"trimmed={_note_int(_private_menu_note, 'trimmed')} "
+            f"round_start_shifted={_note_int(_private_menu_note, 'round_start_shifted')} "
+            f"menu_sentences_removed={_note_int(_private_menu_note, 'menu_sentences_removed')} "
+            f"active_speech_kept={_note_int(_private_menu_note, 'active_speech_kept')}"
         )
 
     # ------------------------------------------------------------------
