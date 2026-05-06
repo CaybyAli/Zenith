@@ -52,6 +52,11 @@ _STRONG_ACTION_STATES = frozenset({
     "high_motion_action",
     "possible_goal_or_flash",
 })
+_SPEECH_BLOCKING_WAIT_STATES = frozenset({
+    "menu_wait",
+    "low_motion_wait",
+    "possible_dead_time_after_goal",
+})
 _WAIT_PHASES = frozenset({
     "menu_wait",
     "queue_wait",
@@ -256,7 +261,16 @@ class SpeechSafePacingGuard:
             wait_overlap = self._round_start_wait_overlap(segment.start_time, wait_end, states, phases, indicators, audio_windows)
             if wait_overlap < LONG_WAIT_MIN_SECONDS:
                 continue
-            if self._has_important_speech(segment.start_time, wait_end, transcripts, sentences, audio_windows, indicators):
+            if self._has_important_speech(
+                segment.start_time,
+                wait_end,
+                states,
+                phases,
+                transcripts,
+                sentences,
+                audio_windows,
+                indicators,
+            ):
                 continue
             if self._has_neutral_speech(segment.start_time, wait_end, audio_windows, indicators):
                 summary.neutral_speech_ignored += 1
@@ -296,6 +310,8 @@ class SpeechSafePacingGuard:
                 continue
             if segment.start_time - preferred > MAX_SAFE_TRIM_SECONDS:
                 preferred = round(segment.start_time - MAX_SAFE_TRIM_SECONDS, 3)
+            if self._round_start_wait_overlap(preferred, segment.start_time, states, phases, indicators, audio_windows) > 0.0:
+                continue
             if self._wait_or_silence_dominates(preferred, segment.start_time, states, phases, indicators, audio_windows):
                 continue
             if segment.end_time - preferred < MIN_SEGMENT_DURATION_SECONDS:
@@ -342,6 +358,8 @@ class SpeechSafePacingGuard:
             important_windows = self._important_speech_windows(
                 segment.start_time,
                 segment.end_time,
+                states,
+                phases,
                 transcripts,
                 sentences,
                 audio_windows,
@@ -639,17 +657,32 @@ class SpeechSafePacingGuard:
         self,
         start: float,
         end: float,
+        states: list[GameplayStateWindow],
+        phases: list[RoundPhaseWindow],
         transcripts: list[TranscriptSegment],
         sentences: list[SentenceItem],
         audio_windows: list[AudioRoleWindow],
         indicators: list[CutIndicator],
     ) -> bool:
-        return bool(self._important_speech_windows(start, end, transcripts, sentences, audio_windows, indicators))
+        return bool(
+            self._important_speech_windows(
+                start,
+                end,
+                states,
+                phases,
+                transcripts,
+                sentences,
+                audio_windows,
+                indicators,
+            )
+        )
 
     def _important_speech_windows(
         self,
         start: float,
         end: float,
+        states: list[GameplayStateWindow],
+        phases: list[RoundPhaseWindow],
         transcripts: list[TranscriptSegment],
         sentences: list[SentenceItem],
         audio_windows: list[AudioRoleWindow],
@@ -659,11 +692,29 @@ class SpeechSafePacingGuard:
         for transcript in transcripts:
             if _overlap_seconds(start, end, transcript.start_seconds, transcript.end_seconds) <= 0.0:
                 continue
+            if self._speech_blocked_by_wait(
+                transcript.start_seconds,
+                transcript.end_seconds,
+                states,
+                phases,
+                indicators,
+                audio_windows,
+            ):
+                continue
             confidence = transcript.confidence if transcript.confidence is not None else 0.0
             if confidence >= SPEECH_IMPORTANCE_THRESHOLD or self._has_important_phrase(transcript.text):
                 windows.append((transcript.start_seconds, transcript.end_seconds))
         for sentence in sentences:
             if _overlap_seconds(start, end, sentence.start_seconds, sentence.end_seconds) <= 0.0:
+                continue
+            if self._speech_blocked_by_wait(
+                sentence.start_seconds,
+                sentence.end_seconds,
+                states,
+                phases,
+                indicators,
+                audio_windows,
+            ):
                 continue
             if (
                 sentence.score >= SPEECH_IMPORTANCE_THRESHOLD
@@ -673,6 +724,15 @@ class SpeechSafePacingGuard:
                 windows.append((sentence.start_seconds, sentence.end_seconds))
         for window in audio_windows:
             if window.role_type in _IMPORTANT_AUDIO_TYPES and _overlap_seconds(start, end, window.start_seconds, window.end_seconds) > 0.0:
+                if self._speech_blocked_by_wait(
+                    window.start_seconds,
+                    window.end_seconds,
+                    states,
+                    phases,
+                    indicators,
+                    audio_windows,
+                ):
+                    continue
                 if max(window.score, window.confidence) >= SPEECH_IMPORTANCE_THRESHOLD:
                     windows.append((window.start_seconds, window.end_seconds))
         for indicator in indicators:
@@ -712,7 +772,11 @@ class SpeechSafePacingGuard:
             return True
         probe_start = max(0.0, start - 0.35)
         probe_end = end + 0.35
-        return self._has_strong_action(probe_start, probe_end, states, indicators, audio_windows) or any(
+        if self._has_strong_action(probe_start, probe_end, states, indicators, audio_windows):
+            return True
+        if self._wait_overlap(probe_start, probe_end, states, [], indicators, audio_windows) / max(probe_end - probe_start, 0.001) >= 0.50:
+            return False
+        return any(
             _overlap_seconds(probe_start, probe_end, item.start_seconds, item.end_seconds) > 0.0
             for item in [*transcripts, *sentences]
         ) or any(
@@ -720,6 +784,36 @@ class SpeechSafePacingGuard:
             and _overlap_seconds(probe_start, probe_end, window.start_seconds, window.end_seconds) > 0.0
             for window in audio_windows
         )
+
+    def _speech_blocked_by_wait(
+        self,
+        start: float,
+        end: float,
+        states: list[GameplayStateWindow],
+        phases: list[RoundPhaseWindow],
+        indicators: list[CutIndicator],
+        audio_windows: list[AudioRoleWindow],
+    ) -> bool:
+        overlap_start = max(0.0, start)
+        overlap_end = max(overlap_start, end)
+        duration = max(overlap_end - overlap_start, 0.001)
+        bad_wait = _overlap_merged_seconds(
+            overlap_start,
+            overlap_end,
+            [
+                (state.start_seconds, state.end_seconds)
+                for state in states
+                if state.state_type in _SPEECH_BLOCKING_WAIT_STATES
+            ]
+            + [
+                (phase.start_seconds, phase.end_seconds)
+                for phase in phases
+                if self._phase_value(phase) in {"menu_wait", "queue_wait"}
+            ],
+        )
+        if bad_wait / duration < 0.50:
+            return False
+        return not self._has_strong_action(overlap_start, overlap_end, states, indicators, audio_windows)
 
     def _has_important_phrase(self, text: str) -> bool:
         lowered = (text or "").lower()

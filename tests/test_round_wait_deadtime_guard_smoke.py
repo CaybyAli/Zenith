@@ -134,19 +134,32 @@ def test_menu_with_neutral_speech_removed() -> None:
     print("  PASS: test_menu_with_neutral_speech_removed")
 
 
-def test_menu_with_hook_or_shout_stays() -> None:
-    segments = [_seg("menu_hook", 500, 530)]
+def test_menu_with_shout_stays() -> None:
+    segments = [_seg("menu_shout", 500, 530)]
     indicators = CutIndicatorResult(indicators=[
         _indicator("menu_or_idle", 500, 530),
-        _indicator("hook_sentence", 512, 515, polarity="positive", score=0.9),
+        _indicator("shout_like_audio", 512, 515, polarity="positive", score=0.9),
     ])
 
     result, summary = RoundWaitDeadtimeGuard().apply(segments, cut_indicator_result=indicators)
-    assert [segment.segment_id for segment in result] == ["menu_hook"]
+    assert [segment.segment_id for segment in result] == ["menu_shout"]
     assert summary.kept_action == 1
     assert result[0].start_time <= 512.0
     assert result[0].end_time >= 515.0
-    print("  PASS: test_menu_with_hook_or_shout_stays")
+    print("  PASS: test_menu_with_shout_stays")
+
+
+def test_menu_hook_sentence_without_action_removed() -> None:
+    segments = [_seg("menu_hook_only", 540, 570)]
+    indicators = CutIndicatorResult(indicators=[
+        _indicator("menu_or_idle", 540, 570),
+        _indicator("hook_sentence", 550, 555, polarity="positive", score=0.95),
+    ])
+
+    result, summary = RoundWaitDeadtimeGuard().apply(segments, cut_indicator_result=indicators)
+    assert result == []
+    assert summary.removed == 1
+    print("  PASS: test_menu_hook_sentence_without_action_removed")
 
 
 def test_after_goal_tail_trimmed() -> None:
@@ -184,7 +197,8 @@ def test_round_wait_deadtime_guard_smoke() -> None:
     test_high_action_protects_segment()
     test_shout_protects_segment()
     test_menu_with_neutral_speech_removed()
-    test_menu_with_hook_or_shout_stays()
+    test_menu_with_shout_stays()
+    test_menu_hook_sentence_without_action_removed()
     test_after_goal_tail_trimmed()
     test_protected_roles_never_removed_and_invariants()
     print("ROUND WAIT DEADTIME GUARD SMOKE TEST PASSED")

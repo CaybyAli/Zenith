@@ -160,13 +160,23 @@ def test_neutral_speech_does_not_protect_wait() -> None:
     assert summary.neutral_speech_ignored >= 1
 
 
-def test_important_speech_protects_wait() -> None:
+def test_important_speech_without_action_does_not_protect_wait() -> None:
     result, summary = SpeechSafePacingGuard().apply(
         [_seg("important_wait", 70.0, 80.0)],
         gameplay_state_result=_states(_state("low_motion_wait", 70.0, 80.0)),
         transcript_result=_transcript(_t(70.0, 80.0, "LEO LEO LEO")),
     )
-    assert [segment.segment_id for segment in result] == ["important_wait"]
+    assert result == []
+    assert summary.boring_wait_removed >= 1
+
+
+def test_active_gameplay_speech_is_kept() -> None:
+    result, summary = SpeechSafePacingGuard().apply(
+        [_seg("gameplay_speech", 82.0, 92.0)],
+        gameplay_state_result=_states(_state("active_gameplay", 82.0, 92.0)),
+        transcript_result=_transcript(_t(83.0, 90.0, "LEO LEO LEO")),
+    )
+    assert [segment.segment_id for segment in result] == ["gameplay_speech"]
     assert summary.boring_wait_removed == 0
 
 
@@ -230,7 +240,8 @@ def test_speech_safe_pacing_guard_smoke() -> None:
     test_micro_gap_without_content_is_spaced_or_safe()
     test_boring_wait_without_important_speech_removed()
     test_neutral_speech_does_not_protect_wait()
-    test_important_speech_protects_wait()
+    test_important_speech_without_action_does_not_protect_wait()
+    test_active_gameplay_speech_is_kept()
     test_round_end_tension_is_expanded_and_protected()
     test_round_start_wait_is_trimmed()
     test_action_context_backfill()

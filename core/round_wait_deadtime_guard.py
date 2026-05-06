@@ -25,12 +25,10 @@ _NEGATIVE_TYPES = frozenset({
 _POSITIVE_TYPES = frozenset({
     "high_action_burst",
     "goal_or_save_like_flash",
+    "possible_goal_or_flash",
     "sustained_action",
     "group_reaction_like",
     "shout_like_audio",
-    "laugh_like_audio",
-    "hook_sentence",
-    "facecam_reaction_spike",
 })
 _SPEECH_TYPES = frozenset({"speech_active", "secondary_speech_like"})
 _BAD_WAIT_STATES = frozenset({

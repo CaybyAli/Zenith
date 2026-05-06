@@ -64,6 +64,11 @@ _GOOD_ACTION_STATES = frozenset({
     "possible_goal_or_flash",
     "possible_pre_action_context",
 })
+_SPEECH_BLOCKING_WAIT_STATES = frozenset({
+    "menu_wait",
+    "low_motion_wait",
+    "possible_dead_time_after_goal",
+})
 
 
 @dataclass
@@ -177,6 +182,7 @@ class HardSpeechLockGuard:
             sentences,
             audio_windows,
             indicators,
+            state_windows,
             summary,
         )
         self._apply_action_preroll(ordered, indicators, audio_windows, state_windows, summary)
@@ -209,6 +215,7 @@ class HardSpeechLockGuard:
         sentences: list[SentenceItem],
         audio_windows: list[AudioRoleWindow],
         indicators: list[CutIndicator],
+        state_windows: list[GameplayStateWindow],
         summary: HardSpeechLockSummary,
     ) -> list[TimelineSegment]:
         removed_ids: set[str] = set()
@@ -219,7 +226,13 @@ class HardSpeechLockGuard:
             next_segment = self._next_kept(segments, index, removed_ids)
 
             start_source = self._containing_transcript(segment.start_time, transcripts)
-            if start_source is not None:
+            if start_source is not None and self._speech_lock_allowed(
+                start_source.start_seconds,
+                start_source.end_seconds,
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 desired = round(max(0.0, start_source.start_seconds - WORD_START_PREROLL_SECONDS), 3)
                 if self._lock_start(segment, previous, desired, "hard_word_start", summary):
                     summary.word_start_locked += 1
@@ -228,19 +241,37 @@ class HardSpeechLockGuard:
                     )
 
             sentence_start = self._containing_sentence(segment.start_time, sentences)
-            if sentence_start is not None:
+            if sentence_start is not None and self._speech_lock_allowed(
+                sentence_start.start_seconds,
+                sentence_start.end_seconds,
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 desired = round(max(0.0, sentence_start.start_seconds - SENTENCE_START_PREROLL_SECONDS), 3)
                 if self._lock_start(segment, previous, desired, "hard_sentence_start", summary):
                     summary.sentence_start_locked += 1
 
             secondary_start = self._containing_audio_window(segment.start_time, audio_windows, _SECONDARY_LOCK_TYPES)
-            if secondary_start is not None:
+            if secondary_start is not None and self._speech_lock_allowed(
+                secondary_start.start_seconds,
+                secondary_start.end_seconds,
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 desired = round(max(0.0, secondary_start.start_seconds - SECONDARY_START_PREROLL_SECONDS), 3)
                 if self._lock_start(segment, previous, desired, "hard_secondary_start", summary):
                     summary.secondary_start_locked += 1
 
             end_source = self._containing_transcript(segment.end_time, transcripts)
-            if end_source is not None:
+            if end_source is not None and self._speech_lock_allowed(
+                end_source.start_seconds,
+                end_source.end_seconds,
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 phrase = self._has_phrase_text(end_source.text)
                 postroll = max(WORD_END_POSTROLL_SECONDS, PHRASE_POSTROLL_SECONDS if phrase else 0.0)
                 desired = round(end_source.end_seconds + postroll, 3)
@@ -261,7 +292,13 @@ class HardSpeechLockGuard:
                         summary.word_lock_removed += 1
 
             sentence_end = self._containing_sentence(segment.end_time, sentences)
-            if sentence_end is not None:
+            if sentence_end is not None and self._speech_lock_allowed(
+                sentence_end.start_seconds,
+                sentence_end.end_seconds,
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 desired = round(sentence_end.end_seconds + SENTENCE_END_POSTROLL_SECONDS, 3)
                 if desired - segment.end_time <= MAX_SENTENCE_EDGE_EXPAND_SECONDS:
                     if self._lock_end(segment, next_segment, desired, "hard_sentence_end", summary):
@@ -276,7 +313,13 @@ class HardSpeechLockGuard:
                         summary.sentence_end_trimmed_back += 1
 
             secondary_end = self._containing_audio_window(segment.end_time, audio_windows, _SECONDARY_LOCK_TYPES)
-            if secondary_end is not None:
+            if secondary_end is not None and self._speech_lock_allowed(
+                secondary_end.start_seconds,
+                secondary_end.end_seconds,
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 desired = round(secondary_end.end_seconds + SECONDARY_END_POSTROLL_SECONDS, 3)
                 if self._lock_end(segment, next_segment, desired, "hard_secondary_end", summary):
                     summary.secondary_end_locked += 1
@@ -296,7 +339,13 @@ class HardSpeechLockGuard:
                     summary.shout_locked += 1
 
             phrase_near_end = self._phrase_source_touching_end(segment.end_time, transcripts, sentences)
-            if phrase_near_end is not None:
+            if phrase_near_end is not None and self._speech_lock_allowed(
+                getattr(phrase_near_end, "start_seconds", segment.end_time),
+                _source_end(phrase_near_end),
+                state_windows,
+                indicators,
+                audio_windows,
+            ):
                 desired = round(_source_end(phrase_near_end) + PHRASE_POSTROLL_SECONDS, 3)
                 if self._lock_end(segment, next_segment, desired, "hard_phrase_end", summary):
                     summary.phrase_locked += 1
@@ -585,6 +634,8 @@ class HardSpeechLockGuard:
         indicators: list[CutIndicator],
         state_windows: list[GameplayStateWindow],
     ) -> bool:
+        if self._bad_wait_dominates(segment.start_time, segment.end_time, state_windows, audio_windows, indicators):
+            return self._has_action_or_reaction(segment.start_time, segment.end_time, indicators, audio_windows, state_windows)
         return (
             self._overlap_any(segment.start_time, segment.end_time, transcripts)
             or self._overlap_any(segment.start_time, segment.end_time, sentences)
@@ -601,6 +652,52 @@ class HardSpeechLockGuard:
             or any(
                 state.state_type in _GOOD_ACTION_STATES
                 and _overlap_seconds(segment.start_time, segment.end_time, state.start_seconds, state.end_seconds) >= 0.2
+                for state in state_windows
+            )
+        )
+
+    def _speech_lock_allowed(
+        self,
+        start: float,
+        end: float,
+        state_windows: list[GameplayStateWindow],
+        indicators: list[CutIndicator],
+        audio_windows: list[AudioRoleWindow],
+    ) -> bool:
+        if end <= start:
+            return True
+        duration = max(end - start, 0.001)
+        bad_wait = sum(
+            _overlap_seconds(start, end, state.start_seconds, state.end_seconds)
+            for state in state_windows
+            if state.state_type in _SPEECH_BLOCKING_WAIT_STATES
+        )
+        if bad_wait / duration < 0.50:
+            return True
+        return self._has_action_or_reaction(start, end, indicators, audio_windows, state_windows)
+
+    def _has_action_or_reaction(
+        self,
+        start: float,
+        end: float,
+        indicators: list[CutIndicator],
+        audio_windows: list[AudioRoleWindow],
+        state_windows: list[GameplayStateWindow],
+    ) -> bool:
+        return (
+            any(
+                indicator.indicator_type in (_ACTION_INDICATOR_TYPES | _SHOUT_TYPES)
+                and _overlap_seconds(start, end, indicator.start_seconds, indicator.end_seconds) > 0.0
+                for indicator in indicators
+            )
+            or any(
+                window.role_type in _SHOUT_TYPES
+                and _overlap_seconds(start, end, window.start_seconds, window.end_seconds) > 0.0
+                for window in audio_windows
+            )
+            or any(
+                state.state_type in _GOOD_ACTION_STATES
+                and _overlap_seconds(start, end, state.start_seconds, state.end_seconds) > 0.0
                 for state in state_windows
             )
         )

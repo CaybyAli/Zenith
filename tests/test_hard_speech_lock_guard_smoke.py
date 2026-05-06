@@ -145,6 +145,16 @@ def test_phrase_lock_keeps_alles_gut() -> None:
     assert summary.phrase_locked >= 1
 
 
+def test_menu_phrase_does_not_expand_without_action() -> None:
+    result, summary = HardSpeechLockGuard().apply(
+        [_seg("menu_phrase", 95.0, 102.0)],
+        transcript_result=_transcript(_t(100.0, 104.0, "alles gut alles gut")),
+        gameplay_state_result=GameplayStateResult(windows=[_state("menu_wait", 95.0, 105.0)]),
+    )
+    assert result[0].end_time == 102.0
+    assert summary.phrase_locked == 0
+
+
 def test_shout_lock_holds_postroll() -> None:
     result, summary = HardSpeechLockGuard().apply(
         [_seg("shout", 60.0, 71.0, role="peak")],
@@ -214,6 +224,7 @@ def test_hard_speech_lock_guard_smoke() -> None:
     test_word_start_cut_pulls_back()
     test_sentence_end_cut_extends_or_trims_cleanly()
     test_phrase_lock_keeps_alles_gut()
+    test_menu_phrase_does_not_expand_without_action()
     test_shout_lock_holds_postroll()
     test_secondary_speech_lock_holds_postroll()
     test_micro_cut_killer_closes_speech_gap()
