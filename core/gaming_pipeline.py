@@ -36,6 +36,7 @@ from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilde
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
 from core.facecam_reaction_analyzer import FacecamReactionAnalyzer
+from core.round_phase_detector import RoundPhaseDetector
 from core.highlight_selector import HighlightSelector
 from core.facecam_intro_guard import FacecamIntroGuard
 from core.longform_timeline_builder import LongformTimelineBuilder
@@ -54,6 +55,90 @@ from core.reframe_plan_repository import ReframePlanRepository
 from core.job_repository import JobRepository
 from core.job_loader import JobLoader
 from core.job_store import JobStore
+from models.round_phase_result import RoundPhase, RoundPhaseResult
+
+
+_PHASE_FILTER_BLOCKED = {RoundPhase.MENU_WAIT, RoundPhase.QUEUE_WAIT}
+_PHASE_FILTER_OVERRIDE_TYPES = {
+    "hook_sentence",
+    "shout_like_audio",
+    "group_reaction_like",
+    "laugh_like_audio",
+    "goal_or_save_like_flash",
+    "high_action_burst",
+    "sustained_action",
+}
+_PHASE_FILTER_IMPORTANT_WORDS = {
+    "alles gut",
+    "oh gott",
+    "nein",
+    "warte",
+    "wichtig",
+    "krass",
+    "tor",
+    "rein",
+}
+
+
+def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float) -> float:
+    return max(0.0, min(end_a, end_b) - max(start_a, start_b))
+
+
+def _transcript_text_for_window(transcript_result, start: float, end: float) -> str:
+    if transcript_result is None:
+        return ""
+    return " ".join(
+        segment.text.lower()
+        for segment in transcript_result.segments
+        if _overlap_seconds(start, end, segment.start_seconds, segment.end_seconds) > 0.0
+    )
+
+
+def _has_phase_override(candidate, cut_indicator_result, transcript_result) -> bool:
+    start = max(0.0, candidate.start_time - 0.5)
+    end = candidate.end_time + 0.5
+    for indicator in getattr(cut_indicator_result, "indicators", []) or []:
+        if _overlap_seconds(start, end, indicator.start_seconds, indicator.end_seconds) <= 0.0:
+            continue
+        if indicator.indicator_type in _PHASE_FILTER_OVERRIDE_TYPES and indicator.score >= 0.65:
+            return True
+        if indicator.indicator_type == "audio_peak" and indicator.score >= 0.85:
+            return True
+    text = _transcript_text_for_window(transcript_result, start, end)
+    return any(word in text for word in _PHASE_FILTER_IMPORTANT_WORDS)
+
+
+def _filter_highlights_by_round_phase(
+    highlight_candidates,
+    round_phase_result: RoundPhaseResult | None,
+    cut_indicator_result,
+    transcript_result,
+) -> tuple[list, dict[str, int]]:
+    stats = {"dropped": 0, "kept_override": 0}
+    if round_phase_result is None or not round_phase_result.windows:
+        return list(highlight_candidates), stats
+
+    kept = []
+    for candidate in highlight_candidates:
+        center = round((candidate.start_time + candidate.end_time) / 2.0, 3)
+        phase_window = round_phase_result.phase_at(center)
+        blocked = (
+            phase_window is not None
+            and phase_window.phase in _PHASE_FILTER_BLOCKED
+            and phase_window.confidence >= 0.5
+        )
+        if not blocked:
+            kept.append(candidate)
+            continue
+        if _has_phase_override(candidate, cut_indicator_result, transcript_result):
+            candidate.notes.append(f"phase_filter_override={phase_window.phase.value}")
+            kept.append(candidate)
+            stats["kept_override"] += 1
+            continue
+        candidate.notes.append(f"phase_filter_dropped={phase_window.phase.value}")
+        stats["dropped"] += 1
+
+    return kept, stats
 
 
 def _build_gaming_services() -> dict:
@@ -378,6 +463,31 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         f"engine={facecam_emotion_result.engine}"
     )
 
+    round_phase_result = None
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        round_phase_result = RoundPhaseDetector().detect(
+            job=job,
+            analysis_result=analysis_result,
+            edit_signals=edit_signals,
+            audio_peaks=energy_curve_result.peak_points,
+            transcript_result=transcript_result,
+            gameplay_vision_result=gameplay_vision_result,
+            facecam_reaction_result=facecam_reaction_result,
+            gameplay_event_result=gameplay_event_result,
+        )
+        phase_counts = round_phase_result.phase_counts
+        print(
+            f"[gaming_pipeline] PHASES {job.job_id} "
+            f"count={len(round_phase_result.windows)} "
+            f"active={phase_counts.get(RoundPhase.ACTIVE_ROUND.value, 0)} "
+            f"goals={phase_counts.get(RoundPhase.GOAL_REPLAY.value, 0)} "
+            f"round_end={phase_counts.get(RoundPhase.ROUND_END.value, 0)} "
+            f"menu_wait={phase_counts.get(RoundPhase.MENU_WAIT.value, 0)} "
+            f"queue_wait={phase_counts.get(RoundPhase.QUEUE_WAIT.value, 0)} "
+            f"countdown={phase_counts.get(RoundPhase.COUNTDOWN_KICKOFF.value, 0)} "
+            f"engine={round_phase_result.engine}"
+        )
+
     # ------------------------------------------------------------------
     # 3) Highlight-Selektion
     # ------------------------------------------------------------------
@@ -427,6 +537,25 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             + " ".join(f"{name}={count}" for name, count in top_items)
         )
 
+    filtered_highlights, phase_filter_stats = _filter_highlights_by_round_phase(
+        highlight_result["highlight_candidates"],
+        round_phase_result,
+        cut_indicator_result,
+        transcript_result,
+    )
+    highlight_result["highlight_candidates"] = filtered_highlights
+    print(
+        "[PHASE-FILTER] "
+        f"dropped {phase_filter_stats['dropped']} highlights in menu_wait/queue_wait, "
+        f"kept {phase_filter_stats['kept_override']} with hook/peak override"
+    )
+    print(
+        f"[gaming_pipeline] PHASE_FILTER {job.job_id} "
+        f"dropped={phase_filter_stats['dropped']} "
+        f"kept_override={phase_filter_stats['kept_override']} "
+        f"remaining={len(filtered_highlights)}"
+    )
+
     # ------------------------------------------------------------------
     # 4) Longform-Timeline  (nur wenn Voraussetzungen erfÃ¼llt)
     # ------------------------------------------------------------------
@@ -450,6 +579,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             cut_scoring_profile=cut_profile,
             sentence_timeline_result=sentence_timeline_result,
             audio_role_result=audio_role_result,
+            round_phase_result=round_phase_result,
         )
         _fusion_timeline_note = next(
             (n for n in edit_timeline.timeline_notes if n.startswith("Indicator fusion:")),
@@ -782,6 +912,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "sentence_timeline_result": sentence_timeline_result,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
+        "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
         "cut_profile":           cut_profile,
@@ -819,6 +950,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_vision_result": gameplay_vision_result,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
+        "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
         "cut_profile":           cut_profile,

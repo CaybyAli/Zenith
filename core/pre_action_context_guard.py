@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from models.highlight_candidate import HighlightCandidate
 from models.audio_role_result import AudioRoleResult, AudioRoleWindow
 from models.cut_indicator import CutIndicator, CutIndicatorResult
+from models.round_phase_result import RoundPhase, RoundPhaseResult
 from models.timeline_segment import TimelineSegment
 
 
@@ -61,7 +62,7 @@ class PreActionContextGuard:
         cut_indicator_result: CutIndicatorResult | None = None,
         audio_role_result: AudioRoleResult | None = None,
         weak_zones: list[HighlightCandidate] | None = None,
-        round_phase_result=None,
+        round_phase_result: RoundPhaseResult | None = None,
     ) -> tuple[list[TimelineSegment], PreActionContextSummary]:
         ordered = sorted(
             (segment for segment in segments if segment.end_time > segment.start_time),
@@ -177,7 +178,6 @@ class PreActionContextGuard:
         silence_zones: list[tuple[float, float]],
         round_phase_result,
     ) -> tuple[float, str]:
-        del round_phase_result  # Phase C wires the phase stop hook into this method.
         target = round(max(0.0, segment.start_time - context_seconds), 3)
         preferred = max(target, previous_limit)
         stop_reason = "max_backfill"
@@ -192,6 +192,11 @@ class PreActionContextGuard:
             if silence is not None:
                 preferred = round(min(segment.start_time, silence[1] + BACKFILL_STOP_OFFSET_SECONDS), 3)
                 stop_reason = "silence_stop"
+                break
+            phase = self._blocking_round_phase(window_start, cursor, round_phase_result)
+            if phase is not None:
+                preferred = round(min(segment.start_time, phase.end_seconds + BACKFILL_STOP_OFFSET_SECONDS), 3)
+                stop_reason = "phase_stop"
                 break
             cursor = window_start
 
@@ -301,6 +306,22 @@ class PreActionContextGuard:
         for window_start, window_end in windows:
             if max(start, window_start) < min(end, window_end):
                 return window_start, window_end
+        return None
+
+    def _blocking_round_phase(
+        self,
+        start: float,
+        end: float,
+        round_phase_result: RoundPhaseResult | None,
+    ):
+        if round_phase_result is None:
+            return None
+        blocked = {RoundPhase.ROUND_END, RoundPhase.MENU_WAIT, RoundPhase.QUEUE_WAIT}
+        for phase in round_phase_result.windows:
+            if phase.phase not in blocked:
+                continue
+            if max(start, phase.start_seconds) < min(end, phase.end_seconds):
+                return phase
         return None
 
 

@@ -23,6 +23,7 @@ from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from core.multi_indicator_score_fusion import MultiIndicatorScoreFusion
 from models.sentence_timeline import SentenceTimelineResult
 from models.audio_role_result import AudioRoleResult
+from models.round_phase_result import RoundPhaseResult
 from shared.errors import ValidationError
 
 
@@ -359,6 +360,7 @@ class LongformTimelineBuilder:
         cut_scoring_profile=None,
         sentence_timeline_result: SentenceTimelineResult | None = None,
         audio_role_result: AudioRoleResult | None = None,
+        round_phase_result: RoundPhaseResult | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -645,6 +647,7 @@ class LongformTimelineBuilder:
             cut_indicator_result=cut_indicator_result,
             audio_role_result=audio_role_result,
             weak_zones=weak_zones,
+            round_phase_result=round_phase_result,
         )
 
         if not selected_segments:
