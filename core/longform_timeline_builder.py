@@ -20,6 +20,7 @@ from core.hard_speech_lock_guard import HardSpeechLockGuard
 from core.speech_safe_pacing_guard import SpeechSafePacingGuard
 from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
 from core.private_menu_speech_guard import PrivateMenuSpeechGuard
+from core.sentence_atomicity_guard import SentenceAtomicityGuard
 from core.pre_action_context_guard import PreActionContextGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
@@ -748,6 +749,35 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after private menu speech guard")
 
+        selected_segments, sentence_atomicity_summary = SentenceAtomicityGuard().apply(
+            selected_segments,
+            transcript_result=transcript_result,
+            sentence_timeline_result=sentence_timeline_result,
+            audio_role_result=audio_role_result,
+            cut_indicator_result=cut_indicator_result,
+            gameplay_state_result=gameplay_state_result,
+            round_phase_result=round_phase_result,
+        )
+        print(
+            "[TIMELINE-SENTENCE-ATOMICITY] "
+            f"sentence_start={sentence_atomicity_summary.sentence_start_fixed} "
+            f"sentence_end={sentence_atomicity_summary.sentence_end_fixed} "
+            f"partial_removed={sentence_atomicity_summary.sentence_partial_removed} "
+            f"secondary_fixed={sentence_atomicity_summary.secondary_sentence_fixed} "
+            f"secondary_removed={sentence_atomicity_summary.secondary_sentence_removed} "
+            f"micro_removed={sentence_atomicity_summary.micro_segments_removed} "
+            f"micro_merged={sentence_atomicity_summary.micro_segments_merged} "
+            f"action_lead_trimmed={sentence_atomicity_summary.action_lead_trimmed} "
+            f"round_action_protected={sentence_atomicity_summary.round_start_action_protected} "
+            f"duration_before={sentence_atomicity_summary.duration_before:.3f}s "
+            f"duration_after={sentence_atomicity_summary.duration_after:.3f}s"
+        )
+        if sentence_atomicity_summary.examples:
+            print(f"[TIMELINE-SENTENCE-ATOMICITY] examples={'; '.join(sentence_atomicity_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after sentence atomicity guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -904,6 +934,18 @@ class LongformTimelineBuilder:
             f"short_removed={private_menu_summary.short_removed} "
             f"duration_before={private_menu_summary.duration_before:.3f}s "
             f"duration_after={private_menu_summary.duration_after:.3f}s",
+            "Sentence atomicity: "
+            f"sentence_start_fixed={sentence_atomicity_summary.sentence_start_fixed} "
+            f"sentence_end_fixed={sentence_atomicity_summary.sentence_end_fixed} "
+            f"sentence_partial_removed={sentence_atomicity_summary.sentence_partial_removed} "
+            f"secondary_sentence_fixed={sentence_atomicity_summary.secondary_sentence_fixed} "
+            f"secondary_sentence_removed={sentence_atomicity_summary.secondary_sentence_removed} "
+            f"micro_segments_removed={sentence_atomicity_summary.micro_segments_removed} "
+            f"micro_segments_merged={sentence_atomicity_summary.micro_segments_merged} "
+            f"action_lead_trimmed={sentence_atomicity_summary.action_lead_trimmed} "
+            f"round_start_action_protected={sentence_atomicity_summary.round_start_action_protected} "
+            f"duration_before={sentence_atomicity_summary.duration_before:.3f}s "
+            f"duration_after={sentence_atomicity_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

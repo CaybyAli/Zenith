@@ -763,6 +763,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             (n for n in edit_timeline.timeline_notes if n.startswith("Private menu speech:")),
             "",
         )
+        _sentence_atomicity_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Sentence atomicity:")),
+            "",
+        )
 
         def _note_int(note: str, key: str) -> int:
             prefix = f"{key}="
@@ -830,6 +834,16 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"round_start_shifted={_note_int(_private_menu_note, 'round_start_shifted')} "
             f"menu_sentences_removed={_note_int(_private_menu_note, 'menu_sentences_removed')} "
             f"active_speech_kept={_note_int(_private_menu_note, 'active_speech_kept')}"
+        )
+        print(
+            f"[gaming_pipeline] SENTENCE_ATOMICITY {job.job_id} "
+            f"sentence_fixed="
+            f"{_note_int(_sentence_atomicity_note, 'sentence_start_fixed') + _note_int(_sentence_atomicity_note, 'sentence_end_fixed')} "
+            f"partial_removed={_note_int(_sentence_atomicity_note, 'sentence_partial_removed')} "
+            f"secondary_fixed={_note_int(_sentence_atomicity_note, 'secondary_sentence_fixed')} "
+            f"micro_removed={_note_int(_sentence_atomicity_note, 'micro_segments_removed')} "
+            f"action_lead_trimmed={_note_int(_sentence_atomicity_note, 'action_lead_trimmed')} "
+            f"round_action_protected={_note_int(_sentence_atomicity_note, 'round_start_action_protected')}"
         )
 
     # ------------------------------------------------------------------
