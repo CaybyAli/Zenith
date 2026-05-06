@@ -14,10 +14,13 @@ from models.transcript_result import TranscriptResult
 from core.final_timeline_guard import FinalTimelineGuard
 from core.final_cut_safety_guard import FinalCutSafetyGuard
 from core.final_timeline_quality_guard import FinalTimelineQualityGuard
+from core.final_cut_seam_guard import FinalCutSeamGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from core.multi_indicator_score_fusion import MultiIndicatorScoreFusion
+from models.sentence_timeline import SentenceTimelineResult
+from models.audio_role_result import AudioRoleResult
 from shared.errors import ValidationError
 
 
@@ -352,6 +355,8 @@ class LongformTimelineBuilder:
         transcript_result: TranscriptResult | None = None,
         cut_indicator_result=None,
         cut_scoring_profile=None,
+        sentence_timeline_result: SentenceTimelineResult | None = None,
+        audio_role_result: AudioRoleResult | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -595,6 +600,30 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after final quality guard")
 
+        selected_segments, seam_summary = FinalCutSeamGuard().apply(
+            selected_segments,
+            transcript_result=transcript_result,
+            sentence_timeline_result=sentence_timeline_result,
+            audio_role_result=audio_role_result,
+            cut_indicator_result=cut_indicator_result,
+        )
+        print(
+            "[TIMELINE-SEAM-GUARD] "
+            f"mini_fixed={seam_summary.mini_seams_fixed} "
+            f"speech_adjusted={seam_summary.speech_start_adjusted + seam_summary.speech_end_adjusted} "
+            f"reaction_context={seam_summary.reaction_context_expanded} "
+            f"secondary_speech={seam_summary.secondary_speech_protected} "
+            f"low_value_removed={seam_summary.low_value_segments_removed} "
+            f"important_context={seam_summary.important_context_expanded} "
+            f"duration_before={seam_summary.duration_before:.3f}s "
+            f"duration_after={seam_summary.duration_after:.3f}s"
+        )
+        if seam_summary.examples:
+            print(f"[TIMELINE-SEAM-GUARD] examples={'; '.join(seam_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after seam guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -653,6 +682,14 @@ class LongformTimelineBuilder:
             f"silence_edge_trimmed={quality_summary.silence_edge_trimmed} "
             f"duration_before={quality_summary.duration_before:.3f}s "
             f"duration_after={quality_summary.duration_after:.3f}s",
+            "Seam guard: "
+            f"mini_fixed={seam_summary.mini_seams_fixed} "
+            f"speech_adjusted={seam_summary.speech_start_adjusted + seam_summary.speech_end_adjusted} "
+            f"reaction_context={seam_summary.reaction_context_expanded} "
+            f"secondary_speech={seam_summary.secondary_speech_protected} "
+            f"low_value_removed={seam_summary.low_value_segments_removed} "
+            f"duration_before={seam_summary.duration_before:.3f}s "
+            f"duration_after={seam_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)

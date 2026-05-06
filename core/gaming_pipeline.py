@@ -447,6 +447,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             transcript_result=transcript_result,
             cut_indicator_result=cut_indicator_result,
             cut_scoring_profile=cut_profile,
+            sentence_timeline_result=sentence_timeline_result,
+            audio_role_result=audio_role_result,
         )
         _fusion_timeline_note = next(
             (n for n in edit_timeline.timeline_notes if n.startswith("Indicator fusion:")),
@@ -553,6 +555,30 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"energy={boost_counts['energy']} "
             f"vision={boost_counts['vision']} "
             f"facecam={boost_counts['facecam']}"
+        )
+
+        _seam_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Seam guard:")),
+            "",
+        )
+
+        def _seam_int(key: str) -> int:
+            prefix = f"{key}="
+            for part in _seam_note.split():
+                if part.startswith(prefix):
+                    try:
+                        return int(part.split("=", 1)[1])
+                    except ValueError:
+                        return 0
+            return 0
+
+        print(
+            f"[gaming_pipeline] SEAM_GUARD {job.job_id} "
+            f"mini_fixed={_seam_int('mini_fixed')} "
+            f"speech_adjusted={_seam_int('speech_adjusted')} "
+            f"reaction_context={_seam_int('reaction_context')} "
+            f"secondary_speech={_seam_int('secondary_speech')} "
+            f"low_value_removed={_seam_int('low_value_removed')}"
         )
 
     # ------------------------------------------------------------------
