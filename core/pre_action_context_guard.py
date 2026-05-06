@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from models.highlight_candidate import HighlightCandidate
 from models.audio_role_result import AudioRoleResult, AudioRoleWindow
 from models.cut_indicator import CutIndicator, CutIndicatorResult
 from models.timeline_segment import TimelineSegment
@@ -12,6 +13,10 @@ PRE_SHOUT_CONTEXT_SECONDS = 1.20
 PRE_GOAL_CONTEXT_SECONDS = 1.50
 STRONG_ACTION_CONTEXT_SECONDS = 2.00
 MAX_PRE_CONTEXT_EXPAND_SECONDS = 2.00
+ACTION_BACKFILL_MIN_SECONDS = 2.00
+ACTION_BACKFILL_MAX_SECONDS = 4.00
+ACTION_BACKFILL_STEP_SECONDS = 0.25
+BACKFILL_STOP_OFFSET_SECONDS = 0.10
 MIN_SEGMENT_DURATION_SECONDS = 2.5
 MIN_GAP_SECONDS = 0.15
 
@@ -31,6 +36,10 @@ class PreActionContextSummary:
     goal: int = 0
     action: int = 0
     strong_action_context: int = 0
+    smart_backfilled: int = 0
+    silence_stop: int = 0
+    boundary_stop: int = 0
+    phase_stop: int = 0
     skipped_overlap: int = 0
     skipped_silence: int = 0
     duration_before: float = 0.0
@@ -51,6 +60,8 @@ class PreActionContextGuard:
         *,
         cut_indicator_result: CutIndicatorResult | None = None,
         audio_role_result: AudioRoleResult | None = None,
+        weak_zones: list[HighlightCandidate] | None = None,
+        round_phase_result=None,
     ) -> tuple[list[TimelineSegment], PreActionContextSummary]:
         ordered = sorted(
             (segment for segment in segments if segment.end_time > segment.start_time),
@@ -61,17 +72,31 @@ class PreActionContextGuard:
         )
         indicators = self._indicators(cut_indicator_result)
         audio_windows = self._audio_windows(audio_role_result)
+        silence_zones = self._silence_zones(weak_zones)
 
         for index, segment in enumerate(ordered):
             previous = ordered[index - 1] if index > 0 else None
             trigger = self._trigger_near_start(segment, indicators)
-            if trigger is None:
+            if trigger is None and segment.segment_role not in {"hook", "peak"}:
+                continue
+            if trigger is None and not indicators and not audio_windows:
                 continue
 
-            context_seconds, trigger_kind = self._context_for_trigger(trigger)
-            context_seconds = min(context_seconds, MAX_PRE_CONTEXT_EXPAND_SECONDS)
+            if trigger is not None:
+                context_seconds, trigger_kind = self._context_for_trigger(trigger)
+            else:
+                context_seconds, trigger_kind = ACTION_BACKFILL_MAX_SECONDS, segment.segment_role
+            if segment.segment_role in {"hook", "peak"} or trigger_kind in {"shout", "goal", "strong_action"}:
+                context_seconds = max(context_seconds, ACTION_BACKFILL_MAX_SECONDS)
+            context_seconds = min(max(context_seconds, ACTION_BACKFILL_MIN_SECONDS), ACTION_BACKFILL_MAX_SECONDS)
             previous_limit = round(previous.end_time + MIN_GAP_SECONDS, 3) if previous else 0.0
-            preferred = round(max(0.0, segment.start_time - context_seconds), 3)
+            preferred, stop_reason = self._smart_backfill_start(
+                segment,
+                previous_limit,
+                context_seconds,
+                silence_zones,
+                round_phase_result,
+            )
 
             if preferred < previous_limit:
                 summary.skipped_overlap += 1
@@ -79,6 +104,9 @@ class PreActionContextGuard:
                 continue
 
             if preferred >= segment.start_time:
+                continue
+            if preferred > round(segment.start_time - ACTION_BACKFILL_MIN_SECONDS, 3):
+                segment.notes.append("pre_action_context_skipped_min_backfill")
                 continue
             if segment.end_time - preferred < MIN_SEGMENT_DURATION_SECONDS:
                 continue
@@ -90,10 +118,17 @@ class PreActionContextGuard:
             old = segment.start_time
             segment.start_time = preferred
             segment.notes.append(
-                f"pre_action_context_{trigger_kind}={old:.3f}->{segment.start_time:.3f}"
+                f"pre_action_context_{trigger_kind}={old:.3f}->{segment.start_time:.3f}:{stop_reason}"
             )
             segment.touch()
             summary.expanded += 1
+            summary.smart_backfilled += 1
+            if stop_reason == "silence_stop":
+                summary.silence_stop += 1
+            elif stop_reason == "boundary_stop":
+                summary.boundary_stop += 1
+            elif stop_reason == "phase_stop":
+                summary.phase_stop += 1
             if trigger_kind == "shout":
                 summary.shout += 1
             elif trigger_kind == "goal":
@@ -106,6 +141,11 @@ class PreActionContextGuard:
             summary.add_example(
                 f"{segment.segment_id} {trigger_kind} start {old:.2f}->{segment.start_time:.2f}"
             )
+            print(
+                "[BACKFILL] "
+                f"highlight @{old:.1f}s extended start {old:.1f} -> {segment.start_time:.1f} "
+                f"({stop_reason})"
+            )
 
         ordered = self._cleanup(ordered)
         summary.duration_after = round(sum(segment.duration for segment in ordered), 3)
@@ -116,6 +156,10 @@ class PreActionContextGuard:
             f"goal={summary.goal} "
             f"action={summary.action} "
             f"strong_action_context={summary.strong_action_context} "
+            f"smart_backfilled={summary.smart_backfilled} "
+            f"silence_stop={summary.silence_stop} "
+            f"boundary_stop={summary.boundary_stop} "
+            f"phase_stop={summary.phase_stop} "
             f"skipped_overlap={summary.skipped_overlap} "
             f"skipped_silence={summary.skipped_silence} "
             f"duration_before={summary.duration_before:.3f}s "
@@ -124,6 +168,34 @@ class PreActionContextGuard:
         if summary.examples:
             print(f"[TIMELINE-PRE-ACTION-CONTEXT] examples={'; '.join(summary.examples)}")
         return ordered, summary
+
+    def _smart_backfill_start(
+        self,
+        segment: TimelineSegment,
+        previous_limit: float,
+        context_seconds: float,
+        silence_zones: list[tuple[float, float]],
+        round_phase_result,
+    ) -> tuple[float, str]:
+        del round_phase_result  # Phase C wires the phase stop hook into this method.
+        target = round(max(0.0, segment.start_time - context_seconds), 3)
+        preferred = max(target, previous_limit)
+        stop_reason = "max_backfill"
+        if preferred > target:
+            stop_reason = "boundary_stop"
+
+        cursor = segment.start_time
+        lower_bound = target
+        while cursor > lower_bound:
+            window_start = max(lower_bound, round(cursor - ACTION_BACKFILL_STEP_SECONDS, 3))
+            silence = self._overlapping_window(window_start, cursor, silence_zones)
+            if silence is not None:
+                preferred = round(min(segment.start_time, silence[1] + BACKFILL_STOP_OFFSET_SECONDS), 3)
+                stop_reason = "silence_stop"
+                break
+            cursor = window_start
+
+        return preferred, stop_reason
 
     def _trigger_near_start(
         self,
@@ -209,6 +281,27 @@ class PreActionContextGuard:
             (window for window in result.windows if window.end_seconds > window.start_seconds),
             key=lambda window: (window.start_seconds, window.end_seconds),
         )
+
+    def _silence_zones(self, weak_zones: list[HighlightCandidate] | None) -> list[tuple[float, float]]:
+        zones: list[tuple[float, float]] = []
+        for zone in weak_zones or []:
+            text = " ".join([zone.candidate_kind, zone.source or "", *zone.notes, *zone.signal_tags]).lower()
+            if "silence" not in text:
+                continue
+            if zone.end_time > zone.start_time:
+                zones.append((zone.start_time, zone.end_time))
+        return sorted(zones)
+
+    def _overlapping_window(
+        self,
+        start: float,
+        end: float,
+        windows: list[tuple[float, float]],
+    ) -> tuple[float, float] | None:
+        for window_start, window_end in windows:
+            if max(start, window_start) < min(end, window_end):
+                return window_start, window_end
+        return None
 
 
 def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float) -> float:

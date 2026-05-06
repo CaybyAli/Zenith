@@ -622,6 +622,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"goal={_note_int(_pre_action_note, 'goal')} "
             f"action={_note_int(_pre_action_note, 'action')} "
             f"strong_action_context={_note_int(_pre_action_note, 'strong_action_context')} "
+            f"smart_backfilled={_note_int(_pre_action_note, 'smart_backfilled')} "
+            f"silence_stop={_note_int(_pre_action_note, 'silence_stop')} "
+            f"boundary_stop={_note_int(_pre_action_note, 'boundary_stop')} "
+            f"phase_stop={_note_int(_pre_action_note, 'phase_stop')} "
             f"skipped_overlap={_note_int(_pre_action_note, 'skipped_overlap')} "
             f"skipped_silence={_note_int(_pre_action_note, 'skipped_silence')}"
         )

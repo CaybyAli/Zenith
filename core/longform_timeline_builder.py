@@ -644,6 +644,7 @@ class LongformTimelineBuilder:
             selected_segments,
             cut_indicator_result=cut_indicator_result,
             audio_role_result=audio_role_result,
+            weak_zones=weak_zones,
         )
 
         if not selected_segments:
@@ -735,6 +736,10 @@ class LongformTimelineBuilder:
             f"goal={pre_action_summary.goal} "
             f"action={pre_action_summary.action} "
             f"strong_action_context={pre_action_summary.strong_action_context} "
+            f"smart_backfilled={pre_action_summary.smart_backfilled} "
+            f"silence_stop={pre_action_summary.silence_stop} "
+            f"boundary_stop={pre_action_summary.boundary_stop} "
+            f"phase_stop={pre_action_summary.phase_stop} "
             f"skipped_overlap={pre_action_summary.skipped_overlap} "
             f"skipped_silence={pre_action_summary.skipped_silence} "
             f"duration_before={pre_action_summary.duration_before:.3f}s "
