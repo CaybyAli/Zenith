@@ -637,8 +637,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             gameplay_state_result=gameplay_state_result,
             universal_moment_result=universal_moment_result,
         )
+        _timeline_notes = getattr(edit_timeline, "timeline_notes", []) or []
         _fusion_timeline_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Indicator fusion:")),
+            (n for n in _timeline_notes if n.startswith("Indicator fusion:")),
             None,
         )
         if _fusion_timeline_note:
@@ -701,7 +702,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         )
         quality_note = next(
             (
-                note for note in edit_timeline.timeline_notes
+                note for note in _timeline_notes
                 if note.startswith("Final quality guard:")
             ),
             "",
@@ -745,7 +746,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         )
 
         _seam_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Seam guard:")),
+            (n for n in _timeline_notes if n.startswith("Seam guard:")),
             "",
         )
 
@@ -775,27 +776,27 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         )
 
         _round_wait_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Round wait guard:")),
+            (n for n in _timeline_notes if n.startswith("Round wait guard:")),
             "",
         )
         _pre_action_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Pre action context:")),
+            (n for n in _timeline_notes if n.startswith("Pre action context:")),
             "",
         )
         _hard_speech_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Hard speech lock:")),
+            (n for n in _timeline_notes if n.startswith("Hard speech lock:")),
             "",
         )
         _pacing_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Pacing guard:")),
+            (n for n in _timeline_notes if n.startswith("Pacing guard:")),
             "",
         )
         _private_menu_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Private menu speech:")),
+            (n for n in _timeline_notes if n.startswith("Private menu speech:")),
             "",
         )
         _sentence_atomicity_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Sentence atomicity:")),
+            (n for n in _timeline_notes if n.startswith("Sentence atomicity:")),
             "",
         )
 
@@ -881,7 +882,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         )
 
         _round_lifecycle_note = next(
-            (n for n in edit_timeline.timeline_notes if n.startswith("Round lifecycle:")),
+            (n for n in _timeline_notes if n.startswith("Round lifecycle:")),
+            "",
+        )
+        _universal_assist_note = next(
+            (n for n in _timeline_notes if n.startswith("Universal moment assist:")),
             "",
         )
         print(
@@ -892,6 +897,16 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"post_goal_extended={_note_int(_round_lifecycle_note, 'post_goal_extended')} "
             f"boring_removed={_note_int(_round_lifecycle_note, 'boring_removed')} "
             f"boring_trimmed={_note_int(_round_lifecycle_note, 'boring_trimmed')}"
+        )
+        print(
+            f"[gaming_pipeline] UNIVERSAL_ASSIST {job.job_id} "
+            f"keep={_note_int(_universal_assist_note, 'keep_protected')} "
+            f"remove_supported={_note_int(_universal_assist_note, 'remove_supported')} "
+            f"pre={_note_int(_universal_assist_note, 'pre_context_protected')} "
+            f"post={_note_int(_universal_assist_note, 'post_context_protected')} "
+            f"cut_risk={_note_int(_universal_assist_note, 'cut_risk_protected')} "
+            f"zoom_risk={_note_int(_universal_assist_note, 'zoom_risk_marked')} "
+            f"private={_note_int(_universal_assist_note, 'private_menu_supported')}"
         )
 
     # ------------------------------------------------------------------

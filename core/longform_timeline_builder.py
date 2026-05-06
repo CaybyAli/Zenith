@@ -24,6 +24,7 @@ from core.private_menu_speech_guard import PrivateMenuSpeechGuard
 from core.sentence_atomicity_guard import SentenceAtomicityGuard
 from core.pre_action_context_guard import PreActionContextGuard
 from core.round_lifecycle_guard import RoundLifecycleGuard
+from core.universal_moment_timeline_assist import UniversalMomentTimelineAssist
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -825,6 +826,14 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after round lifecycle guard")
 
+        selected_segments, universal_assist_summary = UniversalMomentTimelineAssist().apply(
+            selected_segments,
+            universal_moment_result=universal_moment_result,
+        )
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after universal moment assist")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -1005,6 +1014,17 @@ class LongformTimelineBuilder:
             f"boring_trimmed={round_lifecycle_summary.boring_trimmed} "
             f"duration_before={round_lifecycle_summary.duration_before:.3f}s "
             f"duration_after={round_lifecycle_summary.duration_after:.3f}s",
+            "Universal moment assist: "
+            f"keep_protected={universal_assist_summary.keep_protected} "
+            f"remove_supported={universal_assist_summary.remove_supported} "
+            f"pre_context_protected={universal_assist_summary.pre_context_protected} "
+            f"post_context_protected={universal_assist_summary.post_context_protected} "
+            f"cut_risk_protected={universal_assist_summary.cut_risk_protected} "
+            f"zoom_risk_marked={universal_assist_summary.zoom_risk_marked} "
+            f"boring_trim_suggested={universal_assist_summary.boring_trim_suggested} "
+            f"private_menu_supported={universal_assist_summary.private_menu_supported} "
+            f"duration_before={universal_assist_summary.duration_before:.3f}s "
+            f"duration_after={universal_assist_summary.duration_after:.3f}s",
         ]
 
         if universal_moment_stats is not None:
