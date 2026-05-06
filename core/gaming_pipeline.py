@@ -751,6 +751,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             (n for n in edit_timeline.timeline_notes if n.startswith("Pre action context:")),
             "",
         )
+        _hard_speech_note = next(
+            (n for n in edit_timeline.timeline_notes if n.startswith("Hard speech lock:")),
+            "",
+        )
 
         def _note_int(note: str, key: str) -> int:
             prefix = f"{key}="
@@ -790,6 +794,16 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"gameplay_state_backfilled={_note_int(_pre_action_note, 'gameplay_state_backfilled')} "
             f"goal_state_backfilled={_note_int(_pre_action_note, 'goal_state_backfilled')} "
             f"action_state_backfilled={_note_int(_pre_action_note, 'action_state_backfilled')}"
+        )
+        print(
+            f"[gaming_pipeline] HARD_SPEECH_LOCK {job.job_id} "
+            f"word_locked={_note_int(_hard_speech_note, 'word_locked')} "
+            f"sentence_locked={_note_int(_hard_speech_note, 'sentence_locked')} "
+            f"phrase_locked={_note_int(_hard_speech_note, 'phrase_locked')} "
+            f"shout_locked={_note_int(_hard_speech_note, 'shout_locked')} "
+            f"secondary_locked={_note_int(_hard_speech_note, 'secondary_locked')} "
+            f"micro_fixed={_note_int(_hard_speech_note, 'micro_fixed')} "
+            f"short_removed={_note_int(_hard_speech_note, 'short_useless_removed')}"
         )
 
     # ------------------------------------------------------------------

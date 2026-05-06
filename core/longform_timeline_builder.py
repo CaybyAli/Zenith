@@ -16,6 +16,7 @@ from core.final_timeline_guard import FinalTimelineGuard
 from core.final_cut_safety_guard import FinalCutSafetyGuard
 from core.final_timeline_quality_guard import FinalTimelineQualityGuard
 from core.final_cut_seam_guard import FinalCutSeamGuard
+from core.hard_speech_lock_guard import HardSpeechLockGuard
 from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
 from core.pre_action_context_guard import PreActionContextGuard
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
@@ -659,6 +660,36 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after pre-action context guard")
 
+        selected_segments, hard_speech_summary = HardSpeechLockGuard().apply(
+            selected_segments,
+            transcript_result=transcript_result,
+            sentence_timeline_result=sentence_timeline_result,
+            audio_role_result=audio_role_result,
+            cut_indicator_result=cut_indicator_result,
+            gameplay_state_result=gameplay_state_result,
+        )
+        print(
+            "[TIMELINE-HARD-SPEECH-LOCK] "
+            f"word_start={hard_speech_summary.word_start_locked} "
+            f"word_end={hard_speech_summary.word_end_locked} "
+            f"sentence_start={hard_speech_summary.sentence_start_locked} "
+            f"sentence_end={hard_speech_summary.sentence_end_locked} "
+            f"phrase={hard_speech_summary.phrase_locked} "
+            f"shout={hard_speech_summary.shout_locked} "
+            f"secondary={hard_speech_summary.secondary_locked} "
+            f"micro_merged={hard_speech_summary.micro_cuts_merged} "
+            f"micro_removed={hard_speech_summary.micro_cuts_removed} "
+            f"micro_gaps_closed={hard_speech_summary.micro_gaps_closed} "
+            f"short_removed={hard_speech_summary.short_useless_removed} "
+            f"duration_before={hard_speech_summary.duration_before:.3f}s "
+            f"duration_after={hard_speech_summary.duration_after:.3f}s"
+        )
+        if hard_speech_summary.examples:
+            print(f"[TIMELINE-HARD-SPEECH-LOCK] examples={'; '.join(hard_speech_summary.examples)}")
+
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after hard speech lock guard")
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -764,6 +795,31 @@ class LongformTimelineBuilder:
             f"skipped_state_overlap={pre_action_summary.skipped_state_overlap} "
             f"duration_before={pre_action_summary.duration_before:.3f}s "
             f"duration_after={pre_action_summary.duration_after:.3f}s",
+            "Hard speech lock: "
+            f"word_start_locked={hard_speech_summary.word_start_locked} "
+            f"word_end_locked={hard_speech_summary.word_end_locked} "
+            f"word_end_trimmed_back={hard_speech_summary.word_end_trimmed_back} "
+            f"word_lock_removed={hard_speech_summary.word_lock_removed} "
+            f"word_locked={hard_speech_summary.word_locked} "
+            f"sentence_start_locked={hard_speech_summary.sentence_start_locked} "
+            f"sentence_end_locked={hard_speech_summary.sentence_end_locked} "
+            f"sentence_end_trimmed_back={hard_speech_summary.sentence_end_trimmed_back} "
+            f"sentence_locked={hard_speech_summary.sentence_locked} "
+            f"phrase_locked={hard_speech_summary.phrase_locked} "
+            f"shout_locked={hard_speech_summary.shout_locked} "
+            f"secondary_start_locked={hard_speech_summary.secondary_start_locked} "
+            f"secondary_end_locked={hard_speech_summary.secondary_end_locked} "
+            f"secondary_removed={hard_speech_summary.secondary_removed} "
+            f"secondary_locked={hard_speech_summary.secondary_locked} "
+            f"micro_cuts_merged={hard_speech_summary.micro_cuts_merged} "
+            f"micro_cuts_removed={hard_speech_summary.micro_cuts_removed} "
+            f"micro_gaps_closed={hard_speech_summary.micro_gaps_closed} "
+            f"micro_fixed={hard_speech_summary.micro_fixed} "
+            f"short_useless_removed={hard_speech_summary.short_useless_removed} "
+            f"action_preroll_locked={hard_speech_summary.action_preroll_locked} "
+            f"shout_preroll_locked={hard_speech_summary.shout_preroll_locked} "
+            f"duration_before={hard_speech_summary.duration_before:.3f}s "
+            f"duration_after={hard_speech_summary.duration_after:.3f}s",
         ]
 
         boost_counts = self._count_analysis_boosts(selected_segments)
