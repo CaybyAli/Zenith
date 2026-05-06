@@ -103,15 +103,13 @@ def test_facecam_zoom_smoothness_smoke() -> None:
     summary = FacecamZoomSmoothnessGuard().apply(_timeline(segment), plan)
     by_id = {zoom.instruction_id: zoom for zoom in plan.zoom_instructions}
 
-    assert "zoom_start_edge" in by_id
-    assert by_id["zoom_start_edge"].start_time >= segment.start_time + 0.9
-    assert "zoom_end_edge" in by_id
-    assert by_id["zoom_end_edge"].end_time <= segment.end_time - 0.9
+    assert "zoom_start_edge" not in by_id
+    assert "zoom_end_edge" not in by_id
     assert "zoom_short" not in by_id
     assert "zoom_weak" not in by_id
     assert "zoom_strong" in by_id
 
-    assert summary.shifted >= 2
+    assert summary.edge_blocked >= 2
     assert summary.short_removed >= 1
     assert summary.weak_reaction_removed >= 1
 

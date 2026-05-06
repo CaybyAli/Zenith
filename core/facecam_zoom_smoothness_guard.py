@@ -12,7 +12,8 @@ from models.timeline_segment import TimelineSegment
 from models.zoom_instruction import ZoomInstruction
 
 
-FACE_CAM_EDGE_SAFE_SECONDS = 0.90
+ZOOM_EDGE_BUFFER_SECONDS = 1.00
+FACE_CAM_EDGE_SAFE_SECONDS = ZOOM_EDGE_BUFFER_SECONDS
 MIN_FACECAM_ZOOM_DURATION_SECONDS = 1.40
 MIN_VERY_STRONG_ZOOM_DURATION_SECONDS = 0.80
 MIN_REACTION_SCORE_FOR_FACECAM_ZOOM = 0.70
@@ -75,6 +76,7 @@ class FacecamZoomSmoothnessGuard:
         reframe_plan: ReframePlan | None = None,
     ) -> FacecamZoomSmoothnessSummary:
         summary = FacecamZoomSmoothnessSummary()
+        raw_zoom_count = len(dynamic_edit_plan.zoom_instructions)
         segment_by_id = {
             segment.segment_id: segment
             for segment in timeline.selected_segments
@@ -126,6 +128,10 @@ class FacecamZoomSmoothnessGuard:
                 summary,
             )
 
+        print(
+            f"[ZOOM-EDGE] dropped {summary.edge_blocked} of {raw_zoom_count} "
+            f"zoom instructions (edge buffer {ZOOM_EDGE_BUFFER_SECONDS:.1f}s)"
+        )
         print(
             "[FACECAM-ZOOM-SMOOTHNESS] "
             f"removed={summary.removed} "
@@ -187,34 +193,12 @@ class FacecamZoomSmoothnessGuard:
             return None
 
         if zoom.start_time < safe_start:
-            duration = zoom.duration
-            shifted_end = round(safe_start + duration, 3)
-            if shifted_end <= safe_end:
-                old = zoom.start_time
-                zoom.start_time = safe_start
-                zoom.end_time = shifted_end
-                zoom.notes.append(f"facecam_zoom_smooth_shift_start={old:.3f}->{zoom.start_time:.3f}")
-                zoom.touch()
-                summary.shifted += 1
-                summary.add_example(f"{zoom.segment_id} shifted {old:.2f}->{zoom.start_time:.2f}")
-            else:
-                self._remove(summary, "edge_blocked", zoom, "start_edge")
-                return None
+            self._remove(summary, "edge_blocked", zoom, "start_edge")
+            return None
 
         if zoom.end_time > safe_end:
-            old_end = zoom.end_time
-            zoom.end_time = safe_end
-            if (
-                zoom.duration < MIN_FACECAM_ZOOM_DURATION_SECONDS
-                and zoom.intensity < VERY_STRONG_REACTION_SCORE_FOR_SHORT_ZOOM
-            ):
-                zoom.end_time = old_end
-                self._remove(summary, "edge_blocked", zoom, "end_edge")
-                return None
-            zoom.notes.append(f"facecam_zoom_smooth_trim_end={old_end:.3f}->{zoom.end_time:.3f}")
-            zoom.touch()
-            summary.shifted += 1
-            summary.add_example(f"{zoom.segment_id} trimmed_end {old_end:.2f}->{zoom.end_time:.2f}")
+            self._remove(summary, "edge_blocked", zoom, "end_edge")
+            return None
 
         self._trim_post_action_tail(zoom, indicators, audio_windows, facecam_reaction_result, summary)
         if (
