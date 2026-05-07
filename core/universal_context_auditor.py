@@ -27,6 +27,29 @@ from models.universal_role_decision_audit import (
 FIRST_30S = 30.0
 PROTECTED_ROLES = {"hook", "peak", "payoff"}
 EDGE_SECONDS = 0.85
+SPEECH_EDGE_SECONDS = 0.75
+ACTION_EDGE_SECONDS = 1.0
+ZOOM_EDGE_SECONDS = 0.75
+CONFIRMED_BOUNDARY_TYPES = {"speech_cut_risk", "action_cut_risk", "zoom_cut_risk"}
+BOUNDARY_NOTE_TERMS = (
+    "cut_risk",
+    "cut boundary",
+    "boundary risk",
+    "speech boundary",
+    "speech_boundary",
+    "speech cut",
+    "speech_cut",
+    "word start",
+    "word end",
+    "word_start",
+    "word_end",
+    "sentence start",
+    "sentence end",
+    "sentence_start",
+    "sentence_end",
+    "hard_word",
+    "hard_sentence",
+)
 
 
 @dataclass
@@ -54,6 +77,8 @@ class _SignalStats:
     role_alignment: str = "unknown"
     protected: bool = False
     first_30s: bool = False
+    confirmed_cut_risk: bool = False
+    boundary_note_hint: bool = False
 
 
 class UniversalContextAuditor:
@@ -217,17 +242,17 @@ class UniversalContextAuditor:
             right=current,
             edge_time=current.start,
             relation=previous_relation,
-            edge_windows=self._edge_windows(current.start, windows),
+            windows=windows,
         )
         next_boundary_type = self._boundary_type(
             left=current,
             right=next_stats,
             edge_time=current.end,
             relation=next_relation,
-            edge_windows=self._edge_windows(current.end, windows),
+            windows=windows,
         )
-        previous_boundary_risk = previous_boundary_type not in {"clean", "unknown"}
-        next_boundary_risk = next_boundary_type not in {"clean", "unknown"}
+        previous_boundary_risk = previous_boundary_type in CONFIRMED_BOUNDARY_TYPES
+        next_boundary_risk = next_boundary_type in CONFIRMED_BOUNDARY_TYPES
 
         neighbor_keep_score = self._score(
             max(
@@ -300,16 +325,8 @@ class UniversalContextAuditor:
             "menu_continuation",
             "boring_continuation",
         }
-        should_protect_previous_boundary = previous_boundary_risk or previous_relation in {
-            "setup_context",
-            "action_continuation",
-            "speech_continuation",
-        }
-        should_protect_next_boundary = next_boundary_risk or next_relation in {
-            "payoff_context",
-            "action_continuation",
-            "speech_continuation",
-        }
+        should_protect_previous_boundary = previous_boundary_type in CONFIRMED_BOUNDARY_TYPES
+        should_protect_next_boundary = next_boundary_type in CONFIRMED_BOUNDARY_TYPES
 
         return UniversalSegmentContextAudit(
             segment_id=segment.segment_id,
@@ -390,6 +407,7 @@ class UniversalContextAuditor:
         )
         pre_context = self._score(max(tension, self._max(0.72 for w in windows if w.needs_pre_context)))
         post_context = self._score(max(post, self._max(0.72 for w in windows if w.needs_post_context)))
+        note_text = self._debug_note_text(debug)
         return _SignalStats(
             segment_id=str(getattr(segment, "segment_id", "") or ""),
             role=role,
@@ -414,6 +432,8 @@ class UniversalContextAuditor:
             role_alignment=str(getattr(role_audit, "role_decision_alignment", "unknown") or "unknown"),
             protected=role in PROTECTED_ROLES,
             first_30s=self._seconds(getattr(segment, "start_time", 0.0)) < FIRST_30S,
+            confirmed_cut_risk=bool(getattr(debug, "confirmed_cut_risk", False)),
+            boundary_note_hint=any(term in note_text for term in BOUNDARY_NOTE_TERMS),
         )
 
     def _previous_relation(
@@ -455,7 +475,7 @@ class UniversalContextAuditor:
         del previous
         if next_stats is None:
             return "none", 0.0
-        current_setup = current.tension >= 0.52 or current.pre_context >= 0.52 or (
+        current_setup = self._setup_signal(current) or (
             current.keep >= 0.55 and current.peak < 0.55 and next_stats.peak >= 0.55
         )
         next_payoff = self._is_peakish(next_stats)
@@ -480,35 +500,55 @@ class UniversalContextAuditor:
         right: _SignalStats | None,
         edge_time: float,
         relation: str,
-        edge_windows: list[UniversalMomentWindow],
+        windows: list[UniversalMomentWindow],
     ) -> str:
         if left is None or right is None:
             return "clean"
+        speech_windows = self._edge_windows(edge_time, windows, radius=SPEECH_EDGE_SECONDS)
+        action_windows = self._edge_windows(edge_time, windows, radius=ACTION_EDGE_SECONDS)
+        zoom_windows = self._edge_windows(edge_time, windows, radius=ZOOM_EDGE_SECONDS)
         edge_speech = self._max(
-            max(w.speech_score, w.cut_risk_score if w.speech_boundary_risk else 0.0)
-            for w in edge_windows
+            w.speech_score
+            for w in speech_windows
         )
-        edge_action = self._max(
-            max(
-                w.peak_score,
-                w.tension_score,
-                w.visual_action_score,
-                w.gameplay_motion_score,
-                0.66 if w.action_context_risk else 0.0,
-            )
-            for w in edge_windows
+        edge_cut = self._max(
+            w.cut_risk_score
+            for w in speech_windows
         )
-        edge_zoom = self._max(
-            max(w.zoom_risk_score, 0.66 if w.zoom_boundary_risk else 0.0)
-            for w in edge_windows
-        )
-        gap = max(0.0, right.start - left.end)
-        if edge_speech >= 0.55 or (left.speech >= 0.55 and right.speech >= 0.55 and gap < 0.75):
+        edge_speech_boundary = any(w.speech_boundary_risk for w in speech_windows)
+        edge_speech_note = (left.boundary_note_hint or right.boundary_note_hint)
+        confirmed_speech_cut = (left.confirmed_cut_risk or right.confirmed_cut_risk) and edge_speech >= 0.50
+        if (
+            edge_speech >= 0.65
+            or edge_cut >= 0.75
+            or edge_speech_boundary
+            or confirmed_speech_cut
+            or edge_speech_note
+        ):
             return "speech_cut_risk"
-        if edge_action >= 0.60 or (left.action >= 0.60 and right.action >= 0.60 and gap < 0.75):
+
+        edge_peak = self._max(
+            w.peak_score
+            for w in action_windows
+        )
+        edge_tension = self._max(
+            w.tension_score
+            for w in action_windows
+        )
+        edge_action_context = any(
+            w.action_context_risk
+            or str(getattr(w, "moment_type", "") or "").lower() in {"peak_action", "pre_action_tension"}
+            for w in action_windows
+        )
+        if edge_peak >= 0.60 or edge_tension >= 0.60 or edge_action_context:
             return "action_cut_risk"
-        if edge_zoom >= 0.55 or left.zoom >= 0.55 or right.zoom >= 0.55:
+
+        edge_zoom = self._max(w.zoom_risk_score for w in zoom_windows)
+        edge_zoom_boundary = any(w.zoom_boundary_risk for w in zoom_windows)
+        if edge_zoom >= 0.70 or edge_zoom_boundary:
             return "zoom_cut_risk"
+
+        gap = max(0.0, right.start - left.end)
         if (self._menu_like(left) and right.action >= 0.60) or (left.action >= 0.60 and self._menu_like(right)):
             return "menu_jump"
         if gap < 0.5 and relation in {"weak_relation", "unknown"}:
@@ -527,7 +567,7 @@ class UniversalContextAuditor:
             return 0.0
         return self._score(
             (max(current.tension, current.pre_context, current.keep) * 0.52)
-            + (max(next_stats.peak, next_stats.post_reaction, 0.62 if next_stats.role == "peak" else 0.0) * 0.48)
+            + (max(next_stats.peak, next_stats.post_reaction) * 0.48)
         )
 
     def _payoff_score(self, *, previous: _SignalStats | None, current: _SignalStats) -> float:
@@ -535,7 +575,7 @@ class UniversalContextAuditor:
             return self._score(max(current.peak, current.post_reaction) * 0.55)
         return self._score(
             (max(previous.tension, previous.pre_context, previous.keep) * 0.42)
-            + (max(current.peak, current.post_reaction, 0.62 if current.role in {"peak", "payoff"} else 0.0) * 0.58)
+            + (max(current.peak, current.post_reaction) * 0.58)
         )
 
     def _context_conflict_score(
@@ -581,18 +621,21 @@ class UniversalContextAuditor:
         low_action = current.peak < 0.50 and current.tension < 0.50
         if not low_action:
             return False, False, 0.0
+        remove_signal = max(current.private, current.boring, current.remove)
+        if remove_signal < 0.55:
+            return False, False, 0.0
         start = self._edge_profile(current.start, current_windows)
         end = self._edge_profile(current.end, current_windows)
         start_ok = (
             previous_relation in {"none", "weak_relation", "unknown"}
-            and previous_boundary_type in {"clean", "micro_gap", "hard_jump"}
-            and start["remove_edge"] >= 0.62
+            and previous_boundary_type == "clean"
+            and max(start["remove_edge"], remove_signal) >= 0.55
             and start["protect_edge"] < 0.45
         )
         end_ok = (
             next_relation in {"none", "weak_relation", "unknown"}
-            and next_boundary_type in {"clean", "micro_gap", "hard_jump"}
-            and end["remove_edge"] >= 0.62
+            and next_boundary_type == "clean"
+            and max(end["remove_edge"], remove_signal) >= 0.55
             and end["protect_edge"] < 0.45
         )
         if start_ok and end_ok:
@@ -647,10 +690,31 @@ class UniversalContextAuditor:
         notes: list[str] = []
 
         decision = "unknown"
-        if previous_relation == "setup_context" and self._is_peakish(current):
+        payoff_signal = self._strong_payoff_signal(current)
+        setup_keep_payoff = previous_relation == "setup_context" and current.keep >= 0.65
+        role_payoff_signal = self._role_payoff_with_signal(current)
+        protected_without_payoff = current.role in {"peak", "payoff"} and not (
+            payoff_signal or setup_keep_payoff or role_payoff_signal
+        )
+        if previous_relation == "setup_context" and (
+            payoff_signal or setup_keep_payoff or role_payoff_signal
+        ):
             decision = "keep_as_payoff"
             reasons.append("KEEP: previous segment behaves like setup for current payoff/peak.")
-        elif next_relation == "payoff_context" and setup_score >= 0.50:
+        elif protected_without_payoff:
+            decision = "keep_context_chain" if (
+                previous_relation in {"setup_context", "action_continuation", "speech_continuation"}
+                or next_relation in {"payoff_context", "action_continuation", "speech_continuation"}
+            ) else "needs_human_review"
+            warnings.append("protected_role_without_strong_payoff_signal")
+            reasons.append("REVIEW: protected role lacks strong peak/post-reaction payoff signal.")
+        elif (
+            next_relation == "payoff_context"
+            and setup_score >= 0.50
+            and self._setup_signal(current)
+            and next_stats is not None
+            and self._is_peakish(next_stats)
+        ):
             decision = "keep_as_setup"
             reasons.append("KEEP: current segment sets up the next peak/payoff.")
         elif previous_relation in {"action_continuation", "speech_continuation"} or next_relation in {"action_continuation", "speech_continuation"}:
@@ -733,7 +797,16 @@ class UniversalContextAuditor:
         return neighbor_context < 0.55
 
     def _is_peakish(self, item: _SignalStats) -> bool:
-        return item.role in {"peak", "payoff"} or max(item.peak, item.post_reaction) >= 0.55
+        return self._strong_payoff_signal(item) or self._role_payoff_with_signal(item)
+
+    def _strong_payoff_signal(self, item: _SignalStats) -> bool:
+        return max(item.peak, item.post_reaction) >= 0.55
+
+    def _role_payoff_with_signal(self, item: _SignalStats) -> bool:
+        return item.role in {"peak", "payoff"} and max(item.peak, item.post_reaction) >= 0.45
+
+    def _setup_signal(self, item: _SignalStats) -> bool:
+        return max(item.tension, item.pre_context) >= 0.52
 
     def _both_action(self, left: _SignalStats, right: _SignalStats) -> bool:
         return left.action >= 0.55 and right.action >= 0.55
@@ -867,15 +940,37 @@ class UniversalContextAuditor:
         self,
         edge_time: float,
         windows: list[UniversalMomentWindow],
+        *,
+        radius: float = EDGE_SECONDS,
     ) -> list[UniversalMomentWindow]:
-        start = max(0.0, edge_time - EDGE_SECONDS)
-        end = edge_time + EDGE_SECONDS
+        start = max(0.0, edge_time - max(0.0, radius))
+        end = edge_time + max(0.0, radius)
         return self._overlapping_windows(start, end, windows)
 
     def _field(self, item: object, name: str, fallback: float = 0.0) -> float:
         if item is None:
             return fallback
         return self._score(getattr(item, name, fallback), fallback)
+
+    def _debug_note_text(self, debug: UniversalMomentSegmentDebug | None) -> str:
+        if debug is None:
+            return ""
+        values: list[str] = [
+            getattr(debug, "professional_reason", "") or "",
+            getattr(debug, "professional_verdict", "") or "",
+        ]
+        for name in ("cut_risk_reason", "segment_notes", "universal_notes", "diagnosis"):
+            raw = getattr(debug, name, None)
+            if raw is None:
+                continue
+            if isinstance(raw, (str, bytes)):
+                values.append(str(raw))
+            else:
+                try:
+                    values.extend(str(item) for item in raw if item is not None)
+                except TypeError:
+                    values.append(str(raw))
+        return " ".join(values).lower()
 
     def _seconds(self, value: object, fallback: float = 0.0) -> float:
         try:
@@ -929,4 +1024,13 @@ class UniversalContextAuditor:
             f"edge_trim={report.edge_trim_candidate} "
             f"review={report.needs_human_review} "
             f"avg_conflict={report.avg_context_conflict_score}"
+        )
+        print(
+            "[UNIVERSAL-CONTEXT-AUDIT] boundary_types "
+            f"prev_speech={sum(item.previous_boundary_type == 'speech_cut_risk' for item in report.segments)} "
+            f"next_speech={sum(item.next_boundary_type == 'speech_cut_risk' for item in report.segments)} "
+            f"prev_clean={sum(item.previous_boundary_type == 'clean' for item in report.segments)} "
+            f"next_clean={sum(item.next_boundary_type == 'clean' for item in report.segments)} "
+            f"action={sum(item.previous_boundary_type == 'action_cut_risk' for item in report.segments) + sum(item.next_boundary_type == 'action_cut_risk' for item in report.segments)} "
+            f"zoom={sum(item.previous_boundary_type == 'zoom_cut_risk' for item in report.segments) + sum(item.next_boundary_type == 'zoom_cut_risk' for item in report.segments)}"
         )

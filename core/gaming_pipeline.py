@@ -40,6 +40,7 @@ from core.universal_moment_review_exporter import UniversalMomentReviewExporter
 from core.universal_context_auditor import UniversalContextAuditor
 from core.universal_role_decision_auditor import UniversalRoleDecisionAuditor
 from core.universal_moment_soft_decision_builder import UniversalMomentSoftDecisionBuilder
+from core.phase_2b_final_review_builder import Phase2BFinalReviewBuilder
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
@@ -182,12 +183,34 @@ def _write_universal_context_audit_report(job, report) -> list[str]:
     return paths
 
 
+def _write_phase_2b_final_review_report(job, report) -> list[str]:
+    if report is None:
+        return []
+
+    payload = report.to_dict()
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{job.job_id}_phase_2b_final_review.json")
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+    export_path = os.path.join(export_dir, "phase_2b_final_review.json")
+
+    paths = [output_path, export_path]
+    for path in paths:
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=False)
+    return paths
+
+
 def _write_universal_review_report(
     job,
     report,
     soft_decision_report=None,
     role_decision_audit_report=None,
     context_audit_report=None,
+    final_review_report=None,
 ) -> list[str]:
     if report is None:
         return []
@@ -207,6 +230,7 @@ def _write_universal_review_report(
         soft_decision_report=soft_decision_report,
         role_decision_audit_report=role_decision_audit_report,
         context_audit_report=context_audit_report,
+        final_review_report=final_review_report,
     )
     export_path = exporter.write_report(
         report=report,
@@ -215,6 +239,7 @@ def _write_universal_review_report(
         soft_decision_report=soft_decision_report,
         role_decision_audit_report=role_decision_audit_report,
         context_audit_report=context_audit_report,
+        final_review_report=final_review_report,
     )
     return [str(output_path), str(export_path)]
 
@@ -340,10 +365,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_moment_soft_decision_report = None
     universal_role_decision_audit_report = None
     universal_context_audit_report = None
+    phase_2b_final_review_report = None
     universal_moment_debug_paths: list[str] = []
     universal_moment_soft_decision_paths: list[str] = []
     universal_role_decision_audit_paths: list[str] = []
     universal_context_audit_paths: list[str] = []
+    phase_2b_final_review_paths: list[str] = []
     universal_moment_review_paths: list[str] = []
 
     transcript_result = None
@@ -1089,12 +1116,24 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             job,
             universal_context_audit_report,
         )
+        phase_2b_final_review_report = Phase2BFinalReviewBuilder().build(
+            job_id=job.job_id,
+            debug_report=universal_moment_debug_report,
+            soft_decision_report=universal_moment_soft_decision_report,
+            role_decision_audit_report=universal_role_decision_audit_report,
+            context_audit_report=universal_context_audit_report,
+        )
+        phase_2b_final_review_paths = _write_phase_2b_final_review_report(
+            job,
+            phase_2b_final_review_report,
+        )
         universal_moment_review_paths = _write_universal_review_report(
             job,
             universal_moment_debug_report,
             soft_decision_report=universal_moment_soft_decision_report,
             role_decision_audit_report=universal_role_decision_audit_report,
             context_audit_report=universal_context_audit_report,
+            final_review_report=phase_2b_final_review_report,
         )
         print(
             f"[gaming_pipeline] UNIVERSAL_DEBUG {job.job_id} "
@@ -1138,6 +1177,17 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"review={universal_context_audit_report.needs_human_review} "
             f"avg_conflict={universal_context_audit_report.avg_context_conflict_score}"
         )
+        print(
+            f"[gaming_pipeline] PHASE_2B_FINAL_REVIEW {job.job_id} "
+            f"segments={phase_2b_final_review_report.total_segments} "
+            f"strong_keep={phase_2b_final_review_report.strong_keep} "
+            f"boundary_warning={phase_2b_final_review_report.keep_with_boundary_warning} "
+            f"review={phase_2b_final_review_report.review_needed} "
+            f"edge_trim={phase_2b_final_review_report.possible_edge_trim_later} "
+            f"safe={phase_2b_final_review_report.safe} "
+            f"high={phase_2b_final_review_report.high_priority_reviews} "
+            f"medium={phase_2b_final_review_report.medium_priority_reviews}"
+        )
         if universal_moment_debug_paths:
             print(
                 f"[gaming_pipeline] UNIVERSAL_DEBUG_FILE {job.job_id} "
@@ -1157,6 +1207,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] UNIVERSAL_CONTEXT_AUDIT_FILE {job.job_id} "
                 f"path={universal_context_audit_paths[-1]}"
+            )
+        if phase_2b_final_review_paths:
+            print(
+                f"[gaming_pipeline] PHASE_2B_FINAL_REVIEW_FILE {job.job_id} "
+                f"path={phase_2b_final_review_paths[-1]}"
             )
         if universal_moment_review_paths:
             print(
@@ -1369,6 +1424,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             if universal_context_audit_report is not None
             else None
         ),
+        "phase_2b_final_review_report": (
+            phase_2b_final_review_report.to_dict()
+            if phase_2b_final_review_report is not None
+            else None
+        ),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -1413,10 +1473,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "universal_moment_soft_decision_report": universal_moment_soft_decision_report,
         "universal_role_decision_audit_report": universal_role_decision_audit_report,
         "universal_context_audit_report": universal_context_audit_report,
+        "phase_2b_final_review_report": phase_2b_final_review_report,
         "universal_moment_debug_paths": list(universal_moment_debug_paths),
         "universal_moment_soft_decision_paths": list(universal_moment_soft_decision_paths),
         "universal_role_decision_audit_paths": list(universal_role_decision_audit_paths),
         "universal_context_audit_paths": list(universal_context_audit_paths),
+        "phase_2b_final_review_paths": list(phase_2b_final_review_paths),
         "universal_moment_review_paths": list(universal_moment_review_paths),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,

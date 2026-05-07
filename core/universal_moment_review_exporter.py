@@ -19,6 +19,10 @@ from models.universal_role_decision_audit import (
     UniversalRoleDecisionAuditReport,
     UniversalRoleDecisionSegmentAudit,
 )
+from models.phase_2b_final_review import (
+    Phase2BFinalReviewReport,
+    Phase2BSegmentReview,
+)
 
 
 class UniversalMomentReviewExporter:
@@ -31,11 +35,13 @@ class UniversalMomentReviewExporter:
         soft_decision_report=None,
         role_decision_audit_report=None,
         context_audit_report=None,
+        final_review_report=None,
     ) -> Path:
         parsed_report = self._report(report)
         parsed_soft_report = self._soft_report(soft_decision_report)
         parsed_audit_report = self._role_decision_audit_report(role_decision_audit_report)
         parsed_context_report = self._context_audit_report(context_audit_report)
+        parsed_final_review_report = self._final_review_report(final_review_report)
         target_dir = Path(output_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
         output_path = target_dir / filename
@@ -45,6 +51,7 @@ class UniversalMomentReviewExporter:
                 parsed_soft_report,
                 parsed_audit_report,
                 parsed_context_report,
+                parsed_final_review_report,
             ),
             encoding="utf-8",
         )
@@ -98,12 +105,27 @@ class UniversalMomentReviewExporter:
             return UniversalContextAuditReport.from_dict(report.to_dict())
         return None
 
+    def _final_review_report(
+        self,
+        report: Any,
+    ) -> Phase2BFinalReviewReport | None:
+        if report is None:
+            return None
+        if isinstance(report, Phase2BFinalReviewReport):
+            return report
+        if isinstance(report, dict):
+            return Phase2BFinalReviewReport.from_dict(report)
+        if hasattr(report, "to_dict"):
+            return Phase2BFinalReviewReport.from_dict(report.to_dict())
+        return None
+
     def _markdown(
         self,
         report: UniversalMomentDebugReport,
         soft_decision_report: UniversalMomentSoftDecisionReport | None = None,
         role_decision_audit_report: UniversalRoleDecisionAuditReport | None = None,
         context_audit_report: UniversalContextAuditReport | None = None,
+        final_review_report: Phase2BFinalReviewReport | None = None,
     ) -> str:
         lines: list[str] = [
             "# Universal Moment Review",
@@ -165,9 +187,25 @@ class UniversalMomentReviewExporter:
                 ]
             )
 
+        if final_review_report is not None:
+            lines.extend(
+                [
+                    "## Phase 2.B Final Review Summary",
+                    f"- strong_keep: {final_review_report.strong_keep}",
+                    f"- keep_with_boundary_warning: {final_review_report.keep_with_boundary_warning}",
+                    f"- review_needed: {final_review_report.review_needed}",
+                    f"- possible_edge_trim_later: {final_review_report.possible_edge_trim_later}",
+                    f"- safe: {final_review_report.safe}",
+                    f"- high_priority_reviews: {final_review_report.high_priority_reviews}",
+                    f"- medium_priority_reviews: {final_review_report.medium_priority_reviews}",
+                    "",
+                ]
+            )
+
         decisions_by_id = self._soft_by_id(soft_decision_report)
         audit_by_id = self._role_audit_by_id(role_decision_audit_report)
         context_by_id = self._context_audit_by_id(context_audit_report)
+        final_review_by_id = self._final_review_by_id(final_review_report)
         for index, segment in enumerate(report.segments, start=1):
             lines.extend(
                 self._segment_lines(
@@ -176,6 +214,7 @@ class UniversalMomentReviewExporter:
                     decisions_by_id.get(segment.segment_id),
                     audit_by_id.get(segment.segment_id),
                     context_by_id.get(segment.segment_id),
+                    final_review_by_id.get(segment.segment_id),
                 )
             )
 
@@ -188,6 +227,7 @@ class UniversalMomentReviewExporter:
         soft_decision: UniversalMomentSegmentDecision | None = None,
         role_decision_audit: UniversalRoleDecisionSegmentAudit | None = None,
         context_audit: UniversalSegmentContextAudit | None = None,
+        final_review: Phase2BSegmentReview | None = None,
     ) -> list[str]:
         time_range = f"{self._time(segment.start_time)}-{self._time(segment.end_time)}"
         top_types = self._type_counts(segment.top_moment_types)
@@ -228,6 +268,8 @@ class UniversalMomentReviewExporter:
             lines.extend(self._role_decision_audit_lines(role_decision_audit))
         if context_audit is not None:
             lines.extend(self._context_audit_lines(context_audit))
+        if final_review is not None:
+            lines.extend(self._final_review_lines(final_review))
         lines.extend(
             [
                 "- Diagnosis:",
@@ -306,6 +348,23 @@ class UniversalMomentReviewExporter:
             *[f"    - {item}" for item in notes],
         ]
 
+    def _final_review_lines(
+        self,
+        review: Phase2BSegmentReview,
+    ) -> list[str]:
+        key_reasons = review.key_reasons or ["none"]
+        warnings = review.warnings or ["none"]
+        return [
+            "- Phase 2.B Final Review:",
+            f"  - Status: {review.final_review_status}",
+            f"  - Human Review Priority: {review.human_review_priority}",
+            f"  - Human Review Reason: {review.human_review_reason or 'none'}",
+            "  - Key Reasons:",
+            *[f"    - {item}" for item in key_reasons],
+            "  - Warnings:",
+            *[f"    - {item}" for item in warnings],
+        ]
+
     def _soft_by_id(
         self,
         soft_decision_report: UniversalMomentSoftDecisionReport | None,
@@ -340,6 +399,18 @@ class UniversalMomentReviewExporter:
             audit.segment_id: audit
             for audit in context_audit_report.segments
             if audit.segment_id
+        }
+
+    def _final_review_by_id(
+        self,
+        final_review_report: Phase2BFinalReviewReport | None,
+    ) -> dict[str, Phase2BSegmentReview]:
+        if final_review_report is None:
+            return {}
+        return {
+            review.segment_id: review
+            for review in final_review_report.segments
+            if review.segment_id
         }
 
     def _time(self, seconds: float) -> str:
