@@ -25,6 +25,7 @@ from core.sentence_atomicity_guard import SentenceAtomicityGuard
 from core.pre_action_context_guard import PreActionContextGuard
 from core.round_lifecycle_guard import RoundLifecycleGuard
 from core.universal_moment_timeline_assist import UniversalMomentTimelineAssist
+from core.universal_safe_edge_trim_applier import UniversalSafeEdgeTrimApplier
 from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
@@ -389,6 +390,7 @@ class LongformTimelineBuilder:
         round_phase_result: RoundPhaseResult | None = None,
         gameplay_state_result: GameplayStateResult | None = None,
         universal_moment_result: UniversalMomentResult | dict | None = None,
+        soft_decision_report=None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -834,6 +836,12 @@ class LongformTimelineBuilder:
         if not selected_segments:
             raise ValidationError("No longform segments selected after universal moment assist")
 
+        selected_segments, safe_trim_summary = UniversalSafeEdgeTrimApplier().apply(
+            selected_segments,
+            universal_moment_result=universal_moment_result,
+            soft_decision_report=soft_decision_report,
+        )
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
@@ -1025,6 +1033,20 @@ class LongformTimelineBuilder:
             f"private_menu_supported={universal_assist_summary.private_menu_supported} "
             f"duration_before={universal_assist_summary.duration_before:.3f}s "
             f"duration_after={universal_assist_summary.duration_after:.3f}s",
+            "Universal safe edge trim: "
+            f"trim_candidates_seen={safe_trim_summary.trim_candidates_seen} "
+            f"start_trimmed={safe_trim_summary.start_trimmed} "
+            f"end_trimmed={safe_trim_summary.end_trimmed} "
+            f"skipped_safe_keep={safe_trim_summary.skipped_safe_keep} "
+            f"skipped_human_review={safe_trim_summary.skipped_human_review} "
+            f"skipped_first_30s={safe_trim_summary.skipped_first_30s} "
+            f"skipped_protected_role={safe_trim_summary.skipped_protected_role} "
+            f"skipped_speech_risk={safe_trim_summary.skipped_speech_risk} "
+            f"skipped_action_risk={safe_trim_summary.skipped_action_risk} "
+            f"skipped_too_short={safe_trim_summary.skipped_too_short} "
+            f"total_trimmed_seconds={safe_trim_summary.total_trimmed_seconds:.3f} "
+            f"duration_before={safe_trim_summary.duration_before:.3f}s "
+            f"duration_after={safe_trim_summary.duration_after:.3f}s",
         ]
 
         if universal_moment_stats is not None:

@@ -46,6 +46,7 @@ from core.round_phase_detector import RoundPhaseDetector
 from core.highlight_selector import HighlightSelector
 from core.facecam_intro_guard import FacecamIntroGuard
 from core.longform_timeline_builder import LongformTimelineBuilder
+from core.universal_safe_edge_trim_applier import UniversalSafeEdgeTrimApplier
 from core.reframing_core import ReframingCore
 from core.reaction_moment_detector import ReactionMomentDetector
 from core.zoom_pacing_engine import ZoomPacingEngine
@@ -1049,6 +1050,20 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"[gaming_pipeline] UNIVERSAL_REVIEW {job.job_id} "
                 f"file={universal_moment_review_paths[-1]}"
             )
+
+        _safe_trim_segments, _safe_trim_summary = UniversalSafeEdgeTrimApplier().apply(
+            edit_timeline.selected_segments,
+            universal_moment_result=universal_moment_result,
+            soft_decision_report=universal_moment_soft_decision_report,
+        )
+        edit_timeline.selected_segments = _safe_trim_segments
+        print(
+            f"[gaming_pipeline] UNIVERSAL_SAFE_TRIM {job.job_id} "
+            f"candidates={_safe_trim_summary.trim_candidates_seen} "
+            f"start={_safe_trim_summary.start_trimmed} "
+            f"end={_safe_trim_summary.end_trimmed} "
+            f"trimmed_seconds={_safe_trim_summary.total_trimmed_seconds:.3f}"
+        )
 
     # ------------------------------------------------------------------
     # 5) Reframe-Plan
