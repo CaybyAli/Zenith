@@ -37,6 +37,7 @@ from core.gameplay_state_analyzer import GameplayStateAnalyzer
 from core.universal_moment_brain import UniversalMomentBrain
 from core.universal_moment_debug_reporter import UniversalMomentDebugReporter
 from core.universal_moment_review_exporter import UniversalMomentReviewExporter
+from core.universal_context_auditor import UniversalContextAuditor
 from core.universal_role_decision_auditor import UniversalRoleDecisionAuditor
 from core.universal_moment_soft_decision_builder import UniversalMomentSoftDecisionBuilder
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
@@ -160,11 +161,33 @@ def _write_universal_role_decision_audit_report(job, report) -> list[str]:
     return paths
 
 
+def _write_universal_context_audit_report(job, report) -> list[str]:
+    if report is None:
+        return []
+
+    payload = report.to_dict()
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{job.job_id}_universal_context_audit.json")
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+    export_path = os.path.join(export_dir, "universal_context_audit.json")
+
+    paths = [output_path, export_path]
+    for path in paths:
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=False)
+    return paths
+
+
 def _write_universal_review_report(
     job,
     report,
     soft_decision_report=None,
     role_decision_audit_report=None,
+    context_audit_report=None,
 ) -> list[str]:
     if report is None:
         return []
@@ -183,6 +206,7 @@ def _write_universal_review_report(
         filename=f"{job.job_id}_universal_moment_review.md",
         soft_decision_report=soft_decision_report,
         role_decision_audit_report=role_decision_audit_report,
+        context_audit_report=context_audit_report,
     )
     export_path = exporter.write_report(
         report=report,
@@ -190,6 +214,7 @@ def _write_universal_review_report(
         filename="universal_moment_review.md",
         soft_decision_report=soft_decision_report,
         role_decision_audit_report=role_decision_audit_report,
+        context_audit_report=context_audit_report,
     )
     return [str(output_path), str(export_path)]
 
@@ -314,9 +339,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_moment_debug_report = None
     universal_moment_soft_decision_report = None
     universal_role_decision_audit_report = None
+    universal_context_audit_report = None
     universal_moment_debug_paths: list[str] = []
     universal_moment_soft_decision_paths: list[str] = []
     universal_role_decision_audit_paths: list[str] = []
+    universal_context_audit_paths: list[str] = []
     universal_moment_review_paths: list[str] = []
 
     transcript_result = None
@@ -1050,11 +1077,24 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             job,
             universal_role_decision_audit_report,
         )
+        universal_context_audit_report = UniversalContextAuditor().build(
+            job_id=job.job_id,
+            timeline_segments=edit_timeline.selected_segments,
+            debug_report=universal_moment_debug_report,
+            soft_decision_report=universal_moment_soft_decision_report,
+            role_decision_audit_report=universal_role_decision_audit_report,
+            universal_moment_result=universal_moment_result,
+        )
+        universal_context_audit_paths = _write_universal_context_audit_report(
+            job,
+            universal_context_audit_report,
+        )
         universal_moment_review_paths = _write_universal_review_report(
             job,
             universal_moment_debug_report,
             soft_decision_report=universal_moment_soft_decision_report,
             role_decision_audit_report=universal_role_decision_audit_report,
+            context_audit_report=universal_context_audit_report,
         )
         print(
             f"[gaming_pipeline] UNIVERSAL_DEBUG {job.job_id} "
@@ -1085,6 +1125,19 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"aligned={universal_role_decision_audit_report.aligned} "
             f"unclear={universal_role_decision_audit_report.unclear}"
         )
+        print(
+            f"[gaming_pipeline] UNIVERSAL_CONTEXT_AUDIT {job.job_id} "
+            f"segments={universal_context_audit_report.total_segments} "
+            f"setup={universal_context_audit_report.keep_as_setup} "
+            f"payoff={universal_context_audit_report.keep_as_payoff} "
+            f"chain={universal_context_audit_report.keep_context_chain} "
+            f"private_block={universal_context_audit_report.private_menu_block_candidate} "
+            f"boring_bridge={universal_context_audit_report.boring_bridge_candidate} "
+            f"boundary={universal_context_audit_report.boundary_protect} "
+            f"edge_trim={universal_context_audit_report.edge_trim_candidate} "
+            f"review={universal_context_audit_report.needs_human_review} "
+            f"avg_conflict={universal_context_audit_report.avg_context_conflict_score}"
+        )
         if universal_moment_debug_paths:
             print(
                 f"[gaming_pipeline] UNIVERSAL_DEBUG_FILE {job.job_id} "
@@ -1099,6 +1152,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] UNIVERSAL_ROLE_AUDIT_FILE {job.job_id} "
                 f"path={universal_role_decision_audit_paths[-1]}"
+            )
+        if universal_context_audit_paths:
+            print(
+                f"[gaming_pipeline] UNIVERSAL_CONTEXT_AUDIT_FILE {job.job_id} "
+                f"path={universal_context_audit_paths[-1]}"
             )
         if universal_moment_review_paths:
             print(
@@ -1306,6 +1364,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             if universal_role_decision_audit_report is not None
             else None
         ),
+        "universal_context_audit_report": (
+            universal_context_audit_report.to_dict()
+            if universal_context_audit_report is not None
+            else None
+        ),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -1349,9 +1412,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "universal_moment_debug_report": universal_moment_debug_report,
         "universal_moment_soft_decision_report": universal_moment_soft_decision_report,
         "universal_role_decision_audit_report": universal_role_decision_audit_report,
+        "universal_context_audit_report": universal_context_audit_report,
         "universal_moment_debug_paths": list(universal_moment_debug_paths),
         "universal_moment_soft_decision_paths": list(universal_moment_soft_decision_paths),
         "universal_role_decision_audit_paths": list(universal_role_decision_audit_paths),
+        "universal_context_audit_paths": list(universal_context_audit_paths),
         "universal_moment_review_paths": list(universal_moment_review_paths),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
