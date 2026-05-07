@@ -11,6 +11,10 @@ from models.universal_moment_soft_decision import (
     UniversalMomentSegmentDecision,
     UniversalMomentSoftDecisionReport,
 )
+from models.universal_role_decision_audit import (
+    UniversalRoleDecisionAuditReport,
+    UniversalRoleDecisionSegmentAudit,
+)
 
 
 class UniversalMomentReviewExporter:
@@ -21,14 +25,16 @@ class UniversalMomentReviewExporter:
         output_dir: str | Path,
         filename: str = "universal_moment_review.md",
         soft_decision_report=None,
+        role_decision_audit_report=None,
     ) -> Path:
         parsed_report = self._report(report)
         parsed_soft_report = self._soft_report(soft_decision_report)
+        parsed_audit_report = self._role_decision_audit_report(role_decision_audit_report)
         target_dir = Path(output_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
         output_path = target_dir / filename
         output_path.write_text(
-            self._markdown(parsed_report, parsed_soft_report),
+            self._markdown(parsed_report, parsed_soft_report, parsed_audit_report),
             encoding="utf-8",
         )
         return output_path
@@ -53,10 +59,25 @@ class UniversalMomentReviewExporter:
             return UniversalMomentSoftDecisionReport.from_dict(report.to_dict())
         return None
 
+    def _role_decision_audit_report(
+        self,
+        report: Any,
+    ) -> UniversalRoleDecisionAuditReport | None:
+        if report is None:
+            return None
+        if isinstance(report, UniversalRoleDecisionAuditReport):
+            return report
+        if isinstance(report, dict):
+            return UniversalRoleDecisionAuditReport.from_dict(report)
+        if hasattr(report, "to_dict"):
+            return UniversalRoleDecisionAuditReport.from_dict(report.to_dict())
+        return None
+
     def _markdown(
         self,
         report: UniversalMomentDebugReport,
         soft_decision_report: UniversalMomentSoftDecisionReport | None = None,
+        role_decision_audit_report: UniversalRoleDecisionAuditReport | None = None,
     ) -> str:
         lines: list[str] = [
             "# Universal Moment Review",
@@ -88,13 +109,28 @@ class UniversalMomentReviewExporter:
                 ]
             )
 
+        if role_decision_audit_report is not None:
+            lines.extend(
+                [
+                    "## Role Decision Audit Summary",
+                    f"- protected_trim_conflicts: {role_decision_audit_report.protected_trim_conflicts}",
+                    f"- review_maybe_trim: {role_decision_audit_report.review_maybe_trim}",
+                    f"- safe_keep_correct: {role_decision_audit_report.safe_keep_correct}",
+                    f"- aligned: {role_decision_audit_report.aligned}",
+                    f"- unclear: {role_decision_audit_report.unclear}",
+                    "",
+                ]
+            )
+
         decisions_by_id = self._soft_by_id(soft_decision_report)
+        audit_by_id = self._role_audit_by_id(role_decision_audit_report)
         for index, segment in enumerate(report.segments, start=1):
             lines.extend(
                 self._segment_lines(
                     index,
                     segment,
                     decisions_by_id.get(segment.segment_id),
+                    audit_by_id.get(segment.segment_id),
                 )
             )
 
@@ -105,6 +141,7 @@ class UniversalMomentReviewExporter:
         index: int,
         segment: UniversalMomentSegmentDebug,
         soft_decision: UniversalMomentSegmentDecision | None = None,
+        role_decision_audit: UniversalRoleDecisionSegmentAudit | None = None,
     ) -> list[str]:
         time_range = f"{self._time(segment.start_time)}-{self._time(segment.end_time)}"
         top_types = self._type_counts(segment.top_moment_types)
@@ -141,6 +178,8 @@ class UniversalMomentReviewExporter:
         ]
         if soft_decision is not None:
             lines.extend(self._soft_decision_lines(soft_decision))
+        if role_decision_audit is not None:
+            lines.extend(self._role_decision_audit_lines(role_decision_audit))
         lines.extend(
             [
                 "- Diagnosis:",
@@ -173,6 +212,23 @@ class UniversalMomentReviewExporter:
             *[f"    - {item}" for item in warnings],
         ]
 
+    def _role_decision_audit_lines(
+        self,
+        audit: UniversalRoleDecisionSegmentAudit,
+    ) -> list[str]:
+        warnings = audit.warnings or ["none"]
+        notes = audit.notes or ["none"]
+        return [
+            "- Role Decision Audit:",
+            f"  - Alignment: {audit.role_decision_alignment}",
+            f"  - Suggested Decision: {audit.suggested_soft_decision}",
+            f"  - Suggested Reason: {audit.suggested_reason or 'none'}",
+            "  - Warnings:",
+            *[f"    - {item}" for item in warnings],
+            "  - Notes:",
+            *[f"    - {item}" for item in notes],
+        ]
+
     def _soft_by_id(
         self,
         soft_decision_report: UniversalMomentSoftDecisionReport | None,
@@ -183,6 +239,18 @@ class UniversalMomentReviewExporter:
             decision.segment_id: decision
             for decision in soft_decision_report.decisions
             if decision.segment_id
+        }
+
+    def _role_audit_by_id(
+        self,
+        role_decision_audit_report: UniversalRoleDecisionAuditReport | None,
+    ) -> dict[str, UniversalRoleDecisionSegmentAudit]:
+        if role_decision_audit_report is None:
+            return {}
+        return {
+            audit.segment_id: audit
+            for audit in role_decision_audit_report.segments
+            if audit.segment_id
         }
 
     def _time(self, seconds: float) -> str:

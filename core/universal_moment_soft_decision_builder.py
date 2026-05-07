@@ -103,6 +103,10 @@ class UniversalMomentSoftDecisionBuilder:
 
         source_verdict = str(segment.professional_verdict or "unknown")
         source_mixed = source_verdict == "mixed_conflict"
+        role_name = str(segment.segment_role or "").lower()
+        first_30s = segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS
+        protected_role = role_name in PROTECTED_SEGMENT_ROLES
+
         conflict_score = self._conflict_score(
             keep_confidence=keep_confidence,
             remove_confidence=remove_confidence,
@@ -159,15 +163,55 @@ class UniversalMomentSoftDecisionBuilder:
             and peak < 0.35
             and tension < 0.35
         )
+        private_or_boring_signal = (
+            private_confidence >= 0.55
+            or boring_confidence >= 0.55
+            or private_score >= 0.55
+            or boring_score >= 0.55
+            or has_private_menu_risk
+        )
+        boundary_risk = (
+            has_cut_risk
+            or has_zoom_risk
+            or cut_risk_score >= 0.70
+            or zoom_risk_score >= 0.70
+        )
+        very_high_keep_remove_conflict = (
+            keep_confidence >= 0.50
+            and remove_confidence >= 0.50
+            and conflict_score >= 0.65
+        )
+        extreme_first_30s_trim = (
+            first_30s
+            and not protected_role
+            and not boundary_risk
+            and keep_confidence >= 0.65
+            and remove_confidence >= 0.75
+            and conflict_score >= 0.55
+            and private_or_boring >= 0.70
+            and peak < 0.35
+            and tension < 0.35
+        )
         trim_edges_candidate = (
-            keep_confidence >= 0.40
-            and remove_confidence >= 0.40
-            and private_or_boring >= 0.50
-            and action_confidence >= 0.30
-            and (is_mixed_conflict or has_keep_signal)
+            not protected_role
+            and (not first_30s or extreme_first_30s_trim)
+            and not boundary_risk
+            and keep_confidence >= 0.45
+            and remove_confidence >= 0.45
+            and conflict_score >= 0.35
+            and peak < 0.60
+            and tension < 0.60
+            and private_or_boring_signal
+        )
+        hard_review_required = (
+            boundary_risk
+            or very_high_keep_remove_conflict
+            or (protected_role and remove_confidence >= 0.45)
+            or (first_30s and not extreme_first_30s_trim and remove_confidence >= 0.45)
         )
         needs_human_review = (
-            conflict_score >= 0.45
+            hard_review_required
+            or conflict_score >= 0.45
             or risk_private_combo
             or (
                 review_confidence >= 0.68
@@ -181,7 +225,9 @@ class UniversalMomentSoftDecisionBuilder:
         soft_decision = "unknown"
         if safe_keep:
             soft_decision = "safe_keep"
-        elif risk_private_combo:
+        elif protected_role and keep_dominant:
+            soft_decision = "keep_dominant"
+        elif hard_review_required or risk_private_combo:
             soft_decision = "needs_human_review"
         elif keep_dominant:
             soft_decision = "keep_dominant"
@@ -213,24 +259,21 @@ class UniversalMomentSoftDecisionBuilder:
         if risk_confidence >= 0.55 and not risk_private_combo:
             reasons.append("REVIEW: boundary risk present")
 
-        first_30s = segment.start_time < FIRST_CONTEXT_PROTECTION_SECONDS
-        protected_role = str(segment.segment_role or "").lower() in PROTECTED_SEGMENT_ROLES
-
         if first_30s:
             reasons.append("SAFETY: first 30s context protection")
             warnings.append("first_30s_context_protection")
             if soft_decision == "remove_dominant":
                 soft_decision = "keep_dominant" if keep_confidence >= 0.55 and clear_keep_signal else "needs_human_review"
+            if soft_decision == "trim_edges_candidate" and not extreme_first_30s_trim:
+                soft_decision = "needs_human_review"
 
         if protected_role:
             reasons.append("SAFETY: protected segment role")
             warnings.append("protected_segment_role")
-            if remove_confidence >= 0.55:
-                soft_decision = (
-                    "trim_edges_candidate"
-                    if keep_confidence >= 0.40 and action_confidence >= 0.30
-                    else "needs_human_review"
-                )
+            if soft_decision == "remove_dominant":
+                soft_decision = "keep_dominant" if keep_dominant else "needs_human_review"
+            if soft_decision == "trim_edges_candidate":
+                soft_decision = "keep_dominant" if keep_dominant else "needs_human_review"
 
         if soft_decision == "trim_edges_candidate" and "TRIM-CANDIDATE: mixed content, likely bad edges" not in reasons:
             reasons.append("TRIM-CANDIDATE: mixed content, likely bad edges")
