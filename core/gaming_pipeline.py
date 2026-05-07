@@ -38,6 +38,7 @@ from core.universal_moment_brain import UniversalMomentBrain
 from core.universal_moment_debug_reporter import UniversalMomentDebugReporter
 from core.universal_moment_review_exporter import UniversalMomentReviewExporter
 from core.universal_context_auditor import UniversalContextAuditor
+from core.universal_boundary_evidence_reporter import UniversalBoundaryEvidenceReporter
 from core.universal_role_decision_auditor import UniversalRoleDecisionAuditor
 from core.universal_moment_soft_decision_builder import UniversalMomentSoftDecisionBuilder
 from core.phase_2b_final_review_builder import Phase2BFinalReviewBuilder
@@ -183,6 +184,27 @@ def _write_universal_context_audit_report(job, report) -> list[str]:
     return paths
 
 
+def _write_universal_boundary_evidence_report(job, report) -> list[str]:
+    if report is None:
+        return []
+
+    payload = report.to_dict()
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{job.job_id}_universal_boundary_evidence.json")
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+    export_path = os.path.join(export_dir, "universal_boundary_evidence.json")
+
+    paths = [output_path, export_path]
+    for path in paths:
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=False)
+    return paths
+
+
 def _write_phase_2b_final_review_report(job, report) -> list[str]:
     if report is None:
         return []
@@ -210,6 +232,7 @@ def _write_universal_review_report(
     soft_decision_report=None,
     role_decision_audit_report=None,
     context_audit_report=None,
+    boundary_evidence_report=None,
     final_review_report=None,
 ) -> list[str]:
     if report is None:
@@ -230,6 +253,7 @@ def _write_universal_review_report(
         soft_decision_report=soft_decision_report,
         role_decision_audit_report=role_decision_audit_report,
         context_audit_report=context_audit_report,
+        boundary_evidence_report=boundary_evidence_report,
         final_review_report=final_review_report,
     )
     export_path = exporter.write_report(
@@ -239,6 +263,7 @@ def _write_universal_review_report(
         soft_decision_report=soft_decision_report,
         role_decision_audit_report=role_decision_audit_report,
         context_audit_report=context_audit_report,
+        boundary_evidence_report=boundary_evidence_report,
         final_review_report=final_review_report,
     )
     return [str(output_path), str(export_path)]
@@ -365,11 +390,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_moment_soft_decision_report = None
     universal_role_decision_audit_report = None
     universal_context_audit_report = None
+    universal_boundary_evidence_report = None
     phase_2b_final_review_report = None
     universal_moment_debug_paths: list[str] = []
     universal_moment_soft_decision_paths: list[str] = []
     universal_role_decision_audit_paths: list[str] = []
     universal_context_audit_paths: list[str] = []
+    universal_boundary_evidence_paths: list[str] = []
     phase_2b_final_review_paths: list[str] = []
     universal_moment_review_paths: list[str] = []
 
@@ -1116,12 +1143,27 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             job,
             universal_context_audit_report,
         )
+        universal_boundary_evidence_report = UniversalBoundaryEvidenceReporter().build(
+            job_id=job.job_id,
+            timeline_segments=edit_timeline.selected_segments,
+            transcript_result=transcript_result,
+            sentence_timeline_result=sentence_timeline_result,
+            audio_role_result=audio_role_result,
+            universal_moment_result=universal_moment_result,
+            context_audit_report=universal_context_audit_report,
+            final_review_report=None,
+        )
+        universal_boundary_evidence_paths = _write_universal_boundary_evidence_report(
+            job,
+            universal_boundary_evidence_report,
+        )
         phase_2b_final_review_report = Phase2BFinalReviewBuilder().build(
             job_id=job.job_id,
             debug_report=universal_moment_debug_report,
             soft_decision_report=universal_moment_soft_decision_report,
             role_decision_audit_report=universal_role_decision_audit_report,
             context_audit_report=universal_context_audit_report,
+            boundary_evidence_report=universal_boundary_evidence_report,
         )
         phase_2b_final_review_paths = _write_phase_2b_final_review_report(
             job,
@@ -1133,6 +1175,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             soft_decision_report=universal_moment_soft_decision_report,
             role_decision_audit_report=universal_role_decision_audit_report,
             context_audit_report=universal_context_audit_report,
+            boundary_evidence_report=universal_boundary_evidence_report,
             final_review_report=phase_2b_final_review_report,
         )
         print(
@@ -1178,6 +1221,20 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"avg_conflict={universal_context_audit_report.avg_context_conflict_score}"
         )
         print(
+            f"[gaming_pipeline] UNIVERSAL_BOUNDARY_EVIDENCE {job.job_id} "
+            f"boundaries={universal_boundary_evidence_report.total_boundaries} "
+            f"high={universal_boundary_evidence_report.real_high} "
+            f"medium={universal_boundary_evidence_report.medium} "
+            f"low={universal_boundary_evidence_report.low} "
+            f"false_positive={universal_boundary_evidence_report.false_positive} "
+            f"clean={universal_boundary_evidence_report.clean} "
+            f"speech_real={universal_boundary_evidence_report.real_speech_cut_risk} "
+            f"speech_possible={universal_boundary_evidence_report.possible_speech_cut_risk} "
+            f"action={universal_boundary_evidence_report.action_cut_risk} "
+            f"zoom={universal_boundary_evidence_report.zoom_cut_risk} "
+            f"avg={universal_boundary_evidence_report.avg_boundary_risk_score}"
+        )
+        print(
             f"[gaming_pipeline] PHASE_2B_FINAL_REVIEW {job.job_id} "
             f"segments={phase_2b_final_review_report.total_segments} "
             f"strong_keep={phase_2b_final_review_report.strong_keep} "
@@ -1207,6 +1264,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] UNIVERSAL_CONTEXT_AUDIT_FILE {job.job_id} "
                 f"path={universal_context_audit_paths[-1]}"
+            )
+        if universal_boundary_evidence_paths:
+            print(
+                f"[gaming_pipeline] UNIVERSAL_BOUNDARY_EVIDENCE_FILE {job.job_id} "
+                f"path={universal_boundary_evidence_paths[-1]}"
             )
         if phase_2b_final_review_paths:
             print(
@@ -1424,6 +1486,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             if universal_context_audit_report is not None
             else None
         ),
+        "universal_boundary_evidence_report": (
+            universal_boundary_evidence_report.to_dict()
+            if universal_boundary_evidence_report is not None
+            else None
+        ),
         "phase_2b_final_review_report": (
             phase_2b_final_review_report.to_dict()
             if phase_2b_final_review_report is not None
@@ -1473,11 +1540,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "universal_moment_soft_decision_report": universal_moment_soft_decision_report,
         "universal_role_decision_audit_report": universal_role_decision_audit_report,
         "universal_context_audit_report": universal_context_audit_report,
+        "universal_boundary_evidence_report": universal_boundary_evidence_report,
         "phase_2b_final_review_report": phase_2b_final_review_report,
         "universal_moment_debug_paths": list(universal_moment_debug_paths),
         "universal_moment_soft_decision_paths": list(universal_moment_soft_decision_paths),
         "universal_role_decision_audit_paths": list(universal_role_decision_audit_paths),
         "universal_context_audit_paths": list(universal_context_audit_paths),
+        "universal_boundary_evidence_paths": list(universal_boundary_evidence_paths),
         "phase_2b_final_review_paths": list(phase_2b_final_review_paths),
         "universal_moment_review_paths": list(universal_moment_review_paths),
         "round_phase_result":    round_phase_result,

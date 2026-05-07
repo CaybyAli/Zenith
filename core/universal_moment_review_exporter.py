@@ -23,6 +23,10 @@ from models.phase_2b_final_review import (
     Phase2BFinalReviewReport,
     Phase2BSegmentReview,
 )
+from models.universal_boundary_evidence import (
+    UniversalBoundaryEvidence,
+    UniversalBoundaryEvidenceReport,
+)
 
 
 class UniversalMomentReviewExporter:
@@ -35,12 +39,14 @@ class UniversalMomentReviewExporter:
         soft_decision_report=None,
         role_decision_audit_report=None,
         context_audit_report=None,
+        boundary_evidence_report=None,
         final_review_report=None,
     ) -> Path:
         parsed_report = self._report(report)
         parsed_soft_report = self._soft_report(soft_decision_report)
         parsed_audit_report = self._role_decision_audit_report(role_decision_audit_report)
         parsed_context_report = self._context_audit_report(context_audit_report)
+        parsed_boundary_evidence_report = self._boundary_evidence_report(boundary_evidence_report)
         parsed_final_review_report = self._final_review_report(final_review_report)
         target_dir = Path(output_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -51,6 +57,7 @@ class UniversalMomentReviewExporter:
                 parsed_soft_report,
                 parsed_audit_report,
                 parsed_context_report,
+                parsed_boundary_evidence_report,
                 parsed_final_review_report,
             ),
             encoding="utf-8",
@@ -119,12 +126,27 @@ class UniversalMomentReviewExporter:
             return Phase2BFinalReviewReport.from_dict(report.to_dict())
         return None
 
+    def _boundary_evidence_report(
+        self,
+        report: Any,
+    ) -> UniversalBoundaryEvidenceReport | None:
+        if report is None:
+            return None
+        if isinstance(report, UniversalBoundaryEvidenceReport):
+            return report
+        if isinstance(report, dict):
+            return UniversalBoundaryEvidenceReport.from_dict(report)
+        if hasattr(report, "to_dict"):
+            return UniversalBoundaryEvidenceReport.from_dict(report.to_dict())
+        return None
+
     def _markdown(
         self,
         report: UniversalMomentDebugReport,
         soft_decision_report: UniversalMomentSoftDecisionReport | None = None,
         role_decision_audit_report: UniversalRoleDecisionAuditReport | None = None,
         context_audit_report: UniversalContextAuditReport | None = None,
+        boundary_evidence_report: UniversalBoundaryEvidenceReport | None = None,
         final_review_report: Phase2BFinalReviewReport | None = None,
     ) -> str:
         lines: list[str] = [
@@ -187,6 +209,25 @@ class UniversalMomentReviewExporter:
                 ]
             )
 
+        if boundary_evidence_report is not None:
+            lines.extend(
+                [
+                    "## Boundary Evidence Summary",
+                    f"- total_boundaries: {boundary_evidence_report.total_boundaries}",
+                    f"- real_high: {boundary_evidence_report.real_high}",
+                    f"- medium: {boundary_evidence_report.medium}",
+                    f"- low: {boundary_evidence_report.low}",
+                    f"- false_positive: {boundary_evidence_report.false_positive}",
+                    f"- clean: {boundary_evidence_report.clean}",
+                    f"- real_speech_cut_risk: {boundary_evidence_report.real_speech_cut_risk}",
+                    f"- possible_speech_cut_risk: {boundary_evidence_report.possible_speech_cut_risk}",
+                    f"- action_cut_risk: {boundary_evidence_report.action_cut_risk}",
+                    f"- zoom_cut_risk: {boundary_evidence_report.zoom_cut_risk}",
+                    f"- avg_boundary_risk_score: {boundary_evidence_report.avg_boundary_risk_score:.3f}",
+                    "",
+                ]
+            )
+
         if final_review_report is not None:
             lines.extend(
                 [
@@ -201,6 +242,9 @@ class UniversalMomentReviewExporter:
                     "",
                 ]
             )
+
+        if boundary_evidence_report is not None:
+            lines.extend(self._boundary_evidence_section(boundary_evidence_report))
 
         decisions_by_id = self._soft_by_id(soft_decision_report)
         audit_by_id = self._role_audit_by_id(role_decision_audit_report)
@@ -219,6 +263,75 @@ class UniversalMomentReviewExporter:
             )
 
         return "\n".join(lines).rstrip() + "\n"
+
+    def _boundary_evidence_section(
+        self,
+        report: UniversalBoundaryEvidenceReport,
+    ) -> list[str]:
+        lines: list[str] = ["# Boundary Evidence", ""]
+        if not report.boundaries:
+            return lines + ["- none", ""]
+        for boundary in report.boundaries:
+            lines.extend(self._boundary_lines(boundary))
+        return lines
+
+    def _boundary_lines(
+        self,
+        boundary: UniversalBoundaryEvidence,
+    ) -> list[str]:
+        reasons = boundary.reasons or ["none"]
+        warnings = boundary.warnings or ["none"]
+        left = boundary.left_segment_id or "none"
+        right = boundary.right_segment_id or "none"
+        left_time = self._time(boundary.left_end_time or 0.0)
+        right_time = self._time(boundary.right_start_time or 0.0)
+        return [
+            f"## Boundary {boundary.boundary_index:02d} -- {left} -> {right}",
+            f"- Time: {left_time} -> {right_time}",
+            f"- Gap: {boundary.gap_seconds:.3f}s",
+            f"- Type: {boundary.boundary_type}",
+            f"- Priority: {boundary.priority}",
+            f"- Risk Score: {boundary.boundary_risk_score:.3f}",
+            "- Speech Evidence:",
+            f"  - transcript_left: {self._yes_no(boundary.transcript_left_near_edge)}",
+            f"  - transcript_right: {self._yes_no(boundary.transcript_right_near_edge)}",
+            f"  - sentence_left: {self._yes_no(boundary.sentence_left_near_edge)}",
+            f"  - sentence_right: {self._yes_no(boundary.sentence_right_near_edge)}",
+            f"  - audio_left: {self._yes_no(boundary.audio_speech_left_near_edge)}",
+            f"  - audio_right: {self._yes_no(boundary.audio_speech_right_near_edge)}",
+            f"  - speech_crosses_boundary: {self._yes_no(boundary.speech_crosses_boundary)}",
+            f"  - likely_word_cut: {self._yes_no(boundary.likely_word_cut)}",
+            f"  - likely_sentence_cut: {self._yes_no(boundary.likely_sentence_cut)}",
+            "- Action Evidence:",
+            f"  - peak_left: {self._yes_no(boundary.peak_left_near_edge)}",
+            f"  - peak_right: {self._yes_no(boundary.peak_right_near_edge)}",
+            f"  - action_left: {self._yes_no(boundary.action_left_near_edge)}",
+            f"  - action_right: {self._yes_no(boundary.action_right_near_edge)}",
+            f"  - tension_left: {self._yes_no(boundary.tension_left_near_edge)}",
+            f"  - tension_right: {self._yes_no(boundary.tension_right_near_edge)}",
+            f"  - reaction_left: {self._yes_no(boundary.reaction_left_near_edge)}",
+            f"  - reaction_right: {self._yes_no(boundary.reaction_right_near_edge)}",
+            "- Risk Evidence:",
+            f"  - cut_left: {self._yes_no(boundary.cut_risk_left_near_edge)}",
+            f"  - cut_right: {self._yes_no(boundary.cut_risk_right_near_edge)}",
+            f"  - zoom_left: {self._yes_no(boundary.zoom_risk_left_near_edge)}",
+            f"  - zoom_right: {self._yes_no(boundary.zoom_risk_right_near_edge)}",
+            f"  - menu_left: {self._yes_no(boundary.menu_wait_left_near_edge)}",
+            f"  - menu_right: {self._yes_no(boundary.menu_wait_right_near_edge)}",
+            f"  - boring_left: {self._yes_no(boundary.boring_left_near_edge)}",
+            f"  - boring_right: {self._yes_no(boundary.boring_right_near_edge)}",
+            "- Flags:",
+            f"  - protect: {self._yes_no(boundary.should_protect_boundary)}",
+            f"  - review: {self._yes_no(boundary.should_review_boundary)}",
+            f"  - ignore_warning: {self._yes_no(boundary.can_ignore_warning)}",
+            f"  - transcript_check: {self._yes_no(boundary.needs_transcript_check)}",
+            f"  - visual_check: {self._yes_no(boundary.needs_visual_check)}",
+            "- Reasons:",
+            *[f"  - {item}" for item in reasons],
+            "- Warnings:",
+            *[f"  - {item}" for item in warnings],
+            "",
+        ]
 
     def _segment_lines(
         self,

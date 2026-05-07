@@ -7,6 +7,10 @@ from models.phase_2b_final_review import (
     Phase2BFinalReviewReport,
     Phase2BSegmentReview,
 )
+from models.universal_boundary_evidence import (
+    UniversalBoundaryEvidence,
+    UniversalBoundaryEvidenceReport,
+)
 from models.universal_context_audit import (
     UniversalContextAuditReport,
     UniversalSegmentContextAudit,
@@ -41,16 +45,22 @@ class Phase2BFinalReviewBuilder:
         soft_decision_report=None,
         role_decision_audit_report=None,
         context_audit_report=None,
+        boundary_evidence_report=None,
     ) -> Phase2BFinalReviewReport:
         parsed_debug = self._debug_report(debug_report, job_id=job_id)
         parsed_soft = self._soft_report(soft_decision_report, job_id=job_id)
         parsed_role = self._role_report(role_decision_audit_report, job_id=job_id)
         parsed_context = self._context_report(context_audit_report, job_id=job_id)
+        parsed_boundary_evidence = self._boundary_evidence_report(
+            boundary_evidence_report,
+            job_id=job_id,
+        )
 
         debug_by_id = {item.segment_id: item for item in parsed_debug.segments if item.segment_id}
         soft_by_id = {item.segment_id: item for item in parsed_soft.decisions if item.segment_id}
         role_by_id = {item.segment_id: item for item in parsed_role.segments if item.segment_id}
         context_by_id = {item.segment_id: item for item in parsed_context.segments if item.segment_id}
+        boundary_evidence_by_id = self._boundary_evidence_by_segment(parsed_boundary_evidence)
 
         segment_ids = self._ordered_segment_ids(
             parsed_debug=parsed_debug,
@@ -73,11 +83,19 @@ class Phase2BFinalReviewBuilder:
                     soft=soft,
                     role=role,
                     context=context,
+                    boundary_evidence=boundary_evidence_by_id.get(segment_id, []),
                 )
             )
 
         report = Phase2BFinalReviewReport(
-            job_id=str(job_id or parsed_debug.job_id or parsed_soft.job_id or parsed_context.job_id or ""),
+            job_id=str(
+                job_id
+                or parsed_debug.job_id
+                or parsed_soft.job_id
+                or parsed_context.job_id
+                or parsed_boundary_evidence.job_id
+                or ""
+            ),
             engine=self.engine,
             segments=reviews,
         )
@@ -93,6 +111,7 @@ class Phase2BFinalReviewBuilder:
         soft: UniversalMomentSegmentDecision | None,
         role: UniversalRoleDecisionSegmentAudit | None,
         context: UniversalSegmentContextAudit | None,
+        boundary_evidence: list[UniversalBoundaryEvidence],
     ) -> Phase2BSegmentReview:
         start = self._first_number("start_time", debug, soft, role, context)
         end = self._first_number("end_time", debug, soft, role, context, fallback=start + 0.001)
@@ -125,9 +144,13 @@ class Phase2BFinalReviewBuilder:
         next_boundary_type = str(getattr(context, "next_boundary_type", "clean") or "clean")
         protect_previous = bool(getattr(context, "should_protect_previous_boundary", False))
         protect_next = bool(getattr(context, "should_protect_next_boundary", False))
-        boundary_risk = (
+        raw_boundary_risk = (
             (previous_boundary_type in BOUNDARY_RISK_TYPES and protect_previous)
             or (next_boundary_type in BOUNDARY_RISK_TYPES and protect_next)
+        )
+        boundary_risk = self._boundary_risk_from_evidence(
+            raw_boundary_risk=raw_boundary_risk,
+            boundary_evidence=boundary_evidence,
         )
         protected_role = bool(getattr(role, "is_protected_role", False)) or str(segment_role).lower() in PROTECTED_ROLES
         first_30s = bool(getattr(role, "is_first_30s", False)) or start < 30.0
@@ -159,6 +182,8 @@ class Phase2BFinalReviewBuilder:
             conflict_score=conflict_score,
             context_conflict_score=context_conflict_score,
             boundary_risk=boundary_risk,
+            raw_boundary_risk=raw_boundary_risk,
+            boundary_evidence=boundary_evidence,
             possible_edge_trim=possible_edge_trim,
             previous_boundary_type=previous_boundary_type,
             next_boundary_type=next_boundary_type,
@@ -185,8 +210,19 @@ class Phase2BFinalReviewBuilder:
             protect_next_boundary=protect_next,
             human_review_priority=priority,
             human_review_reason=priority_reason,
-            key_reasons=self._key_reasons(debug=debug, soft=soft, role=role, context=context),
-            warnings=self._warnings(soft=soft, role=role, context=context),
+            key_reasons=self._key_reasons(
+                debug=debug,
+                soft=soft,
+                role=role,
+                context=context,
+                boundary_evidence=boundary_evidence,
+            ),
+            warnings=self._warnings(
+                soft=soft,
+                role=role,
+                context=context,
+                boundary_evidence=boundary_evidence,
+            ),
         )
 
     def _status(
@@ -240,6 +276,8 @@ class Phase2BFinalReviewBuilder:
         conflict_score: float,
         context_conflict_score: float,
         boundary_risk: bool,
+        raw_boundary_risk: bool,
+        boundary_evidence: list[UniversalBoundaryEvidence],
         possible_edge_trim: bool,
         previous_boundary_type: str,
         next_boundary_type: str,
@@ -253,6 +291,13 @@ class Phase2BFinalReviewBuilder:
         confirmed_cut_conflict = bool(getattr(debug, "confirmed_cut_risk", False) or getattr(debug, "has_cut_risk", False)) and conflict >= 0.45
         if confirmed_cut_conflict:
             return "high", "Confirmed cut risk overlaps keep/remove or context conflict."
+        evidence_priority, evidence_reason = self._boundary_evidence_priority(boundary_evidence)
+        if evidence_priority == "high":
+            return "high", evidence_reason
+        if evidence_priority == "medium":
+            return "medium", evidence_reason
+        if raw_boundary_risk and evidence_priority == "low":
+            return "low", evidence_reason
         if boundary_risk and speech_or_action_boundary:
             return "high", "Speech/action boundary risk needs visual or transcript verification."
         if protected_weak:
@@ -283,6 +328,48 @@ class Phase2BFinalReviewBuilder:
         if status in {"strong_keep", "safe"}:
             return "none", "No human review needed from Phase 2.B diagnostics."
         return "low", "Safe-looking segment, but review can still confirm pacing."
+
+    def _boundary_risk_from_evidence(
+        self,
+        *,
+        raw_boundary_risk: bool,
+        boundary_evidence: list[UniversalBoundaryEvidence],
+    ) -> bool:
+        if not boundary_evidence:
+            return raw_boundary_risk
+        if any(item.priority == "real_high" for item in boundary_evidence):
+            return True
+        if any(item.priority == "medium" for item in boundary_evidence):
+            return True
+        if raw_boundary_risk and all(
+            item.priority in {"false_positive", "low"} or item.boundary_type in {"likely_false_positive", "clean"}
+            for item in boundary_evidence
+        ):
+            return False
+        return raw_boundary_risk
+
+    def _boundary_evidence_priority(
+        self,
+        boundary_evidence: list[UniversalBoundaryEvidence],
+    ) -> tuple[str, str]:
+        if not boundary_evidence:
+            return "unknown", ""
+        if any(item.priority == "real_high" for item in boundary_evidence):
+            types = ", ".join(
+                sorted({item.boundary_type for item in boundary_evidence if item.priority == "real_high"})
+            )
+            return "high", f"Boundary evidence confirms high-priority edge risk: {types}."
+        if any(item.priority == "medium" for item in boundary_evidence):
+            types = ", ".join(
+                sorted({item.boundary_type for item in boundary_evidence if item.priority == "medium"})
+            )
+            return "medium", f"Boundary evidence indicates medium-priority edge review: {types}."
+        if all(
+            item.priority in {"false_positive", "low"} or item.boundary_type in {"likely_false_positive", "clean"}
+            for item in boundary_evidence
+        ):
+            return "low", "Boundary evidence downgrades the prior warning to clean or likely false positive."
+        return "unknown", ""
 
     def _ordered_segment_ids(
         self,
@@ -326,10 +413,13 @@ class Phase2BFinalReviewBuilder:
         soft: UniversalMomentSegmentDecision | None,
         role: UniversalRoleDecisionSegmentAudit | None,
         context: UniversalSegmentContextAudit | None,
+        boundary_evidence: list[UniversalBoundaryEvidence],
     ) -> list[str]:
         values: list[str] = []
         values.extend(getattr(soft, "reasons", []) or [])
         values.extend(getattr(context, "reasons", []) or [])
+        for evidence in boundary_evidence:
+            values.extend(getattr(evidence, "reasons", []) or [])
         suggested_reason = str(getattr(role, "suggested_reason", "") or "")
         if suggested_reason:
             values.append(suggested_reason)
@@ -344,11 +434,22 @@ class Phase2BFinalReviewBuilder:
         soft: UniversalMomentSegmentDecision | None,
         role: UniversalRoleDecisionSegmentAudit | None,
         context: UniversalSegmentContextAudit | None,
+        boundary_evidence: list[UniversalBoundaryEvidence],
     ) -> list[str]:
         values: list[str] = []
         values.extend(getattr(soft, "warnings", []) or [])
         values.extend(getattr(role, "warnings", []) or [])
         values.extend(getattr(context, "warnings", []) or [])
+        for evidence in boundary_evidence:
+            boundary_type = str(getattr(evidence, "boundary_type", "") or "")
+            if boundary_type == "real_speech_cut_risk":
+                values.append("Boundary evidence: real speech cut risk")
+            elif boundary_type == "likely_false_positive":
+                values.append("Boundary evidence: likely false positive")
+            elif boundary_type == "action_cut_risk":
+                values.append("Boundary evidence: action near edge")
+            elif boundary_type == "zoom_cut_risk":
+                values.append("Boundary evidence: zoom near edge")
         return self._dedupe(values, limit=12)
 
     def _debug_report(self, report: Any, *, job_id: str) -> UniversalMomentDebugReport:
@@ -386,6 +487,27 @@ class Phase2BFinalReviewBuilder:
         if hasattr(report, "to_dict"):
             return UniversalContextAuditReport.from_dict(report.to_dict())
         return UniversalContextAuditReport(job_id=str(job_id or ""))
+
+    def _boundary_evidence_report(self, report: Any, *, job_id: str) -> UniversalBoundaryEvidenceReport:
+        if isinstance(report, UniversalBoundaryEvidenceReport):
+            return report
+        if isinstance(report, dict):
+            return UniversalBoundaryEvidenceReport.from_dict(report)
+        if hasattr(report, "to_dict"):
+            return UniversalBoundaryEvidenceReport.from_dict(report.to_dict())
+        return UniversalBoundaryEvidenceReport(job_id=str(job_id or ""))
+
+    def _boundary_evidence_by_segment(
+        self,
+        report: UniversalBoundaryEvidenceReport,
+    ) -> dict[str, list[UniversalBoundaryEvidence]]:
+        result: dict[str, list[UniversalBoundaryEvidence]] = {}
+        for boundary in report.boundaries:
+            for segment_id in (boundary.left_segment_id, boundary.right_segment_id):
+                if not segment_id:
+                    continue
+                result.setdefault(segment_id, []).append(boundary)
+        return result
 
     def _matching_soft(
         self,
