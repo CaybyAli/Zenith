@@ -12,6 +12,13 @@ from models.universal_moment_debug_report import (
 from models.universal_moment_result import UniversalMomentResult, UniversalMomentWindow
 
 
+CUT_RISK_EDGE_SECONDS = 1.5
+RAW_CUT_RISK_THRESHOLD = 0.55
+CONFIRMED_CUT_RISK_THRESHOLD = 0.85
+CONFIRMED_SPEECH_BOUNDARY_SCORE = 0.70
+CONFIRMED_ACTION_EDGE_SCORE = 0.70
+
+
 class UniversalMomentDebugReporter:
     engine = ENGINE
 
@@ -70,6 +77,16 @@ class UniversalMomentDebugReporter:
             )
             for window in windows
         ]
+        raw_cut_risk_matches = [
+            window for window in windows if self._has_raw_cut_risk(window)
+        ]
+        confirmed_cut_risk_matches = self._confirmed_cut_risk_matches(segment, windows)
+        confirmed_window_keys = {
+            self._window_key(window) for window, _reason in confirmed_cut_risk_matches
+        }
+        cut_risk_reason = self._dedupe(
+            [reason for _window, reason in confirmed_cut_risk_matches]
+        )
 
         has_keep_signal = any(
             window.should_keep
@@ -85,12 +102,7 @@ class UniversalMomentDebugReporter:
             or window.dead_time_score >= 0.70
             for window in windows
         )
-        has_cut_risk = any(
-            window.cut_risk_score >= 0.70
-            or window.speech_boundary_risk
-            or window.action_context_risk
-            for window in windows
-        )
+        has_cut_risk = bool(confirmed_window_keys)
         has_zoom_risk = any(
             window.zoom_risk_score >= 0.70 or window.zoom_boundary_risk
             for window in windows
@@ -104,6 +116,15 @@ class UniversalMomentDebugReporter:
         has_pre_context_need = any(window.needs_pre_context for window in windows)
         has_post_context_need = any(window.needs_post_context for window in windows)
 
+        professional_verdict, professional_reason = self._professional_verdict(
+            windows=windows,
+            has_keep_signal=has_keep_signal,
+            has_remove_signal=has_remove_signal,
+            has_cut_risk=has_cut_risk,
+            has_private_menu_risk=has_private_menu_risk,
+            has_pre_context_need=has_pre_context_need,
+            has_post_context_need=has_post_context_need,
+        )
         diagnosis = self._diagnosis(
             windows=windows,
             has_keep_signal=has_keep_signal,
@@ -113,6 +134,7 @@ class UniversalMomentDebugReporter:
             has_private_menu_risk=has_private_menu_risk,
             has_pre_context_need=has_pre_context_need,
             has_post_context_need=has_post_context_need,
+            professional_reason=professional_reason,
         )
 
         return UniversalMomentSegmentDebug(
@@ -135,13 +157,22 @@ class UniversalMomentDebugReporter:
             avg_peak_score=self._avg(window.peak_score for window in windows),
             avg_tension_score=self._avg(window.tension_score for window in windows),
             avg_post_reaction_score=self._avg(window.post_peak_reaction_score for window in windows),
+            avg_speech_score=self._avg(window.speech_score for window in windows),
+            avg_menu_wait_score=self._avg(window.menu_wait_score for window in windows),
+            raw_cut_risk_score=self._max(self._raw_cut_risk_score(window) for window in windows),
             has_keep_signal=has_keep_signal,
             has_remove_signal=has_remove_signal,
             has_cut_risk=has_cut_risk,
+            confirmed_cut_risk=has_cut_risk,
             has_zoom_risk=has_zoom_risk,
             has_private_menu_risk=has_private_menu_risk,
             has_pre_context_need=has_pre_context_need,
             has_post_context_need=has_post_context_need,
+            raw_cut_risk_windows=len(raw_cut_risk_matches),
+            confirmed_cut_risk_windows=len(confirmed_window_keys),
+            professional_verdict=professional_verdict,
+            professional_reason=professional_reason,
+            cut_risk_reason=cut_risk_reason,
             segment_notes=list(getattr(segment, "notes", []) or []),
             universal_notes=self._universal_notes(segment, windows),
             diagnosis=diagnosis,
@@ -158,6 +189,7 @@ class UniversalMomentDebugReporter:
         has_private_menu_risk: bool,
         has_pre_context_need: bool,
         has_post_context_need: bool,
+        professional_reason: str,
     ) -> list[str]:
         if not windows:
             return ["NO-SIGNAL: no overlapping universal moment windows"]
@@ -177,7 +209,201 @@ class UniversalMomentDebugReporter:
             diagnosis.append("CONTEXT: needs pre-action context")
         if has_post_context_need:
             diagnosis.append("CONTEXT: needs post-peak reaction")
+        if professional_reason:
+            diagnosis.append(professional_reason)
         return diagnosis or ["INFO: universal moment windows overlap without dominant risk"]
+
+    def _professional_verdict(
+        self,
+        *,
+        windows: list[UniversalMomentWindow],
+        has_keep_signal: bool,
+        has_remove_signal: bool,
+        has_cut_risk: bool,
+        has_private_menu_risk: bool,
+        has_pre_context_need: bool,
+        has_post_context_need: bool,
+    ) -> tuple[str, str]:
+        if not windows:
+            return "unknown", "UNKNOWN: no overlapping universal moment windows"
+
+        max_peak = self._max(window.peak_score for window in windows)
+        max_tension = self._max(window.tension_score for window in windows)
+        max_post_reaction = self._max(window.post_peak_reaction_score for window in windows)
+        max_speech = self._max(window.speech_score for window in windows)
+        max_private = self._max(window.private_talk_score for window in windows)
+        max_menu_wait = self._max(window.menu_wait_score for window in windows)
+        max_boring = self._max(window.boring_score for window in windows)
+
+        keep_windows = sum(
+            window.should_keep
+            or window.peak_score >= 0.60
+            or window.tension_score >= 0.60
+            or window.post_peak_reaction_score >= 0.60
+            for window in windows
+        )
+        remove_private_windows = sum(
+            window.should_remove
+            or window.private_talk_score >= 0.70
+            or window.boring_score >= 0.75
+            or window.menu_wait_score >= 0.70
+            for window in windows
+        )
+        keep_strength = max(max_peak, max_tension, max_post_reaction)
+        keep_dominant = keep_windows > 0 and keep_windows >= remove_private_windows
+        review_private_menu = (
+            max_private >= 0.70
+            and max_menu_wait >= 0.60
+            and max_peak < 0.40
+        )
+        review_boring = (
+            max_boring >= 0.75
+            and max_speech < 0.35
+            and max_peak < 0.35
+        )
+        mixed_conflict = (
+            has_keep_signal
+            and keep_strength >= 0.55
+            and (
+                has_remove_signal
+                or has_private_menu_risk
+                or max_private >= 0.70
+                or max_boring >= 0.75
+            )
+        )
+
+        if mixed_conflict:
+            return "mixed_conflict", "MIXED_CONFLICT: keep and remove signals disagree"
+        if has_cut_risk:
+            return "review_cut_risk", "REVIEW_CUT_RISK: boundary-sensitive speech/action"
+        if keep_dominant and keep_strength >= 0.60:
+            return "keep_strong", "KEEP_STRONG: peak/tension/reaction content"
+        if has_pre_context_need or has_post_context_need:
+            return "keep_context", "KEEP_CONTEXT: context needed around action/reaction"
+        if review_private_menu:
+            return "review_private_menu", "REVIEW_PRIVATE_MENU: likely private menu/wait speech"
+        if review_boring:
+            return "review_boring", "REVIEW_BORING: low speech and low action"
+        if has_keep_signal and not has_cut_risk and max_private < 0.55 and max_boring < 0.70:
+            return "safe", "SAFE: content looks stable"
+        return "unknown", "UNKNOWN: signals need manual interpretation"
+
+    def _confirmed_cut_risk_matches(
+        self,
+        segment: TimelineSegment,
+        windows: list[UniversalMomentWindow],
+    ) -> list[tuple[UniversalMomentWindow, str]]:
+        matches: list[tuple[UniversalMomentWindow, str]] = []
+        for window in windows:
+            near_edge = self._window_near_segment_edge(segment, window)
+            straddles_edge = self._window_straddles_segment_edge(segment, window)
+            raw_score = self._raw_cut_risk_score(window)
+            action_score = max(
+                window.peak_score,
+                window.visual_action_score,
+            )
+
+            if raw_score >= CONFIRMED_CUT_RISK_THRESHOLD:
+                matches.append(
+                    (
+                        window,
+                        f"{window.window_id}: raw cut risk >= {CONFIRMED_CUT_RISK_THRESHOLD:.2f}",
+                    )
+                )
+            if window.speech_boundary_risk and (
+                (straddles_edge and raw_score >= CONFIRMED_SPEECH_BOUNDARY_SCORE)
+                or (near_edge and raw_score >= 0.80)
+            ):
+                matches.append(
+                    (
+                        window,
+                        f"{window.window_id}: speech boundary crosses or strongly nears segment edge",
+                    )
+                )
+            if window.action_context_risk and near_edge and action_score >= CONFIRMED_ACTION_EDGE_SCORE:
+                matches.append(
+                    (
+                        window,
+                        f"{window.window_id}: action context near segment edge",
+                    )
+                )
+            if (
+                window.speech_score >= 0.55
+                and straddles_edge
+                and raw_score >= CONFIRMED_SPEECH_BOUNDARY_SCORE
+            ):
+                matches.append(
+                    (
+                        window,
+                        f"{window.window_id}: speech score crosses segment edge",
+                    )
+                )
+            if (
+                window.peak_score >= 0.60
+                and straddles_edge
+                and (
+                    raw_score >= CONFIRMED_SPEECH_BOUNDARY_SCORE
+                    or action_score >= CONFIRMED_ACTION_EDGE_SCORE
+                )
+            ):
+                matches.append(
+                    (
+                        window,
+                        f"{window.window_id}: peak score crosses segment edge",
+                    )
+                )
+
+        return matches
+
+    def _has_raw_cut_risk(self, window: UniversalMomentWindow) -> bool:
+        return (
+            self._raw_cut_risk_score(window) >= RAW_CUT_RISK_THRESHOLD
+            or window.speech_boundary_risk
+            or window.action_context_risk
+        )
+
+    def _raw_cut_risk_score(self, window: UniversalMomentWindow) -> float:
+        return self._clamp(
+            max(
+                window.cut_risk_score,
+                window.zoom_risk_score * 0.45,
+            )
+        )
+
+    def _window_near_segment_edge(
+        self,
+        segment: TimelineSegment,
+        window: UniversalMomentWindow,
+        *,
+        tolerance: float = CUT_RISK_EDGE_SECONDS,
+    ) -> bool:
+        return min(
+            self._distance_to_window(segment.start_time, window.start_seconds, window.end_seconds),
+            self._distance_to_window(segment.end_time, window.start_seconds, window.end_seconds),
+        ) <= tolerance
+
+    def _window_straddles_segment_edge(
+        self,
+        segment: TimelineSegment,
+        window: UniversalMomentWindow,
+    ) -> bool:
+        return (
+            self._point_inside_window(segment.start_time, window.start_seconds, window.end_seconds)
+            or self._point_inside_window(segment.end_time, window.start_seconds, window.end_seconds)
+        )
+
+    def _point_inside_window(self, point: float, start: float, end: float) -> bool:
+        return start < point < end
+
+    def _distance_to_window(self, point: float, start: float, end: float) -> float:
+        if start <= point <= end:
+            return 0.0
+        return min(abs(point - start), abs(point - end))
+
+    def _window_key(self, window: UniversalMomentWindow) -> str:
+        if window.window_id:
+            return str(window.window_id)
+        return f"{window.start_seconds:.3f}-{window.end_seconds:.3f}"
 
     def _universal_notes(
         self,

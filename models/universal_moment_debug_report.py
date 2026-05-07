@@ -71,15 +71,24 @@ class UniversalMomentSegmentDebug:
     avg_peak_score: float = 0.0
     avg_tension_score: float = 0.0
     avg_post_reaction_score: float = 0.0
+    avg_speech_score: float = 0.0
+    avg_menu_wait_score: float = 0.0
+    raw_cut_risk_score: float = 0.0
 
     has_keep_signal: bool = False
     has_remove_signal: bool = False
     has_cut_risk: bool = False
+    confirmed_cut_risk: bool = False
     has_zoom_risk: bool = False
     has_private_menu_risk: bool = False
     has_pre_context_need: bool = False
     has_post_context_need: bool = False
+    raw_cut_risk_windows: int = 0
+    confirmed_cut_risk_windows: int = 0
 
+    professional_verdict: str = "unknown"
+    professional_reason: str = ""
+    cut_risk_reason: list[str] = field(default_factory=list)
     segment_notes: list[str] = field(default_factory=list)
     universal_notes: list[str] = field(default_factory=list)
     diagnosis: list[str] = field(default_factory=list)
@@ -107,10 +116,17 @@ class UniversalMomentSegmentDebug:
         self.has_keep_signal = bool(self.has_keep_signal)
         self.has_remove_signal = bool(self.has_remove_signal)
         self.has_cut_risk = bool(self.has_cut_risk)
+        self.confirmed_cut_risk = bool(self.confirmed_cut_risk or self.has_cut_risk)
+        self.has_cut_risk = bool(self.has_cut_risk or self.confirmed_cut_risk)
         self.has_zoom_risk = bool(self.has_zoom_risk)
         self.has_private_menu_risk = bool(self.has_private_menu_risk)
         self.has_pre_context_need = bool(self.has_pre_context_need)
         self.has_post_context_need = bool(self.has_post_context_need)
+        self.raw_cut_risk_windows = max(0, int(self.raw_cut_risk_windows or 0))
+        self.confirmed_cut_risk_windows = max(0, int(self.confirmed_cut_risk_windows or 0))
+        self.professional_verdict = str(self.professional_verdict or "unknown")
+        self.professional_reason = str(self.professional_reason or "")
+        self.cut_risk_reason = _clean_string_list(self.cut_risk_reason)
         self.segment_notes = _clean_string_list(self.segment_notes)
         self.universal_notes = _clean_string_list(self.universal_notes)
         self.diagnosis = _clean_string_list(self.diagnosis)
@@ -128,10 +144,16 @@ class UniversalMomentSegmentDebug:
             "has_keep_signal": self.has_keep_signal,
             "has_remove_signal": self.has_remove_signal,
             "has_cut_risk": self.has_cut_risk,
+            "confirmed_cut_risk": self.confirmed_cut_risk,
             "has_zoom_risk": self.has_zoom_risk,
             "has_private_menu_risk": self.has_private_menu_risk,
             "has_pre_context_need": self.has_pre_context_need,
             "has_post_context_need": self.has_post_context_need,
+            "raw_cut_risk_windows": self.raw_cut_risk_windows,
+            "confirmed_cut_risk_windows": self.confirmed_cut_risk_windows,
+            "professional_verdict": self.professional_verdict,
+            "professional_reason": self.professional_reason,
+            "cut_risk_reason": list(self.cut_risk_reason),
             "segment_notes": list(self.segment_notes),
             "universal_notes": list(self.universal_notes),
             "diagnosis": list(self.diagnosis),
@@ -156,10 +178,16 @@ class UniversalMomentSegmentDebug:
             has_keep_signal=bool(data.get("has_keep_signal", False)),
             has_remove_signal=bool(data.get("has_remove_signal", False)),
             has_cut_risk=bool(data.get("has_cut_risk", False)),
+            confirmed_cut_risk=bool(data.get("confirmed_cut_risk", data.get("has_cut_risk", False))),
             has_zoom_risk=bool(data.get("has_zoom_risk", False)),
             has_private_menu_risk=bool(data.get("has_private_menu_risk", False)),
             has_pre_context_need=bool(data.get("has_pre_context_need", False)),
             has_post_context_need=bool(data.get("has_post_context_need", False)),
+            raw_cut_risk_windows=int(data.get("raw_cut_risk_windows", 0) or 0),
+            confirmed_cut_risk_windows=int(data.get("confirmed_cut_risk_windows", 0) or 0),
+            professional_verdict=str(data.get("professional_verdict", "unknown")),
+            professional_reason=str(data.get("professional_reason", "")),
+            cut_risk_reason=list(data.get("cut_risk_reason") or []),
             segment_notes=list(data.get("segment_notes") or []),
             universal_notes=list(data.get("universal_notes") or []),
             diagnosis=list(data.get("diagnosis") or []),
@@ -252,4 +280,7 @@ _SCORE_FIELDS = (
     "avg_peak_score",
     "avg_tension_score",
     "avg_post_reaction_score",
+    "avg_speech_score",
+    "avg_menu_wait_score",
+    "raw_cut_risk_score",
 )

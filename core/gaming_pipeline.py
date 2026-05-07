@@ -36,6 +36,7 @@ from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
 from core.gameplay_state_analyzer import GameplayStateAnalyzer
 from core.universal_moment_brain import UniversalMomentBrain
 from core.universal_moment_debug_reporter import UniversalMomentDebugReporter
+from core.universal_moment_review_exporter import UniversalMomentReviewExporter
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
@@ -112,6 +113,31 @@ def _write_universal_debug_report(job, report) -> list[str]:
         with open(path, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2, ensure_ascii=False)
     return paths
+
+
+def _write_universal_review_report(job, report) -> list[str]:
+    if report is None:
+        return []
+
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+
+    exporter = UniversalMomentReviewExporter()
+    output_path = exporter.write_report(
+        report=report,
+        output_dir=output_dir,
+        filename=f"{job.job_id}_universal_moment_review.md",
+    )
+    export_path = exporter.write_report(
+        report=report,
+        output_dir=export_dir,
+        filename="universal_moment_review.md",
+    )
+    return [str(output_path), str(export_path)]
 
 
 def _transcript_text_for_window(transcript_result, start: float, end: float) -> str:
@@ -233,6 +259,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     universal_moment_debug_report = None
     universal_moment_debug_paths: list[str] = []
+    universal_moment_review_paths: list[str] = []
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
@@ -948,6 +975,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             job,
             universal_moment_debug_report,
         )
+        universal_moment_review_paths = _write_universal_review_report(
+            job,
+            universal_moment_debug_report,
+        )
         print(
             f"[gaming_pipeline] UNIVERSAL_DEBUG {job.job_id} "
             f"segments={universal_moment_debug_report.total_segments} "
@@ -962,6 +993,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] UNIVERSAL_DEBUG_FILE {job.job_id} "
                 f"path={universal_moment_debug_paths[-1]}"
+            )
+        if universal_moment_review_paths:
+            print(
+                f"[gaming_pipeline] UNIVERSAL_REVIEW {job.job_id} "
+                f"file={universal_moment_review_paths[-1]}"
             )
 
     # ------------------------------------------------------------------
@@ -1182,6 +1218,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "universal_moment_result": universal_moment_result,
         "universal_moment_debug_report": universal_moment_debug_report,
         "universal_moment_debug_paths": list(universal_moment_debug_paths),
+        "universal_moment_review_paths": list(universal_moment_review_paths),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
