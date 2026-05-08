@@ -42,6 +42,7 @@ from core.universal_boundary_evidence_reporter import UniversalBoundaryEvidenceR
 from core.universal_role_decision_auditor import UniversalRoleDecisionAuditor
 from core.universal_moment_soft_decision_builder import UniversalMomentSoftDecisionBuilder
 from core.phase_2b_final_review_builder import Phase2BFinalReviewBuilder
+from core.phase_2b_stabilization_checker import Phase2BStabilizationChecker
 from core.facecam_emotion_indicator_builder import FacecamEmotionIndicatorBuilder
 from core.energy_curve_builder import EnergyCurveBuilder
 from core.gameplay_vision_analyzer import GameplayVisionAnalyzer
@@ -226,6 +227,52 @@ def _write_phase_2b_final_review_report(job, report) -> list[str]:
     return paths
 
 
+def _write_phase_2b_stabilization_result(job, result) -> list[str]:
+    if result is None:
+        return []
+
+    payload = result.to_dict()
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{job.job_id}_phase_2b_stabilization_result.json")
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+    export_path = os.path.join(export_dir, "phase_2b_stabilization_result.json")
+
+    paths = [output_path, export_path]
+    for path in paths:
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=False)
+    return paths
+
+
+def _write_phase_2b_stabilization_review(job, result) -> list[str]:
+    if result is None:
+        return []
+
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+
+    checker = Phase2BStabilizationChecker()
+    output_path = checker.write_markdown(
+        result=result,
+        output_dir=output_dir,
+        filename=f"{job.job_id}_phase_2b_stabilization_review.md",
+    )
+    export_path = checker.write_markdown(
+        result=result,
+        output_dir=export_dir,
+        filename="phase_2b_stabilization_review.md",
+    )
+    return [str(output_path), str(export_path)]
+
+
 def _write_universal_review_report(
     job,
     report,
@@ -392,6 +439,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_context_audit_report = None
     universal_boundary_evidence_report = None
     phase_2b_final_review_report = None
+    phase_2b_stabilization_result = None
     universal_moment_debug_paths: list[str] = []
     universal_moment_soft_decision_paths: list[str] = []
     universal_role_decision_audit_paths: list[str] = []
@@ -399,6 +447,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_boundary_evidence_paths: list[str] = []
     phase_2b_final_review_paths: list[str] = []
     universal_moment_review_paths: list[str] = []
+    phase_2b_stabilization_paths: list[str] = []
+    phase_2b_stabilization_review_paths: list[str] = []
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
@@ -1459,6 +1509,51 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         f"reason={_compact_log_value(_validator_reason)}"
     )
 
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    phase_2b_stabilization_result = Phase2BStabilizationChecker().check(
+        job_id=job.job_id,
+        job_dir="output",
+        export_dir=export_dir,
+        timeline_segments=(
+            edit_timeline.selected_segments
+            if edit_timeline is not None
+            else []
+        ),
+        final_review_report=phase_2b_final_review_report,
+        boundary_evidence_report=universal_boundary_evidence_report,
+        validator_result=validator_result,
+        render_path=final_video_path,
+    )
+    phase_2b_stabilization_paths = _write_phase_2b_stabilization_result(
+        job,
+        phase_2b_stabilization_result,
+    )
+    phase_2b_stabilization_review_paths = _write_phase_2b_stabilization_review(
+        job,
+        phase_2b_stabilization_result,
+    )
+    _phase_2b_warning_count = sum(
+        [
+            phase_2b_stabilization_result.missing_thumbnail_known_warning,
+            phase_2b_stabilization_result.high_boundary_review_warning,
+            phase_2b_stabilization_result.transcript_boundary_precision_warning,
+        ]
+    )
+    print(
+        f"[gaming_pipeline] PHASE_2B_STABILIZATION {job.job_id} "
+        f"status={phase_2b_stabilization_result.status} "
+        f"ready={str(phase_2b_stabilization_result.phase_2b_ready_to_close).lower()} "
+        f"timeline={phase_2b_stabilization_result.timeline_segments} "
+        f"review={phase_2b_stabilization_result.final_review_segments} "
+        f"warnings={_phase_2b_warning_count}"
+    )
+    if phase_2b_stabilization_paths:
+        print(
+            f"[gaming_pipeline] PHASE_2B_STABILIZATION_FILE {job.job_id} "
+            f"path={phase_2b_stabilization_paths[-1]}"
+        )
+
     # ------------------------------------------------------------------
     # 11) Repositories speichern
     # ------------------------------------------------------------------
@@ -1507,6 +1602,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             if phase_2b_final_review_report is not None
             else None
         ),
+        "phase_2b_stabilization_result": (
+            phase_2b_stabilization_result.to_dict()
+            if phase_2b_stabilization_result is not None
+            else None
+        ),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
@@ -1553,6 +1653,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "universal_context_audit_report": universal_context_audit_report,
         "universal_boundary_evidence_report": universal_boundary_evidence_report,
         "phase_2b_final_review_report": phase_2b_final_review_report,
+        "phase_2b_stabilization_result": phase_2b_stabilization_result,
         "universal_moment_debug_paths": list(universal_moment_debug_paths),
         "universal_moment_soft_decision_paths": list(universal_moment_soft_decision_paths),
         "universal_role_decision_audit_paths": list(universal_role_decision_audit_paths),
@@ -1560,6 +1661,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "universal_boundary_evidence_paths": list(universal_boundary_evidence_paths),
         "phase_2b_final_review_paths": list(phase_2b_final_review_paths),
         "universal_moment_review_paths": list(universal_moment_review_paths),
+        "phase_2b_stabilization_paths": list(phase_2b_stabilization_paths),
+        "phase_2b_stabilization_review_paths": list(phase_2b_stabilization_review_paths),
         "round_phase_result":    round_phase_result,
         "facecam_emotion_result": facecam_emotion_result,
         "cut_indicator_result":  cut_indicator_result,
