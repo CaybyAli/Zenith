@@ -172,7 +172,10 @@ def _dispatch_pipeline(job, services: dict) -> dict:
 #  Batch dispatcher                                                    #
 # ------------------------------------------------------------------ #
 
-def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
+def run_pending_jobs(
+    db_path: str = "data/jobs.json",
+    input_video_path: str | None = None,
+) -> list[dict]:
     """
     Scan the job store and process every CREATED / STORED job.
 
@@ -180,13 +183,60 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
       {"job_id": ..., "status": "ok"|"skip"|"error", ...}
     """
     job_store = JobStore(db_path=db_path)
-    _scan_inbox_and_create_jobs(job_store)
+    cli_video_path: Path | None = None
+    if input_video_path:
+        cli_video_path = Path(input_video_path)
+        if not cli_video_path.exists() or not cli_video_path.is_file():
+            raise FileNotFoundError(f"Input video not found: {input_video_path}")
+
+        existing_jobs = job_store.list_jobs()
+        existing_paths = {
+            str(Path(job.raw_video_path).resolve())
+            for job in existing_jobs
+            if job.raw_video_path
+        }
+        normalized = str(cli_video_path.resolve())
+        has_pending_cli_job = any(
+            job.status in (JobStatus.CREATED, JobStatus.STORED)
+            and job.raw_video_path
+            and str(Path(job.raw_video_path).resolve()) == normalized
+            for job in existing_jobs
+        )
+        if normalized in existing_paths and has_pending_cli_job:
+            print(
+                f"[pipeline_runner] CLI SKIP   {cli_video_path.name}  "
+                f"(pending job already exists)"
+            )
+        else:
+            print(
+                f"[pipeline_runner] CLI NEW    {cli_video_path.name}  "
+                f"channel={ChannelType.GAMING_MAIN.value}"
+            )
+            job = IntakeManager(job_store).create_gaming_job(
+                channel_type=ChannelType.GAMING_MAIN,
+                raw_video_path=str(cli_video_path),
+                target_format=TargetFormat.LONGFORM,
+                target_platforms=["youtube"],
+                mode=Mode.NORMAL,
+            )
+            print(f"[pipeline_runner] CLI JOB    {job.job_id}  created")
+    else:
+        _scan_inbox_and_create_jobs(job_store)
 
     all_jobs = job_store.list_jobs()
-    pending = [
-        j for j in all_jobs
-        if j.status in (JobStatus.CREATED, JobStatus.STORED)
-    ]
+    if cli_video_path is not None:
+        cli_normalized = str(cli_video_path.resolve())
+        pending = [
+            j for j in all_jobs
+            if j.status in (JobStatus.CREATED, JobStatus.STORED)
+            and j.raw_video_path
+            and str(Path(j.raw_video_path).resolve()) == cli_normalized
+        ]
+    else:
+        pending = [
+            j for j in all_jobs
+            if j.status in (JobStatus.CREATED, JobStatus.STORED)
+        ]
 
     # ---- Empty-state ------------------------------------------------
     if not pending:
@@ -288,7 +338,8 @@ def run_pending_jobs(db_path: str = "data/jobs.json") -> list[dict]:
 # ------------------------------------------------------------------ #
 
 if __name__ == "__main__":
-    results = run_pending_jobs()
+    input_video_path = sys.argv[1] if len(sys.argv) > 1 else None
+    results = run_pending_jobs(input_video_path=input_video_path)
 
     ok      = sum(1 for r in results if r["status"] == "ok")
     skipped = sum(1 for r in results if r["status"] == "skip")

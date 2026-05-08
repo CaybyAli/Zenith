@@ -14,6 +14,7 @@ Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
 from __future__ import annotations
 
 import json
+import logging
 import os
 
 from shared.enums import ChannelType, JobStatus, TargetFormat
@@ -34,6 +35,7 @@ from core.cut_indicator_builder import CutIndicatorBuilder
 from core.audio_role_indicator_builder import AudioRoleIndicatorBuilder
 from core.gameplay_event_indicator_builder import GameplayEventIndicatorBuilder
 from core.gameplay_state_analyzer import GameplayStateAnalyzer
+from core.editing_profile_registry import resolve
 from core.universal_moment_brain import UniversalMomentBrain
 from core.universal_moment_debug_reporter import UniversalMomentDebugReporter
 from core.universal_moment_review_exporter import UniversalMomentReviewExporter
@@ -69,6 +71,8 @@ from core.job_loader import JobLoader
 from core.job_store import JobStore
 from models.round_phase_result import RoundPhase, RoundPhaseResult
 
+
+logger = logging.getLogger(__name__)
 
 _PHASE_FILTER_BLOCKED = {RoundPhase.MENU_WAIT, RoundPhase.QUEUE_WAIT}
 _PHASE_FILTER_OVERRIDE_TYPES = {
@@ -449,6 +453,28 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_moment_review_paths: list[str] = []
     phase_2b_stabilization_paths: list[str] = []
     phase_2b_stabilization_review_paths: list[str] = []
+
+    _channel_str = getattr(
+        getattr(job, "channel_type", None),
+        "value",
+        getattr(job, "channel", "gaming_main"),
+    )
+    _profile, _mode_config = resolve(
+        channel_str=str(_channel_str or "gaming_main"),
+        quality_mode_str=str(getattr(job, "quality_mode", "pro") or "pro"),
+    )
+    _editing_profile_log = (
+        f"[gaming_pipeline] EDITING_PROFILE job={job.job_id} "
+        f"channel={_profile.channel.value} "
+        f"profile={_profile.channel.value} "
+        f"content_family={_profile.content_family.value} "
+        f"output_style={_profile.output_style.value} "
+        f"quality_mode={_mode_config.mode.value} "
+        f"analysis_depth={_mode_config.analysis_depth} "
+        f"cut_aggressiveness={_profile.cut_aggressiveness}"
+    )
+    logger.info(_editing_profile_log)
+    print(_editing_profile_log)
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
