@@ -1235,6 +1235,17 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"avg={universal_boundary_evidence_report.avg_boundary_risk_score}"
         )
         print(
+            f"[gaming_pipeline] UNIVERSAL_BOUNDARY_CALIBRATION {job.job_id} "
+            f"real_word={universal_boundary_evidence_report.real_word_cut} "
+            f"real_sentence={universal_boundary_evidence_report.real_sentence_cut} "
+            f"likely={universal_boundary_evidence_report.likely_speech_cut} "
+            f"uncertain={universal_boundary_evidence_report.timestamp_uncertain} "
+            f"audio_only={universal_boundary_evidence_report.audio_only_near_edge} "
+            f"weak={universal_boundary_evidence_report.weak_speech_evidence} "
+            f"safe={universal_boundary_evidence_report.probably_safe} "
+            f"downgrade={universal_boundary_evidence_report.downgrade_candidates}"
+        )
+        print(
             f"[gaming_pipeline] PHASE_2B_FINAL_REVIEW {job.job_id} "
             f"segments={phase_2b_final_review_report.total_segments} "
             f"strong_keep={phase_2b_final_review_report.strong_keep} "

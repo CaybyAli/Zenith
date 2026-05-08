@@ -221,6 +221,14 @@ class UniversalMomentReviewExporter:
                     f"- clean: {boundary_evidence_report.clean}",
                     f"- real_speech_cut_risk: {boundary_evidence_report.real_speech_cut_risk}",
                     f"- possible_speech_cut_risk: {boundary_evidence_report.possible_speech_cut_risk}",
+                    f"- real_word_cut: {boundary_evidence_report.real_word_cut}",
+                    f"- real_sentence_cut: {boundary_evidence_report.real_sentence_cut}",
+                    f"- likely_speech_cut: {boundary_evidence_report.likely_speech_cut}",
+                    f"- timestamp_uncertain: {boundary_evidence_report.timestamp_uncertain}",
+                    f"- audio_only_near_edge: {boundary_evidence_report.audio_only_near_edge}",
+                    f"- weak_speech_evidence: {boundary_evidence_report.weak_speech_evidence}",
+                    f"- probably_safe: {boundary_evidence_report.probably_safe}",
+                    f"- downgrade_candidates: {boundary_evidence_report.downgrade_candidates}",
                     f"- action_cut_risk: {boundary_evidence_report.action_cut_risk}",
                     f"- zoom_cut_risk: {boundary_evidence_report.zoom_cut_risk}",
                     f"- avg_boundary_risk_score: {boundary_evidence_report.avg_boundary_risk_score:.3f}",
@@ -292,6 +300,21 @@ class UniversalMomentReviewExporter:
             f"- Type: {boundary.boundary_type}",
             f"- Priority: {boundary.priority}",
             f"- Risk Score: {boundary.boundary_risk_score:.3f}",
+            f"- Speech Boundary Classification: {boundary.speech_boundary_classification}",
+            f"- Word Cut Confidence: {boundary.word_cut_confidence:.3f}",
+            f"- Sentence Cut Confidence: {boundary.sentence_cut_confidence:.3f}",
+            f"- Timestamp Uncertainty: {boundary.transcript_timestamp_uncertainty:.3f}",
+            f"- Audio Speech Confidence: {boundary.audio_speech_confidence:.3f}",
+            f"- Calibrated Speech Risk Score: {boundary.calibrated_speech_risk_score:.3f}",
+            f"- Transcript Evidence Quality: {boundary.transcript_evidence_quality}",
+            f"- Sentence Evidence Quality: {boundary.sentence_evidence_quality}",
+            "- Edge Distances:",
+            f"  - transcript_left: {self._optional_seconds(boundary.transcript_edge_distance_left)}",
+            f"  - transcript_right: {self._optional_seconds(boundary.transcript_edge_distance_right)}",
+            f"  - sentence_left: {self._optional_seconds(boundary.sentence_edge_distance_left)}",
+            f"  - sentence_right: {self._optional_seconds(boundary.sentence_edge_distance_right)}",
+            f"  - audio_left: {self._optional_seconds(boundary.audio_edge_distance_left)}",
+            f"  - audio_right: {self._optional_seconds(boundary.audio_edge_distance_right)}",
             "- Speech Evidence:",
             f"  - transcript_left: {self._yes_no(boundary.transcript_left_near_edge)}",
             f"  - transcript_right: {self._yes_no(boundary.transcript_right_near_edge)}",
@@ -326,6 +349,10 @@ class UniversalMomentReviewExporter:
             f"  - ignore_warning: {self._yes_no(boundary.can_ignore_warning)}",
             f"  - transcript_check: {self._yes_no(boundary.needs_transcript_check)}",
             f"  - visual_check: {self._yes_no(boundary.needs_visual_check)}",
+            f"  - transcript_only_risk: {self._yes_no(boundary.transcript_only_risk)}",
+            f"  - audio_only_risk: {self._yes_no(boundary.audio_only_risk)}",
+            f"  - downgrade_candidate: {self._yes_no(boundary.downgrade_candidate)}",
+            f"  - sentence_span_too_broad: {self._yes_no(boundary.sentence_span_too_broad)}",
             "- Reasons:",
             *[f"  - {item}" for item in reasons],
             "- Warnings:",
@@ -539,3 +566,8 @@ class UniversalMomentReviewExporter:
 
     def _yes_no(self, value: bool) -> str:
         return "yes" if value else "no"
+
+    def _optional_seconds(self, value: float | None) -> str:
+        if value is None:
+            return "none"
+        return f"{float(value):.3f}s"

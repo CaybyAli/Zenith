@@ -291,6 +291,13 @@ class Phase2BFinalReviewBuilder:
         confirmed_cut_conflict = bool(getattr(debug, "confirmed_cut_risk", False) or getattr(debug, "has_cut_risk", False)) and conflict >= 0.45
         if confirmed_cut_conflict:
             return "high", "Confirmed cut risk overlaps keep/remove or context conflict."
+        if any(
+            item.speech_boundary_classification == "likely_speech_cut"
+            for item in boundary_evidence
+        ):
+            if conflict >= 0.45 or keep_confidence >= 0.70:
+                return "high", "Likely speech cut overlaps conflict or strong keep signal."
+            return "medium", "Boundary transcript evidence indicates likely speech cut; manual check recommended."
         evidence_priority, evidence_reason = self._boundary_evidence_priority(boundary_evidence)
         if evidence_priority == "high":
             return "high", evidence_reason
@@ -337,12 +344,31 @@ class Phase2BFinalReviewBuilder:
     ) -> bool:
         if not boundary_evidence:
             return raw_boundary_risk
-        if any(item.priority == "real_high" for item in boundary_evidence):
+        if any(
+            item.speech_boundary_classification in {"real_word_cut", "real_sentence_cut"}
+            or item.boundary_type in {"action_cut_risk", "zoom_cut_risk"}
+            or (
+                item.priority == "real_high"
+                and item.speech_boundary_classification
+                not in {"audio_only_near_edge", "weak_speech_evidence", "probably_safe"}
+            )
+            for item in boundary_evidence
+        ):
             return True
-        if any(item.priority == "medium" for item in boundary_evidence):
+        if any(
+            item.speech_boundary_classification in {"likely_speech_cut", "timestamp_uncertain"}
+            or item.priority == "medium"
+            for item in boundary_evidence
+        ):
             return True
         if raw_boundary_risk and all(
-            item.priority in {"false_positive", "low"} or item.boundary_type in {"likely_false_positive", "clean"}
+            item.speech_boundary_classification in {
+                "audio_only_near_edge",
+                "weak_speech_evidence",
+                "probably_safe",
+            }
+            or item.priority in {"false_positive", "low"}
+            or item.boundary_type in {"likely_false_positive", "clean"}
             for item in boundary_evidence
         ):
             return False
@@ -354,18 +380,54 @@ class Phase2BFinalReviewBuilder:
     ) -> tuple[str, str]:
         if not boundary_evidence:
             return "unknown", ""
-        if any(item.priority == "real_high" for item in boundary_evidence):
+        if any(
+            item.speech_boundary_classification in {"real_word_cut", "real_sentence_cut"}
+            for item in boundary_evidence
+        ):
             types = ", ".join(
-                sorted({item.boundary_type for item in boundary_evidence if item.priority == "real_high"})
+                sorted(
+                    {
+                        item.speech_boundary_classification
+                        for item in boundary_evidence
+                        if item.speech_boundary_classification in {"real_word_cut", "real_sentence_cut"}
+                    }
+                )
             )
-            return "high", f"Boundary evidence confirms high-priority edge risk: {types}."
+            return "high", f"Boundary transcript evidence confirms high-priority edge risk: {types}."
+        if any(item.boundary_type in {"action_cut_risk", "zoom_cut_risk"} for item in boundary_evidence):
+            types = ", ".join(
+                sorted(
+                    {
+                        item.boundary_type
+                        for item in boundary_evidence
+                        if item.boundary_type in {"action_cut_risk", "zoom_cut_risk"}
+                    }
+                )
+            )
+            return "high", f"Boundary evidence confirms high-priority visual edge risk: {types}."
+        if any(item.speech_boundary_classification == "timestamp_uncertain" for item in boundary_evidence):
+            return "medium", "Transcript boundary evidence uncertain; manual check recommended."
         if any(item.priority == "medium" for item in boundary_evidence):
             types = ", ".join(
-                sorted({item.boundary_type for item in boundary_evidence if item.priority == "medium"})
+                sorted(
+                    {
+                        item.speech_boundary_classification
+                        if item.speech_boundary_classification != "unknown"
+                        else item.boundary_type
+                        for item in boundary_evidence
+                        if item.priority == "medium"
+                    }
+                )
             )
             return "medium", f"Boundary evidence indicates medium-priority edge review: {types}."
+        if any(item.speech_boundary_classification == "audio_only_near_edge" for item in boundary_evidence):
+            return "low", "Boundary transcript evidence is audio-only near edge; spot-check if pacing looks suspicious."
+        if any(item.speech_boundary_classification == "weak_speech_evidence" for item in boundary_evidence):
+            return "low", "Boundary speech evidence is weak after calibration."
         if all(
-            item.priority in {"false_positive", "low"} or item.boundary_type in {"likely_false_positive", "clean"}
+            item.speech_boundary_classification in {"probably_safe", "weak_speech_evidence"}
+            or item.priority in {"false_positive", "low"}
+            or item.boundary_type in {"likely_false_positive", "clean"}
             for item in boundary_evidence
         ):
             return "low", "Boundary evidence downgrades the prior warning to clean or likely false positive."
@@ -442,7 +504,18 @@ class Phase2BFinalReviewBuilder:
         values.extend(getattr(context, "warnings", []) or [])
         for evidence in boundary_evidence:
             boundary_type = str(getattr(evidence, "boundary_type", "") or "")
-            if boundary_type == "real_speech_cut_risk":
+            speech_classification = str(
+                getattr(evidence, "speech_boundary_classification", "") or ""
+            )
+            if speech_classification == "timestamp_uncertain":
+                values.append("Boundary transcript evidence: timestamp uncertain")
+            elif speech_classification == "audio_only_near_edge":
+                values.append("Boundary transcript evidence: audio-only near edge")
+            elif speech_classification == "real_word_cut":
+                values.append("Boundary transcript evidence: likely real word cut")
+            elif speech_classification == "real_sentence_cut":
+                values.append("Boundary transcript evidence: likely real sentence cut")
+            elif boundary_type == "real_speech_cut_risk":
                 values.append("Boundary evidence: real speech cut risk")
             elif boundary_type == "likely_false_positive":
                 values.append("Boundary evidence: likely false positive")

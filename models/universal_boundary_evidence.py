@@ -20,6 +20,19 @@ BOUNDARY_TYPES = {
 
 BOUNDARY_PRIORITIES = {"real_high", "medium", "low", "false_positive", "unknown"}
 
+EVIDENCE_QUALITIES = {"exact", "likely", "uncertain", "weak", "none"}
+
+SPEECH_BOUNDARY_CLASSIFICATIONS = {
+    "real_word_cut",
+    "real_sentence_cut",
+    "likely_speech_cut",
+    "timestamp_uncertain",
+    "audio_only_near_edge",
+    "weak_speech_evidence",
+    "probably_safe",
+    "unknown",
+}
+
 
 def _clamp_score(value: object, fallback: float = 0.0) -> float:
     try:
@@ -80,6 +93,28 @@ class UniversalBoundaryEvidence:
     sentence_crosses_boundary: bool = False
     likely_word_cut: bool = False
     likely_sentence_cut: bool = False
+
+    transcript_edge_distance_left: float | None = None
+    transcript_edge_distance_right: float | None = None
+    sentence_edge_distance_left: float | None = None
+    sentence_edge_distance_right: float | None = None
+    audio_edge_distance_left: float | None = None
+    audio_edge_distance_right: float | None = None
+
+    word_cut_confidence: float = 0.0
+    sentence_cut_confidence: float = 0.0
+    transcript_timestamp_uncertainty: float = 0.0
+    audio_speech_confidence: float = 0.0
+    calibrated_speech_risk_score: float = 0.0
+
+    transcript_evidence_quality: str = "none"
+    sentence_evidence_quality: str = "none"
+    speech_boundary_classification: str = "unknown"
+
+    transcript_only_risk: bool = False
+    audio_only_risk: bool = False
+    sentence_span_too_broad: bool = False
+    downgrade_candidate: bool = False
 
     action_left_near_edge: bool = False
     action_right_near_edge: bool = False
@@ -144,10 +179,22 @@ class UniversalBoundaryEvidence:
             self.evidence_end_time = self.evidence_start_time
         self.edge_radius_seconds = float(_safe_seconds(self.edge_radius_seconds, 0.75) or 0.75)
 
+        for name in _DISTANCE_FIELDS:
+            setattr(self, name, _safe_seconds(getattr(self, name, None), None))
         for name in _BOOL_FIELDS:
             setattr(self, name, bool(getattr(self, name, False)))
         for name in _SCORE_FIELDS:
             setattr(self, name, _clamp_score(getattr(self, name, 0.0)))
+
+        self.transcript_evidence_quality = str(self.transcript_evidence_quality or "none")
+        if self.transcript_evidence_quality not in EVIDENCE_QUALITIES:
+            self.transcript_evidence_quality = "none"
+        self.sentence_evidence_quality = str(self.sentence_evidence_quality or "none")
+        if self.sentence_evidence_quality not in EVIDENCE_QUALITIES:
+            self.sentence_evidence_quality = "none"
+        self.speech_boundary_classification = str(self.speech_boundary_classification or "unknown")
+        if self.speech_boundary_classification not in SPEECH_BOUNDARY_CLASSIFICATIONS:
+            self.speech_boundary_classification = "unknown"
 
         self.boundary_type = str(self.boundary_type or "unknown")
         if self.boundary_type not in BOUNDARY_TYPES:
@@ -177,6 +224,9 @@ class UniversalBoundaryEvidence:
             "edge_radius_seconds": self.edge_radius_seconds,
             "boundary_type": self.boundary_type,
             "priority": self.priority,
+            "transcript_evidence_quality": self.transcript_evidence_quality,
+            "sentence_evidence_quality": self.sentence_evidence_quality,
+            "speech_boundary_classification": self.speech_boundary_classification,
             "should_protect_boundary": self.should_protect_boundary,
             "should_review_boundary": self.should_review_boundary,
             "can_ignore_warning": self.can_ignore_warning,
@@ -186,6 +236,8 @@ class UniversalBoundaryEvidence:
             "warnings": list(self.warnings),
             "evidence_notes": list(self.evidence_notes),
         }
+        for name in _DISTANCE_FIELDS:
+            payload[name] = getattr(self, name)
         for name in _BOOL_FIELDS:
             payload[name] = getattr(self, name)
         for name in _SCORE_FIELDS:
@@ -197,6 +249,7 @@ class UniversalBoundaryEvidence:
         data = dict(data or {})
         kwargs = {name: bool(data.get(name, False)) for name in _BOOL_FIELDS}
         kwargs.update({name: data.get(name, 0.0) for name in _SCORE_FIELDS})
+        kwargs.update({name: data.get(name) for name in _DISTANCE_FIELDS})
         return cls(
             boundary_id=str(data.get("boundary_id", "")),
             job_id=str(data.get("job_id", "")),
@@ -213,6 +266,9 @@ class UniversalBoundaryEvidence:
             edge_radius_seconds=data.get("edge_radius_seconds", 0.75),
             boundary_type=str(data.get("boundary_type", "unknown")),
             priority=str(data.get("priority", "unknown")),
+            transcript_evidence_quality=str(data.get("transcript_evidence_quality", "none")),
+            sentence_evidence_quality=str(data.get("sentence_evidence_quality", "none")),
+            speech_boundary_classification=str(data.get("speech_boundary_classification", "unknown")),
             should_protect_boundary=bool(data.get("should_protect_boundary", False)),
             should_review_boundary=bool(data.get("should_review_boundary", False)),
             can_ignore_warning=bool(data.get("can_ignore_warning", False)),
@@ -250,6 +306,14 @@ class UniversalBoundaryEvidenceReport:
     menu_jump: int = 0
     boring_gap: int = 0
     avg_boundary_risk_score: float = 0.0
+    real_word_cut: int = 0
+    real_sentence_cut: int = 0
+    likely_speech_cut: int = 0
+    timestamp_uncertain: int = 0
+    audio_only_near_edge: int = 0
+    weak_speech_evidence: int = 0
+    probably_safe: int = 0
+    downgrade_candidates: int = 0
 
     def __post_init__(self) -> None:
         self.job_id = str(self.job_id or "")
@@ -276,6 +340,14 @@ class UniversalBoundaryEvidenceReport:
         self.zoom_cut_risk = self._count_type("zoom_cut_risk")
         self.menu_jump = self._count_type("menu_jump")
         self.boring_gap = self._count_type("boring_gap")
+        self.real_word_cut = self._count_speech_classification("real_word_cut")
+        self.real_sentence_cut = self._count_speech_classification("real_sentence_cut")
+        self.likely_speech_cut = self._count_speech_classification("likely_speech_cut")
+        self.timestamp_uncertain = self._count_speech_classification("timestamp_uncertain")
+        self.audio_only_near_edge = self._count_speech_classification("audio_only_near_edge")
+        self.weak_speech_evidence = self._count_speech_classification("weak_speech_evidence")
+        self.probably_safe = self._count_speech_classification("probably_safe")
+        self.downgrade_candidates = sum(boundary.downgrade_candidate for boundary in self.boundaries)
         self.avg_boundary_risk_score = _clamp_score(
             sum(item.boundary_risk_score for item in self.boundaries) / len(self.boundaries)
             if self.boundaries
@@ -287,6 +359,12 @@ class UniversalBoundaryEvidenceReport:
 
     def _count_type(self, boundary_type: str) -> int:
         return sum(boundary.boundary_type == boundary_type for boundary in self.boundaries)
+
+    def _count_speech_classification(self, classification: str) -> int:
+        return sum(
+            boundary.speech_boundary_classification == classification
+            for boundary in self.boundaries
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -306,6 +384,14 @@ class UniversalBoundaryEvidenceReport:
             "menu_jump": self.menu_jump,
             "boring_gap": self.boring_gap,
             "avg_boundary_risk_score": self.avg_boundary_risk_score,
+            "real_word_cut": self.real_word_cut,
+            "real_sentence_cut": self.real_sentence_cut,
+            "likely_speech_cut": self.likely_speech_cut,
+            "timestamp_uncertain": self.timestamp_uncertain,
+            "audio_only_near_edge": self.audio_only_near_edge,
+            "weak_speech_evidence": self.weak_speech_evidence,
+            "probably_safe": self.probably_safe,
+            "downgrade_candidates": self.downgrade_candidates,
         }
 
     @classmethod
@@ -332,8 +418,25 @@ class UniversalBoundaryEvidenceReport:
             menu_jump=int(data.get("menu_jump", 0) or 0),
             boring_gap=int(data.get("boring_gap", 0) or 0),
             avg_boundary_risk_score=data.get("avg_boundary_risk_score", 0.0),
+            real_word_cut=int(data.get("real_word_cut", 0) or 0),
+            real_sentence_cut=int(data.get("real_sentence_cut", 0) or 0),
+            likely_speech_cut=int(data.get("likely_speech_cut", 0) or 0),
+            timestamp_uncertain=int(data.get("timestamp_uncertain", 0) or 0),
+            audio_only_near_edge=int(data.get("audio_only_near_edge", 0) or 0),
+            weak_speech_evidence=int(data.get("weak_speech_evidence", 0) or 0),
+            probably_safe=int(data.get("probably_safe", 0) or 0),
+            downgrade_candidates=int(data.get("downgrade_candidates", 0) or 0),
         )
 
+
+_DISTANCE_FIELDS = (
+    "transcript_edge_distance_left",
+    "transcript_edge_distance_right",
+    "sentence_edge_distance_left",
+    "sentence_edge_distance_right",
+    "audio_edge_distance_left",
+    "audio_edge_distance_right",
+)
 
 _BOOL_FIELDS = (
     "transcript_left_near_edge",
@@ -346,6 +449,10 @@ _BOOL_FIELDS = (
     "sentence_crosses_boundary",
     "likely_word_cut",
     "likely_sentence_cut",
+    "transcript_only_risk",
+    "audio_only_risk",
+    "sentence_span_too_broad",
+    "downgrade_candidate",
     "action_left_near_edge",
     "action_right_near_edge",
     "peak_left_near_edge",
@@ -372,4 +479,9 @@ _SCORE_FIELDS = (
     "boring_evidence_score",
     "false_positive_score",
     "boundary_risk_score",
+    "word_cut_confidence",
+    "sentence_cut_confidence",
+    "transcript_timestamp_uncertainty",
+    "audio_speech_confidence",
+    "calibrated_speech_risk_score",
 )
