@@ -1,4 +1,4 @@
-﻿"""Gaming Pipeline — core/gaming_pipeline.py
+"""Gaming Pipeline — core/gaming_pipeline.py
 
 Isoliertes Pipeline-Modul für gaming_main und gaming_uncut.
 Output: <export_dir>/<job_id>/<job_id>_final.mp4
