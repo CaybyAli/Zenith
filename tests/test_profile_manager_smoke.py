@@ -103,9 +103,18 @@ def test_fallback_preserves_profile_id(manager):
 # ── Fehlerbehandlung ──────────────────────────────────────────────────────────
 
 def test_broken_json_raises_profile_load_error(manager, tmp_path):
+    default_source = PROFILES_DIR / "default.json"
+    default_target = tmp_path / "default.json"
+    default_target.write_text(
+        default_source.read_text(encoding="utf-8-sig"),
+        encoding="utf-8",
+    )
+
     broken = tmp_path / "broken.json"
     broken.write_text("{ this is not valid json }", encoding="utf-8")
+
     bad_manager = ProfileManager(profiles_dir=tmp_path)
+
     with pytest.raises(ProfileLoadError, match="ungültiges JSON"):
         bad_manager.load_profile("broken")
 

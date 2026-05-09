@@ -29,7 +29,7 @@ REQUIRED_FIELDS = {
     "version",
 }
 
-DEFAULT_FALLBACK_QUALITY = "balanced"
+DEFAULT_PROFILE_ID = "default"
 
 
 class ProfileLoadError(Exception):
@@ -45,19 +45,89 @@ class ProfileManager:
             profiles_dir = Path(__file__).parent.parent / "profiles"
         self.profiles_dir = Path(profiles_dir)
 
+    def load_default_profile(self) -> dict:
+        """
+        Lädt profiles/default.json.
+        Wenn default.json fehlt, ist das ein echter Fehler.
+        """
+        default_path = self.profiles_dir / f"{DEFAULT_PROFILE_ID}.json"
+
+        if not default_path.exists():
+            raise ProfileLoadError(
+                f"Default-Profil fehlt: {default_path}"
+            )
+
+        data = self._load_json_file(DEFAULT_PROFILE_ID)
+        self.validate_profile(data)
+        return data
+
     def load_profile(self, profile_id: str) -> dict:
         """
         Lädt ein Profil anhand seiner ID.
-        Fallback auf quality_mode=balanced wenn Profil nicht gefunden.
+
+        Neu:
+        default.json wird zuerst geladen.
+        Danach wird das spezifische Profil darübergelegt.
+        Spezifische Werte gewinnen.
         """
+        profile_id = str(profile_id or DEFAULT_PROFILE_ID)
+
+        if profile_id == DEFAULT_PROFILE_ID:
+            return self.load_default_profile()
+
+        default_profile = self.load_default_profile()
         profile_path = self.profiles_dir / f"{profile_id}.json"
 
         if not profile_path.exists():
             logger.warning(
-                "PROFILE_NOT_FOUND profile=%s — using balanced fallback",
+                "PROFILE_NOT_FOUND profile=%s — using default fallback",
                 profile_id,
             )
-            return self._make_fallback_profile(profile_id)
+            fallback = self._make_fallback_profile(profile_id, default_profile)
+            self.validate_profile(fallback)
+            return fallback
+
+        specific_profile = self._load_json_file(profile_id)
+
+        merged = self._merge_profiles(
+            default_profile=default_profile,
+            specific_profile=specific_profile,
+            requested_profile_id=profile_id,
+        )
+
+        self.validate_profile(merged)
+
+        logger.info(
+            "PROFILE_LOADED profile=%s source=profiles/%s.json inherited_from=profiles/default.json",
+            profile_id,
+            profile_id,
+        )
+        return merged
+
+    def list_profiles(self) -> list[str]:
+        """
+        Gibt alle echten Channel-Profile zurück.
+        default.json wird absichtlich nicht mitgezählt.
+        """
+        return sorted(
+            p.stem
+            for p in self.profiles_dir.glob("*.json")
+            if p.stem != DEFAULT_PROFILE_ID
+        )
+
+    def validate_profile(self, data: dict) -> None:
+        """
+        Prüft ob alle Pflichtfelder im fertigen Profil vorhanden sind.
+        Wichtig: Diese Prüfung passiert nach dem Merge.
+        """
+        missing = REQUIRED_FIELDS - data.keys()
+        if missing:
+            raise ValueError(
+                f"Profil ungültig — fehlende Felder: {sorted(missing)}"
+            )
+
+    def _load_json_file(self, profile_id: str) -> dict:
+        profile_path = self.profiles_dir / f"{profile_id}.json"
 
         try:
             with open(profile_path, encoding="utf-8-sig") as f:
@@ -66,56 +136,56 @@ class ProfileManager:
             raise ProfileLoadError(
                 f"Profil '{profile_id}' enthält ungültiges JSON: {e}"
             ) from e
+        except OSError as e:
+            raise ProfileLoadError(
+                f"Profil '{profile_id}' konnte nicht gelesen werden: {e}"
+            ) from e
 
-        self.validate_profile(data)
-
-        logger.info(
-            "PROFILE_LOADED profile=%s source=profiles/%s.json",
-            profile_id,
-            profile_id,
-        )
-        return data
-
-    def list_profiles(self) -> list[str]:
-        """Gibt alle verfügbaren Profil-IDs zurück."""
-        return sorted(
-            p.stem for p in self.profiles_dir.glob("*.json")
-        )
-
-    def validate_profile(self, data: dict) -> None:
-        """
-        Prüft ob alle Pflichtfelder vorhanden sind.
-        Wirft ValueError wenn ein Feld fehlt.
-        """
-        missing = REQUIRED_FIELDS - data.keys()
-        if missing:
-            raise ValueError(
-                f"Profil ungültig — fehlende Felder: {sorted(missing)}"
+        if not isinstance(data, dict):
+            raise ProfileLoadError(
+                f"Profil '{profile_id}' muss ein JSON-Objekt sein."
             )
 
-    def _make_fallback_profile(self, profile_id: str) -> dict:
-        """Erstellt ein minimales Fallback-Profil mit balanced-Defaults."""
-        return {
+        return data
+
+    def _merge_profiles(
+        self,
+        default_profile: dict,
+        specific_profile: dict,
+        requested_profile_id: str,
+    ) -> dict:
+        merged = dict(default_profile)
+        merged.update(specific_profile)
+
+        merged["profile_id"] = specific_profile.get(
+            "profile_id",
+            requested_profile_id,
+        )
+        merged["channel_type"] = specific_profile.get(
+            "channel_type",
+            requested_profile_id,
+        )
+
+        merged.pop("_is_fallback", None)
+        return merged
+
+    def _make_fallback_profile(
+        self,
+        profile_id: str,
+        default_profile: dict | None = None,
+    ) -> dict:
+        """
+        Erstellt ein Fallback-Profil aus default.json.
+        profile_id bleibt das angefragte Profil.
+        """
+        if default_profile is None:
+            default_profile = self.load_default_profile()
+
+        fallback = dict(default_profile)
+        fallback.update({
             "profile_id": profile_id,
             "channel_type": profile_id,
             "display_name": f"Fallback ({profile_id})",
-            "quality_mode": DEFAULT_FALLBACK_QUALITY,
-            "cut_aggressiveness": 0.5,
-            "dead_time_removal_strength": 0.7,
-            "speech_protection_strength": 0.9,
-            "music_enabled": False,
-            "source_aspect_ratio": "16:9",
-            "target_format": "16:9",
-            "reframing_mode": "none",
-            "gameplay_zoom_enabled": False,
-            "gameplay_zoom_mode": None,
-            "camera_zoom_enabled": False,
-            "camera_zoom_mode": "selective",
-            "camera_zoom_trigger": [],
-            "camera_zoom_strength": 0.1,
-            "grading_strength": 0.2,
-            "min_clip_duration": 2.0,
-            "max_clip_duration": 45.0,
-            "version": "1.0.0",
             "_is_fallback": True,
-        }
+        })
+        return fallback
