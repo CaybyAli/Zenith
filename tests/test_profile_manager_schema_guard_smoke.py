@@ -1,4 +1,4 @@
-﻿"""
+"""
 Smoke-Tests für Profile Validation Hardening / Schema Guard — 2B-01-D
 """
 

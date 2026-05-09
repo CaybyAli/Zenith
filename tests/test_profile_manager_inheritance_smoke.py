@@ -1,5 +1,5 @@
-﻿"""
-Smoke-Tests fÃ¼r Profile Inheritance / Default Fallback â€” 2B-01-C
+"""
+Smoke-Tests für Profile Inheritance / Default Fallback — 2B-01-C
 """
 
 import json

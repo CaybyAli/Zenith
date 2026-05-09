@@ -1,4 +1,4 @@
-﻿"""
+"""
 ProfileManager — lädt, validiert und verwaltet Editing-Profile aus JSON-Dateien.
 """
 

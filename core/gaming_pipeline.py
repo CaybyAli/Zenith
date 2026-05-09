@@ -1,9 +1,9 @@
-﻿"""Gaming Pipeline â€” core/gaming_pipeline.py
+"""Gaming Pipeline — core/gaming_pipeline.py
 
-Isoliertes Pipeline-Modul fÃ¼r gaming_main und gaming_uncut.
+Isoliertes Pipeline-Modul für gaming_main und gaming_uncut.
 Output: <export_dir>/<job_id>/<job_id>_final.mp4
 
-Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
+Entfernt gegenüber app.py (werden in späteren Phasen separat gebaut):
   - Music: MusicCueEngine, AudioMixPlanner, MusicApplyProcessor, etc.
   - Thumbnails: ThumbnailForge, AIThumbnailForge
   - Shorts: ShortsDecisionEngine, ShortsGenerator
@@ -104,9 +104,6 @@ def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float)
 def _compact_log_value(value: object, fallback: str = "none", limit: int = 260) -> str:
     text = " ".join(str(value or fallback).split())
     return (text[:limit] if text else fallback)
-
-def _profile_value(profile: dict, key: str, default=None):
-    return profile.get(key, default)
 
 
 def _load_json_profile_for_job(job) -> dict:
@@ -443,9 +440,9 @@ def _filter_highlights_by_round_phase(
 
 
 def _build_gaming_services() -> dict:
-    """Dependency-Container fÃ¼r die Gaming-Pipeline.
+    """Dependency-Container für die Gaming-Pipeline.
 
-    Gibt ein Dict mit allen benÃ¶tigten Service-Instanzen zurÃ¼ck.
+    Gibt ein Dict mit allen benötigten Service-Instanzen zurück.
     Wird einmal in pipeline_runner.py aufgerufen und an
     run_gaming_pipeline_for_job() weitergegeben.
     """
@@ -467,20 +464,20 @@ def _build_gaming_services() -> dict:
 
 
 def run_gaming_pipeline_for_job(job, services: dict) -> dict:
-    """FÃ¼hrt die vollstÃ¤ndige Gaming-Render-Pipeline fÃ¼r einen Job aus.
+    """Führt die vollständige Gaming-Render-Pipeline für einen Job aus.
 
     Pipeline-Schritte:
-      1) GamingAnalyzer + GamingCutter  â†’ analysis + edit_decision
-      2) EditSignalExtractor            â†’ edit_signals
-      3) HighlightSelector              â†’ highlights
-      4) LongformTimelineBuilder        â†’ edit_timeline  (wenn longform)
-      5) ReframingCore                  â†’ reframe_plan
+      1) GamingAnalyzer + GamingCutter  → analysis + edit_decision
+      2) EditSignalExtractor            → edit_signals
+      3) HighlightSelector              → highlights
+      4) LongformTimelineBuilder        → edit_timeline  (wenn longform)
+      5) ReframingCore                  → reframe_plan
       6) ReactionMomentDetector
-         + ZoomPacingEngine             â†’ dynamic_edit_plan
-      7) FinalRenderDriver / RenderProcessor â†’ final_video_path
-      8) SubtitleProcessor              â†’ subtitles
-      9) TitleGenerator + MetadataGenerator â†’ title + metadata
-     10) Validator                      â†’ validator_result
+         + ZoomPacingEngine             → dynamic_edit_plan
+      7) FinalRenderDriver / RenderProcessor → final_video_path
+      8) SubtitleProcessor              → subtitles
+      9) TitleGenerator + MetadataGenerator → title + metadata
+     10) Validator                      → validator_result
      11) Repositories speichern        (highlight, timeline, reframe, zoom)
      12) Job-Status -> JobStatus.RENDERED
 
@@ -522,6 +519,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     json_profile = _load_json_profile_for_job(job)
     profile_snapshot_path = _write_profile_snapshot(job, json_profile)
 
+    # JSON ProfileManager is the editable source of truth for channel profile values.
+    # editing_profile_registry.resolve(...) stays temporarily for legacy mode/profile objects
+    # until later phases migrate the remaining engines.
+    
     _channel_str = getattr(
         getattr(job, "channel_type", None),
         "value",
@@ -952,7 +953,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
 
     # ------------------------------------------------------------------
-    # 4) Longform-Timeline  (nur wenn Voraussetzungen erfÃ¼llt)
+    # 4) Longform-Timeline  (nur wenn Voraussetzungen erfüllt)
     # ------------------------------------------------------------------
     edit_timeline = None
     _fusion_timeline_note = None
@@ -1541,7 +1542,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(f"[DEBUG] =====================================\n")
 
     # ------------------------------------------------------------------
-    # 7) Render â€” FinalRenderDriver wenn Timeline vorhanden,
+    # 7) Render — FinalRenderDriver wenn Timeline vorhanden,
     #             sonst RenderProcessor als Fallback
     # ------------------------------------------------------------------
     if edit_timeline is not None and job.raw_video_path:
@@ -1565,7 +1566,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         active_renderer = renderer
 
     final_video_path = active_renderer.render(job, edit_decision)
-    print(f"[gaming_pipeline] RENDER    {job.job_id}  â†’ {final_video_path}")
+    print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")
 
     # ------------------------------------------------------------------
     # 8) Untertitel
@@ -1582,24 +1583,24 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
           f"title='{getattr(title_package, 'primary_title', '')[:40]}'")
 
     # ------------------------------------------------------------------
-    # 10) Validator  (kein Thumbnail â†’ None)
+    # 10) Validator  (kein Thumbnail → None)
     # ------------------------------------------------------------------
     validator_result = validator.validate(
         job,
         final_video_path,
         title_package,
         metadata,
-        None,   # thumbnail_package â€” wird in Phase 2.5 gebaut
+        None,   # thumbnail_package — wird in Phase 2.5 gebaut
     )
     print(f"[gaming_pipeline] VALIDATE  {job.job_id}  "
-          f"status={getattr(validator_result, 'validator_status', '?')}")
+          f"status={getattr(validator_result, 'validator_status', '-')}")
     _validator_reason = getattr(validator_result, "reason", "")
     if not _validator_reason:
         _blocking_issues = getattr(validator_result, "blocking_issues", []) or []
         _validator_reason = "; ".join(str(issue) for issue in _blocking_issues) or "not provided"
     print(
         f"[gaming_pipeline] VALIDATE_DETAIL {job.job_id} "
-        f"status={getattr(validator_result, 'validator_status', '?')} "
+        f"status={getattr(validator_result, 'validator_status', '-')} "
         f"reason={_compact_log_value(_validator_reason)}"
     )
 
@@ -1651,8 +1652,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     # 11) Repositories speichern
     # ------------------------------------------------------------------
-    # Highlight-Daten werden export_path-los gespeichert â€”
-    # pipeline_runner Ã¼bergibt export_path nach RÃ¼ckkehr.
+    # Highlight-Daten werden export_path-los gespeichert —
+    # pipeline_runner übergibt export_path nach Rückkehr.
     _highlight_repo_data = {
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
@@ -1722,7 +1723,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     try:
         job_repo.save_job(job=job, export_path=None, publish_package=None, shorts_paths=[])
     except Exception:
-        pass  # pipeline_runner kÃ¼mmert sich ums finale Speichern
+        pass  # pipeline_runner kümmert sich ums finale Speichern
 
     print(f"[gaming_pipeline] DONE      {job.job_id}  status=rendered")
 
@@ -1789,11 +1790,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "metadata":              metadata,
         # Validierung
         "validator_result":      validator_result,
-        # Repo-Daten (fÃ¼r pipeline_runner zum Speichern)
+        # Repo-Daten (für pipeline_runner zum Speichern)
         "_highlight_repo_data":  _highlight_repo_data,
         "_timeline_to_save":     _timeline_to_save,
         "_reframe_to_save":      _reframe_to_save,
         "_dynamic_plan_to_save": _dynamic_plan_to_save,
     }
-
-
