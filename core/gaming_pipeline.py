@@ -1,4 +1,4 @@
-"""Gaming Pipeline — core/gaming_pipeline.py
+﻿"""Gaming Pipeline — core/gaming_pipeline.py
 
 Isoliertes Pipeline-Modul für gaming_main und gaming_uncut.
 Output: <export_dir>/<job_id>/<job_id>_final.mp4
@@ -62,6 +62,7 @@ from core.final_render_driver import FinalRenderDriver
 from core.ffmpeg_helper import ensure_ffmpeg_on_path
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
+from core.job_profile_metadata import apply_profile_metadata_to_job
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -518,6 +519,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     json_profile = _load_json_profile_for_job(job)
     profile_snapshot_path = _write_profile_snapshot(job, json_profile)
+    profile_metadata = apply_profile_metadata_to_job(
+        job=job,
+        profile=json_profile,
+        profile_snapshot_path=profile_snapshot_path,
+    )
 
     # JSON ProfileManager is the editable source of truth for channel profile values.
     # editing_profile_registry.resolve(...) stays temporarily for legacy mode/profile objects
@@ -1731,6 +1737,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         # JSON Profile
         "json_profile":          json_profile,
         "profile_snapshot_path": profile_snapshot_path,
+        "profile_metadata":      profile_metadata,
         "profile_id":            json_profile.get("profile_id"),
         "quality_mode":          json_profile.get("quality_mode"),
         "cut_aggressiveness":    json_profile.get("cut_aggressiveness"),

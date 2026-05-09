@@ -15,6 +15,7 @@ Run directly:
 Or import run_pending_jobs() for programmatic use (e.g. from tests).
 """
 from __future__ import annotations
+import json
 import sys
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -100,6 +101,16 @@ _INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
     "vlog_main":    ChannelType.VLOG_MAIN,
     "faceless":     ChannelType.FACELESS_TREND,
 }
+
+def _write_export_job_json(job, export_dir: Path) -> Path:
+    job_json_path = export_dir / "job.json"
+
+    with job_json_path.open("w", encoding="utf-8") as handle:
+        json.dump(job.to_dict(), handle, indent=4, ensure_ascii=False)
+
+    print(f"[pipeline_runner] JOB_JSON  {job.job_id}  path={job_json_path}")
+    return job_json_path
+
 
 
 # ------------------------------------------------------------------ #
@@ -291,6 +302,7 @@ def run_pending_jobs(
             job.status = JobStatus.ASSEMBLED
             job.touch()
             job_store.update_job(job)
+            _write_export_job_json(job, export_dir)
 
             results.append({
                 "job_id":   job.job_id,

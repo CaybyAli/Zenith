@@ -39,6 +39,12 @@ class Job:
     topic: str | None = None
     title: str | None = None
     pipeline_type: PipelineType | None = None
+    profile_id: str | None = None
+    quality_mode: str | None = None
+    profile_version: str | None = None
+    profile_snapshot_path: str | None = None
+    profile_source: str | None = None
+    profile_metadata: dict[str, Any] = field(default_factory=dict)
     current_module: str | None = None
     error_message: str | None = None
 
@@ -122,6 +128,12 @@ class Job:
             topic=data.get("topic"),
             title=data.get("title"),            
             pipeline_type=PipelineType(data["pipeline_type"]) if data.get("pipeline_type") else None,
+            profile_id=data.get("profile_id"),
+            quality_mode=data.get("quality_mode"),
+            profile_version=data.get("profile_version"),
+            profile_snapshot_path=data.get("profile_snapshot_path"),
+            profile_source=data.get("profile_source"),
+            profile_metadata=dict(data.get("profile_metadata") or {}),
             current_module=data.get("current_module"),
             error_message=data.get("error_message"),
             review_status=data.get("review_status", "pending"),
