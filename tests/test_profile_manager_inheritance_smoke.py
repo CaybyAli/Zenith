@@ -1,5 +1,5 @@
-"""
-Smoke-Tests für Profile Inheritance / Default Fallback — 2B-01-C
+﻿"""
+Smoke-Tests fÃ¼r Profile Inheritance / Default Fallback â€” 2B-01-C
 """
 
 import json
@@ -53,25 +53,8 @@ def test_gaming_main_overrides_default_values():
 
 
 def test_missing_specific_fields_are_inherited_from_default(tmp_path):
-    default_profile = {
-        "profile_id": "default",
-        "channel_type": "default",
-        "display_name": "Default Editing Profile",
-        "quality_mode": "balanced",
-        "cut_aggressiveness": 0.5,
-        "music_enabled": False,
-        "source_aspect_ratio": "16:9",
-        "target_format": "16:9",
-        "reframing_mode": "none",
-        "camera_zoom_enabled": False,
-        "camera_zoom_mode": "selective",
-        "camera_zoom_trigger": [],
-        "camera_zoom_strength": 0.1,
-        "grading_strength": 0.2,
-        "min_clip_duration": 2.0,
-        "max_clip_duration": 45.0,
-        "version": "1.0.0",
-    }
+    default_profile = ProfileManager(profiles_dir=PROFILES_DIR).load_default_profile()
+
     specific_profile = {
         "profile_id": "mini_profile",
         "channel_type": "mini_profile",

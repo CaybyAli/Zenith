@@ -15,10 +15,24 @@ REQUIRED_FIELDS = {
     "display_name",
     "quality_mode",
     "cut_aggressiveness",
+    "dead_time_removal_strength",
+    "speech_protection_strength",
+    "story_context_weight",
+    "gameplay_context_weight",
+    "reaction_context_weight",
     "music_enabled",
+    "dynamic_zoom_allowed",
+    "facecam_emphasis_allowed",
+    "gameplay_focus_allowed",
+    "fixed_facecam_mode",
+    "subtitles_default",
+    "review_strictness",
+    "requires_human_approval",
     "source_aspect_ratio",
     "target_format",
     "reframing_mode",
+    "gameplay_zoom_enabled",
+    "gameplay_zoom_mode",
     "camera_zoom_enabled",
     "camera_zoom_mode",
     "camera_zoom_trigger",
@@ -31,11 +45,47 @@ REQUIRED_FIELDS = {
 
 DEFAULT_PROFILE_ID = "default"
 
+ALLOWED_QUALITY_MODES = {"fast", "balanced", "pro", "cinematic"}
+ALLOWED_ASPECT_RATIOS = {"16:9", "32:9", "9:16", "1:1"}
+ALLOWED_REFRAMING_MODES = {"none", "intelligent_crop", "center_crop", "vertical_reframe"}
+ALLOWED_ZOOM_MODES = {"aggressive", "selective", "none", None}
+
+RATIO_0_TO_1_FIELDS = (
+    "cut_aggressiveness",
+    "dead_time_removal_strength",
+    "speech_protection_strength",
+    "story_context_weight",
+    "gameplay_context_weight",
+    "reaction_context_weight",
+    "camera_zoom_strength",
+    "grading_strength",
+)
+
+POSITIVE_DURATION_FIELDS = (
+    "min_clip_duration",
+    "max_clip_duration",
+)
+
+BOOLEAN_FIELDS = (
+    "music_enabled",
+    "dynamic_zoom_allowed",
+    "facecam_emphasis_allowed",
+    "gameplay_focus_allowed",
+    "fixed_facecam_mode",
+    "subtitles_default",
+    "requires_human_approval",
+    "gameplay_zoom_enabled",
+    "camera_zoom_enabled",
+)
+
 
 class ProfileLoadError(Exception):
     """Wird geworfen wenn ein Profil nicht geladen werden kann."""
     pass
 
+class ProfileValidationError(ValueError):
+    """Wird geworfen wenn ein Profil ungültige Werte enthält."""
+    pass
 
 class ProfileManager:
     """Verwaltet Editing-Profile aus dem profiles/ Ordner."""
@@ -117,13 +167,90 @@ class ProfileManager:
 
     def validate_profile(self, data: dict) -> None:
         """
-        Prüft ob alle Pflichtfelder im fertigen Profil vorhanden sind.
+        Prüft ob alle Pflichtfelder und Werte im fertigen Profil gültig sind.
         Wichtig: Diese Prüfung passiert nach dem Merge.
         """
         missing = REQUIRED_FIELDS - data.keys()
         if missing:
-            raise ValueError(
+            raise ProfileValidationError(
                 f"Profil ungültig — fehlende Felder: {sorted(missing)}"
+            )
+
+        self._require_choice(data, "quality_mode", ALLOWED_QUALITY_MODES)
+        self._require_choice(data, "source_aspect_ratio", ALLOWED_ASPECT_RATIOS)
+        self._require_choice(data, "target_format", ALLOWED_ASPECT_RATIOS)
+        self._require_choice(data, "reframing_mode", ALLOWED_REFRAMING_MODES)
+        self._require_choice(data, "camera_zoom_mode", ALLOWED_ZOOM_MODES)
+        self._require_choice(data, "gameplay_zoom_mode", ALLOWED_ZOOM_MODES)
+
+        for key in BOOLEAN_FIELDS:
+            self._require_bool(data, key)
+
+        for key in RATIO_0_TO_1_FIELDS:
+            self._require_range_0_to_1(data, key)
+
+        for key in POSITIVE_DURATION_FIELDS:
+            self._require_positive_number(data, key)
+
+        self._require_list(data, "camera_zoom_trigger")
+        self._require_non_empty_string(data, "version")
+        self._validate_duration_order(data)
+
+    def _require_choice(self, data: dict, key: str, allowed: set) -> None:
+        value = data.get(key)
+        if value not in allowed:
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss einer von {sorted(allowed, key=str)} sein."
+            )
+
+    def _require_bool(self, data: dict, key: str) -> None:
+        if not isinstance(data.get(key), bool):
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss true oder false sein."
+            )
+
+    def _require_number(self, data: dict, key: str) -> float:
+        value = data.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss eine Zahl sein."
+            )
+        return float(value)
+
+    def _require_range_0_to_1(self, data: dict, key: str) -> None:
+        value = self._require_number(data, key)
+        if value < 0.0 or value > 1.0:
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss zwischen 0.0 und 1.0 liegen."
+            )
+
+    def _require_positive_number(self, data: dict, key: str) -> None:
+        value = self._require_number(data, key)
+        if value <= 0.0:
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss größer als 0 sein."
+            )
+
+    def _require_non_empty_string(self, data: dict, key: str) -> None:
+        value = data.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss ein nicht-leerer String sein."
+            )
+
+    def _require_list(self, data: dict, key: str) -> None:
+        if not isinstance(data.get(key), list):
+            raise ProfileValidationError(
+                f"Profil ungültig — {key} muss eine Liste sein."
+            )
+
+    def _validate_duration_order(self, data: dict) -> None:
+        min_duration = self._require_number(data, "min_clip_duration")
+        max_duration = self._require_number(data, "max_clip_duration")
+
+        if min_duration > max_duration:
+            raise ProfileValidationError(
+                "Profil ungültig — min_clip_duration darf nicht größer als max_clip_duration sein."
             )
 
     def _load_json_file(self, profile_id: str) -> dict:
