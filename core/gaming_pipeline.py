@@ -61,6 +61,7 @@ from core.facecam_zoom_smoothness_guard import FacecamZoomSmoothnessGuard
 from core.final_render_driver import FinalRenderDriver
 from core.ffmpeg_helper import ensure_ffmpeg_on_path
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
+from core.profile_manager import ProfileManager
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -104,6 +105,70 @@ def _compact_log_value(value: object, fallback: str = "none", limit: int = 260) 
     text = " ".join(str(value or fallback).split())
     return (text[:limit] if text else fallback)
 
+def _profile_value(profile: dict, key: str, default=None):
+    return profile.get(key, default)
+
+
+def _load_json_profile_for_job(job) -> dict:
+    channel_type = getattr(job, "channel_type", None)
+    profile_id = getattr(channel_type, "value", channel_type) or "gaming_main"
+    profile_id = str(profile_id)
+
+    profile = ProfileManager().load_profile(profile_id)
+
+    source = (
+        f"profiles/{profile_id}.json"
+        if not profile.get("_is_fallback")
+        else "fallback"
+    )
+
+    log_line = (
+        f"[gaming_pipeline] JSON_PROFILE job={job.job_id} "
+        f"profile={profile.get('profile_id')} "
+        f"quality_mode={profile.get('quality_mode')} "
+        f"cut_aggressiveness={profile.get('cut_aggressiveness')} "
+        f"source={source}"
+    )
+    logger.info(log_line)
+    print(log_line)
+
+    return profile
+
+
+def _write_profile_snapshot(job, profile: dict) -> str:
+    channel_type = getattr(job, "channel_type", None)
+    channel_value = getattr(channel_type, "value", channel_type) or "gaming_main"
+    channel_value = str(channel_value)
+
+    export_dir = os.path.join("exports", channel_value, job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+
+    snapshot = {
+        "job_id": job.job_id,
+        "profile_id": profile.get("profile_id"),
+        "channel_type": profile.get("channel_type", channel_value),
+        "quality_mode": profile.get("quality_mode"),
+        "cut_aggressiveness": profile.get("cut_aggressiveness"),
+        "source_aspect_ratio": profile.get("source_aspect_ratio"),
+        "target_format": profile.get("target_format"),
+        "reframing_mode": profile.get("reframing_mode"),
+        "music_enabled": profile.get("music_enabled"),
+        "camera_zoom_enabled": profile.get("camera_zoom_enabled"),
+        "gameplay_zoom_enabled": profile.get("gameplay_zoom_enabled"),
+        "profile_version": profile.get("version"),
+    }
+
+    snapshot_path = os.path.join(export_dir, "profile_snapshot.json")
+
+    with open(snapshot_path, "w", encoding="utf-8") as handle:
+        json.dump(snapshot, handle, indent=2, ensure_ascii=False)
+
+    print(
+        f"[gaming_pipeline] PROFILE_SNAPSHOT job={job.job_id} "
+        f"path={snapshot_path}"
+    )
+
+    return snapshot_path
 
 def _write_universal_debug_report(job, report) -> list[str]:
     if report is None:
@@ -453,6 +518,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     universal_moment_review_paths: list[str] = []
     phase_2b_stabilization_paths: list[str] = []
     phase_2b_stabilization_review_paths: list[str] = []
+
+    json_profile = _load_json_profile_for_job(job)
+    profile_snapshot_path = _write_profile_snapshot(job, json_profile)
 
     _channel_str = getattr(
         getattr(job, "channel_type", None),
@@ -1659,6 +1727,19 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     print(f"[gaming_pipeline] DONE      {job.job_id}  status=rendered")
 
     return {
+        # JSON Profile
+        "json_profile":          json_profile,
+        "profile_snapshot_path": profile_snapshot_path,
+        "profile_id":            json_profile.get("profile_id"),
+        "quality_mode":          json_profile.get("quality_mode"),
+        "cut_aggressiveness":    json_profile.get("cut_aggressiveness"),
+        "music_enabled":         json_profile.get("music_enabled"),
+        "source_aspect_ratio":   json_profile.get("source_aspect_ratio"),
+        "target_format":         json_profile.get("target_format"),
+        "reframing_mode":        json_profile.get("reframing_mode"),
+        "camera_zoom_enabled":   json_profile.get("camera_zoom_enabled"),
+        "gameplay_zoom_enabled": json_profile.get("gameplay_zoom_enabled"),
+        "profile_version":       json_profile.get("version"),
         # Analyse
         "transcript_result":     transcript_result,
         "hook_keyword_result":   hook_keyword_result,
