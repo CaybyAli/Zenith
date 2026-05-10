@@ -65,6 +65,7 @@ from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
+from core.decision_logger import log_decision
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -77,6 +78,40 @@ from models.round_phase_result import RoundPhase, RoundPhaseResult
 
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_log_decision(
+    job,
+    export_dir,
+    phase: str,
+    event_type: str,
+    action: str,
+    module: str = "gaming_pipeline",
+    status: str = "ok",
+    reason: str | None = None,
+    score: float | None = None,
+    details: dict | None = None,
+):
+    try:
+        return log_decision(
+            job=job,
+            export_dir=export_dir,
+            phase=phase,
+            module=module,
+            event_type=event_type,
+            action=action,
+            status=status,
+            reason=reason,
+            score=score,
+            details=details,
+        )
+    except Exception as exc:
+        print(
+            f"[gaming_pipeline] DECISION_LOG_WARN "
+            f"job={getattr(job, 'job_id', '-')} error={exc}"
+        )
+        return None
+
 
 _PHASE_FILTER_BLOCKED = {RoundPhase.MENU_WAIT, RoundPhase.QUEUE_WAIT}
 _PHASE_FILTER_OVERRIDE_TYPES = {
@@ -535,6 +570,21 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
     job_state_export_dir = os.path.join("exports", str(job_state_channel), job.job_id)
 
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="profile",
+        event_type="PROFILE_LOADED",
+        action="load_json_profile",
+        reason="profile_manager_loaded_profile",
+        details={
+            "profile_id": json_profile.get("profile_id"),
+            "quality_mode": json_profile.get("quality_mode"),
+            "profile_snapshot_path": str(profile_snapshot_path),
+            "profile_metadata": profile_metadata,
+        },
+    )
+
     transition_job_state(
         job,
         JobStatus.ANALYZING,
@@ -546,6 +596,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         job_store=job_state_store,
         export_dir=job_state_export_dir,
         step_name="analyzing",
+        reason="pipeline_analysis_started",
+    )
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="state",
+        event_type="STATE_ANALYZING",
+        action="transition_to_analyzing",
         reason="pipeline_analysis_started",
     )
 
@@ -673,6 +731,18 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="analyzed",
         reason="analysis_finished",
     )
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="analysis",
+        event_type="ANALYSIS_DONE",
+        action="analyzer_completed",
+        reason="analysis_finished",
+        details={
+            "analysis_duration_seconds": getattr(analysis_result, "duration_seconds", None),
+            "usable_for_longform": getattr(analysis_result, "usable_for_longform", None),
+        },
+    )
     print(f"[gaming_pipeline] ANALYZE   {job.job_id}  done")
 
     transition_job_state(
@@ -688,6 +758,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="cutting",
         reason="cutting_started",
     )
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="cut",
+        event_type="CUTTING_STARTED",
+        action="transition_to_cutting",
+        reason="cutting_started",
+    )
     edit_decision = cutter.build_cut(job, analysis_result)
     transition_job_state(
         job,
@@ -701,6 +779,17 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         export_dir=job_state_export_dir,
         step_name="cut",
         reason="cutting_finished",
+    )
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="cut",
+        event_type="CUT_DONE",
+        action="cut_builder_completed",
+        reason="cutting_finished",
+        details={
+            "edit_decision_type": type(edit_decision).__name__,
+        },
     )
     print(f"[gaming_pipeline] CUT       {job.job_id}  done")
 
@@ -1647,6 +1736,17 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="rendering",
         reason="rendering_started",
     )
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="render",
+        event_type="RENDERING_STARTED",
+        action="renderer_started",
+        reason="rendering_started",
+        details={
+            "renderer_type": type(active_renderer).__name__,
+        },
+    )
     final_video_path = active_renderer.render(job, edit_decision)
     transition_job_state(
         job,
@@ -1660,6 +1760,17 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         export_dir=job_state_export_dir,
         step_name="rendered",
         reason="rendering_finished",
+    )
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="render",
+        event_type="RENDER_DONE",
+        action="renderer_completed",
+        reason="rendering_finished",
+        details={
+            "final_video_path": str(final_video_path),
+        },
     )
     print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")
 
