@@ -64,6 +64,7 @@ from core.debug_mode import build_debug_context
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
+from core.file_handler import run_file_handler_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -143,6 +144,14 @@ def _overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float)
 def _compact_log_value(value: object, fallback: str = "none", limit: int = 260) -> str:
     text = " ".join(str(value or fallback).split())
     return (text[:limit] if text else fallback)
+
+
+def _job_input_path(job):
+    for attr in ["raw_video_path", "input_file", "source_file", "video_path", "file_path"]:
+        value = getattr(job, attr, None)
+        if value:
+            return value
+    return None
 
 
 def _load_json_profile_for_job(job) -> dict:
@@ -594,6 +603,194 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             "debug_context": debug_context,
         },
     )
+
+    input_path = _job_input_path(job)
+    file_handler_report = None
+
+    if not input_path:
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="file_handler",
+            event_type="FILE_HANDLER_SKIPPED",
+            action="skip_file_handler",
+            status="warning",
+            reason="input_path_missing",
+            details={"job_id": getattr(job, "job_id", None)},
+        )
+    else:
+        file_handler_report = run_file_handler_for_job(
+            job=job,
+            input_path=input_path,
+            profile=json_profile,
+            readability_seconds=3.0,
+        )
+
+        file_info = file_handler_report.get("file_info", {}) or {}
+        file_acceptance = file_handler_report.get("file_acceptance", {}) or {}
+        stream_classification = file_handler_report.get("stream_classification", {}) or {}
+        file_readability = file_handler_report.get("file_readability", {}) or {}
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="file_handler",
+            event_type="FILE_PROBED",
+            action="probe_input_file",
+            reason="file_probe_completed",
+            details={
+                "input_path": str(input_path),
+                "probe_status": file_info.get("probe_status"),
+                "duration_seconds": file_info.get("duration_seconds"),
+                "width": file_info.get("width"),
+                "height": file_info.get("height"),
+                "fps": file_info.get("fps"),
+                "audio_stream_count": file_info.get("audio_stream_count"),
+                "video_stream_count": file_info.get("video_stream_count"),
+            },
+        )
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="file_handler",
+            event_type="FILE_ACCEPTANCE_CHECKED",
+            action="validate_input_file",
+            status=file_acceptance.get("severity", "ok"),
+            reason=file_acceptance.get("recommendation"),
+            details={
+                "accepted": file_acceptance.get("accepted"),
+                "status": file_acceptance.get("status"),
+                "warnings": file_acceptance.get("warnings", []),
+                "errors": file_acceptance.get("errors", []),
+                "recommendation": file_acceptance.get("recommendation"),
+            },
+        )
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="file_handler",
+            event_type="STREAMS_CLASSIFIED",
+            action="classify_streams",
+            status="warning" if stream_classification.get("needs_manual_review") else "ok",
+            reason="manual_review_needed" if stream_classification.get("needs_manual_review") else "streams_classified",
+            details={
+                "stream_count": stream_classification.get("stream_count"),
+                "needs_manual_review": stream_classification.get("needs_manual_review"),
+                "primary_video_stream": stream_classification.get("primary_video_stream"),
+                "voice_audio_candidate_count": len(stream_classification.get("voice_audio_candidates", []) or []),
+                "game_audio_candidate_count": len(stream_classification.get("game_audio_candidates", []) or []),
+                "unknown_audio_stream_count": len(stream_classification.get("unknown_audio_streams", []) or []),
+                "warnings": stream_classification.get("warnings", []),
+            },
+        )
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="file_handler",
+            event_type="FILE_READABILITY_CHECKED",
+            action="check_file_readability",
+            status=file_readability.get("severity", "error") if file_readability else "skipped",
+            reason=file_readability.get("recommendation", "skipped") if file_readability else "acceptance_rejected_before_readability",
+            details={
+                "readable": file_readability.get("readable") if file_readability else False,
+                "status": file_readability.get("status") if file_readability else "skipped",
+                "warnings": file_readability.get("warnings", []) if file_readability else [],
+                "errors": file_readability.get("errors", []) if file_readability else [],
+                "recommendation": file_readability.get("recommendation") if file_readability else "reject",
+            },
+        )
+
+        persist_job_state_checkpoint(
+            job=job,
+            job_store=job_state_store,
+            export_dir=job_state_export_dir,
+            step_name="file_handler_checked",
+            reason="file_handler_completed",
+        )
+
+        if not file_handler_report.get("accepted", False):
+            transition_job_state(
+                job,
+                JobStatus.FAILED,
+                module="gaming_pipeline",
+                reason="file_handler_rejected_file",
+            )
+            persist_job_state_checkpoint(
+                job=job,
+                job_store=job_state_store,
+                export_dir=job_state_export_dir,
+                step_name="failed_file_rejected",
+                reason="file_handler_rejected_file",
+            )
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="file_handler",
+                event_type="FILE_REJECTED",
+                action="abort_pipeline",
+                status="error",
+                reason="file_acceptance_failed",
+                details={
+                    "errors": file_handler_report.get("errors", []),
+                    "warnings": file_handler_report.get("warnings", []),
+                    "recommendation": file_handler_report.get("recommendation"),
+                },
+            )
+            raise RuntimeError(
+                f"File rejected by file handler: {file_handler_report.get('errors', [])}"
+            )
+
+        if not file_handler_report.get("readable", False):
+            transition_job_state(
+                job,
+                JobStatus.FAILED,
+                module="gaming_pipeline",
+                reason="file_handler_unreadable_file",
+            )
+            persist_job_state_checkpoint(
+                job=job,
+                job_store=job_state_store,
+                export_dir=job_state_export_dir,
+                step_name="failed_file_unreadable",
+                reason="file_handler_unreadable_file",
+            )
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="file_handler",
+                event_type="FILE_UNREADABLE",
+                action="abort_pipeline",
+                status="error",
+                reason="file_readability_failed",
+                details={
+                    "errors": file_handler_report.get("errors", []),
+                    "warnings": file_handler_report.get("warnings", []),
+                    "recommendation": file_handler_report.get("recommendation"),
+                },
+            )
+            raise RuntimeError(
+                f"File unreadable by file handler: {file_handler_report.get('errors', [])}"
+            )
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="file_handler",
+            event_type="FILE_HANDLER_PASSED",
+            action="continue_pipeline",
+            reason="file_handler_passed",
+            details={
+                "accepted": file_handler_report.get("accepted"),
+                "readable": file_handler_report.get("readable"),
+                "status": file_handler_report.get("status"),
+                "recommendation": file_handler_report.get("recommendation"),
+                "needs_manual_review": file_handler_report.get("needs_manual_review"),
+                "warnings": file_handler_report.get("warnings", []),
+            },
+        )
 
     transition_job_state(
         job,

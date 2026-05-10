@@ -49,6 +49,12 @@ class Job:
     current_module: str | None = None
     error_message: str | None = None
 
+    file_info: dict[str, Any] = field(default_factory=dict)
+    file_acceptance: dict[str, Any] = field(default_factory=dict)
+    stream_classification: dict[str, Any] = field(default_factory=dict)
+    file_readability: dict[str, Any] = field(default_factory=dict)
+    file_handler_report: dict[str, Any] = field(default_factory=dict)
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -151,6 +157,11 @@ class Job:
             state_history=list(data.get("state_history") or []),
             current_module=data.get("current_module"),
             error_message=data.get("error_message"),
+            file_info=dict(data.get("file_info") or {}),
+            file_acceptance=dict(data.get("file_acceptance") or {}),
+            stream_classification=dict(data.get("stream_classification") or {}),
+            file_readability=dict(data.get("file_readability") or {}),
+            file_handler_report=dict(data.get("file_handler_report") or {}),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
