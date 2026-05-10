@@ -64,6 +64,7 @@ from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.job_state_transitions import transition_job_state
+from core.job_state_persistence import persist_job_state_checkpoint
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -525,10 +526,26 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         profile=json_profile,
         profile_snapshot_path=profile_snapshot_path,
     )
+
+    job_state_store = services.get("job_store")
+    job_state_channel = getattr(
+        getattr(job, "channel_type", None),
+        "value",
+        "gaming_main",
+    )
+    job_state_export_dir = os.path.join("exports", str(job_state_channel), job.job_id)
+
     transition_job_state(
         job,
         JobStatus.ANALYZING,
         module="gaming_pipeline",
+        reason="pipeline_analysis_started",
+    )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="analyzing",
         reason="pipeline_analysis_started",
     )
 
@@ -649,6 +666,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         module="gaming_pipeline",
         reason="analysis_finished",
     )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="analyzed",
+        reason="analysis_finished",
+    )
     print(f"[gaming_pipeline] ANALYZE   {job.job_id}  done")
 
     transition_job_state(
@@ -657,11 +681,25 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         module="gaming_pipeline",
         reason="cutting_started",
     )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="cutting",
+        reason="cutting_started",
+    )
     edit_decision = cutter.build_cut(job, analysis_result)
     transition_job_state(
         job,
         JobStatus.CUT,
         module="gaming_pipeline",
+        reason="cutting_finished",
+    )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="cut",
         reason="cutting_finished",
     )
     print(f"[gaming_pipeline] CUT       {job.job_id}  done")
@@ -1602,11 +1640,25 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         module="gaming_pipeline",
         reason="rendering_started",
     )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="rendering",
+        reason="rendering_started",
+    )
     final_video_path = active_renderer.render(job, edit_decision)
     transition_job_state(
         job,
         JobStatus.RENDERED,
         module="gaming_pipeline",
+        reason="rendering_finished",
+    )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="rendered",
         reason="rendering_finished",
     )
     print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")

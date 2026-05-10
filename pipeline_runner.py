@@ -31,6 +31,7 @@ from pathlib import Path
 from core.intake_manager import IntakeManager
 from core.job_store import JobStore
 from core.job_state_transitions import transition_job_state
+from core.job_state_persistence import persist_job_state_checkpoint
 from core.render_versioning import next_render_version, versioned_final_path
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
 
@@ -277,6 +278,7 @@ def run_pending_jobs(
         # Lazy-init services (only built once, reused across jobs)
         if gaming_services is None:
             gaming_services = _build_gaming_services()
+            gaming_services["job_store"] = job_store
 
         channel_label = channel.upper().replace("_", " ")
         print(
@@ -311,7 +313,13 @@ def run_pending_jobs(
                 job.status = JobStatus.ASSEMBLED
                 job.touch()
 
-            job_store.update_job(job)
+            persist_job_state_checkpoint(
+                job=job,
+                job_store=job_store,
+                export_dir=export_dir,
+                step_name="assembled",
+                reason="export_finished",
+            )
             _write_export_job_json(job, export_dir)
 
             results.append({
