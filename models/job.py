@@ -45,6 +45,7 @@ class Job:
     profile_snapshot_path: str | None = None
     profile_source: str | None = None
     profile_metadata: dict[str, Any] = field(default_factory=dict)
+    state_history: list[dict[str, Any]] = field(default_factory=list)
     current_module: str | None = None
     error_message: str | None = None
 
@@ -134,6 +135,7 @@ class Job:
             profile_snapshot_path=data.get("profile_snapshot_path"),
             profile_source=data.get("profile_source"),
             profile_metadata=dict(data.get("profile_metadata") or {}),
+            state_history=list(data.get("state_history") or []),
             current_module=data.get("current_module"),
             error_message=data.get("error_message"),
             review_status=data.get("review_status", "pending"),

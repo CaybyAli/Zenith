@@ -124,6 +124,7 @@ class JobRepository:
             "profile_snapshot_path": job.profile_snapshot_path,
             "profile_source": job.profile_source,
             "profile_metadata": job.profile_metadata,
+            "state_history": job.state_history,
             "current_module": job.current_module,
             "error_message": job.error_message,
             "review_status": job.review_status,

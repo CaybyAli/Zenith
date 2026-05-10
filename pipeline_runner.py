@@ -30,6 +30,7 @@ from pathlib import Path
 
 from core.intake_manager import IntakeManager
 from core.job_store import JobStore
+from core.job_state_transitions import transition_job_state
 from core.render_versioning import next_render_version, versioned_final_path
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
 
@@ -299,8 +300,17 @@ def run_pending_jobs(
             title_package = result.get("title_package")
             if title_package is not None:
                 job.title = title_package.primary_title
-            job.status = JobStatus.ASSEMBLED
-            job.touch()
+            if job.status == JobStatus.RENDERED:
+                transition_job_state(
+                    job,
+                    JobStatus.ASSEMBLED,
+                    module="pipeline_runner",
+                    reason="export_finished",
+                )
+            else:
+                job.status = JobStatus.ASSEMBLED
+                job.touch()
+
             job_store.update_job(job)
             _write_export_job_json(job, export_dir)
 

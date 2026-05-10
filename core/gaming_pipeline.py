@@ -1,4 +1,4 @@
-"""Gaming Pipeline — core/gaming_pipeline.py
+﻿"""Gaming Pipeline — core/gaming_pipeline.py
 
 Isoliertes Pipeline-Modul für gaming_main und gaming_uncut.
 Output: <export_dir>/<job_id>/<job_id>_final.mp4
@@ -63,6 +63,7 @@ from core.ffmpeg_helper import ensure_ffmpeg_on_path
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
+from core.job_state_transitions import transition_job_state
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -524,6 +525,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         profile=json_profile,
         profile_snapshot_path=profile_snapshot_path,
     )
+    transition_job_state(
+        job,
+        JobStatus.ANALYZING,
+        module="gaming_pipeline",
+        reason="pipeline_analysis_started",
+    )
 
     # JSON ProfileManager is the editable source of truth for channel profile values.
     # editing_profile_registry.resolve(...) stays temporarily for legacy mode/profile objects
@@ -636,9 +643,27 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # 1) Analyse + Edit-Entscheidung
     # ------------------------------------------------------------------
     analysis_result = analyzer.analyze(job)
+    transition_job_state(
+        job,
+        JobStatus.ANALYZED,
+        module="gaming_pipeline",
+        reason="analysis_finished",
+    )
     print(f"[gaming_pipeline] ANALYZE   {job.job_id}  done")
 
+    transition_job_state(
+        job,
+        JobStatus.CUTTING,
+        module="gaming_pipeline",
+        reason="cutting_started",
+    )
     edit_decision = cutter.build_cut(job, analysis_result)
+    transition_job_state(
+        job,
+        JobStatus.CUT,
+        module="gaming_pipeline",
+        reason="cutting_finished",
+    )
     print(f"[gaming_pipeline] CUT       {job.job_id}  done")
 
     # ------------------------------------------------------------------
@@ -1571,7 +1596,19 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     else:
         active_renderer = renderer
 
+    transition_job_state(
+        job,
+        JobStatus.RENDERING,
+        module="gaming_pipeline",
+        reason="rendering_started",
+    )
     final_video_path = active_renderer.render(job, edit_decision)
+    transition_job_state(
+        job,
+        JobStatus.RENDERED,
+        module="gaming_pipeline",
+        reason="rendering_finished",
+    )
     print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")
 
     # ------------------------------------------------------------------
@@ -1723,9 +1760,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     _dynamic_plan_to_save  = dynamic_edit_plan
 
     # ------------------------------------------------------------------
-    # 12) Job-Status setzen
+    # 12) Job-Status ist bereits über state transitions auf RENDERED gesetzt
     # ------------------------------------------------------------------
-    job.status = JobStatus.RENDERED
     try:
         job_repo.save_job(job=job, export_path=None, publish_package=None, shorts_paths=[])
     except Exception:

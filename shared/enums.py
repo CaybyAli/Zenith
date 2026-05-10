@@ -41,8 +41,16 @@ class JobStatus(str, Enum):
     ROUTED = "routed"
     PENDING = "pending"
     PROCESSING = "processing"
-    ASSEMBLED = "assembled"
+
+    ANALYZING = "analyzing"
+    ANALYZED = "analyzed"
+    CUTTING = "cutting"
+    CUT = "cut"
+    RENDERING = "rendering"
+
     RENDERED = "rendered"
+    ASSEMBLED = "assembled"
+    DONE = "done"
     PUBLISHED = "published"
     FAILED = "failed"
 
