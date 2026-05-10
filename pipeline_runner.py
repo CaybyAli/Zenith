@@ -36,6 +36,7 @@ from core.job_recovery import (
     apply_recovery_report_to_job,
     build_recovery_report,
 )
+from core.error_logger import log_error
 from core.render_versioning import next_render_version, versioned_final_path
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
 
@@ -48,6 +49,32 @@ from core.uncut_pipeline import run_uncut_pipeline_for_job
 from core.faceless_pipeline import run_faceless_pipeline_for_job
 
 EXPORTS_BASE = Path("exports")
+
+
+def _safe_log_error(
+    job,
+    export_dir: Path,
+    module: str,
+    phase: str,
+    error: BaseException,
+    details: dict | None = None,
+):
+    try:
+        return log_error(
+            job=job,
+            export_dir=export_dir,
+            module=module,
+            phase=phase,
+            error=error,
+            details=details,
+        )
+    except Exception as log_exc:
+        print(
+            f"[pipeline_runner] ERROR_LOG_WARN "
+            f"job={getattr(job, 'job_id', '-')} error={log_exc}"
+        )
+        return None
+
 
 
 def _make_export_dir(channel: str, job_id: str) -> Path:
@@ -360,7 +387,40 @@ def run_pending_jobs(
             job.status = JobStatus.FAILED
             job.error_message = str(exc)
             job.touch()
+
+            export_dir = _make_export_dir(channel, job.job_id)
+
+            _safe_log_error(
+                job=job,
+                export_dir=export_dir,
+                module="pipeline_runner",
+                phase="dispatch",
+                error=exc,
+                details={
+                    "channel": channel,
+                    "raw_video_path": str(job.raw_video_path),
+                },
+            )
+
+            try:
+                recovery_report = build_recovery_report(job, export_dir=export_dir)
+                apply_recovery_report_to_job(job, recovery_report)
+            except Exception as recovery_exc:
+                print(
+                    f"[pipeline_runner] RECOVERY_AFTER_ERROR_WARN "
+                    f"job={job.job_id} error={recovery_exc}"
+                )
+
             job_store.update_job(job)
+
+            try:
+                _write_export_job_json(job, export_dir)
+            except Exception as job_json_exc:
+                print(
+                    f"[pipeline_runner] JOB_JSON_AFTER_ERROR_WARN "
+                    f"job={job.job_id} error={job_json_exc}"
+                )
+
             results.append({
                 "job_id":   job.job_id,
                 "channel":  channel,
