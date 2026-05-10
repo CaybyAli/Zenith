@@ -60,6 +60,8 @@ class Job:
     preprocessing_status: str | None = None
     preprocessing_cache_key: str | None = None
     preprocessing_reused_cache: bool = False
+    audio_extraction_plan: dict[str, Any] = field(default_factory=dict)
+    audio_targets: list[dict[str, Any]] = field(default_factory=list)
 
     recovery_status: str | None = None
     resume_safety: str | None = None
@@ -174,6 +176,8 @@ class Job:
             preprocessing_status=data.get("preprocessing_status"),
             preprocessing_cache_key=data.get("preprocessing_cache_key"),
             preprocessing_reused_cache=bool(data.get("preprocessing_reused_cache", False)),
+            audio_extraction_plan=dict(data.get("audio_extraction_plan") or {}),
+            audio_targets=list(data.get("audio_targets") or []),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),

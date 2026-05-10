@@ -24,6 +24,9 @@ class PreprocessingManifest:
     frame_pattern: str
     thumbnail_pattern: str
 
+    audio_extraction_plan: dict[str, Any] = field(default_factory=dict)
+    audio_targets: list[dict[str, Any]] = field(default_factory=list)
+
     status: str = "ready"
     reused_cache: bool = False
 
@@ -51,6 +54,8 @@ class PreprocessingManifest:
             "music_audio_path": self.music_audio_path,
             "frame_pattern": self.frame_pattern,
             "thumbnail_pattern": self.thumbnail_pattern,
+            "audio_extraction_plan": dict(self.audio_extraction_plan),
+            "audio_targets": list(self.audio_targets),
             "status": self.status,
             "reused_cache": self.reused_cache,
             "created_at": self.created_at,
@@ -78,6 +83,8 @@ class PreprocessingManifest:
             music_audio_path=str(data.get("music_audio_path", "")),
             frame_pattern=str(data.get("frame_pattern", "")),
             thumbnail_pattern=str(data.get("thumbnail_pattern", "")),
+            audio_extraction_plan=dict(data.get("audio_extraction_plan") or {}),
+            audio_targets=list(data.get("audio_targets") or []),
             status=str(data.get("status", "ready")),
             reused_cache=bool(data.get("reused_cache", False)),
             created_at=data.get("created_at"),
