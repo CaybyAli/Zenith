@@ -53,6 +53,12 @@ class Job:
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
 
+    decision_log_path: str | None = None
+    decision_jsonl_path: str | None = None
+    error_log_path: str | None = None
+    error_jsonl_path: str | None = None
+    log_index: dict[str, Any] = field(default_factory=dict)
+
     review_status: str = "pending"
     scheduled_at: Optional[str] = None
     is_scheduled: bool = False
@@ -145,6 +151,11 @@ class Job:
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
+            decision_log_path=data.get("decision_log_path"),
+            decision_jsonl_path=data.get("decision_jsonl_path"),
+            error_log_path=data.get("error_log_path"),
+            error_jsonl_path=data.get("error_jsonl_path"),
+            log_index=dict(data.get("log_index") or {}),
             review_status=data.get("review_status", "pending"),
             scheduled_at=data.get("scheduled_at"),
             is_scheduled=data.get("is_scheduled", False),

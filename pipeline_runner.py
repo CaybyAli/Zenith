@@ -37,6 +37,7 @@ from core.job_recovery import (
     build_recovery_report,
 )
 from core.error_logger import log_error
+from core.job_log_index import update_job_log_index
 from core.render_versioning import next_render_version, versioned_final_path
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
 
@@ -75,6 +76,18 @@ def _safe_log_error(
         )
         return None
 
+
+
+
+def _safe_update_job_log_index(job, export_dir: Path):
+    try:
+        return update_job_log_index(job, export_dir)
+    except Exception as exc:
+        print(
+            f"[pipeline_runner] LOG_INDEX_WARN "
+            f"job={getattr(job, 'job_id', '-')} error={exc}"
+        )
+        return None
 
 
 def _make_export_dir(channel: str, job_id: str) -> Path:
@@ -354,6 +367,7 @@ def run_pending_jobs(
 
             recovery_report = build_recovery_report(job, export_dir=export_dir)
             apply_recovery_report_to_job(job, recovery_report)
+            _safe_update_job_log_index(job, export_dir)
             job_store.update_job(job)
 
             _write_export_job_json(job, export_dir)
@@ -411,6 +425,7 @@ def run_pending_jobs(
                     f"job={job.job_id} error={recovery_exc}"
                 )
 
+            _safe_update_job_log_index(job, export_dir)
             job_store.update_job(job)
 
             try:
