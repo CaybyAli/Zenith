@@ -65,6 +65,10 @@ class Job:
     frame_extraction_plan: dict[str, Any] = field(default_factory=dict)
     frame_targets: list[dict[str, Any]] = field(default_factory=list)
 
+    preprocessing_cache_validation: dict[str, Any] = field(default_factory=dict)
+    preprocessing_cache_validation_status: str | None = None
+    preprocessing_cache_reuse_allowed: bool = False
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -182,6 +186,9 @@ class Job:
             audio_targets=list(data.get("audio_targets") or []),
             frame_extraction_plan=dict(data.get("frame_extraction_plan") or {}),
             frame_targets=list(data.get("frame_targets") or []),
+            preprocessing_cache_validation=dict(data.get("preprocessing_cache_validation") or {}),
+            preprocessing_cache_validation_status=data.get("preprocessing_cache_validation_status"),
+            preprocessing_cache_reuse_allowed=bool(data.get("preprocessing_cache_reuse_allowed", False)),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),

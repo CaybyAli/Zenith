@@ -29,6 +29,10 @@ class PreprocessingManifest:
     frame_extraction_plan: dict[str, Any] = field(default_factory=dict)
     frame_targets: list[dict[str, Any]] = field(default_factory=list)
 
+    cache_validation: dict[str, Any] = field(default_factory=dict)
+    cache_validation_status: str | None = None
+    cache_reuse_allowed: bool = False
+
     status: str = "ready"
     reused_cache: bool = False
 
@@ -60,6 +64,9 @@ class PreprocessingManifest:
             "audio_targets": list(self.audio_targets),
             "frame_extraction_plan": dict(self.frame_extraction_plan),
             "frame_targets": list(self.frame_targets),
+            "cache_validation": dict(self.cache_validation),
+            "cache_validation_status": self.cache_validation_status,
+            "cache_reuse_allowed": self.cache_reuse_allowed,
             "status": self.status,
             "reused_cache": self.reused_cache,
             "created_at": self.created_at,
@@ -91,6 +98,9 @@ class PreprocessingManifest:
             audio_targets=list(data.get("audio_targets") or []),
             frame_extraction_plan=dict(data.get("frame_extraction_plan") or {}),
             frame_targets=list(data.get("frame_targets") or []),
+            cache_validation=dict(data.get("cache_validation") or {}),
+            cache_validation_status=data.get("cache_validation_status"),
+            cache_reuse_allowed=bool(data.get("cache_reuse_allowed", False)),
             status=str(data.get("status", "ready")),
             reused_cache=bool(data.get("reused_cache", False)),
             created_at=data.get("created_at"),
