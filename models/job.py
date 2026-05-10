@@ -59,6 +59,9 @@ class Job:
     error_jsonl_path: str | None = None
     log_index: dict[str, Any] = field(default_factory=dict)
 
+    debug_mode: str = "off"
+    debug_context: dict[str, Any] = field(default_factory=dict)
+
     review_status: str = "pending"
     scheduled_at: Optional[str] = None
     is_scheduled: bool = False
@@ -156,6 +159,8 @@ class Job:
             error_log_path=data.get("error_log_path"),
             error_jsonl_path=data.get("error_jsonl_path"),
             log_index=dict(data.get("log_index") or {}),
+            debug_mode=data.get("debug_mode", "off"),
+            debug_context=dict(data.get("debug_context") or {}),
             review_status=data.get("review_status", "pending"),
             scheduled_at=data.get("scheduled_at"),
             is_scheduled=data.get("is_scheduled", False),

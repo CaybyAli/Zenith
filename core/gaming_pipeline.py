@@ -60,6 +60,7 @@ from core.zoom_pacing_engine import ZoomPacingEngine
 from core.facecam_zoom_smoothness_guard import FacecamZoomSmoothnessGuard
 from core.final_render_driver import FinalRenderDriver
 from core.ffmpeg_helper import ensure_ffmpeg_on_path
+from core.debug_mode import build_debug_context
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
@@ -562,6 +563,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         profile_snapshot_path=profile_snapshot_path,
     )
 
+    debug_context = build_debug_context(
+        job=job,
+        profile=json_profile,
+        services=services,
+    )
+    job.debug_mode = debug_context.get("debug_mode", "off")
+    job.debug_context = debug_context
+
     job_state_store = services.get("job_store")
     job_state_channel = getattr(
         getattr(job, "channel_type", None),
@@ -582,6 +591,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             "quality_mode": json_profile.get("quality_mode"),
             "profile_snapshot_path": str(profile_snapshot_path),
             "profile_metadata": profile_metadata,
+            "debug_context": debug_context,
         },
     )
 
@@ -741,6 +751,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         details={
             "analysis_duration_seconds": getattr(analysis_result, "duration_seconds", None),
             "usable_for_longform": getattr(analysis_result, "usable_for_longform", None),
+            "debug_context": debug_context,
         },
     )
     print(f"[gaming_pipeline] ANALYZE   {job.job_id}  done")
@@ -789,6 +800,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="cutting_finished",
         details={
             "edit_decision_type": type(edit_decision).__name__,
+            "debug_context": debug_context,
         },
     )
     print(f"[gaming_pipeline] CUT       {job.job_id}  done")
@@ -1770,6 +1782,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="rendering_finished",
         details={
             "final_video_path": str(final_video_path),
+            "debug_context": debug_context,
         },
     )
     print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")
