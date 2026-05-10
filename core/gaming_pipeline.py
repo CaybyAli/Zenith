@@ -65,6 +65,7 @@ from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.file_handler import run_file_handler_for_job
+from core.preprocessing_pipeline import run_preprocessing_pipeline_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -791,6 +792,139 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 "warnings": file_handler_report.get("warnings", []),
             },
         )
+
+    if not input_path:
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="preprocessing",
+            event_type="PREPROCESSING_FAILED",
+            action="abort_pipeline",
+            status="error",
+            reason="input_path_missing",
+            details={"job_id": getattr(job, "job_id", None)},
+        )
+        raise RuntimeError("Preprocessing failed: input_path_missing")
+
+    preprocessing_report = run_preprocessing_pipeline_for_job(
+        job=job,
+        source_path=input_path,
+        root_dir="preprocessed",
+        metadata={
+            "profile_id": getattr(job, "profile_id", None),
+            "quality_mode": getattr(job, "quality_mode", None),
+        },
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="preprocessing",
+        event_type="PREPROCESSING_WORKSPACE_READY",
+        action="prepare_preprocessing_workspace",
+        reason="preprocessing_workspace_ready",
+        details={
+            "preprocessing_dir": preprocessing_report.get("preprocessing_dir"),
+            "manifest_path": preprocessing_report.get("manifest_path"),
+            "status": preprocessing_report.get("status"),
+            "reused_cache": preprocessing_report.get("reused_cache"),
+            "cache_key": job.preprocessing_cache_key,
+        },
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="preprocessing",
+        event_type="AUDIO_EXTRACTION_PLAN_READY",
+        action="build_audio_extraction_plan",
+        reason="audio_extraction_plan_ready",
+        details={
+            "status": job.audio_extraction_plan.get("status"),
+            "target_count": len(job.audio_targets),
+            "target_ids": [
+                target.get("target_id")
+                for target in job.audio_targets
+            ],
+        },
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="preprocessing",
+        event_type="FRAME_EXTRACTION_PLAN_READY",
+        action="build_frame_extraction_plan",
+        reason="frame_extraction_plan_ready",
+        details={
+            "status": job.frame_extraction_plan.get("status"),
+            "target_count": len(job.frame_targets),
+            "target_ids": [
+                target.get("target_id")
+                for target in job.frame_targets
+            ],
+        },
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="preprocessing",
+        event_type="PREPROCESSING_CACHE_VALIDATED",
+        action="validate_preprocessing_cache",
+        status=job.preprocessing_cache_validation.get("severity", "ok"),
+        reason=preprocessing_report.get("recommendation"),
+        details={
+            "reusable": job.preprocessing_cache_reuse_allowed,
+            "status": job.preprocessing_cache_validation_status,
+            "severity": job.preprocessing_cache_validation.get("severity"),
+            "warnings": preprocessing_report.get("warnings", []),
+            "errors": preprocessing_report.get("errors", []),
+            "recommendation": preprocessing_report.get("recommendation"),
+        },
+    )
+
+    if preprocessing_report.get("errors"):
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="preprocessing",
+            event_type="PREPROCESSING_FAILED",
+            action="abort_pipeline",
+            status="error",
+            reason="preprocessing_errors",
+            details={
+                "errors": preprocessing_report.get("errors", []),
+                "warnings": preprocessing_report.get("warnings", []),
+                "recommendation": preprocessing_report.get("recommendation"),
+            },
+        )
+        raise RuntimeError(
+            f"Preprocessing failed: {preprocessing_report.get('errors', [])}"
+        )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="preprocessing",
+        event_type="PREPROCESSING_READY",
+        action="continue_pipeline",
+        reason="preprocessing_ready",
+        details={
+            "status": preprocessing_report.get("status"),
+            "cache_reuse_allowed": preprocessing_report.get("cache_reuse_allowed"),
+            "warnings": preprocessing_report.get("warnings", []),
+            "errors": preprocessing_report.get("errors", []),
+        },
+    )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="preprocessing_ready",
+        reason="preprocessing_workspace_and_plans_ready",
+    )
 
     transition_job_state(
         job,
