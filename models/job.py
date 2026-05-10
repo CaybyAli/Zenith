@@ -49,6 +49,10 @@ class Job:
     current_module: str | None = None
     error_message: str | None = None
 
+    recovery_status: str | None = None
+    resume_safety: str | None = None
+    recovery_report: dict[str, Any] = field(default_factory=dict)
+
     review_status: str = "pending"
     scheduled_at: Optional[str] = None
     is_scheduled: bool = False
@@ -138,6 +142,9 @@ class Job:
             state_history=list(data.get("state_history") or []),
             current_module=data.get("current_module"),
             error_message=data.get("error_message"),
+            recovery_status=data.get("recovery_status"),
+            resume_safety=data.get("resume_safety"),
+            recovery_report=dict(data.get("recovery_report") or {}),
             review_status=data.get("review_status", "pending"),
             scheduled_at=data.get("scheduled_at"),
             is_scheduled=data.get("is_scheduled", False),

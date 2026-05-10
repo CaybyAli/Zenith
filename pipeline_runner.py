@@ -32,6 +32,10 @@ from core.intake_manager import IntakeManager
 from core.job_store import JobStore
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
+from core.job_recovery import (
+    apply_recovery_report_to_job,
+    build_recovery_report,
+)
 from core.render_versioning import next_render_version, versioned_final_path
 from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
 
@@ -320,6 +324,11 @@ def run_pending_jobs(
                 step_name="assembled",
                 reason="export_finished",
             )
+
+            recovery_report = build_recovery_report(job, export_dir=export_dir)
+            apply_recovery_report_to_job(job, recovery_report)
+            job_store.update_job(job)
+
             _write_export_job_json(job, export_dir)
 
             results.append({
