@@ -54,6 +54,12 @@ class Job:
     stream_classification: dict[str, Any] = field(default_factory=dict)
     file_readability: dict[str, Any] = field(default_factory=dict)
     file_handler_report: dict[str, Any] = field(default_factory=dict)
+    preprocessing_dir: str | None = None
+    preprocessing_manifest_path: str | None = None
+    preprocessing_manifest: dict[str, Any] = field(default_factory=dict)
+    preprocessing_status: str | None = None
+    preprocessing_cache_key: str | None = None
+    preprocessing_reused_cache: bool = False
 
     recovery_status: str | None = None
     resume_safety: str | None = None
@@ -162,6 +168,12 @@ class Job:
             stream_classification=dict(data.get("stream_classification") or {}),
             file_readability=dict(data.get("file_readability") or {}),
             file_handler_report=dict(data.get("file_handler_report") or {}),
+            preprocessing_dir=data.get("preprocessing_dir"),
+            preprocessing_manifest_path=data.get("preprocessing_manifest_path"),
+            preprocessing_manifest=dict(data.get("preprocessing_manifest") or {}),
+            preprocessing_status=data.get("preprocessing_status"),
+            preprocessing_cache_key=data.get("preprocessing_cache_key"),
+            preprocessing_reused_cache=bool(data.get("preprocessing_reused_cache", False)),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
