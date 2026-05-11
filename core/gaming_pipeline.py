@@ -67,6 +67,7 @@ from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.file_handler import run_file_handler_for_job
 from core.preprocessing_pipeline import run_preprocessing_pipeline_for_job
 from core.silence_detection_runner import run_silence_detection_for_job
+from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1063,6 +1064,104 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         export_dir=job_state_export_dir,
         step_name="silence_detection_done",
         reason="silence_detection_completed_or_skipped",
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="silence_classification",
+        event_type="SILENCE_CLASSIFICATION_STARTED",
+        action="run_silence_classifier",
+        reason="silence_classification_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "silence_detection_status": getattr(job, "silence_detection_status", None),
+            "silence_segment_count": int(getattr(job, "silence_segment_count", 0) or 0),
+        },
+    )
+
+    try:
+        silence_classifier_report = run_silence_classifier_for_job(
+            job=job,
+            profile=json_profile if isinstance(json_profile, dict) else None,
+            metadata={
+                "stage": "2B-07-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as classifier_exc:
+        silence_classifier_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="silence_classification",
+            event_type="SILENCE_CLASSIFICATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="silence_classifier_runner_exception",
+            details={"error": str(classifier_exc)},
+        )
+
+    if silence_classifier_report is not None:
+        job.silence_classification_report = silence_classifier_report.to_dict()
+        job.silence_classification_result = dict(silence_classifier_report.classification_result or {})
+        job.silence_classification_status = silence_classifier_report.status
+        job.silence_classifications = list(silence_classifier_report.classifications or [])
+        job.silence_classification_count = int(silence_classifier_report.classification_count or 0)
+        job.silence_remove_candidate_count = int(silence_classifier_report.remove_candidate_count or 0)
+        job.silence_keep_candidate_count = int(silence_classifier_report.keep_candidate_count or 0)
+        job.silence_counts_by_classification = dict(silence_classifier_report.counts_by_classification or {})
+
+        classifier_details = {
+            "status": silence_classifier_report.status,
+            "classification_count": silence_classifier_report.classification_count,
+            "remove_candidate_count": silence_classifier_report.remove_candidate_count,
+            "keep_candidate_count": silence_classifier_report.keep_candidate_count,
+            "counts_by_classification": dict(silence_classifier_report.counts_by_classification or {}),
+            "recommendation": silence_classifier_report.recommendation,
+            "warnings": list(silence_classifier_report.warnings or []),
+            "errors": list(silence_classifier_report.errors or []),
+        }
+
+        if silence_classifier_report.status == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="silence_classification",
+                event_type="SILENCE_CLASSIFICATION_DONE",
+                action="continue_pipeline",
+                reason="silence_classification_completed",
+                details=classifier_details,
+            )
+        elif silence_classifier_report.status == "skipped_no_silence_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="silence_classification",
+                event_type="SILENCE_CLASSIFICATION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=silence_classifier_report.recommendation or "silence_classification_skipped",
+                details=classifier_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="silence_classification",
+                event_type="SILENCE_CLASSIFICATION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=silence_classifier_report.recommendation or "silence_classification_failed",
+                details=classifier_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="silence_classification_done",
+        reason="silence_classification_completed_or_skipped",
     )
 
     transition_job_state(

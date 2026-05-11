@@ -79,6 +79,15 @@ class Job:
     silence_segment_count: int = 0
     silence_total_seconds: float = 0.0
 
+    silence_classification_report: dict[str, Any] = field(default_factory=dict)
+    silence_classification_result: dict[str, Any] = field(default_factory=dict)
+    silence_classification_status: str | None = None
+    silence_classifications: list[dict[str, Any]] = field(default_factory=list)
+    silence_classification_count: int = 0
+    silence_remove_candidate_count: int = 0
+    silence_keep_candidate_count: int = 0
+    silence_counts_by_classification: dict[str, int] = field(default_factory=dict)
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -216,6 +225,14 @@ class Job:
             ),
             silence_segment_count=int(data.get("silence_segment_count", 0) or 0),
             silence_total_seconds=float(data.get("silence_total_seconds", 0.0) or 0.0),
+            silence_classification_report=dict(data.get("silence_classification_report") or {}),
+            silence_classification_result=dict(data.get("silence_classification_result") or {}),
+            silence_classification_status=data.get("silence_classification_status"),
+            silence_classifications=list(data.get("silence_classifications") or []),
+            silence_classification_count=int(data.get("silence_classification_count", 0) or 0),
+            silence_remove_candidate_count=int(data.get("silence_remove_candidate_count", 0) or 0),
+            silence_keep_candidate_count=int(data.get("silence_keep_candidate_count", 0) or 0),
+            silence_counts_by_classification=dict(data.get("silence_counts_by_classification") or {}),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
