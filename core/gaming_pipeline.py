@@ -66,6 +66,8 @@ from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.file_handler import run_file_handler_for_job
 from core.preprocessing_pipeline import run_preprocessing_pipeline_for_job
+from core.rms_energy_runner import run_rms_energy_for_job
+from core.rms_energy_context_adapter import adapt_rms_energy_run_report_to_context
 from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.job_state_transitions import transition_job_state
@@ -928,6 +930,249 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="preprocessing_workspace_and_plans_ready",
     )
 
+    # ── RMS Energy ──────────────────────────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="rms_energy",
+        event_type="RMS_ENERGY_STARTED",
+        action="run_rms_energy",
+        reason="rms_energy_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "profile_id": getattr(job, "profile_id", None),
+            "quality_mode": getattr(job, "quality_mode", None),
+        },
+    )
+
+    try:
+        rms_report = run_rms_energy_for_job(
+            job=job,
+            require_existing_file=True,
+            allow_original_wav_fallback=True,
+            frame_ms=10.0,
+            hop_ms=5.0,
+            silence_rms_threshold=0.001,
+            metadata={
+                "stage": "2B-08-E",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as rms_exc:
+        rms_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="rms_energy",
+            event_type="RMS_ENERGY_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="rms_energy_runner_exception",
+            details={"error": str(rms_exc)},
+        )
+
+    if rms_report is not None:
+        job.rms_energy_report = rms_report.to_dict()
+        job.rms_energy_status = rms_report.status
+        job.rms_energy_source_selection = dict(rms_report.source_selection or {})
+        job.rms_energy_timeline_result = dict(rms_report.energy_timeline_result or {})
+        job.rms_energy_selected_path = rms_report.selected_path
+        job.rms_energy_selected_type = rms_report.selected_type
+        job.rms_energy_timeline_status = rms_report.timeline_status
+        job.rms_energy_point_count = int(rms_report.point_count or 0)
+        job.rms_energy_duration_seconds = float(rms_report.duration_seconds or 0.0)
+        job.rms_energy_sample_rate = rms_report.sample_rate
+        job.rms_energy_channels = rms_report.channels
+        job.rms_energy_frame_ms = float(rms_report.frame_ms or 10.0)
+        job.rms_energy_hop_ms = float(rms_report.hop_ms or 5.0)
+        job.rms_energy_min_rms = float(rms_report.min_rms or 0.0)
+        job.rms_energy_max_rms = float(rms_report.max_rms or 0.0)
+        job.rms_energy_avg_rms = float(rms_report.avg_rms or 0.0)
+        job.rms_energy_min_normalized_energy = float(rms_report.min_normalized_energy or 0.0)
+        job.rms_energy_max_normalized_energy = float(rms_report.max_normalized_energy or 0.0)
+        job.rms_energy_avg_normalized_energy = float(rms_report.avg_normalized_energy or 0.0)
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="rms_energy",
+            event_type="RMS_ENERGY_SOURCE_SELECTED",
+            action="select_rms_energy_source",
+            reason=rms_report.status or "rms_energy_source_selected",
+            details={
+                "status": rms_report.status,
+                "selected_path": rms_report.selected_path,
+                "selected_type": rms_report.selected_type,
+                "source_selection": dict(rms_report.source_selection or {}),
+                "recommendation": rms_report.recommendation,
+                "warnings": list(rms_report.warnings or []),
+                "errors": list(rms_report.errors or []),
+            },
+        )
+
+        if rms_report.status == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="rms_energy",
+                event_type="RMS_ENERGY_DONE",
+                action="continue_pipeline",
+                reason="rms_energy_completed",
+                details={
+                    "status": rms_report.status,
+                    "timeline_status": rms_report.timeline_status,
+                    "point_count": rms_report.point_count,
+                    "duration_seconds": rms_report.duration_seconds,
+                    "max_normalized_energy": rms_report.max_normalized_energy,
+                    "recommendation": rms_report.recommendation,
+                    "warnings": list(rms_report.warnings or []),
+                    "errors": list(rms_report.errors or []),
+                },
+            )
+        elif rms_report.status == "completed_with_warnings":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="rms_energy",
+                event_type="RMS_ENERGY_COMPLETED_WITH_WARNINGS",
+                action="continue_pipeline",
+                status="warn",
+                reason="rms_energy_completed_with_warnings",
+                details={
+                    "status": rms_report.status,
+                    "recommendation": rms_report.recommendation,
+                    "warnings": list(rms_report.warnings or []),
+                    "errors": list(rms_report.errors or []),
+                },
+            )
+        elif rms_report.status == "blocked_missing_preprocessed_audio":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="rms_energy",
+                event_type="RMS_ENERGY_BLOCKED",
+                action="continue_pipeline",
+                status="warn",
+                reason="rms_energy_blocked_missing_preprocessed_audio",
+                details={
+                    "status": rms_report.status,
+                    "recommendation": rms_report.recommendation,
+                    "warnings": list(rms_report.warnings or []),
+                    "errors": list(rms_report.errors or []),
+                },
+            )
+        elif rms_report.status == "skipped_unsupported_source":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="rms_energy",
+                event_type="RMS_ENERGY_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason="rms_energy_skipped_unsupported_source",
+                details={
+                    "status": rms_report.status,
+                    "recommendation": rms_report.recommendation,
+                    "warnings": list(rms_report.warnings or []),
+                    "errors": list(rms_report.errors or []),
+                },
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="rms_energy",
+                event_type="RMS_ENERGY_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=rms_report.recommendation or "rms_energy_failed",
+                details={
+                    "status": rms_report.status,
+                    "recommendation": rms_report.recommendation,
+                    "warnings": list(rms_report.warnings or []),
+                    "errors": list(rms_report.errors or []),
+                },
+            )
+
+        # ── RMS Context Adapter ─────────────────────────────────────────────
+        if rms_report.energy_timeline_result and int(rms_report.point_count or 0) > 0:
+            try:
+                adapter_result = adapt_rms_energy_run_report_to_context(rms_report)
+                job.rms_energy_context_adapter = adapter_result.to_dict()
+                job.rms_energy_context_timeline = list(adapter_result.energy_timeline or [])
+                job.rms_energy_context_status = adapter_result.status
+                job.rms_energy_context_point_count = int(adapter_result.point_count or 0)
+                job.rms_energy_context_peak_count = int(adapter_result.peak_count or 0)
+                job.rms_energy_context_silent_count = int(adapter_result.silent_count or 0)
+                _safe_log_decision(
+                    job=job,
+                    export_dir=job_state_export_dir,
+                    phase="rms_energy",
+                    event_type="RMS_ENERGY_CONTEXT_ADAPTED",
+                    action="adapt_rms_energy_context",
+                    reason="rms_energy_context_adapted",
+                    details={
+                        "status": adapter_result.status,
+                        "point_count": adapter_result.point_count,
+                        "peak_count": adapter_result.peak_count,
+                        "silent_count": adapter_result.silent_count,
+                        "warnings": list(adapter_result.warnings or []),
+                        "errors": list(adapter_result.errors or []),
+                    },
+                )
+            except Exception as adapter_exc:
+                job.rms_energy_context_adapter = {}
+                job.rms_energy_context_timeline = []
+                job.rms_energy_context_status = "skipped_no_energy_timeline"
+                job.rms_energy_context_point_count = 0
+                job.rms_energy_context_peak_count = 0
+                job.rms_energy_context_silent_count = 0
+                _safe_log_decision(
+                    job=job,
+                    export_dir=job_state_export_dir,
+                    phase="rms_energy",
+                    event_type="RMS_ENERGY_CONTEXT_SKIPPED",
+                    action="continue_pipeline",
+                    status="warn",
+                    reason="rms_energy_context_adapter_exception",
+                    details={
+                        "reason": "no_energy_timeline_available",
+                        "rms_energy_status": rms_report.status,
+                        "point_count": int(rms_report.point_count or 0),
+                        "error": str(adapter_exc),
+                    },
+                )
+        else:
+            job.rms_energy_context_adapter = {}
+            job.rms_energy_context_timeline = []
+            job.rms_energy_context_status = "skipped_no_energy_timeline"
+            job.rms_energy_context_point_count = 0
+            job.rms_energy_context_peak_count = 0
+            job.rms_energy_context_silent_count = 0
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="rms_energy",
+                event_type="RMS_ENERGY_CONTEXT_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason="rms_energy_context_skipped",
+                details={
+                    "reason": "no_energy_timeline_available",
+                    "rms_energy_status": rms_report.status,
+                    "point_count": int(rms_report.point_count or 0),
+                },
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="rms_energy_done",
+        reason="rms_energy_completed_or_skipped",
+    )
+    # ── End RMS Energy ───────────────────────────────────────────────────────
+
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
@@ -1081,9 +1326,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
 
     try:
+        _rms_context_timeline = list(getattr(job, "rms_energy_context_timeline", None) or [])
         silence_classifier_report = run_silence_classifier_for_job(
             job=job,
             profile=json_profile if isinstance(json_profile, dict) else None,
+            energy_timeline=_rms_context_timeline if _rms_context_timeline else None,
             metadata={
                 "stage": "2B-07-C",
                 "job_id": getattr(job, "job_id", None),

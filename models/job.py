@@ -88,6 +88,32 @@ class Job:
     silence_keep_candidate_count: int = 0
     silence_counts_by_classification: dict[str, int] = field(default_factory=dict)
 
+    rms_energy_report: dict[str, Any] = field(default_factory=dict)
+    rms_energy_status: str | None = None
+    rms_energy_source_selection: dict[str, Any] = field(default_factory=dict)
+    rms_energy_timeline_result: dict[str, Any] = field(default_factory=dict)
+    rms_energy_selected_path: str | None = None
+    rms_energy_selected_type: str | None = None
+    rms_energy_timeline_status: str | None = None
+    rms_energy_point_count: int = 0
+    rms_energy_duration_seconds: float = 0.0
+    rms_energy_sample_rate: int | None = None
+    rms_energy_channels: int | None = None
+    rms_energy_frame_ms: float = 10.0
+    rms_energy_hop_ms: float = 5.0
+    rms_energy_min_rms: float = 0.0
+    rms_energy_max_rms: float = 0.0
+    rms_energy_avg_rms: float = 0.0
+    rms_energy_min_normalized_energy: float = 0.0
+    rms_energy_max_normalized_energy: float = 0.0
+    rms_energy_avg_normalized_energy: float = 0.0
+    rms_energy_context_adapter: dict[str, Any] = field(default_factory=dict)
+    rms_energy_context_timeline: list[dict[str, Any]] = field(default_factory=list)
+    rms_energy_context_status: str | None = None
+    rms_energy_context_point_count: int = 0
+    rms_energy_context_peak_count: int = 0
+    rms_energy_context_silent_count: int = 0
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -233,6 +259,39 @@ class Job:
             silence_remove_candidate_count=int(data.get("silence_remove_candidate_count", 0) or 0),
             silence_keep_candidate_count=int(data.get("silence_keep_candidate_count", 0) or 0),
             silence_counts_by_classification=dict(data.get("silence_counts_by_classification") or {}),
+            rms_energy_report=dict(data.get("rms_energy_report") or {}),
+            rms_energy_status=data.get("rms_energy_status"),
+            rms_energy_source_selection=dict(data.get("rms_energy_source_selection") or {}),
+            rms_energy_timeline_result=dict(data.get("rms_energy_timeline_result") or {}),
+            rms_energy_selected_path=data.get("rms_energy_selected_path"),
+            rms_energy_selected_type=data.get("rms_energy_selected_type"),
+            rms_energy_timeline_status=data.get("rms_energy_timeline_status"),
+            rms_energy_point_count=int(data.get("rms_energy_point_count", 0) or 0),
+            rms_energy_duration_seconds=float(data.get("rms_energy_duration_seconds", 0.0) or 0.0),
+            rms_energy_sample_rate=(
+                int(data["rms_energy_sample_rate"])
+                if data.get("rms_energy_sample_rate") is not None
+                else None
+            ),
+            rms_energy_channels=(
+                int(data["rms_energy_channels"])
+                if data.get("rms_energy_channels") is not None
+                else None
+            ),
+            rms_energy_frame_ms=float(data.get("rms_energy_frame_ms", 10.0) or 10.0),
+            rms_energy_hop_ms=float(data.get("rms_energy_hop_ms", 5.0) or 5.0),
+            rms_energy_min_rms=float(data.get("rms_energy_min_rms", 0.0) or 0.0),
+            rms_energy_max_rms=float(data.get("rms_energy_max_rms", 0.0) or 0.0),
+            rms_energy_avg_rms=float(data.get("rms_energy_avg_rms", 0.0) or 0.0),
+            rms_energy_min_normalized_energy=float(data.get("rms_energy_min_normalized_energy", 0.0) or 0.0),
+            rms_energy_max_normalized_energy=float(data.get("rms_energy_max_normalized_energy", 0.0) or 0.0),
+            rms_energy_avg_normalized_energy=float(data.get("rms_energy_avg_normalized_energy", 0.0) or 0.0),
+            rms_energy_context_adapter=dict(data.get("rms_energy_context_adapter") or {}),
+            rms_energy_context_timeline=list(data.get("rms_energy_context_timeline") or []),
+            rms_energy_context_status=data.get("rms_energy_context_status"),
+            rms_energy_context_point_count=int(data.get("rms_energy_context_point_count", 0) or 0),
+            rms_energy_context_peak_count=int(data.get("rms_energy_context_peak_count", 0) or 0),
+            rms_energy_context_silent_count=int(data.get("rms_energy_context_silent_count", 0) or 0),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
