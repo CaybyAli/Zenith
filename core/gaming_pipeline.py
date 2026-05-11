@@ -72,6 +72,7 @@ from core.energy_peak_runner import run_energy_peak_detection_for_job
 from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.filler_word_runner import run_filler_word_detection_for_job
+from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -120,6 +121,125 @@ def _safe_log_decision(
             f"job={getattr(job, 'job_id', '-')} error={exc}"
         )
         return None
+
+def _audio_normalization_event_type_for_status(status: str | None) -> str:
+    status_text = str(status or "").strip().lower()
+
+    if status_text == "ok":
+        return "AUDIO_NORMALIZATION_DONE"
+
+    if status_text == "completed_with_warnings":
+        return "AUDIO_NORMALIZATION_COMPLETED_WITH_WARNINGS"
+
+    if status_text == "blocked_missing_preprocessed_audio":
+        return "AUDIO_NORMALIZATION_BLOCKED"
+
+    if status_text in {"skipped_unsupported_source", "skipped_no_audio_source"}:
+        return "AUDIO_NORMALIZATION_SKIPPED"
+
+    if status_text == "failed":
+        return "AUDIO_NORMALIZATION_FAILED"
+
+    return "AUDIO_NORMALIZATION_FAILED"
+
+
+def _apply_audio_normalization_report_to_job(job, audio_normalization_report) -> None:
+    report_dict = {}
+
+    to_dict = getattr(audio_normalization_report, "to_dict", None)
+    if callable(to_dict):
+        try:
+            maybe_dict = to_dict()
+            if isinstance(maybe_dict, dict):
+                report_dict = dict(maybe_dict)
+        except Exception:
+            report_dict = {}
+
+    job.audio_normalization_report = report_dict
+    job.audio_normalization_status = getattr(audio_normalization_report, "status", None)
+    job.audio_normalization_selected_path = getattr(audio_normalization_report, "selected_path", None)
+    job.audio_normalization_selected_type = getattr(audio_normalization_report, "selected_type", None)
+    job.audio_normalization_source_selection = dict(
+        getattr(audio_normalization_report, "source_selection", {}) or {}
+    )
+    job.audio_normalization_result = dict(
+        getattr(audio_normalization_report, "normalization_result", {}) or {}
+    )
+    job.audio_normalization_level_status = getattr(audio_normalization_report, "level_status", None)
+    job.audio_normalization_needed = bool(
+        getattr(audio_normalization_report, "normalization_needed", False)
+    )
+    job.audio_normalization_recommendation = getattr(audio_normalization_report, "recommendation", None)
+
+    job.audio_normalization_target_rms_dbfs = float(
+        getattr(audio_normalization_report, "target_rms_dbfs", -18.0) or -18.0
+    )
+    job.audio_normalization_target_peak_dbfs = float(
+        getattr(audio_normalization_report, "target_peak_dbfs", -1.0) or -1.0
+    )
+    job.audio_normalization_recommended_gain_db = float(
+        getattr(audio_normalization_report, "recommended_gain_db", 0.0) or 0.0
+    )
+    job.audio_normalization_limited_gain_db = float(
+        getattr(audio_normalization_report, "limited_gain_db", 0.0) or 0.0
+    )
+    job.audio_normalization_gain_limited_by_peak = bool(
+        getattr(audio_normalization_report, "gain_limited_by_peak", False)
+    )
+    job.audio_normalization_would_clip_after_gain = bool(
+        getattr(audio_normalization_report, "would_clip_after_gain", False)
+    )
+
+    job.audio_normalization_peak_dbfs = getattr(audio_normalization_report, "peak_dbfs", None)
+    job.audio_normalization_rms_dbfs = getattr(audio_normalization_report, "rms_dbfs", None)
+    job.audio_normalization_peak_amplitude = float(
+        getattr(audio_normalization_report, "peak_amplitude", 0.0) or 0.0
+    )
+    job.audio_normalization_rms = float(
+        getattr(audio_normalization_report, "rms", 0.0) or 0.0
+    )
+    job.audio_normalization_clipping_sample_count = int(
+        getattr(audio_normalization_report, "clipping_sample_count", 0) or 0
+    )
+    job.audio_normalization_clipping_ratio = float(
+        getattr(audio_normalization_report, "clipping_ratio", 0.0) or 0.0
+    )
+    job.audio_normalization_sample_count = int(
+        getattr(audio_normalization_report, "sample_count", 0) or 0
+    )
+    job.audio_normalization_duration_seconds = float(
+        getattr(audio_normalization_report, "duration_seconds", 0.0) or 0.0
+    )
+    job.audio_normalization_sample_rate = getattr(audio_normalization_report, "sample_rate", None)
+    job.audio_normalization_channels = getattr(audio_normalization_report, "channels", None)
+
+
+def _audio_normalization_decision_details(audio_normalization_report) -> dict:
+    return {
+        "status": getattr(audio_normalization_report, "status", None),
+        "selected_type": getattr(audio_normalization_report, "selected_type", None),
+        "selected_path": getattr(audio_normalization_report, "selected_path", None),
+        "level_status": getattr(audio_normalization_report, "level_status", None),
+        "normalization_needed": bool(
+            getattr(audio_normalization_report, "normalization_needed", False)
+        ),
+        "recommended_gain_db": getattr(audio_normalization_report, "recommended_gain_db", 0.0),
+        "limited_gain_db": getattr(audio_normalization_report, "limited_gain_db", 0.0),
+        "gain_limited_by_peak": bool(
+            getattr(audio_normalization_report, "gain_limited_by_peak", False)
+        ),
+        "would_clip_after_gain": bool(
+            getattr(audio_normalization_report, "would_clip_after_gain", False)
+        ),
+        "peak_dbfs": getattr(audio_normalization_report, "peak_dbfs", None),
+        "rms_dbfs": getattr(audio_normalization_report, "rms_dbfs", None),
+        "clipping_sample_count": int(
+            getattr(audio_normalization_report, "clipping_sample_count", 0) or 0
+        ),
+        "recommendation": getattr(audio_normalization_report, "recommendation", None),
+        "warnings": list(getattr(audio_normalization_report, "warnings", []) or []),
+        "errors": list(getattr(audio_normalization_report, "errors", []) or []),
+    }
 
 
 _PHASE_FILTER_BLOCKED = {RoundPhase.MENU_WAIT, RoundPhase.QUEUE_WAIT}
@@ -1662,6 +1782,85 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="filler_word_detection_completed_or_skipped",
     )
     # ── End Filler Word Detection ────────────────────────────────────────────
+
+    # ── Audio Normalization (2B-11-E) ────────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="audio_normalization",
+        event_type="AUDIO_NORMALIZATION_STARTED",
+        action="run_audio_normalization",
+        reason="audio_normalization_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "profile_id": getattr(job, "profile_id", None),
+            "quality_mode": getattr(job, "quality_mode", None),
+        },
+    )
+
+    try:
+        audio_normalization_report = run_audio_normalization_for_job(
+            job=job,
+            target_rms_dbfs=-18.0,
+            target_peak_dbfs=-1.0,
+            require_existing_file=True,
+            allow_original_wav_fallback=True,
+            metadata={
+                "stage": "2B-11-E",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as audio_normalization_exc:
+        audio_normalization_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="audio_normalization",
+            event_type="AUDIO_NORMALIZATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="audio_normalization_runner_exception",
+            details={"error": str(audio_normalization_exc)},
+        )
+
+    if audio_normalization_report is not None:
+        _apply_audio_normalization_report_to_job(job, audio_normalization_report)
+
+        _audio_normalization_event_type = _audio_normalization_event_type_for_status(
+            audio_normalization_report.status
+        )
+        _audio_normalization_status = (
+            "warn"
+            if _audio_normalization_event_type
+            in {
+                "AUDIO_NORMALIZATION_COMPLETED_WITH_WARNINGS",
+                "AUDIO_NORMALIZATION_BLOCKED",
+                "AUDIO_NORMALIZATION_SKIPPED",
+                "AUDIO_NORMALIZATION_FAILED",
+            }
+            else "ok"
+        )
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="audio_normalization",
+            event_type=_audio_normalization_event_type,
+            action="continue_pipeline",
+            status=_audio_normalization_status,
+            reason=audio_normalization_report.recommendation
+            or "audio_normalization_completed_or_skipped",
+            details=_audio_normalization_decision_details(audio_normalization_report),
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="audio_normalization_done",
+        reason="audio_normalization_completed_or_skipped",
+    )
+    # ── End Audio Normalization ──────────────────────────────────────────────
 
     transition_job_state(
         job,

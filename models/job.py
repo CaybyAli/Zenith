@@ -146,6 +146,32 @@ class Job:
     filler_word_rate: float = 0.0
     filler_word_recommendation: str | None = None
 
+    audio_normalization_report: dict[str, Any] = field(default_factory=dict)
+    audio_normalization_status: str | None = None
+    audio_normalization_selected_path: str | None = None
+    audio_normalization_selected_type: str | None = None
+    audio_normalization_source_selection: dict[str, Any] = field(default_factory=dict)
+    audio_normalization_result: dict[str, Any] = field(default_factory=dict)
+    audio_normalization_level_status: str | None = None
+    audio_normalization_needed: bool = False
+    audio_normalization_recommendation: str | None = None
+    audio_normalization_target_rms_dbfs: float = -18.0
+    audio_normalization_target_peak_dbfs: float = -1.0
+    audio_normalization_recommended_gain_db: float = 0.0
+    audio_normalization_limited_gain_db: float = 0.0
+    audio_normalization_gain_limited_by_peak: bool = False
+    audio_normalization_would_clip_after_gain: bool = False
+    audio_normalization_peak_dbfs: float | None = None
+    audio_normalization_rms_dbfs: float | None = None
+    audio_normalization_peak_amplitude: float = 0.0
+    audio_normalization_rms: float = 0.0
+    audio_normalization_clipping_sample_count: int = 0
+    audio_normalization_clipping_ratio: float = 0.0
+    audio_normalization_sample_count: int = 0
+    audio_normalization_duration_seconds: float = 0.0
+    audio_normalization_sample_rate: int | None = None
+    audio_normalization_channels: int | None = None
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -358,6 +384,47 @@ class Job:
             filler_word_transcript_word_count=int(data.get("filler_word_transcript_word_count", 0) or 0),
             filler_word_rate=float(data.get("filler_word_rate", 0.0) or 0.0),
             filler_word_recommendation=data.get("filler_word_recommendation"),
+            audio_normalization_report=dict(data.get("audio_normalization_report") or {}),
+            audio_normalization_status=data.get("audio_normalization_status"),
+            audio_normalization_selected_path=data.get("audio_normalization_selected_path"),
+            audio_normalization_selected_type=data.get("audio_normalization_selected_type"),
+            audio_normalization_source_selection=dict(data.get("audio_normalization_source_selection") or {}),
+            audio_normalization_result=dict(data.get("audio_normalization_result") or {}),
+            audio_normalization_level_status=data.get("audio_normalization_level_status"),
+            audio_normalization_needed=bool(data.get("audio_normalization_needed", False)),
+            audio_normalization_recommendation=data.get("audio_normalization_recommendation"),
+            audio_normalization_target_rms_dbfs=float(data.get("audio_normalization_target_rms_dbfs", -18.0) or -18.0),
+            audio_normalization_target_peak_dbfs=float(data.get("audio_normalization_target_peak_dbfs", -1.0) or -1.0),
+            audio_normalization_recommended_gain_db=float(data.get("audio_normalization_recommended_gain_db", 0.0) or 0.0),
+            audio_normalization_limited_gain_db=float(data.get("audio_normalization_limited_gain_db", 0.0) or 0.0),
+            audio_normalization_gain_limited_by_peak=bool(data.get("audio_normalization_gain_limited_by_peak", False)),
+            audio_normalization_would_clip_after_gain=bool(data.get("audio_normalization_would_clip_after_gain", False)),
+            audio_normalization_peak_dbfs=(
+                float(data["audio_normalization_peak_dbfs"])
+                if data.get("audio_normalization_peak_dbfs") is not None
+                else None
+            ),
+            audio_normalization_rms_dbfs=(
+                float(data["audio_normalization_rms_dbfs"])
+                if data.get("audio_normalization_rms_dbfs") is not None
+                else None
+            ),
+            audio_normalization_peak_amplitude=float(data.get("audio_normalization_peak_amplitude", 0.0) or 0.0),
+            audio_normalization_rms=float(data.get("audio_normalization_rms", 0.0) or 0.0),
+            audio_normalization_clipping_sample_count=int(data.get("audio_normalization_clipping_sample_count", 0) or 0),
+            audio_normalization_clipping_ratio=float(data.get("audio_normalization_clipping_ratio", 0.0) or 0.0),
+            audio_normalization_sample_count=int(data.get("audio_normalization_sample_count", 0) or 0),
+            audio_normalization_duration_seconds=float(data.get("audio_normalization_duration_seconds", 0.0) or 0.0),
+            audio_normalization_sample_rate=(
+                int(data["audio_normalization_sample_rate"])
+                if data.get("audio_normalization_sample_rate") is not None
+                else None
+            ),
+            audio_normalization_channels=(
+                int(data["audio_normalization_channels"])
+                if data.get("audio_normalization_channels") is not None
+                else None
+            ),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
