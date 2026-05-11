@@ -69,6 +69,16 @@ class Job:
     preprocessing_cache_validation_status: str | None = None
     preprocessing_cache_reuse_allowed: bool = False
 
+    silence_detection_report: dict[str, Any] = field(default_factory=dict)
+    silence_detection_result: dict[str, Any] = field(default_factory=dict)
+    silence_detection_status: str | None = None
+    silence_detection_source_path: str | None = None
+    silence_detection_source_type: str | None = None
+    silence_detection_threshold_db: float | None = None
+    silence_detection_min_duration_seconds: float | None = None
+    silence_segment_count: int = 0
+    silence_total_seconds: float = 0.0
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -189,6 +199,23 @@ class Job:
             preprocessing_cache_validation=dict(data.get("preprocessing_cache_validation") or {}),
             preprocessing_cache_validation_status=data.get("preprocessing_cache_validation_status"),
             preprocessing_cache_reuse_allowed=bool(data.get("preprocessing_cache_reuse_allowed", False)),
+            silence_detection_report=dict(data.get("silence_detection_report") or {}),
+            silence_detection_result=dict(data.get("silence_detection_result") or {}),
+            silence_detection_status=data.get("silence_detection_status"),
+            silence_detection_source_path=data.get("silence_detection_source_path"),
+            silence_detection_source_type=data.get("silence_detection_source_type"),
+            silence_detection_threshold_db=(
+                float(data["silence_detection_threshold_db"])
+                if data.get("silence_detection_threshold_db") is not None
+                else None
+            ),
+            silence_detection_min_duration_seconds=(
+                float(data["silence_detection_min_duration_seconds"])
+                if data.get("silence_detection_min_duration_seconds") is not None
+                else None
+            ),
+            silence_segment_count=int(data.get("silence_segment_count", 0) or 0),
+            silence_total_seconds=float(data.get("silence_total_seconds", 0.0) or 0.0),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),

@@ -66,6 +66,7 @@ from core.profile_manager import ProfileManager
 from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.file_handler import run_file_handler_for_job
 from core.preprocessing_pipeline import run_preprocessing_pipeline_for_job
+from core.silence_detection_runner import run_silence_detection_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -924,6 +925,144 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         export_dir=job_state_export_dir,
         step_name="preprocessing_ready",
         reason="preprocessing_workspace_and_plans_ready",
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="silence_detection",
+        event_type="SILENCE_DETECTION_STARTED",
+        action="run_silence_detection",
+        reason="silence_detection_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "profile_id": getattr(job, "profile_id", None),
+            "quality_mode": getattr(job, "quality_mode", None),
+        },
+    )
+
+    try:
+        silence_report = run_silence_detection_for_job(
+            job=job,
+            profile=json_profile,
+        )
+    except Exception as silence_exc:
+        silence_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="silence_detection",
+            event_type="SILENCE_DETECTION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="silence_detection_runner_exception",
+            details={"error": str(silence_exc)},
+        )
+
+    if silence_report is not None:
+        job.silence_detection_report = silence_report.to_dict()
+        job.silence_detection_result = dict(silence_report.detection_result or {})
+        job.silence_detection_status = silence_report.status
+        job.silence_detection_source_path = silence_report.source_path
+        job.silence_detection_source_type = silence_report.source_type
+        job.silence_detection_threshold_db = silence_report.threshold_db
+        job.silence_detection_min_duration_seconds = silence_report.min_duration_seconds
+        job.silence_segment_count = int(silence_report.segment_count or 0)
+        job.silence_total_seconds = float(silence_report.total_silence_seconds or 0.0)
+
+        audio_selection = silence_report.audio_source_selection or {}
+        params_dict = silence_report.parameters or {}
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="silence_detection",
+            event_type="SILENCE_AUDIO_SOURCE_SELECTED",
+            action="select_silence_audio_source",
+            reason=audio_selection.get("status") or "silence_audio_source_selected",
+            details={
+                "source_path": silence_report.source_path,
+                "source_type": silence_report.source_type,
+                "status": audio_selection.get("status"),
+                "exists": audio_selection.get("exists"),
+                "warnings": list(audio_selection.get("warnings") or []),
+                "errors": list(audio_selection.get("errors") or []),
+            },
+        )
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="silence_detection",
+            event_type="SILENCE_PARAMETERS_RESOLVED",
+            action="resolve_silence_parameters",
+            reason="silence_parameters_resolved",
+            details={
+                "threshold_db": silence_report.threshold_db,
+                "min_duration_seconds": silence_report.min_duration_seconds,
+                "require_existing_audio": silence_report.require_existing_audio,
+                "resolved_from": dict(params_dict.get("resolved_from") or {}),
+                "profile_id": params_dict.get("profile_id"),
+                "quality_mode": params_dict.get("quality_mode"),
+            },
+        )
+
+        if silence_report.status == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="silence_detection",
+                event_type="SILENCE_DETECTION_DONE",
+                action="continue_pipeline",
+                reason="silence_detection_completed",
+                details={
+                    "status": silence_report.status,
+                    "segment_count": silence_report.segment_count,
+                    "total_silence_seconds": silence_report.total_silence_seconds,
+                    "recommendation": silence_report.recommendation,
+                    "warnings": list(silence_report.warnings or []),
+                    "errors": list(silence_report.errors or []),
+                },
+            )
+        elif silence_report.status in ("skipped_no_audio_source", "blocked"):
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="silence_detection",
+                event_type="SILENCE_DETECTION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=silence_report.recommendation or "silence_detection_skipped",
+                details={
+                    "status": silence_report.status,
+                    "recommendation": silence_report.recommendation,
+                    "warnings": list(silence_report.warnings or []),
+                    "errors": list(silence_report.errors or []),
+                },
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="silence_detection",
+                event_type="SILENCE_DETECTION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=silence_report.recommendation or "silence_detection_failed",
+                details={
+                    "status": silence_report.status,
+                    "recommendation": silence_report.recommendation,
+                    "warnings": list(silence_report.warnings or []),
+                    "errors": list(silence_report.errors or []),
+                },
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="silence_detection_done",
+        reason="silence_detection_completed_or_skipped",
     )
 
     transition_job_state(
