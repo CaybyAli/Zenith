@@ -68,6 +68,7 @@ from core.file_handler import run_file_handler_for_job
 from core.preprocessing_pipeline import run_preprocessing_pipeline_for_job
 from core.rms_energy_runner import run_rms_energy_for_job
 from core.rms_energy_context_adapter import adapt_rms_energy_run_report_to_context
+from core.energy_peak_runner import run_energy_peak_detection_for_job
 from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.job_state_transitions import transition_job_state
@@ -1172,6 +1173,135 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="rms_energy_completed_or_skipped",
     )
     # ── End RMS Energy ───────────────────────────────────────────────────────
+
+    # ── Energy Peak Detection (2B-09-C) ──────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="energy_peak_detection",
+        event_type="ENERGY_PEAK_DETECTION_STARTED",
+        action="run_energy_peak_detection",
+        reason="energy_peak_detection_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "rms_energy_status": getattr(job, "rms_energy_status", None),
+            "rms_energy_context_status": getattr(job, "rms_energy_context_status", None),
+            "rms_energy_context_point_count": int(getattr(job, "rms_energy_context_point_count", 0) or 0),
+        },
+    )
+
+    try:
+        energy_peak_report = run_energy_peak_detection_for_job(
+            job=job,
+            peak_threshold=0.85,
+            rise_threshold=0.25,
+            min_peak_distance_seconds=0.4,
+            local_window_size=1,
+            max_peaks=None,
+            metadata={
+                "stage": "2B-09-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as energy_peak_exc:
+        energy_peak_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="energy_peak_detection",
+            event_type="ENERGY_PEAK_DETECTION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="energy_peak_runner_exception",
+            details={"error": str(energy_peak_exc)},
+        )
+
+    if energy_peak_report is not None:
+        job.energy_peak_report = energy_peak_report.to_dict()
+        job.energy_peak_status = energy_peak_report.status
+        job.energy_peak_timeline_source = energy_peak_report.energy_timeline_source
+        job.energy_peak_detection_result = dict(energy_peak_report.peak_detection_result or {})
+        job.energy_peaks = list(energy_peak_report.peaks or [])
+        job.energy_peak_count = int(energy_peak_report.peak_count or 0)
+        job.energy_high_energy_peak_count = int(energy_peak_report.high_energy_peak_count or 0)
+        job.energy_local_max_peak_count = int(energy_peak_report.local_max_peak_count or 0)
+        job.energy_rise_peak_count = int(energy_peak_report.rise_peak_count or 0)
+        job.energy_threshold_peak_count = int(energy_peak_report.threshold_peak_count or 0)
+        job.energy_peak_threshold = float(energy_peak_report.peak_threshold or 0.85)
+        job.energy_rise_threshold = float(energy_peak_report.rise_threshold or 0.25)
+        job.energy_min_peak_distance_seconds = float(energy_peak_report.min_peak_distance_seconds or 0.4)
+        job.energy_max_peak_score = float(energy_peak_report.max_peak_score or 0.0)
+        job.energy_avg_peak_score = float(energy_peak_report.avg_peak_score or 0.0)
+        job.energy_top_peak = dict(energy_peak_report.top_peak or {})
+        job.energy_peak_recommendation = energy_peak_report.recommendation
+
+        _energy_peak_details = {
+            "status": energy_peak_report.status,
+            "energy_timeline_source": energy_peak_report.energy_timeline_source,
+            "peak_count": energy_peak_report.peak_count,
+            "high_energy_peak_count": energy_peak_report.high_energy_peak_count,
+            "local_max_peak_count": energy_peak_report.local_max_peak_count,
+            "rise_peak_count": energy_peak_report.rise_peak_count,
+            "threshold_peak_count": energy_peak_report.threshold_peak_count,
+            "max_peak_score": energy_peak_report.max_peak_score,
+            "avg_peak_score": energy_peak_report.avg_peak_score,
+            "recommendation": energy_peak_report.recommendation,
+            "warnings": list(energy_peak_report.warnings or []),
+            "errors": list(energy_peak_report.errors or []),
+        }
+
+        if energy_peak_report.status == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="energy_peak_detection",
+                event_type="ENERGY_PEAK_DETECTION_DONE",
+                action="continue_pipeline",
+                reason="energy_peak_detection_completed",
+                details=_energy_peak_details,
+            )
+        elif energy_peak_report.status == "completed_with_warnings":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="energy_peak_detection",
+                event_type="ENERGY_PEAK_DETECTION_COMPLETED_WITH_WARNINGS",
+                action="continue_pipeline",
+                status="warn",
+                reason="energy_peak_detection_completed_with_warnings",
+                details=_energy_peak_details,
+            )
+        elif energy_peak_report.status == "skipped_no_energy_timeline":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="energy_peak_detection",
+                event_type="ENERGY_PEAK_DETECTION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=energy_peak_report.recommendation or "energy_peak_detection_skipped",
+                details=_energy_peak_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="energy_peak_detection",
+                event_type="ENERGY_PEAK_DETECTION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=energy_peak_report.recommendation or "energy_peak_detection_failed",
+                details=_energy_peak_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="energy_peak_detection_done",
+        reason="energy_peak_detection_completed_or_skipped",
+    )
+    # ── End Energy Peak Detection ────────────────────────────────────────────
 
     _safe_log_decision(
         job=job,

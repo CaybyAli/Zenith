@@ -114,6 +114,24 @@ class Job:
     rms_energy_context_peak_count: int = 0
     rms_energy_context_silent_count: int = 0
 
+    energy_peak_report: dict[str, Any] = field(default_factory=dict)
+    energy_peak_status: str | None = None
+    energy_peak_timeline_source: str | None = None
+    energy_peak_detection_result: dict[str, Any] = field(default_factory=dict)
+    energy_peaks: list[dict[str, Any]] = field(default_factory=list)
+    energy_peak_count: int = 0
+    energy_high_energy_peak_count: int = 0
+    energy_local_max_peak_count: int = 0
+    energy_rise_peak_count: int = 0
+    energy_threshold_peak_count: int = 0
+    energy_peak_threshold: float = 0.85
+    energy_rise_threshold: float = 0.25
+    energy_min_peak_distance_seconds: float = 0.4
+    energy_max_peak_score: float = 0.0
+    energy_avg_peak_score: float = 0.0
+    energy_top_peak: dict[str, Any] = field(default_factory=dict)
+    energy_peak_recommendation: str | None = None
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -292,6 +310,23 @@ class Job:
             rms_energy_context_point_count=int(data.get("rms_energy_context_point_count", 0) or 0),
             rms_energy_context_peak_count=int(data.get("rms_energy_context_peak_count", 0) or 0),
             rms_energy_context_silent_count=int(data.get("rms_energy_context_silent_count", 0) or 0),
+            energy_peak_report=dict(data.get("energy_peak_report") or {}),
+            energy_peak_status=data.get("energy_peak_status"),
+            energy_peak_timeline_source=data.get("energy_peak_timeline_source"),
+            energy_peak_detection_result=dict(data.get("energy_peak_detection_result") or {}),
+            energy_peaks=list(data.get("energy_peaks") or []),
+            energy_peak_count=int(data.get("energy_peak_count", 0) or 0),
+            energy_high_energy_peak_count=int(data.get("energy_high_energy_peak_count", 0) or 0),
+            energy_local_max_peak_count=int(data.get("energy_local_max_peak_count", 0) or 0),
+            energy_rise_peak_count=int(data.get("energy_rise_peak_count", 0) or 0),
+            energy_threshold_peak_count=int(data.get("energy_threshold_peak_count", 0) or 0),
+            energy_peak_threshold=float(data.get("energy_peak_threshold", 0.85) or 0.85),
+            energy_rise_threshold=float(data.get("energy_rise_threshold", 0.25) or 0.25),
+            energy_min_peak_distance_seconds=float(data.get("energy_min_peak_distance_seconds", 0.4) or 0.4),
+            energy_max_peak_score=float(data.get("energy_max_peak_score", 0.0) or 0.0),
+            energy_avg_peak_score=float(data.get("energy_avg_peak_score", 0.0) or 0.0),
+            energy_top_peak=dict(data.get("energy_top_peak") or {}),
+            energy_peak_recommendation=data.get("energy_peak_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
