@@ -73,6 +73,7 @@ from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.filler_word_runner import run_filler_word_detection_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
+from core.beat_detection_runner import run_beat_detection_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -239,6 +240,109 @@ def _audio_normalization_decision_details(audio_normalization_report) -> dict:
         "recommendation": getattr(audio_normalization_report, "recommendation", None),
         "warnings": list(getattr(audio_normalization_report, "warnings", []) or []),
         "errors": list(getattr(audio_normalization_report, "errors", []) or []),
+    }
+
+
+def _beat_detection_event_type_for_status(status: str | None) -> str:
+    status_text = str(status or "").strip().lower()
+
+    if status_text == "ok":
+        return "BEAT_DETECTION_DONE"
+
+    if status_text == "completed_with_warnings":
+        return "BEAT_DETECTION_COMPLETED_WITH_WARNINGS"
+
+    if status_text == "blocked_missing_preprocessed_audio":
+        return "BEAT_DETECTION_BLOCKED"
+
+    if status_text in {"skipped_unsupported_source", "skipped_no_audio_source"}:
+        return "BEAT_DETECTION_SKIPPED"
+
+    if status_text == "failed":
+        return "BEAT_DETECTION_FAILED"
+
+    return "BEAT_DETECTION_FAILED"
+
+
+def _apply_beat_detection_report_to_job(job, beat_detection_report) -> None:
+    report_dict = {}
+
+    to_dict = getattr(beat_detection_report, "to_dict", None)
+    if callable(to_dict):
+        try:
+            maybe_dict = to_dict()
+            if isinstance(maybe_dict, dict):
+                report_dict = dict(maybe_dict)
+        except Exception:
+            report_dict = {}
+
+    job.beat_detection_report = report_dict
+    job.beat_detection_status = getattr(beat_detection_report, "status", None)
+    job.beat_detection_selected_path = getattr(beat_detection_report, "selected_path", None)
+    job.beat_detection_selected_type = getattr(beat_detection_report, "selected_type", None)
+    job.beat_detection_source_selection = dict(
+        getattr(beat_detection_report, "source_selection", {}) or {}
+    )
+    job.beat_detection_result = dict(
+        getattr(beat_detection_report, "beat_detection_result", {}) or {}
+    )
+    job.beat_detection_beats = list(getattr(beat_detection_report, "beats", []) or [])
+    job.beat_detection_beat_count = int(
+        getattr(beat_detection_report, "beat_count", 0) or 0
+    )
+    job.beat_detection_estimated_bpm = getattr(
+        beat_detection_report, "estimated_bpm", None
+    )
+    job.beat_detection_average_beat_interval_seconds = getattr(
+        beat_detection_report, "average_beat_interval_seconds", None
+    )
+    job.beat_detection_duration_seconds = float(
+        getattr(beat_detection_report, "duration_seconds", 0.0) or 0.0
+    )
+    job.beat_detection_sample_rate = getattr(beat_detection_report, "sample_rate", None)
+    job.beat_detection_channels = getattr(beat_detection_report, "channels", None)
+    job.beat_detection_energy_frame_count = int(
+        getattr(beat_detection_report, "energy_frame_count", 0) or 0
+    )
+    job.beat_detection_peak_threshold = float(
+        getattr(beat_detection_report, "peak_threshold", 1.35) or 1.35
+    )
+    job.beat_detection_min_beat_distance_seconds = float(
+        getattr(beat_detection_report, "min_beat_distance_seconds", 0.25) or 0.25
+    )
+    job.beat_detection_max_beat_strength = float(
+        getattr(beat_detection_report, "max_beat_strength", 0.0) or 0.0
+    )
+    job.beat_detection_avg_beat_strength = float(
+        getattr(beat_detection_report, "avg_beat_strength", 0.0) or 0.0
+    )
+    job.beat_detection_top_beat = dict(
+        getattr(beat_detection_report, "top_beat", {}) or {}
+    )
+    job.beat_detection_recommendation = getattr(
+        beat_detection_report, "recommendation", None
+    )
+
+
+def _beat_detection_decision_details(beat_detection_report) -> dict:
+    return {
+        "status": getattr(beat_detection_report, "status", None),
+        "selected_type": getattr(beat_detection_report, "selected_type", None),
+        "selected_path": getattr(beat_detection_report, "selected_path", None),
+        "beat_count": int(getattr(beat_detection_report, "beat_count", 0) or 0),
+        "estimated_bpm": getattr(beat_detection_report, "estimated_bpm", None),
+        "average_beat_interval_seconds": getattr(
+            beat_detection_report, "average_beat_interval_seconds", None
+        ),
+        "duration_seconds": getattr(beat_detection_report, "duration_seconds", 0.0),
+        "energy_frame_count": int(
+            getattr(beat_detection_report, "energy_frame_count", 0) or 0
+        ),
+        "max_beat_strength": getattr(beat_detection_report, "max_beat_strength", 0.0),
+        "avg_beat_strength": getattr(beat_detection_report, "avg_beat_strength", 0.0),
+        "recommendation": getattr(beat_detection_report, "recommendation", None),
+        "warnings": list(getattr(beat_detection_report, "warnings", []) or []),
+        "errors": list(getattr(beat_detection_report, "errors", []) or []),
     }
 
 
@@ -1878,7 +1982,69 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
+        phase="beat_detection",
+        event_type="BEAT_DETECTION_STARTED",
+        action="run_beat_detection",
+        reason="beat_detection_runner_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "profile_id": getattr(job, "profile_id", None),
+            "quality_mode": getattr(job, "quality_mode", None),
+        },
+    )
+
+    beat_detection_report = run_beat_detection_for_job(
+        job=job,
+        frame_ms=50.0,
+        hop_ms=25.0,
+        peak_threshold=1.35,
+        min_beat_distance_seconds=0.25,
+        require_existing_file=True,
+        allow_original_wav_fallback=True,
+        metadata={
+            "stage": "2B-12-E",
+            "job_id": getattr(job, "job_id", None),
+        },
+    )
+
+    _apply_beat_detection_report_to_job(job, beat_detection_report)
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="beat_detection",
+        event_type=_beat_detection_event_type_for_status(
+            getattr(beat_detection_report, "status", None)
+        ),
+        action="complete_beat_detection",
+        status=(
+            "warning"
+            if getattr(beat_detection_report, "status", None)
+            in {
+                "completed_with_warnings",
+                "blocked_missing_preprocessed_audio",
+                "skipped_unsupported_source",
+                "skipped_no_audio_source",
+            }
+            else getattr(beat_detection_report, "status", "ok")
+        ),
+        reason="beat_detection_completed_or_skipped",
+        details=_beat_detection_decision_details(beat_detection_report),
+    )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="beat_detection_done",
+        reason="beat_detection_completed_or_skipped",
+    )
+
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
         phase="state",
+
         event_type="STATE_ANALYZING",
         action="transition_to_analyzing",
         reason="pipeline_analysis_started",

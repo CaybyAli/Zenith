@@ -172,6 +172,27 @@ class Job:
     audio_normalization_sample_rate: int | None = None
     audio_normalization_channels: int | None = None
 
+    beat_detection_report: dict[str, Any] = field(default_factory=dict)
+    beat_detection_status: str | None = None
+    beat_detection_selected_path: str | None = None
+    beat_detection_selected_type: str | None = None
+    beat_detection_source_selection: dict[str, Any] = field(default_factory=dict)
+    beat_detection_result: dict[str, Any] = field(default_factory=dict)
+    beat_detection_beats: list[dict[str, Any]] = field(default_factory=list)
+    beat_detection_beat_count: int = 0
+    beat_detection_estimated_bpm: float | None = None
+    beat_detection_average_beat_interval_seconds: float | None = None
+    beat_detection_duration_seconds: float = 0.0
+    beat_detection_sample_rate: int | None = None
+    beat_detection_channels: int | None = None
+    beat_detection_energy_frame_count: int = 0
+    beat_detection_peak_threshold: float = 1.35
+    beat_detection_min_beat_distance_seconds: float = 0.25
+    beat_detection_max_beat_strength: float = 0.0
+    beat_detection_avg_beat_strength: float = 0.0
+    beat_detection_top_beat: dict[str, Any] = field(default_factory=dict)
+    beat_detection_recommendation: str | None = None
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -425,6 +446,44 @@ class Job:
                 if data.get("audio_normalization_channels") is not None
                 else None
             ),
+            beat_detection_report=dict(data.get("beat_detection_report") or {}),
+            beat_detection_status=data.get("beat_detection_status"),
+            beat_detection_selected_path=data.get("beat_detection_selected_path"),
+            beat_detection_selected_type=data.get("beat_detection_selected_type"),
+            beat_detection_source_selection=dict(data.get("beat_detection_source_selection") or {}),
+            beat_detection_result=dict(data.get("beat_detection_result") or {}),
+            beat_detection_beats=list(data.get("beat_detection_beats") or []),
+            beat_detection_beat_count=int(data.get("beat_detection_beat_count", 0) or 0),
+            beat_detection_estimated_bpm=(
+                float(data["beat_detection_estimated_bpm"])
+                if data.get("beat_detection_estimated_bpm") is not None
+                else None
+            ),
+            beat_detection_average_beat_interval_seconds=(
+                float(data["beat_detection_average_beat_interval_seconds"])
+                if data.get("beat_detection_average_beat_interval_seconds") is not None
+                else None
+            ),
+            beat_detection_duration_seconds=float(data.get("beat_detection_duration_seconds", 0.0) or 0.0),
+            beat_detection_sample_rate=(
+                int(data["beat_detection_sample_rate"])
+                if data.get("beat_detection_sample_rate") is not None
+                else None
+            ),
+            beat_detection_channels=(
+                int(data["beat_detection_channels"])
+                if data.get("beat_detection_channels") is not None
+                else None
+            ),
+            beat_detection_energy_frame_count=int(data.get("beat_detection_energy_frame_count", 0) or 0),
+            beat_detection_peak_threshold=float(data.get("beat_detection_peak_threshold", 1.35) or 1.35),
+            beat_detection_min_beat_distance_seconds=float(
+                data.get("beat_detection_min_beat_distance_seconds", 0.25) or 0.25
+            ),
+            beat_detection_max_beat_strength=float(data.get("beat_detection_max_beat_strength", 0.0) or 0.0),
+            beat_detection_avg_beat_strength=float(data.get("beat_detection_avg_beat_strength", 0.0) or 0.0),
+            beat_detection_top_beat=dict(data.get("beat_detection_top_beat") or {}),
+            beat_detection_recommendation=data.get("beat_detection_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
