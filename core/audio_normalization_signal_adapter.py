@@ -448,3 +448,4 @@ def adapt_audio_normalization_run_report_to_signals(report: Any) -> AudioNormali
                 "future_edit_compatible": True,
             },
         )
+        

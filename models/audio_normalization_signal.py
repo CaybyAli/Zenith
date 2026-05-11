@@ -82,3 +82,4 @@ class AudioNormalizationSignalAdapterResult:
             recommendation=str(data.get("recommendation", "review")),
             metadata=metadata,
         )
+        
