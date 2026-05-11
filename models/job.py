@@ -132,6 +132,20 @@ class Job:
     energy_top_peak: dict[str, Any] = field(default_factory=dict)
     energy_peak_recommendation: str | None = None
 
+    filler_word_report: dict[str, Any] = field(default_factory=dict)
+    filler_word_status: str | None = None
+    filler_word_transcript_source: str | None = None
+    filler_word_detection_result: dict[str, Any] = field(default_factory=dict)
+    filler_word_occurrences: list[dict[str, Any]] = field(default_factory=list)
+    filler_word_occurrence_count: int = 0
+    filler_word_remove_candidate_count: int = 0
+    filler_word_counts_by_type: dict[str, int] = field(default_factory=dict)
+    filler_word_counts_by_language: dict[str, int] = field(default_factory=dict)
+    filler_word_total_duration_seconds: float = 0.0
+    filler_word_transcript_word_count: int = 0
+    filler_word_rate: float = 0.0
+    filler_word_recommendation: str | None = None
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -327,6 +341,23 @@ class Job:
             energy_avg_peak_score=float(data.get("energy_avg_peak_score", 0.0) or 0.0),
             energy_top_peak=dict(data.get("energy_top_peak") or {}),
             energy_peak_recommendation=data.get("energy_peak_recommendation"),
+            filler_word_report=dict(data.get("filler_word_report") or {}),
+            filler_word_status=data.get("filler_word_status"),
+            filler_word_transcript_source=data.get("filler_word_transcript_source"),
+            filler_word_detection_result=dict(data.get("filler_word_detection_result") or {}),
+            filler_word_occurrences=list(data.get("filler_word_occurrences") or []),
+            filler_word_occurrence_count=int(data.get("filler_word_occurrence_count", 0) or 0),
+            filler_word_remove_candidate_count=int(data.get("filler_word_remove_candidate_count", 0) or 0),
+            filler_word_counts_by_type={
+                str(k): int(v) for k, v in (data.get("filler_word_counts_by_type") or {}).items()
+            } if isinstance(data.get("filler_word_counts_by_type"), dict) else {},
+            filler_word_counts_by_language={
+                str(k): int(v) for k, v in (data.get("filler_word_counts_by_language") or {}).items()
+            } if isinstance(data.get("filler_word_counts_by_language"), dict) else {},
+            filler_word_total_duration_seconds=float(data.get("filler_word_total_duration_seconds", 0.0) or 0.0),
+            filler_word_transcript_word_count=int(data.get("filler_word_transcript_word_count", 0) or 0),
+            filler_word_rate=float(data.get("filler_word_rate", 0.0) or 0.0),
+            filler_word_recommendation=data.get("filler_word_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),

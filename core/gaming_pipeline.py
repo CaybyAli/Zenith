@@ -71,6 +71,7 @@ from core.rms_energy_context_adapter import adapt_rms_energy_run_report_to_conte
 from core.energy_peak_runner import run_energy_peak_detection_for_job
 from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
+from core.filler_word_runner import run_filler_word_detection_for_job
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1540,6 +1541,127 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="silence_classification_done",
         reason="silence_classification_completed_or_skipped",
     )
+
+    # ── Filler Word Detection (2B-10-C) ──────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="filler_word_detection",
+        event_type="FILLER_WORD_DETECTION_STARTED",
+        action="run_filler_word_detection",
+        reason="filler_word_detection_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "profile_id": getattr(job, "profile_id", None),
+            "quality_mode": getattr(job, "quality_mode", None),
+        },
+    )
+
+    try:
+        filler_word_report = run_filler_word_detection_for_job(
+            job=job,
+            detect_repeated_words=True,
+            repeat_max_gap_seconds=0.35,
+            max_occurrences=None,
+            metadata={
+                "stage": "2B-10-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as filler_exc:
+        filler_word_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="filler_word_detection",
+            event_type="FILLER_WORD_DETECTION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="filler_word_runner_exception",
+            details={"error": str(filler_exc)},
+        )
+
+    if filler_word_report is not None:
+        job.filler_word_report = filler_word_report.to_dict()
+        job.filler_word_status = filler_word_report.status
+        job.filler_word_transcript_source = filler_word_report.transcript_source
+        job.filler_word_detection_result = dict(filler_word_report.detection_result or {})
+        job.filler_word_occurrences = list(filler_word_report.occurrences or [])
+        job.filler_word_occurrence_count = int(filler_word_report.occurrence_count or 0)
+        job.filler_word_remove_candidate_count = int(filler_word_report.remove_candidate_count or 0)
+        job.filler_word_counts_by_type = dict(filler_word_report.counts_by_filler_type or {})
+        job.filler_word_counts_by_language = dict(filler_word_report.counts_by_language or {})
+        job.filler_word_total_duration_seconds = float(filler_word_report.total_filler_duration_seconds or 0.0)
+        job.filler_word_transcript_word_count = int(filler_word_report.transcript_word_count or 0)
+        job.filler_word_rate = float(filler_word_report.filler_rate or 0.0)
+        job.filler_word_recommendation = filler_word_report.recommendation
+
+        _filler_details = {
+            "status": filler_word_report.status,
+            "transcript_source": filler_word_report.transcript_source,
+            "occurrence_count": filler_word_report.occurrence_count,
+            "remove_candidate_count": filler_word_report.remove_candidate_count,
+            "counts_by_filler_type": dict(filler_word_report.counts_by_filler_type or {}),
+            "counts_by_language": dict(filler_word_report.counts_by_language or {}),
+            "transcript_word_count": filler_word_report.transcript_word_count,
+            "filler_rate": filler_word_report.filler_rate,
+            "recommendation": filler_word_report.recommendation,
+            "warnings": list(filler_word_report.warnings or []),
+            "errors": list(filler_word_report.errors or []),
+        }
+
+        if filler_word_report.status == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="filler_word_detection",
+                event_type="FILLER_WORD_DETECTION_DONE",
+                action="continue_pipeline",
+                reason="filler_word_detection_completed",
+                details=_filler_details,
+            )
+        elif filler_word_report.status == "completed_with_warnings":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="filler_word_detection",
+                event_type="FILLER_WORD_DETECTION_COMPLETED_WITH_WARNINGS",
+                action="continue_pipeline",
+                status="warn",
+                reason=filler_word_report.recommendation or "filler_word_detection_completed_with_warnings",
+                details=_filler_details,
+            )
+        elif filler_word_report.status == "skipped_no_transcript":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="filler_word_detection",
+                event_type="FILLER_WORD_DETECTION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=filler_word_report.recommendation or "filler_word_detection_skipped",
+                details=_filler_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="filler_word_detection",
+                event_type="FILLER_WORD_DETECTION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=filler_word_report.recommendation or "filler_word_detection_failed",
+                details=_filler_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="filler_word_detection_done",
+        reason="filler_word_detection_completed_or_skipped",
+    )
+    # ── End Filler Word Detection ────────────────────────────────────────────
 
     transition_job_state(
         job,
