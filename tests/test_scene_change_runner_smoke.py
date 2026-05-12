@@ -173,11 +173,7 @@ def test_run_scene_change_for_job_uses_preprocessing_manifest_source_path_fallba
 
     assert report.status == "ok"
     assert report.selected_path == str(fallback_video)
-    assert report.selected_type in {
-        "preprocessing_manifest_source_path",
-        "source_path",
-        "preprocessed_source_path",
-    }
+    assert report.selected_type == "preprocessing_source_path"
     assert called["path"] == str(fallback_video)
     assert report.scene_change_count == 2
 
