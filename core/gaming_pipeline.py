@@ -73,6 +73,10 @@ from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.filler_word_runner import run_filler_word_detection_for_job
 from core.transcript_runner import apply_transcript_run_report_to_job, run_transcript_for_job
+from core.sentence_boundary_runner import (
+    apply_sentence_boundary_run_report_to_job,
+    run_sentence_boundary_for_job,
+)
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -2582,6 +2586,113 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ── End Transcript Lifeline ──────────────────────────────────────────────
 
     # ── Filler Word Detection (2B-10-C) ──────────────────────────────────────
+    # Sentence Boundary Protection (2B-20-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="sentence_boundary",
+        event_type="SENTENCE_BOUNDARY_STARTED",
+        action="run_sentence_boundary",
+        reason="sentence_boundary_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transcript_segment_count": len(
+                list(getattr(job, "transcript_segments", []) or [])
+            ),
+        },
+    )
+
+    try:
+        sentence_boundary_report = run_sentence_boundary_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-20-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_sentence_boundary_run_report_to_job(job, sentence_boundary_report)
+    except Exception as sentence_boundary_exc:
+        sentence_boundary_report = None
+        job.sentence_boundary_status = "failed"
+        job.sentence_boundary_recommendation = "sentence_boundary_failed"
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="sentence_boundary",
+            event_type="SENTENCE_BOUNDARY_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="sentence_boundary_runner_exception",
+            details={"error": str(sentence_boundary_exc)},
+        )
+
+    if sentence_boundary_report is not None:
+        _sentence_boundary_details = {
+            "status": sentence_boundary_report.status,
+            "boundary_count": sentence_boundary_report.boundary_count,
+            "protection_zone_count": sentence_boundary_report.protection_zone_count,
+            "complete_sentence_count": sentence_boundary_report.complete_sentence_count,
+            "open_fragment_count": sentence_boundary_report.open_fragment_count,
+            "question_count": sentence_boundary_report.question_count,
+            "open_question_count": sentence_boundary_report.open_question_count,
+            "safe_boundary_count": sentence_boundary_report.safe_boundary_count,
+            "unsafe_boundary_count": sentence_boundary_report.unsafe_boundary_count,
+            "recommendation": sentence_boundary_report.recommendation,
+            "warnings": list(sentence_boundary_report.warnings or []),
+            "errors": list(sentence_boundary_report.errors or []),
+        }
+        _sentence_boundary_status = str(
+            sentence_boundary_report.status or ""
+        ).strip().lower()
+
+        if _sentence_boundary_status in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="sentence_boundary",
+                event_type="SENTENCE_BOUNDARY_DONE",
+                action="continue_pipeline",
+                status="warn"
+                if _sentence_boundary_status == "completed_with_warnings"
+                else "ok",
+                reason=sentence_boundary_report.recommendation
+                or "sentence_boundary_completed",
+                details=_sentence_boundary_details,
+            )
+        elif _sentence_boundary_status == "skipped_no_transcript_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="sentence_boundary",
+                event_type="SENTENCE_BOUNDARY_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=sentence_boundary_report.recommendation
+                or "sentence_boundary_skipped_no_transcript",
+                details=_sentence_boundary_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="sentence_boundary",
+                event_type="SENTENCE_BOUNDARY_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=sentence_boundary_report.recommendation
+                or "sentence_boundary_failed",
+                details=_sentence_boundary_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="sentence_boundary_done",
+        reason="sentence_boundary_completed_or_skipped",
+    )
+    # End Sentence Boundary Protection
+
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,

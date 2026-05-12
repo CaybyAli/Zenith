@@ -95,6 +95,20 @@ class Job:
     transcript_segment_normalization_status: str | None = None
     transcript_segment_normalization_recommendation: str | None = None
 
+    sentence_boundary_report: dict[str, Any] = field(default_factory=dict)
+    sentence_boundary_status: str | None = None
+    sentence_boundary_boundaries: list[dict[str, Any]] = field(default_factory=list)
+    sentence_boundary_protection_zones: list[dict[str, Any]] = field(default_factory=list)
+    sentence_boundary_boundary_count: int = 0
+    sentence_boundary_protection_zone_count: int = 0
+    sentence_boundary_complete_sentence_count: int = 0
+    sentence_boundary_open_fragment_count: int = 0
+    sentence_boundary_question_count: int = 0
+    sentence_boundary_open_question_count: int = 0
+    sentence_boundary_safe_boundary_count: int = 0
+    sentence_boundary_unsafe_boundary_count: int = 0
+    sentence_boundary_recommendation: str | None = None
+
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
     unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
@@ -460,6 +474,19 @@ class Job:
             transcript_has_word_level_timestamps=bool(data.get("transcript_has_word_level_timestamps", False)),
             transcript_segment_normalization_status=data.get("transcript_segment_normalization_status"),
             transcript_segment_normalization_recommendation=data.get("transcript_segment_normalization_recommendation"),
+            sentence_boundary_report=dict(data.get("sentence_boundary_report") or {}),
+            sentence_boundary_status=data.get("sentence_boundary_status"),
+            sentence_boundary_boundaries=list(data.get("sentence_boundary_boundaries") or []),
+            sentence_boundary_protection_zones=list(data.get("sentence_boundary_protection_zones") or []),
+            sentence_boundary_boundary_count=int(data.get("sentence_boundary_boundary_count", 0) or 0),
+            sentence_boundary_protection_zone_count=int(data.get("sentence_boundary_protection_zone_count", 0) or 0),
+            sentence_boundary_complete_sentence_count=int(data.get("sentence_boundary_complete_sentence_count", 0) or 0),
+            sentence_boundary_open_fragment_count=int(data.get("sentence_boundary_open_fragment_count", 0) or 0),
+            sentence_boundary_question_count=int(data.get("sentence_boundary_question_count", 0) or 0),
+            sentence_boundary_open_question_count=int(data.get("sentence_boundary_open_question_count", 0) or 0),
+            sentence_boundary_safe_boundary_count=int(data.get("sentence_boundary_safe_boundary_count", 0) or 0),
+            sentence_boundary_unsafe_boundary_count=int(data.get("sentence_boundary_unsafe_boundary_count", 0) or 0),
+            sentence_boundary_recommendation=data.get("sentence_boundary_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),

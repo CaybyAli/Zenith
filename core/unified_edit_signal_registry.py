@@ -14,6 +14,7 @@ from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
 from core.stutter_detection_signal_adapter import adapt_stutter_detection_report_to_signals
 from core.screen_content_signal_adapter import adapt_screen_content_report_to_signals
+from core.sentence_boundary_signal_adapter import adapt_sentence_boundary_report_to_signals
 from core.visual_energy_signal_adapter import adapt_visual_energy_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
@@ -27,6 +28,7 @@ SOURCE_MOTION_ANALYSIS = "motion_analysis"
 SOURCE_FACE_REACTION = "face_reaction"
 SOURCE_STUTTER_DETECTION = "stutter_detection"
 SOURCE_SCREEN_CONTENT = "screen_content"
+SOURCE_SENTENCE_BOUNDARY = "sentence_boundary"
 SOURCE_VISUAL_ENERGY = "visual_energy"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
@@ -469,6 +471,38 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_FILLER_WORD}")
+
+    sentence_boundary_report = _job_attr(job, "sentence_boundary_report")
+    if not sentence_boundary_report:
+        sentence_boundary_boundaries = _job_attr(job, "sentence_boundary_boundaries")
+        sentence_boundary_zones = _job_attr(job, "sentence_boundary_protection_zones")
+        if isinstance(sentence_boundary_boundaries, list) or isinstance(
+            sentence_boundary_zones,
+            list,
+        ):
+            sentence_boundary_report = {
+                "boundaries": sentence_boundary_boundaries
+                if isinstance(sentence_boundary_boundaries, list)
+                else [],
+                "protection_zones": sentence_boundary_zones
+                if isinstance(sentence_boundary_zones, list)
+                else [],
+            }
+
+    sentence_boundary_signals = _safe_collect(
+        lambda: adapt_sentence_boundary_report_to_signals(sentence_boundary_report),
+        label=SOURCE_SENTENCE_BOUNDARY,
+        warnings=warnings,
+        errors=errors,
+    )
+    if sentence_boundary_signals:
+        source_counts[SOURCE_SENTENCE_BOUNDARY] = len(sentence_boundary_signals)
+        for signal in sentence_boundary_signals:
+            normalized = _normalize_signal(signal, SOURCE_SENTENCE_BOUNDARY)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_SENTENCE_BOUNDARY}")
 
     audio_signals = _safe_collect(
         lambda: adapt_audio_normalization_run_report_to_signals(
