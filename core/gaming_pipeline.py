@@ -96,6 +96,10 @@ from core.screen_content_runner import (
     apply_screen_content_run_report_to_job,
     run_screen_content_classification_for_job,
 )
+from core.visual_energy_runner import (
+    apply_visual_energy_run_report_to_job,
+    run_visual_energy_for_job,
+)
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1729,7 +1733,118 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="screen_content_completed_or_skipped",
     )
     # End Screen Content Classification
-    
+
+    # ── Visual Energy Score (2B-18-C) ───────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="2B-18-C",
+        event_type="VISUAL_ENERGY_STARTED",
+        action="run_visual_energy",
+        module="gaming_pipeline",
+        reason="visual_energy_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "scene_change_status": getattr(job, "scene_change_status", None),
+            "motion_analysis_status": getattr(job, "motion_analysis_status", None),
+            "face_reaction_status": getattr(job, "face_reaction_status", None),
+            "stutter_detection_status": getattr(job, "stutter_detection_status", None),
+            "screen_content_status": getattr(job, "screen_content_status", None),
+        },
+    )
+
+    visual_energy_report = None
+
+    try:
+        visual_energy_report = run_visual_energy_for_job(job)
+
+        apply_visual_energy_run_report_to_job(job, visual_energy_report)
+
+        visual_energy_status = getattr(visual_energy_report, "status", None)
+
+        if visual_energy_status in {"ok", "completed_with_warnings"}:
+            visual_energy_event_type = "VISUAL_ENERGY_DONE"
+        elif visual_energy_status == "skipped_no_visual_sources":
+            visual_energy_event_type = "VISUAL_ENERGY_SKIPPED"
+        else:
+            visual_energy_event_type = "VISUAL_ENERGY_FAILED"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-18-C",
+            event_type=visual_energy_event_type,
+            action="visual_energy_completed",
+            module="gaming_pipeline",
+            status=visual_energy_status or "failed",
+            reason="visual_energy_completed_or_skipped",
+            details={
+                "status": visual_energy_status,
+                "point_count": getattr(visual_energy_report, "point_count", 0),
+                "segment_count": getattr(visual_energy_report, "segment_count", 0),
+                "high_energy_segment_count": getattr(
+                    visual_energy_report,
+                    "high_energy_segment_count",
+                    0,
+                ),
+                "low_energy_segment_count": getattr(
+                    visual_energy_report,
+                    "low_energy_segment_count",
+                    0,
+                ),
+                "technical_warning_segment_count": getattr(
+                    visual_energy_report,
+                    "technical_warning_segment_count",
+                    0,
+                ),
+                "duration_seconds": getattr(
+                    visual_energy_report,
+                    "duration_seconds",
+                    None,
+                ),
+                "frame_sample_rate": getattr(
+                    visual_energy_report,
+                    "frame_sample_rate",
+                    None,
+                ),
+                "recommendation": getattr(
+                    visual_energy_report,
+                    "recommendation",
+                    None,
+                ),
+                "warnings": list(getattr(visual_energy_report, "warnings", []) or []),
+                "errors": list(getattr(visual_energy_report, "errors", []) or []),
+            },
+        )
+
+    except Exception as visual_energy_exc:
+        job.visual_energy_status = "failed"
+        job.visual_energy_recommendation = "visual_energy_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-18-C",
+            event_type="VISUAL_ENERGY_FAILED",
+            action="visual_energy_failed",
+            module="gaming_pipeline",
+            status="failed",
+            reason="visual_energy_exception",
+            details={
+                "error": str(visual_energy_exc),
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="visual_energy_done",
+        reason="visual_energy_completed_or_skipped",
+    )
+    # ── End Visual Energy Score ──────────────────────────────────────────────
+
     # ── RMS Energy ──────────────────────────────────────────────────────────
     _safe_log_decision(
         job=job,
