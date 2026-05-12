@@ -13,6 +13,7 @@ from core.scene_change_signal_adapter import adapt_scene_change_report_to_signal
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
 from core.stutter_detection_signal_adapter import adapt_stutter_detection_report_to_signals
+from core.screen_content_signal_adapter import adapt_screen_content_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -24,6 +25,7 @@ SOURCE_SCENE_CHANGE = "scene_change"
 SOURCE_MOTION_ANALYSIS = "motion_analysis"
 SOURCE_FACE_REACTION = "face_reaction"
 SOURCE_STUTTER_DETECTION = "stutter_detection"
+SOURCE_SCREEN_CONTENT = "screen_content"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -602,6 +604,34 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_STUTTER_DETECTION}")
+
+    screen_content_report = _job_attr(job, "screen_content_report")
+    if not screen_content_report:
+        screen_content_segments = _job_attr(job, "screen_content_segments")
+        if isinstance(screen_content_segments, list) and screen_content_segments:
+            screen_content_report = {
+                "screen_content_segments": screen_content_segments
+            }
+
+    if not screen_content_report:
+        screen_content_result = _job_attr(job, "screen_content_result")
+        if screen_content_result:
+            screen_content_report = screen_content_result
+
+    screen_content_signals = _safe_collect(
+        lambda: adapt_screen_content_report_to_signals(screen_content_report),
+        label=SOURCE_SCREEN_CONTENT,
+        warnings=warnings,
+        errors=errors,
+    )
+    if screen_content_signals:
+        source_counts[SOURCE_SCREEN_CONTENT] = len(screen_content_signals)
+        for signal in screen_content_signals:
+            normalized = _normalize_signal(signal, SOURCE_SCREEN_CONTENT)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_SCREEN_CONTENT}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     

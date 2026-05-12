@@ -275,6 +275,25 @@ class Job:
     stutter_detection_duration_seconds: float | None = None
     stutter_detection_frame_sample_rate: float = 10.0
     stutter_detection_recommendation: str | None = None
+    screen_content_report: dict[str, Any] = field(default_factory=dict)
+    screen_content_status: str | None = None
+    screen_content_selected_path: str | None = None
+    screen_content_selected_type: str | None = None
+    screen_content_result: dict[str, Any] = field(default_factory=dict)
+    screen_content_points: list[dict[str, Any]] = field(default_factory=list)
+    screen_content_segments: list[dict[str, Any]] = field(default_factory=list)
+    screen_content_point_count: int = 0
+    screen_content_segment_count: int = 0
+    screen_content_gameplay_segment_count: int = 0
+    screen_content_menu_segment_count: int = 0
+    screen_content_loading_segment_count: int = 0
+    screen_content_scoreboard_segment_count: int = 0
+    screen_content_death_screen_segment_count: int = 0
+    screen_content_victory_screen_segment_count: int = 0
+    screen_content_black_screen_segment_count: int = 0
+    screen_content_duration_seconds: float | None = None
+    screen_content_frame_sample_rate: float = 2.0
+    screen_content_recommendation: str | None = None
 
     recovery_status: str | None = None
     resume_safety: str | None = None
@@ -704,6 +723,49 @@ class Job:
             stutter_detection_recommendation=data.get(
                 "stutter_detection_recommendation"
             ),
+            screen_content_report=dict(data.get("screen_content_report") or {}),
+            screen_content_status=data.get("screen_content_status"),
+            screen_content_selected_path=data.get("screen_content_selected_path"),
+            screen_content_selected_type=data.get("screen_content_selected_type"),
+            screen_content_result=dict(data.get("screen_content_result") or {}),
+            screen_content_points=list(data.get("screen_content_points") or []),
+            screen_content_segments=list(data.get("screen_content_segments") or []),
+            screen_content_point_count=int(
+                data.get("screen_content_point_count", 0) or 0
+            ),
+            screen_content_segment_count=int(
+                data.get("screen_content_segment_count", 0) or 0
+            ),
+            screen_content_gameplay_segment_count=int(
+                data.get("screen_content_gameplay_segment_count", 0) or 0
+            ),
+            screen_content_menu_segment_count=int(
+                data.get("screen_content_menu_segment_count", 0) or 0
+            ),
+            screen_content_loading_segment_count=int(
+                data.get("screen_content_loading_segment_count", 0) or 0
+            ),
+            screen_content_scoreboard_segment_count=int(
+                data.get("screen_content_scoreboard_segment_count", 0) or 0
+            ),
+            screen_content_death_screen_segment_count=int(
+                data.get("screen_content_death_screen_segment_count", 0) or 0
+            ),
+            screen_content_victory_screen_segment_count=int(
+                data.get("screen_content_victory_screen_segment_count", 0) or 0
+            ),
+            screen_content_black_screen_segment_count=int(
+                data.get("screen_content_black_screen_segment_count", 0) or 0
+            ),
+            screen_content_duration_seconds=(
+                float(data["screen_content_duration_seconds"])
+                if data.get("screen_content_duration_seconds") is not None
+                else None
+            ),
+            screen_content_frame_sample_rate=float(
+                data.get("screen_content_frame_sample_rate", 2.0) or 2.0
+            ),
+            screen_content_recommendation=data.get("screen_content_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),

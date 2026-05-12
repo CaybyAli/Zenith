@@ -92,6 +92,10 @@ from core.stutter_detection_runner import (
     apply_stutter_detection_run_report_to_job,
     run_stutter_detection_for_job,
 )
+from core.screen_content_runner import (
+    apply_screen_content_run_report_to_job,
+    run_screen_content_classification_for_job,
+)
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1599,6 +1603,132 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="stutter_detection_completed_or_skipped",
     )
     # End Stutter Detection
+
+    # Screen Content Classification (2B-17-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="2B-17-C",
+        event_type="SCREEN_CONTENT_STARTED",
+        action="run_screen_content_classification",
+        module="gaming_pipeline",
+        reason="screen_content_classification_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "raw_video_path": getattr(job, "raw_video_path", None),
+            "preprocessing_manifest_path": getattr(
+                job,
+                "preprocessing_manifest_path",
+                None,
+            ),
+        },
+    )
+
+    screen_content_report = None
+
+    try:
+        screen_content_report = run_screen_content_classification_for_job(job)
+
+        apply_screen_content_run_report_to_job(job, screen_content_report)
+
+        screen_content_status = getattr(screen_content_report, "status", None)
+
+        if screen_content_status in {"ok", "completed_with_warnings"}:
+            screen_content_event_type = "SCREEN_CONTENT_DONE"
+        elif screen_content_status == "skipped_no_video_source":
+            screen_content_event_type = "SCREEN_CONTENT_SKIPPED"
+        elif screen_content_status == "blocked_missing_video_source":
+            screen_content_event_type = "SCREEN_CONTENT_BLOCKED"
+        else:
+            screen_content_event_type = "SCREEN_CONTENT_FAILED"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-17-C",
+            event_type=screen_content_event_type,
+            action="screen_content_classification_completed",
+            module="gaming_pipeline",
+            status=screen_content_status or "failed",
+            reason="screen_content_completed_or_skipped",
+            details={
+                "status": screen_content_status,
+                "selected_path": getattr(screen_content_report, "selected_path", None),
+                "selected_type": getattr(screen_content_report, "selected_type", None),
+                "point_count": getattr(screen_content_report, "point_count", 0),
+                "segment_count": getattr(screen_content_report, "segment_count", 0),
+                "gameplay_segment_count": getattr(
+                    screen_content_report,
+                    "gameplay_segment_count",
+                    0,
+                ),
+                "menu_segment_count": getattr(
+                    screen_content_report,
+                    "menu_segment_count",
+                    0,
+                ),
+                "loading_segment_count": getattr(
+                    screen_content_report,
+                    "loading_segment_count",
+                    0,
+                ),
+                "scoreboard_segment_count": getattr(
+                    screen_content_report,
+                    "scoreboard_segment_count",
+                    0,
+                ),
+                "death_screen_segment_count": getattr(
+                    screen_content_report,
+                    "death_screen_segment_count",
+                    0,
+                ),
+                "victory_screen_segment_count": getattr(
+                    screen_content_report,
+                    "victory_screen_segment_count",
+                    0,
+                ),
+                "black_screen_segment_count": getattr(
+                    screen_content_report,
+                    "black_screen_segment_count",
+                    0,
+                ),
+                "recommendation": getattr(
+                    screen_content_report,
+                    "recommendation",
+                    None,
+                ),
+                "warnings": list(getattr(screen_content_report, "warnings", []) or []),
+                "errors": list(getattr(screen_content_report, "errors", []) or []),
+            },
+        )
+
+    except Exception as screen_content_exc:
+        job.screen_content_status = "failed"
+        job.screen_content_recommendation = "screen_content_classification_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-17-C",
+            event_type="SCREEN_CONTENT_FAILED",
+            action="screen_content_classification_failed",
+            module="gaming_pipeline",
+            status="failed",
+            reason="screen_content_exception",
+            details={
+                "error": str(screen_content_exc),
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="screen_content_done",
+        reason="screen_content_completed_or_skipped",
+    )
+    # End Screen Content Classification
     
     # ── RMS Energy ──────────────────────────────────────────────────────────
     _safe_log_decision(
