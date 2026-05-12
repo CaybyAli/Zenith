@@ -86,6 +86,13 @@ class Job:
     transcript_language: str | None = None
     transcript_recommendation: str | None = None
 
+    unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
+    unified_edit_signal_status: str | None = None
+    unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
+    unified_edit_signal_count: int = 0
+    unified_edit_signal_summary: dict[str, Any] = field(default_factory=dict)
+    unified_edit_signal_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -345,6 +352,12 @@ class Job:
             transcript_duration_seconds=float(data.get("transcript_duration_seconds", 0.0) or 0.0),
             transcript_language=data.get("transcript_language"),
             transcript_recommendation=data.get("transcript_recommendation"),
+            unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
+            unified_edit_signal_status=data.get("unified_edit_signal_status"),
+            unified_edit_signals=list(data.get("unified_edit_signals") or []),
+            unified_edit_signal_count=int(data.get("unified_edit_signal_count", 0) or 0),
+            unified_edit_signal_summary=dict(data.get("unified_edit_signal_summary") or {}),
+            unified_edit_signal_recommendation=data.get("unified_edit_signal_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

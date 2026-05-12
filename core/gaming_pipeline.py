@@ -73,6 +73,7 @@ from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.filler_word_runner import run_filler_word_detection_for_job
 from core.transcript_runner import apply_transcript_run_report_to_job, run_transcript_for_job
+from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.job_state_transitions import transition_job_state
@@ -2166,6 +2167,119 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="beat_detection_done",
         reason="beat_detection_completed_or_skipped",
     )
+
+    # ── Unified Edit Signal Registry (3-C) ───────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="unified_edit_signals",
+        event_type="UNIFIED_EDIT_SIGNALS_STARTED",
+        action="run_unified_edit_signal_registry",
+        reason="unified_edit_signals_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "have_energy_peak_report": bool(getattr(job, "energy_peak_report", None)),
+            "have_filler_word_report": bool(getattr(job, "filler_word_report", None)),
+            "have_audio_normalization_report": bool(
+                getattr(job, "audio_normalization_report", None)
+            ),
+            "have_beat_detection_report": bool(getattr(job, "beat_detection_report", None)),
+        },
+    )
+
+    try:
+        unified_signal_result = run_unified_edit_signal_registry_for_job(
+            job=job,
+            metadata={
+                "stage": "3-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as unified_signal_exc:
+        unified_signal_result = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="unified_edit_signals",
+            event_type="UNIFIED_EDIT_SIGNALS_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="unified_edit_signal_registry_exception",
+            details={"error": str(unified_signal_exc)},
+        )
+
+    if unified_signal_result is not None:
+        _unified_signal_details = {
+            "status": unified_signal_result.status,
+            "signal_count": unified_signal_result.signal_count,
+            "source_counts": dict(unified_signal_result.source_counts),
+            "type_counts": dict(unified_signal_result.type_counts),
+            "priority_counts": dict(unified_signal_result.priority_counts),
+            "duplicate_count": unified_signal_result.duplicate_count,
+            "max_signal_score": unified_signal_result.max_signal_score,
+            "avg_signal_score": unified_signal_result.avg_signal_score,
+            "timeline_coverage_seconds": unified_signal_result.timeline_coverage_seconds,
+            "recommendation": unified_signal_result.recommendation,
+            "warnings": list(unified_signal_result.warnings or []),
+            "errors": list(unified_signal_result.errors or []),
+        }
+
+        _unified_status_text = str(unified_signal_result.status or "").strip().lower()
+
+        if _unified_status_text == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="unified_edit_signals",
+                event_type="UNIFIED_EDIT_SIGNALS_DONE",
+                action="continue_pipeline",
+                reason="unified_edit_signals_completed",
+                details=_unified_signal_details,
+            )
+        elif _unified_status_text == "completed_with_warnings":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="unified_edit_signals",
+                event_type="UNIFIED_EDIT_SIGNALS_DONE",
+                action="continue_pipeline",
+                status="warn",
+                reason=unified_signal_result.recommendation
+                or "unified_edit_signals_completed_with_warnings",
+                details=_unified_signal_details,
+            )
+        elif _unified_status_text == "skipped_no_signals":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="unified_edit_signals",
+                event_type="UNIFIED_EDIT_SIGNALS_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=unified_signal_result.recommendation
+                or "no_edit_signals_available",
+                details=_unified_signal_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="unified_edit_signals",
+                event_type="UNIFIED_EDIT_SIGNALS_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=unified_signal_result.recommendation or "unified_edit_signals_failed",
+                details=_unified_signal_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="unified_edit_signals_done",
+        reason="unified_edit_signals_completed_or_skipped",
+    )
+    # ── End Unified Edit Signal Registry ─────────────────────────────────────
 
     _safe_log_decision(
         job=job,
