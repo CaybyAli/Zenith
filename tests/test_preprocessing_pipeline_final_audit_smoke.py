@@ -145,6 +145,7 @@ def test_preprocessing_pipeline_report_contains_all_required_sections(
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
         metadata={"audit": "2B-05-F"},
+        execute_audio_extraction=False,
     )
 
     required_keys = [
@@ -181,6 +182,7 @@ def test_preprocessing_pipeline_manifest_json_contains_plans_and_cache_validatio
         job_id="job_preprocessing_final_audit_001",
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
+        execute_audio_extraction=False,
     )
 
     manifest_path = Path(report["manifest_path"])
@@ -207,6 +209,7 @@ def test_preprocessing_job_roundtrip_preserves_all_pipeline_fields(
         job_id="job_preprocessing_final_audit_001",
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
+        execute_audio_extraction=False,
     )
 
     job = _make_job(raw_video_path=str(source_path))

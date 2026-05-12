@@ -45,6 +45,7 @@ def test_preprocessing_pipeline_report_builds_all_sections(tmp_path: Path) -> No
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
         metadata={"test": True},
+        execute_audio_extraction=False,
     )
 
     assert report["preprocessing_manifest"]
@@ -64,6 +65,7 @@ def test_preprocessing_pipeline_creates_manifest_file(tmp_path: Path) -> None:
         job_id="job_preprocessing_pipeline_001",
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
+        execute_audio_extraction=False,
     )
 
     manifest_path = Path(report["manifest_path"])
@@ -85,6 +87,7 @@ def test_apply_preprocessing_pipeline_report_to_job_sets_fields(tmp_path: Path) 
         job_id="job_preprocessing_pipeline_001",
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
+        execute_audio_extraction=False,
     )
     job = _make_job(raw_video_path=str(source_path))
 
@@ -112,6 +115,7 @@ def test_run_preprocessing_pipeline_for_job_sets_job_fields(tmp_path: Path) -> N
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
         metadata={"test": True},
+        execute_audio_extraction=False,
     )
 
     assert job.preprocessing_dir == report["preprocessing_dir"]
@@ -132,6 +136,7 @@ def test_job_to_dict_from_dict_preserves_preprocessing_pipeline_fields(
         job=job,
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
+        execute_audio_extraction=False,
     )
 
     restored = Job.from_dict(job.to_dict())
@@ -157,6 +162,7 @@ def test_missing_source_report_is_failed(tmp_path: Path) -> None:
         job_id="job_preprocessing_pipeline_001",
         source_path=source_path,
         root_dir=tmp_path / "preprocessed",
+        execute_audio_extraction=False,
     )
 
     assert report["status"] == "failed"

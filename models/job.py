@@ -69,6 +69,12 @@ class Job:
     preprocessing_cache_validation_status: str | None = None
     preprocessing_cache_reuse_allowed: bool = False
 
+    audio_extraction_result: dict[str, Any] = field(default_factory=dict)
+    audio_extraction_status: str | None = None
+    ready_audio_targets: list[str] = field(default_factory=list)
+    missing_audio_targets: list[str] = field(default_factory=list)
+    failed_audio_targets: list[str] = field(default_factory=list)
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -313,6 +319,11 @@ class Job:
             preprocessing_cache_validation=dict(data.get("preprocessing_cache_validation") or {}),
             preprocessing_cache_validation_status=data.get("preprocessing_cache_validation_status"),
             preprocessing_cache_reuse_allowed=bool(data.get("preprocessing_cache_reuse_allowed", False)),
+            audio_extraction_result=dict(data.get("audio_extraction_result") or {}),
+            audio_extraction_status=data.get("audio_extraction_status"),
+            ready_audio_targets=list(data.get("ready_audio_targets") or []),
+            missing_audio_targets=list(data.get("missing_audio_targets") or []),
+            failed_audio_targets=list(data.get("failed_audio_targets") or []),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

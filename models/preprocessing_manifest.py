@@ -33,6 +33,12 @@ class PreprocessingManifest:
     cache_validation_status: str | None = None
     cache_reuse_allowed: bool = False
 
+    audio_extraction_result: dict[str, Any] = field(default_factory=dict)
+    audio_extraction_status: str | None = None
+    ready_audio_targets: list[str] = field(default_factory=list)
+    missing_audio_targets: list[str] = field(default_factory=list)
+    failed_audio_targets: list[str] = field(default_factory=list)
+
     status: str = "ready"
     reused_cache: bool = False
 
@@ -67,6 +73,11 @@ class PreprocessingManifest:
             "cache_validation": dict(self.cache_validation),
             "cache_validation_status": self.cache_validation_status,
             "cache_reuse_allowed": self.cache_reuse_allowed,
+            "audio_extraction_result": dict(self.audio_extraction_result),
+            "audio_extraction_status": self.audio_extraction_status,
+            "ready_audio_targets": list(self.ready_audio_targets),
+            "missing_audio_targets": list(self.missing_audio_targets),
+            "failed_audio_targets": list(self.failed_audio_targets),
             "status": self.status,
             "reused_cache": self.reused_cache,
             "created_at": self.created_at,
@@ -101,6 +112,11 @@ class PreprocessingManifest:
             cache_validation=dict(data.get("cache_validation") or {}),
             cache_validation_status=data.get("cache_validation_status"),
             cache_reuse_allowed=bool(data.get("cache_reuse_allowed", False)),
+            audio_extraction_result=dict(data.get("audio_extraction_result") or {}),
+            audio_extraction_status=data.get("audio_extraction_status"),
+            ready_audio_targets=list(data.get("ready_audio_targets") or []),
+            missing_audio_targets=list(data.get("missing_audio_targets") or []),
+            failed_audio_targets=list(data.get("failed_audio_targets") or []),
             status=str(data.get("status", "ready")),
             reused_cache=bool(data.get("reused_cache", False)),
             created_at=data.get("created_at"),
