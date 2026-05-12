@@ -217,6 +217,20 @@ class Job:
     beat_detection_top_beat: dict[str, Any] = field(default_factory=dict)
     beat_detection_recommendation: str | None = None
 
+    scene_change_report: dict[str, Any] = field(default_factory=dict)
+    scene_change_status: str | None = None
+    scene_change_selected_path: str | None = None
+    scene_change_selected_type: str | None = None
+    scene_change_result: dict[str, Any] = field(default_factory=dict)
+    scene_changes: list[dict[str, Any]] = field(default_factory=list)
+    scene_change_count: int = 0
+    scene_change_hard_count: int = 0
+    scene_change_soft_count: int = 0
+    scene_change_false_positive_candidate_count: int = 0
+    scene_change_threshold: float = 0.30
+    scene_change_duration_seconds: float | None = None
+    scene_change_recommendation: str | None = None
+
     recovery_status: str | None = None
     resume_safety: str | None = None
     recovery_report: dict[str, Any] = field(default_factory=dict)
@@ -529,6 +543,25 @@ class Job:
             beat_detection_avg_beat_strength=float(data.get("beat_detection_avg_beat_strength", 0.0) or 0.0),
             beat_detection_top_beat=dict(data.get("beat_detection_top_beat") or {}),
             beat_detection_recommendation=data.get("beat_detection_recommendation"),
+            scene_change_report=dict(data.get("scene_change_report") or {}),
+            scene_change_status=data.get("scene_change_status"),
+            scene_change_selected_path=data.get("scene_change_selected_path"),
+            scene_change_selected_type=data.get("scene_change_selected_type"),
+            scene_change_result=dict(data.get("scene_change_result") or {}),
+            scene_changes=list(data.get("scene_changes") or []),
+            scene_change_count=int(data.get("scene_change_count", 0) or 0),
+            scene_change_hard_count=int(data.get("scene_change_hard_count", 0) or 0),
+            scene_change_soft_count=int(data.get("scene_change_soft_count", 0) or 0),
+            scene_change_false_positive_candidate_count=int(
+                data.get("scene_change_false_positive_candidate_count", 0) or 0
+            ),
+            scene_change_threshold=float(data.get("scene_change_threshold", 0.30) or 0.30),
+            scene_change_duration_seconds=(
+                float(data["scene_change_duration_seconds"])
+                if data.get("scene_change_duration_seconds") is not None
+                else None
+            ),
+            scene_change_recommendation=data.get("scene_change_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
