@@ -9,6 +9,7 @@ from core.audio_normalization_signal_adapter import (
 from core.beat_detection_signal_adapter import adapt_beat_detection_run_report_to_signals
 from core.energy_peak_signal_adapter import adapt_energy_peak_run_report_to_signals
 from core.filler_word_signal_adapter import adapt_filler_word_run_report_to_signals
+from core.keyword_emotion_signal_adapter import adapt_keyword_emotion_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
@@ -21,6 +22,7 @@ from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 SOURCE_ENERGY_PEAK = "energy_peak"
 SOURCE_FILLER_WORD = "filler_word"
+SOURCE_KEYWORD_EMOTION = "keyword_emotion"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
@@ -503,6 +505,38 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_SENTENCE_BOUNDARY}")
+
+    keyword_emotion_report = _job_attr(job, "keyword_emotion_report")
+    if not keyword_emotion_report:
+        keyword_emotion_scores = _job_attr(job, "keyword_emotion_segment_scores")
+        keyword_emotion_matches = _job_attr(job, "keyword_emotion_matches")
+        if isinstance(keyword_emotion_scores, list) or isinstance(
+            keyword_emotion_matches,
+            list,
+        ):
+            keyword_emotion_report = {
+                "segment_scores": keyword_emotion_scores
+                if isinstance(keyword_emotion_scores, list)
+                else [],
+                "matches": keyword_emotion_matches
+                if isinstance(keyword_emotion_matches, list)
+                else [],
+            }
+
+    keyword_emotion_signals = _safe_collect(
+        lambda: adapt_keyword_emotion_report_to_signals(keyword_emotion_report),
+        label=SOURCE_KEYWORD_EMOTION,
+        warnings=warnings,
+        errors=errors,
+    )
+    if keyword_emotion_signals:
+        source_counts[SOURCE_KEYWORD_EMOTION] = len(keyword_emotion_signals)
+        for signal in keyword_emotion_signals:
+            normalized = _normalize_signal(signal, SOURCE_KEYWORD_EMOTION)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_KEYWORD_EMOTION}")
 
     audio_signals = _safe_collect(
         lambda: adapt_audio_normalization_run_report_to_signals(

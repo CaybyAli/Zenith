@@ -109,6 +109,20 @@ class Job:
     sentence_boundary_unsafe_boundary_count: int = 0
     sentence_boundary_recommendation: str | None = None
 
+    keyword_emotion_report: dict[str, Any] = field(default_factory=dict)
+    keyword_emotion_status: str | None = None
+    keyword_emotion_matches: list[dict[str, Any]] = field(default_factory=list)
+    keyword_emotion_segment_scores: list[dict[str, Any]] = field(default_factory=list)
+    keyword_emotion_match_count: int = 0
+    keyword_emotion_segment_score_count: int = 0
+    keyword_emotion_hype_match_count: int = 0
+    keyword_emotion_frustration_match_count: int = 0
+    keyword_emotion_shock_match_count: int = 0
+    keyword_emotion_laugh_match_count: int = 0
+    keyword_emotion_question_match_count: int = 0
+    keyword_emotion_high_value_segment_count: int = 0
+    keyword_emotion_recommendation: str | None = None
+
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
     unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
@@ -487,6 +501,19 @@ class Job:
             sentence_boundary_safe_boundary_count=int(data.get("sentence_boundary_safe_boundary_count", 0) or 0),
             sentence_boundary_unsafe_boundary_count=int(data.get("sentence_boundary_unsafe_boundary_count", 0) or 0),
             sentence_boundary_recommendation=data.get("sentence_boundary_recommendation"),
+            keyword_emotion_report=dict(data.get("keyword_emotion_report") or {}),
+            keyword_emotion_status=data.get("keyword_emotion_status"),
+            keyword_emotion_matches=list(data.get("keyword_emotion_matches") or []),
+            keyword_emotion_segment_scores=list(data.get("keyword_emotion_segment_scores") or []),
+            keyword_emotion_match_count=int(data.get("keyword_emotion_match_count", 0) or 0),
+            keyword_emotion_segment_score_count=int(data.get("keyword_emotion_segment_score_count", 0) or 0),
+            keyword_emotion_hype_match_count=int(data.get("keyword_emotion_hype_match_count", 0) or 0),
+            keyword_emotion_frustration_match_count=int(data.get("keyword_emotion_frustration_match_count", 0) or 0),
+            keyword_emotion_shock_match_count=int(data.get("keyword_emotion_shock_match_count", 0) or 0),
+            keyword_emotion_laugh_match_count=int(data.get("keyword_emotion_laugh_match_count", 0) or 0),
+            keyword_emotion_question_match_count=int(data.get("keyword_emotion_question_match_count", 0) or 0),
+            keyword_emotion_high_value_segment_count=int(data.get("keyword_emotion_high_value_segment_count", 0) or 0),
+            keyword_emotion_recommendation=data.get("keyword_emotion_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),

@@ -77,6 +77,10 @@ from core.sentence_boundary_runner import (
     apply_sentence_boundary_run_report_to_job,
     run_sentence_boundary_for_job,
 )
+from core.keyword_emotion_runner import (
+    apply_keyword_emotion_run_report_to_job,
+    run_keyword_emotion_for_job,
+)
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -2692,6 +2696,111 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="sentence_boundary_completed_or_skipped",
     )
     # End Sentence Boundary Protection
+
+    # Keyword Emotion Scoring (2B-21-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="keyword_emotion",
+        event_type="KEYWORD_EMOTION_STARTED",
+        action="run_keyword_emotion",
+        reason="keyword_emotion_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transcript_segment_count": len(
+                list(getattr(job, "transcript_segments", []) or [])
+            ),
+        },
+    )
+
+    try:
+        keyword_emotion_report = run_keyword_emotion_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-21-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_keyword_emotion_run_report_to_job(job, keyword_emotion_report)
+    except Exception as keyword_emotion_exc:
+        keyword_emotion_report = None
+        job.keyword_emotion_status = "failed"
+        job.keyword_emotion_recommendation = "keyword_emotion_failed"
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="keyword_emotion",
+            event_type="KEYWORD_EMOTION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="keyword_emotion_runner_exception",
+            details={"error": str(keyword_emotion_exc)},
+        )
+
+    if keyword_emotion_report is not None:
+        _keyword_emotion_details = {
+            "status": keyword_emotion_report.status,
+            "match_count": keyword_emotion_report.match_count,
+            "segment_score_count": keyword_emotion_report.segment_score_count,
+            "hype_match_count": keyword_emotion_report.hype_match_count,
+            "frustration_match_count": keyword_emotion_report.frustration_match_count,
+            "shock_match_count": keyword_emotion_report.shock_match_count,
+            "laugh_match_count": keyword_emotion_report.laugh_match_count,
+            "question_match_count": keyword_emotion_report.question_match_count,
+            "high_value_segment_count": keyword_emotion_report.high_value_segment_count,
+            "recommendation": keyword_emotion_report.recommendation,
+            "warnings": list(keyword_emotion_report.warnings or []),
+            "errors": list(keyword_emotion_report.errors or []),
+        }
+        _keyword_emotion_status = str(keyword_emotion_report.status or "").strip().lower()
+
+        if _keyword_emotion_status in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="keyword_emotion",
+                event_type="KEYWORD_EMOTION_DONE",
+                action="continue_pipeline",
+                status="warn"
+                if _keyword_emotion_status == "completed_with_warnings"
+                else "ok",
+                reason=keyword_emotion_report.recommendation
+                or "keyword_emotion_completed",
+                details=_keyword_emotion_details,
+            )
+        elif _keyword_emotion_status == "skipped_no_transcript_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="keyword_emotion",
+                event_type="KEYWORD_EMOTION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=keyword_emotion_report.recommendation
+                or "keyword_emotion_skipped_no_transcript",
+                details=_keyword_emotion_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="keyword_emotion",
+                event_type="KEYWORD_EMOTION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=keyword_emotion_report.recommendation
+                or "keyword_emotion_failed",
+                details=_keyword_emotion_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="keyword_emotion_done",
+        reason="keyword_emotion_completed_or_skipped",
+    )
+    # End Keyword Emotion Scoring
 
     _safe_log_decision(
         job=job,
