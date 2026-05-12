@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
+from core.transcript_segment_normalizer import normalize_transcript_segments
 from core.transcript_source_selector import (
     TranscriptSourceSelection,
     select_transcript_source_for_job,
@@ -32,6 +33,7 @@ def _serialize_segments(result: TranscriptResult) -> list[dict[str, Any]]:
                 "end_seconds": float(getattr(segment, "end_seconds", 0.0) or 0.0),
                 "text": str(getattr(segment, "text", "") or ""),
                 "confidence": getattr(segment, "confidence", None),
+                "words": list(getattr(segment, "words", []) or []),
             }
         )
 
@@ -165,15 +167,36 @@ def build_transcript_run_report(
             metadata=safe_metadata,
         )
 
-    segments = _serialize_segments(result)
+    raw_segments = _serialize_segments(result)
     full_text = (result.full_text or "").strip()
+
+    normalization_result = normalize_transcript_segments(
+        raw_segments,
+        metadata={
+            "stage": safe_metadata.get("stage"),
+            "source_path": selection.selected_path,
+            "source_type": selection.selected_type,
+            "engine": getattr(result, "engine", None),
+        },
+    )
+
+    segments = list(normalization_result.segments)
     duration_seconds = _duration_seconds(segments)
-    word_count = _word_count(full_text)
+    text_word_count = _word_count(full_text)
+
+    warnings.extend(list(normalization_result.warnings or []))
+    errors.extend(list(normalization_result.errors or []))
 
     if not segments or not full_text:
         warnings.append("transcript_empty")
         status = "completed_with_warnings"
         recommendation = "transcript_empty_review"
+    elif normalization_result.status == "failed":
+        status = "failed"
+        recommendation = normalization_result.recommendation or "fix_transcript_segments"
+    elif normalization_result.status == "completed_with_warnings":
+        status = "completed_with_warnings"
+        recommendation = normalization_result.recommendation or "review_transcript_segments"
     elif warnings:
         status = "completed_with_warnings"
         recommendation = "transcript_completed_with_warnings"
@@ -191,11 +214,17 @@ def build_transcript_run_report(
         segments=segments,
         full_text=full_text,
         segment_count=len(segments),
+        normalized_segment_count=normalization_result.segment_count,
+        valid_segment_count=normalization_result.valid_segment_count,
+        invalid_segment_count=normalization_result.invalid_segment_count,
         duration_seconds=duration_seconds,
-        word_count=word_count,
+        word_count=text_word_count,
+        has_word_level_timestamps=normalization_result.has_word_level_timestamps,
+        segment_normalization_status=normalization_result.status,
+        segment_normalization_recommendation=normalization_result.recommendation,
         recommendation=recommendation,
-        warnings=warnings,
-        errors=errors,
+        warnings=sorted(set(warnings)),
+        errors=sorted(set(errors)),
         metadata=safe_metadata,
     )
 
@@ -243,6 +272,29 @@ def apply_transcript_run_report_to_job(
     job.transcript_duration_seconds = float(report.duration_seconds or 0.0)
     job.transcript_language = report.language
     job.transcript_recommendation = report.recommendation
+
+    if hasattr(job, "transcript_normalized_segment_count"):
+        job.transcript_normalized_segment_count = int(report.normalized_segment_count or 0)
+
+    if hasattr(job, "transcript_valid_segment_count"):
+        job.transcript_valid_segment_count = int(report.valid_segment_count or 0)
+
+    if hasattr(job, "transcript_invalid_segment_count"):
+        job.transcript_invalid_segment_count = int(report.invalid_segment_count or 0)
+
+    if hasattr(job, "transcript_word_count"):
+        job.transcript_word_count = int(report.word_count or 0)
+
+    if hasattr(job, "transcript_has_word_level_timestamps"):
+        job.transcript_has_word_level_timestamps = bool(report.has_word_level_timestamps)
+
+    if hasattr(job, "transcript_segment_normalization_status"):
+        job.transcript_segment_normalization_status = report.segment_normalization_status
+
+    if hasattr(job, "transcript_segment_normalization_recommendation"):
+        job.transcript_segment_normalization_recommendation = (
+            report.segment_normalization_recommendation
+        )
 
     if hasattr(job, "touch"):
         job.touch()

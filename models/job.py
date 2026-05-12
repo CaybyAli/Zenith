@@ -85,6 +85,13 @@ class Job:
     transcript_duration_seconds: float = 0.0
     transcript_language: str | None = None
     transcript_recommendation: str | None = None
+    transcript_normalized_segment_count: int = 0
+    transcript_valid_segment_count: int = 0
+    transcript_invalid_segment_count: int = 0
+    transcript_word_count: int = 0
+    transcript_has_word_level_timestamps: bool = False
+    transcript_segment_normalization_status: str | None = None
+    transcript_segment_normalization_recommendation: str | None = None
 
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
@@ -325,7 +332,7 @@ class Job:
     scheduled_at: Optional[str] = None
     is_scheduled: bool = False
 
-    # 🔥 NEU (für Dashboard)
+    # ðŸ”¥ NEU (fÃ¼r Dashboard)
     is_rerender: bool = False
     source_job_id: str | None = None
     publish_status: str | None = None
@@ -443,6 +450,13 @@ class Job:
             transcript_duration_seconds=float(data.get("transcript_duration_seconds", 0.0) or 0.0),
             transcript_language=data.get("transcript_language"),
             transcript_recommendation=data.get("transcript_recommendation"),
+            transcript_normalized_segment_count=int(data.get("transcript_normalized_segment_count", 0) or 0),
+            transcript_valid_segment_count=int(data.get("transcript_valid_segment_count", 0) or 0),
+            transcript_invalid_segment_count=int(data.get("transcript_invalid_segment_count", 0) or 0),
+            transcript_word_count=int(data.get("transcript_word_count", 0) or 0),
+            transcript_has_word_level_timestamps=bool(data.get("transcript_has_word_level_timestamps", False)),
+            transcript_segment_normalization_status=data.get("transcript_segment_normalization_status"),
+            transcript_segment_normalization_recommendation=data.get("transcript_segment_normalization_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),
@@ -793,7 +807,7 @@ class Job:
             scheduled_at=data.get("scheduled_at"),
             is_scheduled=data.get("is_scheduled", False),
 
-            # 🔥 NEU
+            # ðŸ”¥ NEU
             is_rerender=bool(
     data.get("is_rerender", False) or data.get("rerender_requested", False)
 ),
