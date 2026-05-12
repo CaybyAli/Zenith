@@ -9,6 +9,7 @@ from core.audio_normalization_signal_adapter import (
 from core.beat_detection_signal_adapter import adapt_beat_detection_run_report_to_signals
 from core.energy_peak_signal_adapter import adapt_energy_peak_run_report_to_signals
 from core.filler_word_signal_adapter import adapt_filler_word_run_report_to_signals
+from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -16,6 +17,7 @@ SOURCE_ENERGY_PEAK = "energy_peak"
 SOURCE_FILLER_WORD = "filler_word"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
+SOURCE_SCENE_CHANGE = "scene_change"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -491,6 +493,27 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_BEAT_DETECTION}")
+
+    scene_change_report = _job_attr(job, "scene_change_report")
+    if not scene_change_report:
+        scene_changes = _job_attr(job, "scene_changes")
+        if isinstance(scene_changes, list) and scene_changes:
+            scene_change_report = {"scene_changes": scene_changes}
+
+    scene_change_signals = _safe_collect(
+        lambda: adapt_scene_change_report_to_signals(scene_change_report),
+        label=SOURCE_SCENE_CHANGE,
+        warnings=warnings,
+        errors=errors,
+    )
+    if scene_change_signals:
+        source_counts[SOURCE_SCENE_CHANGE] = len(scene_change_signals)
+        for signal in scene_change_signals:
+            normalized = _normalize_signal(signal, SOURCE_SCENE_CHANGE)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_SCENE_CHANGE}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     if silence_class_signals:
