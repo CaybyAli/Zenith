@@ -230,6 +230,21 @@ class Job:
     scene_change_threshold: float = 0.30
     scene_change_duration_seconds: float | None = None
     scene_change_recommendation: str | None = None
+    motion_analysis_report: dict[str, Any] = field(default_factory=dict)
+    motion_analysis_status: str | None = None
+    motion_analysis_selected_path: str | None = None
+    motion_analysis_selected_type: str | None = None
+    motion_analysis_result: dict[str, Any] = field(default_factory=dict)
+    motion_analysis_points: list[dict[str, Any]] = field(default_factory=list)
+    motion_analysis_segments: list[dict[str, Any]] = field(default_factory=list)
+    motion_analysis_point_count: int = 0
+    motion_analysis_segment_count: int = 0
+    motion_analysis_low_motion_segment_count: int = 0
+    motion_analysis_high_motion_segment_count: int = 0
+    motion_analysis_dead_visual_candidate_count: int = 0
+    motion_analysis_duration_seconds: float | None = None
+    motion_analysis_frame_sample_rate: float = 2.0
+    motion_analysis_recommendation: str | None = None
 
     recovery_status: str | None = None
     resume_safety: str | None = None
@@ -562,6 +577,37 @@ class Job:
                 else None
             ),
             scene_change_recommendation=data.get("scene_change_recommendation"),
+            motion_analysis_report=dict(data.get("motion_analysis_report") or {}),
+            motion_analysis_status=data.get("motion_analysis_status"),
+            motion_analysis_selected_path=data.get("motion_analysis_selected_path"),
+            motion_analysis_selected_type=data.get("motion_analysis_selected_type"),
+            motion_analysis_result=dict(data.get("motion_analysis_result") or {}),
+            motion_analysis_points=list(data.get("motion_analysis_points") or []),
+            motion_analysis_segments=list(data.get("motion_analysis_segments") or []),
+            motion_analysis_point_count=int(
+                data.get("motion_analysis_point_count", 0) or 0
+            ),
+            motion_analysis_segment_count=int(
+                data.get("motion_analysis_segment_count", 0) or 0
+            ),
+            motion_analysis_low_motion_segment_count=int(
+                data.get("motion_analysis_low_motion_segment_count", 0) or 0
+            ),
+            motion_analysis_high_motion_segment_count=int(
+                data.get("motion_analysis_high_motion_segment_count", 0) or 0
+            ),
+            motion_analysis_dead_visual_candidate_count=int(
+                data.get("motion_analysis_dead_visual_candidate_count", 0) or 0
+            ),
+            motion_analysis_duration_seconds=(
+                float(data["motion_analysis_duration_seconds"])
+                if data.get("motion_analysis_duration_seconds") is not None
+                else None
+            ),
+            motion_analysis_frame_sample_rate=float(
+                data.get("motion_analysis_frame_sample_rate", 2.0) or 2.0
+            ),
+            motion_analysis_recommendation=data.get("motion_analysis_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
