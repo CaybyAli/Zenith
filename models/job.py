@@ -294,6 +294,19 @@ class Job:
     screen_content_duration_seconds: float | None = None
     screen_content_frame_sample_rate: float = 2.0
     screen_content_recommendation: str | None = None
+    visual_energy_report: dict[str, Any] = field(default_factory=dict)
+    visual_energy_status: str | None = None
+    visual_energy_result: dict[str, Any] = field(default_factory=dict)
+    visual_energy_points: list[dict[str, Any]] = field(default_factory=list)
+    visual_energy_segments: list[dict[str, Any]] = field(default_factory=list)
+    visual_energy_point_count: int = 0
+    visual_energy_segment_count: int = 0
+    visual_energy_high_segment_count: int = 0
+    visual_energy_low_segment_count: int = 0
+    visual_energy_technical_warning_segment_count: int = 0
+    visual_energy_duration_seconds: float | None = None
+    visual_energy_frame_sample_rate: float = 2.0
+    visual_energy_recommendation: str | None = None
 
     recovery_status: str | None = None
     resume_safety: str | None = None

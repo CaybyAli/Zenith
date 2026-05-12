@@ -160,7 +160,10 @@ def _collect_sample_times(
 
     times.extend(
         _collect_times_from_items(
-            _get_report_items(motion_analysis_report, ("points", "segments"))
+            _get_report_items(
+                motion_analysis_report,
+                ("points", "motion_points", "segments", "motion_segments"),
+            )
         )
     )
     times.extend(
@@ -170,12 +173,18 @@ def _collect_sample_times(
     )
     times.extend(
         _collect_times_from_items(
-            _get_report_items(screen_content_report, ("points", "segments"))
+            _get_report_items(
+                screen_content_report,
+                ("points", "screen_content_points", "segments", "screen_content_segments"),
+            )
         )
     )
     times.extend(
         _collect_times_from_items(
-            _get_report_items(stutter_detection_report, ("points", "segments"))
+            _get_report_items(
+                stutter_detection_report,
+                ("points", "stutter_detection_points", "segments", "stutter_detection_segments"),
+            )
         )
     )
     times.extend(
@@ -241,8 +250,8 @@ def _score_from_item(
 
 
 def _motion_score_at_time(report: Any | None, time_seconds: float) -> float:
-    points = _get_report_items(report, ("points",))
-    segments = _get_report_items(report, ("segments",))
+    points = _get_report_items(report, ("points", "motion_points"))
+    segments = _get_report_items(report, ("segments", "motion_segments"))
 
     active_segment = _find_active_segment(segments, time_seconds)
     if active_segment:
@@ -298,8 +307,8 @@ def _screen_type_from_item(item: dict[str, Any] | None) -> str:
 
 
 def _screen_content_score_at_time(report: Any | None, time_seconds: float) -> float:
-    points = _get_report_items(report, ("points",))
-    segments = _get_report_items(report, ("segments",))
+    points = _get_report_items(report, ("points", "screen_content_points"))
+    segments = _get_report_items(report, ("segments", "screen_content_segments"))
 
     active_segment = _find_active_segment(segments, time_seconds)
     if active_segment:
@@ -336,8 +345,8 @@ def _scene_change_score_at_time(report: Any | None, time_seconds: float) -> floa
 
 
 def _stutter_penalty_at_time(report: Any | None, time_seconds: float) -> float:
-    points = _get_report_items(report, ("points",))
-    segments = _get_report_items(report, ("segments",))
+    points = _get_report_items(report, ("points", "stutter_detection_points"))
+    segments = _get_report_items(report, ("segments", "stutter_detection_segments"))
 
     active_segment = _find_active_segment(segments, time_seconds)
     if active_segment:
@@ -611,10 +620,19 @@ def _has_any_visual_source(
                 scene_change_report,
                 ("points", "scene_changes", "changes", "segments"),
             ),
-            _has_visual_source(motion_analysis_report, ("points", "segments")),
+            _has_visual_source(
+                motion_analysis_report,
+                ("points", "motion_points", "segments", "motion_segments"),
+            ),
             _has_visual_source(face_reaction_report, ("reaction_windows", "windows", "points")),
-            _has_visual_source(stutter_detection_report, ("points", "segments")),
-            _has_visual_source(screen_content_report, ("points", "segments")),
+            _has_visual_source(
+                stutter_detection_report,
+                ("points", "stutter_detection_points", "segments", "stutter_detection_segments"),
+            ),
+            _has_visual_source(
+                screen_content_report,
+                ("points", "screen_content_points", "segments", "screen_content_segments"),
+            ),
         )
     )
 
