@@ -123,6 +123,22 @@ class Job:
     keyword_emotion_high_value_segment_count: int = 0
     keyword_emotion_recommendation: str | None = None
 
+    interaction_classification_report: dict[str, Any] = field(default_factory=dict)
+    interaction_classification_status: str | None = None
+    interaction_classification_points: list[dict[str, Any]] = field(default_factory=list)
+    interaction_classification_segments: list[dict[str, Any]] = field(default_factory=list)
+    interaction_classification_point_count: int = 0
+    interaction_classification_segment_count: int = 0
+    interaction_classification_monologue_count: int = 0
+    interaction_classification_interaction_count: int = 0
+    interaction_classification_question_answer_count: int = 0
+    interaction_classification_chat_reaction_count: int = 0
+    interaction_classification_callout_count: int = 0
+    interaction_classification_commentary_count: int = 0
+    interaction_classification_private_or_meta_count: int = 0
+    interaction_classification_context_needed_count: int = 0
+    interaction_classification_recommendation: str | None = None
+
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
     unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
@@ -514,6 +530,21 @@ class Job:
             keyword_emotion_question_match_count=int(data.get("keyword_emotion_question_match_count", 0) or 0),
             keyword_emotion_high_value_segment_count=int(data.get("keyword_emotion_high_value_segment_count", 0) or 0),
             keyword_emotion_recommendation=data.get("keyword_emotion_recommendation"),
+            interaction_classification_report=dict(data.get("interaction_classification_report") or {}),
+            interaction_classification_status=data.get("interaction_classification_status"),
+            interaction_classification_points=list(data.get("interaction_classification_points") or []),
+            interaction_classification_segments=list(data.get("interaction_classification_segments") or []),
+            interaction_classification_point_count=int(data.get("interaction_classification_point_count", 0) or 0),
+            interaction_classification_segment_count=int(data.get("interaction_classification_segment_count", 0) or 0),
+            interaction_classification_monologue_count=int(data.get("interaction_classification_monologue_count", 0) or 0),
+            interaction_classification_interaction_count=int(data.get("interaction_classification_interaction_count", 0) or 0),
+            interaction_classification_question_answer_count=int(data.get("interaction_classification_question_answer_count", 0) or 0),
+            interaction_classification_chat_reaction_count=int(data.get("interaction_classification_chat_reaction_count", 0) or 0),
+            interaction_classification_callout_count=int(data.get("interaction_classification_callout_count", 0) or 0),
+            interaction_classification_commentary_count=int(data.get("interaction_classification_commentary_count", 0) or 0),
+            interaction_classification_private_or_meta_count=int(data.get("interaction_classification_private_or_meta_count", 0) or 0),
+            interaction_classification_context_needed_count=int(data.get("interaction_classification_context_needed_count", 0) or 0),
+            interaction_classification_recommendation=data.get("interaction_classification_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),

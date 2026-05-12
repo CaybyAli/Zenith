@@ -81,6 +81,10 @@ from core.keyword_emotion_runner import (
     apply_keyword_emotion_run_report_to_job,
     run_keyword_emotion_for_job,
 )
+from core.interaction_classification_runner import (
+    apply_interaction_classification_run_report_to_job,
+    run_interaction_classification_for_job,
+)
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -2801,6 +2805,129 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="keyword_emotion_completed_or_skipped",
     )
     # End Keyword Emotion Scoring
+
+    # Interaction Classification (2B-22-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="interaction_classification",
+        event_type="INTERACTION_CLASSIFICATION_STARTED",
+        action="run_interaction_classification",
+        reason="interaction_classification_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transcript_segment_count": len(
+                list(getattr(job, "transcript_segments", []) or [])
+            ),
+        },
+    )
+
+    try:
+        interaction_classification_report = run_interaction_classification_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-22-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_interaction_classification_run_report_to_job(
+            job,
+            interaction_classification_report,
+        )
+    except Exception as interaction_classification_exc:
+        interaction_classification_report = None
+        job.interaction_classification_status = "failed"
+        job.interaction_classification_recommendation = (
+            "interaction_classification_failed"
+        )
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="interaction_classification",
+            event_type="INTERACTION_CLASSIFICATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="interaction_classification_runner_exception",
+            details={"error": str(interaction_classification_exc)},
+        )
+
+    if interaction_classification_report is not None:
+        _interaction_classification_details = {
+            "status": interaction_classification_report.status,
+            "point_count": interaction_classification_report.point_count,
+            "segment_classification_count": (
+                interaction_classification_report.segment_classification_count
+            ),
+            "monologue_count": interaction_classification_report.monologue_count,
+            "interaction_count": interaction_classification_report.interaction_count,
+            "question_answer_count": (
+                interaction_classification_report.question_answer_count
+            ),
+            "chat_reaction_count": (
+                interaction_classification_report.chat_reaction_count
+            ),
+            "callout_count": interaction_classification_report.callout_count,
+            "private_or_meta_count": (
+                interaction_classification_report.private_or_meta_count
+            ),
+            "context_needed_count": (
+                interaction_classification_report.context_needed_count
+            ),
+            "recommendation": interaction_classification_report.recommendation,
+            "warnings": list(interaction_classification_report.warnings or []),
+            "errors": list(interaction_classification_report.errors or []),
+        }
+        _interaction_classification_status = str(
+            interaction_classification_report.status or ""
+        ).strip().lower()
+
+        if _interaction_classification_status in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="interaction_classification",
+                event_type="INTERACTION_CLASSIFICATION_DONE",
+                action="continue_pipeline",
+                status="warn"
+                if _interaction_classification_status == "completed_with_warnings"
+                else "ok",
+                reason=interaction_classification_report.recommendation
+                or "interaction_classification_completed",
+                details=_interaction_classification_details,
+            )
+        elif _interaction_classification_status == "skipped_no_transcript_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="interaction_classification",
+                event_type="INTERACTION_CLASSIFICATION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=interaction_classification_report.recommendation
+                or "interaction_classification_skipped_no_transcript",
+                details=_interaction_classification_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="interaction_classification",
+                event_type="INTERACTION_CLASSIFICATION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=interaction_classification_report.recommendation
+                or "interaction_classification_failed",
+                details=_interaction_classification_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="interaction_classification_done",
+        reason="interaction_classification_completed_or_skipped",
+    )
+    # End Interaction Classification
 
     _safe_log_decision(
         job=job,

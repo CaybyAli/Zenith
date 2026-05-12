@@ -9,6 +9,9 @@ from core.audio_normalization_signal_adapter import (
 from core.beat_detection_signal_adapter import adapt_beat_detection_run_report_to_signals
 from core.energy_peak_signal_adapter import adapt_energy_peak_run_report_to_signals
 from core.filler_word_signal_adapter import adapt_filler_word_run_report_to_signals
+from core.interaction_classification_signal_adapter import (
+    adapt_interaction_classification_report_to_signals,
+)
 from core.keyword_emotion_signal_adapter import adapt_keyword_emotion_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
@@ -22,6 +25,7 @@ from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 SOURCE_ENERGY_PEAK = "energy_peak"
 SOURCE_FILLER_WORD = "filler_word"
+SOURCE_INTERACTION_CLASSIFICATION = "interaction_classification"
 SOURCE_KEYWORD_EMOTION = "keyword_emotion"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
@@ -537,6 +541,56 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_KEYWORD_EMOTION}")
+
+    interaction_classification_report = _job_attr(
+        job,
+        "interaction_classification_report",
+    )
+    if not interaction_classification_report:
+        interaction_classification_segments = _job_attr(
+            job,
+            "interaction_classification_segments",
+        )
+        interaction_classification_points = _job_attr(
+            job,
+            "interaction_classification_points",
+        )
+        if isinstance(interaction_classification_segments, list) or isinstance(
+            interaction_classification_points,
+            list,
+        ):
+            interaction_classification_report = {
+                "segment_classifications": (
+                    interaction_classification_segments
+                    if isinstance(interaction_classification_segments, list)
+                    and interaction_classification_segments
+                    else interaction_classification_points
+                    if isinstance(interaction_classification_points, list)
+                    else []
+                ),
+            }
+
+    interaction_classification_signals = _safe_collect(
+        lambda: adapt_interaction_classification_report_to_signals(
+            interaction_classification_report,
+        ),
+        label=SOURCE_INTERACTION_CLASSIFICATION,
+        warnings=warnings,
+        errors=errors,
+    )
+    if interaction_classification_signals:
+        source_counts[SOURCE_INTERACTION_CLASSIFICATION] = len(
+            interaction_classification_signals
+        )
+        for signal in interaction_classification_signals:
+            normalized = _normalize_signal(
+                signal,
+                SOURCE_INTERACTION_CLASSIFICATION,
+            )
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_INTERACTION_CLASSIFICATION}")
 
     audio_signals = _safe_collect(
         lambda: adapt_audio_normalization_run_report_to_signals(
