@@ -14,6 +14,7 @@ from core.interaction_classification_signal_adapter import (
 )
 from core.keyword_emotion_signal_adapter import adapt_keyword_emotion_report_to_signals
 from core.dead_content_signal_adapter import adapt_dead_content_report_to_signals
+from core.content_value_signal_adapter import adapt_content_value_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
@@ -29,6 +30,7 @@ SOURCE_FILLER_WORD = "filler_word"
 SOURCE_INTERACTION_CLASSIFICATION = "interaction_classification"
 SOURCE_KEYWORD_EMOTION = "keyword_emotion"
 SOURCE_DEAD_CONTENT = "dead_content"
+SOURCE_CONTENT_VALUE = "content_value"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
@@ -625,6 +627,32 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_DEAD_CONTENT}")
+
+    content_value_report = _job_attr(job, "content_value_report")
+    if not content_value_report:
+        content_value_segment_scores = _job_attr(
+            job,
+            "content_value_segment_scores",
+        )
+        if isinstance(content_value_segment_scores, list):
+            content_value_report = {
+                "segment_scores": content_value_segment_scores
+            }
+
+    content_value_signals = _safe_collect(
+        lambda: adapt_content_value_report_to_signals(content_value_report),
+        label=SOURCE_CONTENT_VALUE,
+        warnings=warnings,
+        errors=errors,
+    )
+    if content_value_signals:
+        source_counts[SOURCE_CONTENT_VALUE] = len(content_value_signals)
+        for signal in content_value_signals:
+            normalized = _normalize_signal(signal, SOURCE_CONTENT_VALUE)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CONTENT_VALUE}")
 
     audio_signals = _safe_collect(
         lambda: adapt_audio_normalization_run_report_to_signals(

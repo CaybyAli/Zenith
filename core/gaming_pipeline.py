@@ -89,6 +89,10 @@ from core.dead_content_runner import (
     apply_dead_content_run_report_to_job,
     run_dead_content_detection_for_job,
 )
+from core.content_value_runner import (
+    apply_content_value_run_report_to_job,
+    run_content_value_for_job,
+)
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -3332,6 +3336,128 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
 
     # ── Unified Edit Signal Registry (3-C) ───────────────────────────────────
+    # Content Value Score (2B-24-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="content_value",
+        event_type="CONTENT_VALUE_STARTED",
+        action="run_content_value",
+        reason="content_value_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transcript_segment_count": len(
+                list(getattr(job, "transcript_segments", []) or [])
+            ),
+            "have_dead_content_report": bool(getattr(job, "dead_content_report", None)),
+            "have_keyword_emotion_report": bool(
+                getattr(job, "keyword_emotion_report", None)
+            ),
+            "have_interaction_classification_report": bool(
+                getattr(job, "interaction_classification_report", None)
+            ),
+            "have_visual_energy_report": bool(
+                getattr(job, "visual_energy_report", None)
+            ),
+            "have_energy_peak_report": bool(getattr(job, "energy_peak_report", None)),
+            "have_audio_normalization_report": bool(
+                getattr(job, "audio_normalization_report", None)
+            ),
+        },
+    )
+
+    try:
+        content_value_report = run_content_value_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-24-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_content_value_run_report_to_job(job, content_value_report)
+    except Exception as content_value_exc:
+        content_value_report = None
+        job.content_value_status = "failed"
+        job.content_value_recommendation = "content_value_failed"
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="content_value",
+            event_type="CONTENT_VALUE_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="content_value_exception",
+            details={"error": str(content_value_exc)},
+        )
+
+    if content_value_report is not None:
+        _content_value_details = {
+            "status": content_value_report.status,
+            "segment_score_count": content_value_report.segment_score_count,
+            "high_value_count": content_value_report.high_value_count,
+            "mid_value_count": content_value_report.mid_value_count,
+            "low_value_count": content_value_report.low_value_count,
+            "protected_context_count": content_value_report.protected_context_count,
+            "hook_candidate_count": content_value_report.hook_candidate_count,
+            "technical_warning_count": (
+                content_value_report.technical_warning_count
+            ),
+            "avg_content_value_score": content_value_report.avg_content_value_score,
+            "max_content_value_score": content_value_report.max_content_value_score,
+            "min_content_value_score": content_value_report.min_content_value_score,
+            "recommendation": content_value_report.recommendation,
+            "warnings": list(content_value_report.warnings or []),
+            "errors": list(content_value_report.errors or []),
+        }
+        _content_value_status = str(content_value_report.status or "").strip().lower()
+
+        if _content_value_status in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="content_value",
+                event_type="CONTENT_VALUE_DONE",
+                action="continue_pipeline",
+                status="warn"
+                if _content_value_status == "completed_with_warnings"
+                else "ok",
+                reason=content_value_report.recommendation
+                or "content_value_completed",
+                details=_content_value_details,
+            )
+        elif _content_value_status == "skipped_no_inputs":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="content_value",
+                event_type="CONTENT_VALUE_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=content_value_report.recommendation
+                or "content_value_skipped_no_inputs",
+                details=_content_value_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="content_value",
+                event_type="CONTENT_VALUE_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=content_value_report.recommendation or "content_value_failed",
+                details=_content_value_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="content_value_done",
+        reason="content_value_completed_or_skipped",
+    )
+    # End Content Value Score
+
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,

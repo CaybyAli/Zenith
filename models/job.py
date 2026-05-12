@@ -154,6 +154,21 @@ class Job:
     dead_content_high_confidence_candidate_count: int = 0
     dead_content_recommendation: str | None = None
 
+    content_value_report: dict[str, Any] = field(default_factory=dict)
+    content_value_status: str | None = None
+    content_value_segment_scores: list[dict[str, Any]] = field(default_factory=list)
+    content_value_segment_score_count: int = 0
+    content_value_high_value_count: int = 0
+    content_value_mid_value_count: int = 0
+    content_value_low_value_count: int = 0
+    content_value_protected_context_count: int = 0
+    content_value_hook_candidate_count: int = 0
+    content_value_technical_warning_count: int = 0
+    content_value_avg_score: float = 0.0
+    content_value_max_score: float = 0.0
+    content_value_min_score: float = 0.0
+    content_value_recommendation: str | None = None
+
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
     unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
@@ -574,6 +589,20 @@ class Job:
             dead_content_protected_candidate_count=int(data.get("dead_content_protected_candidate_count", 0) or 0),
             dead_content_high_confidence_candidate_count=int(data.get("dead_content_high_confidence_candidate_count", 0) or 0),
             dead_content_recommendation=data.get("dead_content_recommendation"),
+            content_value_report=dict(data.get("content_value_report") or {}),
+            content_value_status=data.get("content_value_status"),
+            content_value_segment_scores=list(data.get("content_value_segment_scores") or []),
+            content_value_segment_score_count=int(data.get("content_value_segment_score_count", 0) or 0),
+            content_value_high_value_count=int(data.get("content_value_high_value_count", 0) or 0),
+            content_value_mid_value_count=int(data.get("content_value_mid_value_count", 0) or 0),
+            content_value_low_value_count=int(data.get("content_value_low_value_count", 0) or 0),
+            content_value_protected_context_count=int(data.get("content_value_protected_context_count", 0) or 0),
+            content_value_hook_candidate_count=int(data.get("content_value_hook_candidate_count", 0) or 0),
+            content_value_technical_warning_count=int(data.get("content_value_technical_warning_count", 0) or 0),
+            content_value_avg_score=float(data.get("content_value_avg_score", 0.0) or 0.0),
+            content_value_max_score=float(data.get("content_value_max_score", 0.0) or 0.0),
+            content_value_min_score=float(data.get("content_value_min_score", 0.0) or 0.0),
+            content_value_recommendation=data.get("content_value_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),
