@@ -10,6 +10,7 @@ from core.beat_detection_signal_adapter import adapt_beat_detection_run_report_t
 from core.energy_peak_signal_adapter import adapt_energy_peak_run_report_to_signals
 from core.filler_word_signal_adapter import adapt_filler_word_run_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
+from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -18,6 +19,7 @@ SOURCE_FILLER_WORD = "filler_word"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
+SOURCE_MOTION_ANALYSIS = "motion_analysis"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -515,7 +517,34 @@ def build_unified_edit_signal_result(
     else:
         warnings.append(f"no_signals_from_{SOURCE_SCENE_CHANGE}")
 
+    motion_analysis_report = _job_attr(job, "motion_analysis_report")
+    if not motion_analysis_report:
+        motion_analysis_segments = _job_attr(job, "motion_analysis_segments")
+        if isinstance(motion_analysis_segments, list) and motion_analysis_segments:
+            motion_analysis_report = {"motion_segments": motion_analysis_segments}
+
+    if not motion_analysis_report:
+        motion_analysis_result = _job_attr(job, "motion_analysis_result")
+        if motion_analysis_result:
+            motion_analysis_report = motion_analysis_result
+
+    motion_analysis_signals = _safe_collect(
+        lambda: adapt_motion_analysis_report_to_signals(motion_analysis_report),
+        label=SOURCE_MOTION_ANALYSIS,
+        warnings=warnings,
+        errors=errors,
+    )
+    if motion_analysis_signals:
+        source_counts[SOURCE_MOTION_ANALYSIS] = len(motion_analysis_signals)
+        for signal in motion_analysis_signals:
+            normalized = _normalize_signal(signal, SOURCE_MOTION_ANALYSIS)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_MOTION_ANALYSIS}")
+
     silence_class_signals = _collect_silence_classification_signals(job)
+    
     if silence_class_signals:
         source_counts[SOURCE_SILENCE_CLASSIFICATION] = len(silence_class_signals)
         for signal in silence_class_signals:
