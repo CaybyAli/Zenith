@@ -14,6 +14,7 @@ from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
 from core.stutter_detection_signal_adapter import adapt_stutter_detection_report_to_signals
 from core.screen_content_signal_adapter import adapt_screen_content_report_to_signals
+from core.visual_energy_signal_adapter import adapt_visual_energy_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -26,6 +27,7 @@ SOURCE_MOTION_ANALYSIS = "motion_analysis"
 SOURCE_FACE_REACTION = "face_reaction"
 SOURCE_STUTTER_DETECTION = "stutter_detection"
 SOURCE_SCREEN_CONTENT = "screen_content"
+SOURCE_VISUAL_ENERGY = "visual_energy"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -632,6 +634,34 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_SCREEN_CONTENT}")
+
+    visual_energy_report = _job_attr(job, "visual_energy_report")
+    if not visual_energy_report:
+        visual_energy_segments = _job_attr(job, "visual_energy_segments")
+        if isinstance(visual_energy_segments, list) and visual_energy_segments:
+            visual_energy_report = {
+                "visual_energy_segments": visual_energy_segments
+            }
+
+    if not visual_energy_report:
+        visual_energy_result = _job_attr(job, "visual_energy_result")
+        if visual_energy_result:
+            visual_energy_report = visual_energy_result
+
+    visual_energy_signals = _safe_collect(
+        lambda: adapt_visual_energy_report_to_signals(visual_energy_report),
+        label=SOURCE_VISUAL_ENERGY,
+        warnings=warnings,
+        errors=errors,
+    )
+    if visual_energy_signals:
+        source_counts[SOURCE_VISUAL_ENERGY] = len(visual_energy_signals)
+        for signal in visual_energy_signals:
+            normalized = _normalize_signal(signal, SOURCE_VISUAL_ENERGY)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_VISUAL_ENERGY}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     
