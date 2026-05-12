@@ -20,6 +20,8 @@ class TranscriptRunReport:
     invalid_segment_count: int = 0
     duration_seconds: float = 0.0
     word_count: int = 0
+    normalized_word_count: int = 0
+    word_timestamp_count: int = 0
     has_word_level_timestamps: bool = False
     segment_normalization_status: str | None = None
     segment_normalization_recommendation: str | None = None
@@ -44,6 +46,8 @@ class TranscriptRunReport:
             "invalid_segment_count": self.invalid_segment_count,
             "duration_seconds": self.duration_seconds,
             "word_count": self.word_count,
+            "normalized_word_count": self.normalized_word_count,
+            "word_timestamp_count": self.word_timestamp_count,
             "has_word_level_timestamps": self.has_word_level_timestamps,
             "segment_normalization_status": self.segment_normalization_status,
             "segment_normalization_recommendation": self.segment_normalization_recommendation,

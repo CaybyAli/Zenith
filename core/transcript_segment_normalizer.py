@@ -14,6 +14,7 @@ class TranscriptSegmentNormalizationResult:
     valid_segment_count: int = 0
     invalid_segment_count: int = 0
     word_count: int = 0
+    word_timestamp_count: int = 0
     has_word_level_timestamps: bool = False
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
@@ -30,6 +31,7 @@ class TranscriptSegmentNormalizationResult:
             "valid_segment_count": self.valid_segment_count,
             "invalid_segment_count": self.invalid_segment_count,
             "word_count": self.word_count,
+            "word_timestamp_count": self.word_timestamp_count,
             "has_word_level_timestamps": self.has_word_level_timestamps,
             "warnings": list(self.warnings),
             "errors": list(self.errors),
@@ -290,6 +292,7 @@ def normalize_transcript_segments(
     warnings: list[str] = []
     errors: list[str] = []
     word_count = 0
+    word_timestamp_count = 0
     has_word_level_timestamps = False
 
     for source_index, raw_segment in enumerate(segments):
@@ -310,11 +313,15 @@ def normalize_transcript_segments(
         words = normalized.get("words") or []
         word_count += len(words)
 
-        if any(
-            word_item.get("start_seconds") is not None
-            and word_item.get("end_seconds") is not None
+        current_word_timestamp_count = sum(
+            1
             for word_item in words
-        ):
+            if word_item.get("start_seconds") is not None
+            and word_item.get("end_seconds") is not None
+        )
+        word_timestamp_count += current_word_timestamp_count
+
+        if current_word_timestamp_count > 0:
             has_word_level_timestamps = True
 
     if valid_segments and invalid_segments:
@@ -336,6 +343,7 @@ def normalize_transcript_segments(
         valid_segment_count=len(valid_segments),
         invalid_segment_count=len(invalid_segments),
         word_count=word_count,
+        word_timestamp_count=word_timestamp_count,
         has_word_level_timestamps=has_word_level_timestamps,
         warnings=sorted(set(warnings)),
         errors=sorted(set(errors)),

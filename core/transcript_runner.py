@@ -219,6 +219,8 @@ def build_transcript_run_report(
         invalid_segment_count=normalization_result.invalid_segment_count,
         duration_seconds=duration_seconds,
         word_count=text_word_count,
+        normalized_word_count=normalization_result.word_count,
+        word_timestamp_count=normalization_result.word_timestamp_count,
         has_word_level_timestamps=normalization_result.has_word_level_timestamps,
         segment_normalization_status=normalization_result.status,
         segment_normalization_recommendation=normalization_result.recommendation,
@@ -285,6 +287,12 @@ def apply_transcript_run_report_to_job(
     if hasattr(job, "transcript_word_count"):
         job.transcript_word_count = int(report.word_count or 0)
 
+    if hasattr(job, "transcript_normalized_word_count"):
+        job.transcript_normalized_word_count = int(report.normalized_word_count or 0)
+
+    if hasattr(job, "transcript_word_timestamp_count"):
+        job.transcript_word_timestamp_count = int(report.word_timestamp_count or 0)
+
     if hasattr(job, "transcript_has_word_level_timestamps"):
         job.transcript_has_word_level_timestamps = bool(report.has_word_level_timestamps)
 
@@ -300,3 +308,15 @@ def apply_transcript_run_report_to_job(
         job.touch()
 
     return job
+
+def detect_transcript_cache_status(job: Any) -> dict[str, Any]:
+    return {
+        "status": "cache_not_configured",
+        "recommendation": "transcript_cache_not_configured",
+        "warnings": ["transcript_cache_not_configured"],
+        "errors": [],
+        "metadata": {
+            "job_id": str(getattr(job, "job_id", "") or ""),
+            "transcript_status": getattr(job, "transcript_status", None),
+        },
+    }
