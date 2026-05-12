@@ -80,6 +80,10 @@ from core.scene_change_runner import (
     apply_scene_change_run_report_to_job,
     run_scene_change_for_job,
 )
+from core.motion_analysis_runner import (
+    apply_motion_analysis_run_report_to_job,
+    run_motion_analysis_for_job,
+)
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1279,6 +1283,102 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="scene_change_detection_completed_or_skipped",
     )
     # ── End Scene Change Detection ───────────────────────────────────────────
+
+    # ── Motion Analysis (2B-14-C) ───────────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="2B-14-C",
+        event_type="MOTION_ANALYSIS_STARTED",
+        action="run_motion_analysis",
+        module="gaming_pipeline",
+        reason="motion_analysis_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "raw_video_path": getattr(job, "raw_video_path", None),
+            "preprocessing_manifest_path": getattr(
+                job,
+                "preprocessing_manifest_path",
+                None,
+            ),
+        },
+    )
+
+    motion_analysis_report = None
+
+    try:
+        motion_analysis_report = run_motion_analysis_for_job(job)
+
+        apply_motion_analysis_run_report_to_job(job, motion_analysis_report)
+
+        motion_analysis_status = getattr(motion_analysis_report, "status", None)
+
+        if motion_analysis_status in {"ok", "completed_with_warnings"}:
+            motion_analysis_event_type = "MOTION_ANALYSIS_DONE"
+        elif motion_analysis_status == "skipped_no_video_source":
+            motion_analysis_event_type = "MOTION_ANALYSIS_SKIPPED"
+        elif motion_analysis_status == "blocked_missing_video_source":
+            motion_analysis_event_type = "MOTION_ANALYSIS_BLOCKED"
+        else:
+            motion_analysis_event_type = "MOTION_ANALYSIS_FAILED"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-14-C",
+            event_type=motion_analysis_event_type,
+            action="motion_analysis_completed",
+            module="gaming_pipeline",
+            status=motion_analysis_status or "failed",
+            reason="motion_analysis_completed_or_skipped",
+            details={
+                "status": motion_analysis_status,
+                "selected_path": getattr(motion_analysis_report, "selected_path", None),
+                "selected_type": getattr(motion_analysis_report, "selected_type", None),
+                "point_count": getattr(motion_analysis_report, "point_count", 0),
+                "segment_count": getattr(motion_analysis_report, "segment_count", 0),
+                "dead_visual_candidate_count": getattr(
+                    motion_analysis_report,
+                    "dead_visual_candidate_count",
+                    0,
+                ),
+                "recommendation": getattr(
+                    motion_analysis_report,
+                    "recommendation",
+                    None,
+                ),
+                "warnings": list(getattr(motion_analysis_report, "warnings", []) or []),
+                "errors": list(getattr(motion_analysis_report, "errors", []) or []),
+            },
+        )
+
+    except Exception as motion_analysis_exc:
+        job.motion_analysis_status = "failed"
+        job.motion_analysis_recommendation = "motion_analysis_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-14-C",
+            event_type="MOTION_ANALYSIS_FAILED",
+            action="motion_analysis_failed",
+            module="gaming_pipeline",
+            status="failed",
+            reason="motion_analysis_exception",
+            details={
+                "error": str(motion_analysis_exc),
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="motion_analysis_done",
+        reason="motion_analysis_completed_or_skipped",
+    )
+    # ── End Motion Analysis ─────────────────────────────────────────────────
     
     # ── RMS Energy ──────────────────────────────────────────────────────────
     _safe_log_decision(
