@@ -88,6 +88,10 @@ from core.face_reaction_runner import (
     apply_face_reaction_run_report_to_job,
     run_face_reaction_for_job,
 )
+from core.stutter_detection_runner import (
+    apply_stutter_detection_run_report_to_job,
+    run_stutter_detection_for_job,
+)
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1489,6 +1493,112 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="face_reaction_completed_or_skipped",
     )
     # End Face Reaction Analysis
+
+    # Stutter Detection (2B-16-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="2B-16-C",
+        event_type="STUTTER_DETECTION_STARTED",
+        action="run_stutter_detection",
+        module="gaming_pipeline",
+        reason="stutter_detection_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "raw_video_path": getattr(job, "raw_video_path", None),
+            "preprocessing_manifest_path": getattr(
+                job,
+                "preprocessing_manifest_path",
+                None,
+            ),
+        },
+    )
+
+    stutter_detection_report = None
+
+    try:
+        stutter_detection_report = run_stutter_detection_for_job(job)
+
+        apply_stutter_detection_run_report_to_job(job, stutter_detection_report)
+
+        stutter_detection_status = getattr(stutter_detection_report, "status", None)
+
+        if stutter_detection_status in {"ok", "completed_with_warnings"}:
+            stutter_detection_event_type = "STUTTER_DETECTION_DONE"
+        elif stutter_detection_status == "skipped_no_video_source":
+            stutter_detection_event_type = "STUTTER_DETECTION_SKIPPED"
+        elif stutter_detection_status == "blocked_missing_video_source":
+            stutter_detection_event_type = "STUTTER_DETECTION_BLOCKED"
+        else:
+            stutter_detection_event_type = "STUTTER_DETECTION_FAILED"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-16-C",
+            event_type=stutter_detection_event_type,
+            action="stutter_detection_completed",
+            module="gaming_pipeline",
+            status=stutter_detection_status or "failed",
+            reason="stutter_detection_completed_or_skipped",
+            details={
+                "status": stutter_detection_status,
+                "selected_path": getattr(stutter_detection_report, "selected_path", None),
+                "selected_type": getattr(stutter_detection_report, "selected_type", None),
+                "point_count": getattr(stutter_detection_report, "point_count", 0),
+                "segment_count": getattr(stutter_detection_report, "segment_count", 0),
+                "duplicate_candidate_count": getattr(
+                    stutter_detection_report,
+                    "duplicate_candidate_count",
+                    0,
+                ),
+                "stutter_segment_count": getattr(
+                    stutter_detection_report,
+                    "stutter_segment_count",
+                    0,
+                ),
+                "freeze_segment_count": getattr(
+                    stutter_detection_report,
+                    "freeze_segment_count",
+                    0,
+                ),
+                "recommendation": getattr(
+                    stutter_detection_report,
+                    "recommendation",
+                    None,
+                ),
+                "warnings": list(getattr(stutter_detection_report, "warnings", []) or []),
+                "errors": list(getattr(stutter_detection_report, "errors", []) or []),
+            },
+        )
+
+    except Exception as stutter_detection_exc:
+        job.stutter_detection_status = "failed"
+        job.stutter_detection_recommendation = "stutter_detection_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-16-C",
+            event_type="STUTTER_DETECTION_FAILED",
+            action="stutter_detection_failed",
+            module="gaming_pipeline",
+            status="failed",
+            reason="stutter_detection_exception",
+            details={
+                "error": str(stutter_detection_exc),
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="stutter_detection_done",
+        reason="stutter_detection_completed_or_skipped",
+    )
+    # End Stutter Detection
     
     # ── RMS Energy ──────────────────────────────────────────────────────────
     _safe_log_decision(

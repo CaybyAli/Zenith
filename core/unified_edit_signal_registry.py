@@ -12,6 +12,7 @@ from core.filler_word_signal_adapter import adapt_filler_word_run_report_to_sign
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
+from core.stutter_detection_signal_adapter import adapt_stutter_detection_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -22,6 +23,7 @@ SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
 SOURCE_MOTION_ANALYSIS = "motion_analysis"
 SOURCE_FACE_REACTION = "face_reaction"
+SOURCE_STUTTER_DETECTION = "stutter_detection"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -572,6 +574,34 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_FACE_REACTION}")
+
+    stutter_detection_report = _job_attr(job, "stutter_detection_report")
+    if not stutter_detection_report:
+        stutter_detection_segments = _job_attr(job, "stutter_detection_segments")
+        if isinstance(stutter_detection_segments, list) and stutter_detection_segments:
+            stutter_detection_report = {
+                "stutter_detection_segments": stutter_detection_segments
+            }
+
+    if not stutter_detection_report:
+        stutter_detection_result = _job_attr(job, "stutter_detection_result")
+        if stutter_detection_result:
+            stutter_detection_report = stutter_detection_result
+
+    stutter_detection_signals = _safe_collect(
+        lambda: adapt_stutter_detection_report_to_signals(stutter_detection_report),
+        label=SOURCE_STUTTER_DETECTION,
+        warnings=warnings,
+        errors=errors,
+    )
+    if stutter_detection_signals:
+        source_counts[SOURCE_STUTTER_DETECTION] = len(stutter_detection_signals)
+        for signal in stutter_detection_signals:
+            normalized = _normalize_signal(signal, SOURCE_STUTTER_DETECTION)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_STUTTER_DETECTION}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     

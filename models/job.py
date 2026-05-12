@@ -260,6 +260,21 @@ class Job:
     face_reaction_duration_seconds: float | None = None
     face_reaction_frame_sample_rate: float = 2.0
     face_reaction_recommendation: str | None = None
+    stutter_detection_report: dict[str, Any] = field(default_factory=dict)
+    stutter_detection_status: str | None = None
+    stutter_detection_selected_path: str | None = None
+    stutter_detection_selected_type: str | None = None
+    stutter_detection_result: dict[str, Any] = field(default_factory=dict)
+    stutter_detection_points: list[dict[str, Any]] = field(default_factory=list)
+    stutter_detection_segments: list[dict[str, Any]] = field(default_factory=list)
+    stutter_detection_point_count: int = 0
+    stutter_detection_segment_count: int = 0
+    stutter_detection_duplicate_candidate_count: int = 0
+    stutter_detection_stutter_segment_count: int = 0
+    stutter_detection_freeze_segment_count: int = 0
+    stutter_detection_duration_seconds: float | None = None
+    stutter_detection_frame_sample_rate: float = 10.0
+    stutter_detection_recommendation: str | None = None
 
     recovery_status: str | None = None
     resume_safety: str | None = None
@@ -654,6 +669,41 @@ class Job:
                 data.get("face_reaction_frame_sample_rate", 2.0) or 2.0
             ),
             face_reaction_recommendation=data.get("face_reaction_recommendation"),
+            stutter_detection_report=dict(data.get("stutter_detection_report") or {}),
+            stutter_detection_status=data.get("stutter_detection_status"),
+            stutter_detection_selected_path=data.get("stutter_detection_selected_path"),
+            stutter_detection_selected_type=data.get("stutter_detection_selected_type"),
+            stutter_detection_result=dict(data.get("stutter_detection_result") or {}),
+            stutter_detection_points=list(data.get("stutter_detection_points") or []),
+            stutter_detection_segments=list(
+                data.get("stutter_detection_segments") or []
+            ),
+            stutter_detection_point_count=int(
+                data.get("stutter_detection_point_count", 0) or 0
+            ),
+            stutter_detection_segment_count=int(
+                data.get("stutter_detection_segment_count", 0) or 0
+            ),
+            stutter_detection_duplicate_candidate_count=int(
+                data.get("stutter_detection_duplicate_candidate_count", 0) or 0
+            ),
+            stutter_detection_stutter_segment_count=int(
+                data.get("stutter_detection_stutter_segment_count", 0) or 0
+            ),
+            stutter_detection_freeze_segment_count=int(
+                data.get("stutter_detection_freeze_segment_count", 0) or 0
+            ),
+            stutter_detection_duration_seconds=(
+                float(data["stutter_detection_duration_seconds"])
+                if data.get("stutter_detection_duration_seconds") is not None
+                else None
+            ),
+            stutter_detection_frame_sample_rate=float(
+                data.get("stutter_detection_frame_sample_rate", 10.0) or 10.0
+            ),
+            stutter_detection_recommendation=data.get(
+                "stutter_detection_recommendation"
+            ),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),
