@@ -245,6 +245,21 @@ class Job:
     motion_analysis_duration_seconds: float | None = None
     motion_analysis_frame_sample_rate: float = 2.0
     motion_analysis_recommendation: str | None = None
+    face_reaction_report: dict[str, Any] = field(default_factory=dict)
+    face_reaction_status: str | None = None
+    face_reaction_selected_path: str | None = None
+    face_reaction_selected_type: str | None = None
+    face_reaction_result: dict[str, Any] = field(default_factory=dict)
+    face_reaction_points: list[dict[str, Any]] = field(default_factory=list)
+    face_reaction_segments: list[dict[str, Any]] = field(default_factory=list)
+    face_reaction_point_count: int = 0
+    face_reaction_segment_count: int = 0
+    face_reaction_detected_point_count: int = 0
+    face_reaction_candidate_count: int = 0
+    face_reaction_high_segment_count: int = 0
+    face_reaction_duration_seconds: float | None = None
+    face_reaction_frame_sample_rate: float = 2.0
+    face_reaction_recommendation: str | None = None
 
     recovery_status: str | None = None
     resume_safety: str | None = None
@@ -608,6 +623,37 @@ class Job:
                 data.get("motion_analysis_frame_sample_rate", 2.0) or 2.0
             ),
             motion_analysis_recommendation=data.get("motion_analysis_recommendation"),
+            face_reaction_report=dict(data.get("face_reaction_report") or {}),
+            face_reaction_status=data.get("face_reaction_status"),
+            face_reaction_selected_path=data.get("face_reaction_selected_path"),
+            face_reaction_selected_type=data.get("face_reaction_selected_type"),
+            face_reaction_result=dict(data.get("face_reaction_result") or {}),
+            face_reaction_points=list(data.get("face_reaction_points") or []),
+            face_reaction_segments=list(data.get("face_reaction_segments") or []),
+            face_reaction_point_count=int(
+                data.get("face_reaction_point_count", 0) or 0
+            ),
+            face_reaction_segment_count=int(
+                data.get("face_reaction_segment_count", 0) or 0
+            ),
+            face_reaction_detected_point_count=int(
+                data.get("face_reaction_detected_point_count", 0) or 0
+            ),
+            face_reaction_candidate_count=int(
+                data.get("face_reaction_candidate_count", 0) or 0
+            ),
+            face_reaction_high_segment_count=int(
+                data.get("face_reaction_high_segment_count", 0) or 0
+            ),
+            face_reaction_duration_seconds=(
+                float(data["face_reaction_duration_seconds"])
+                if data.get("face_reaction_duration_seconds") is not None
+                else None
+            ),
+            face_reaction_frame_sample_rate=float(
+                data.get("face_reaction_frame_sample_rate", 2.0) or 2.0
+            ),
+            face_reaction_recommendation=data.get("face_reaction_recommendation"),
             recovery_status=data.get("recovery_status"),
             resume_safety=data.get("resume_safety"),
             recovery_report=dict(data.get("recovery_report") or {}),

@@ -11,6 +11,7 @@ from core.energy_peak_signal_adapter import adapt_energy_peak_run_report_to_sign
 from core.filler_word_signal_adapter import adapt_filler_word_run_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
+from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -20,6 +21,7 @@ SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
 SOURCE_MOTION_ANALYSIS = "motion_analysis"
+SOURCE_FACE_REACTION = "face_reaction"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -542,6 +544,34 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_MOTION_ANALYSIS}")
+
+    face_reaction_report = _job_attr(job, "face_reaction_report")
+    if not face_reaction_report:
+        face_reaction_segments = _job_attr(job, "face_reaction_segments")
+        if isinstance(face_reaction_segments, list) and face_reaction_segments:
+            face_reaction_report = {
+                "face_reaction_segments": face_reaction_segments
+            }
+
+    if not face_reaction_report:
+        face_reaction_result = _job_attr(job, "face_reaction_result")
+        if face_reaction_result:
+            face_reaction_report = face_reaction_result
+
+    face_reaction_signals = _safe_collect(
+        lambda: adapt_face_reaction_report_to_signals(face_reaction_report),
+        label=SOURCE_FACE_REACTION,
+        warnings=warnings,
+        errors=errors,
+    )
+    if face_reaction_signals:
+        source_counts[SOURCE_FACE_REACTION] = len(face_reaction_signals)
+        for signal in face_reaction_signals:
+            normalized = _normalize_signal(signal, SOURCE_FACE_REACTION)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_FACE_REACTION}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     

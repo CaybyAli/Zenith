@@ -84,6 +84,10 @@ from core.motion_analysis_runner import (
     apply_motion_analysis_run_report_to_job,
     run_motion_analysis_for_job,
 )
+from core.face_reaction_runner import (
+    apply_face_reaction_run_report_to_job,
+    run_face_reaction_for_job,
+)
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -1378,7 +1382,113 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="motion_analysis_done",
         reason="motion_analysis_completed_or_skipped",
     )
-    # ── End Motion Analysis ─────────────────────────────────────────────────
+    # End Motion Analysis
+
+    # Face Reaction Analysis (2B-15-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="2B-15-C",
+        event_type="FACE_REACTION_STARTED",
+        action="run_face_reaction_analysis",
+        module="gaming_pipeline",
+        reason="face_reaction_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "raw_video_path": getattr(job, "raw_video_path", None),
+            "preprocessing_manifest_path": getattr(
+                job,
+                "preprocessing_manifest_path",
+                None,
+            ),
+        },
+    )
+
+    face_reaction_report = None
+
+    try:
+        face_reaction_report = run_face_reaction_for_job(job)
+
+        apply_face_reaction_run_report_to_job(job, face_reaction_report)
+
+        face_reaction_status = getattr(face_reaction_report, "status", None)
+
+        if face_reaction_status in {"ok", "completed_with_warnings"}:
+            face_reaction_event_type = "FACE_REACTION_DONE"
+        elif face_reaction_status == "skipped_no_video_source":
+            face_reaction_event_type = "FACE_REACTION_SKIPPED"
+        elif face_reaction_status == "blocked_missing_video_source":
+            face_reaction_event_type = "FACE_REACTION_BLOCKED"
+        else:
+            face_reaction_event_type = "FACE_REACTION_FAILED"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-15-C",
+            event_type=face_reaction_event_type,
+            action="face_reaction_completed",
+            module="gaming_pipeline",
+            status=face_reaction_status or "failed",
+            reason="face_reaction_completed_or_skipped",
+            details={
+                "status": face_reaction_status,
+                "selected_path": getattr(face_reaction_report, "selected_path", None),
+                "selected_type": getattr(face_reaction_report, "selected_type", None),
+                "point_count": getattr(face_reaction_report, "point_count", 0),
+                "segment_count": getattr(face_reaction_report, "segment_count", 0),
+                "face_detected_point_count": getattr(
+                    face_reaction_report,
+                    "face_detected_point_count",
+                    0,
+                ),
+                "reaction_candidate_count": getattr(
+                    face_reaction_report,
+                    "reaction_candidate_count",
+                    0,
+                ),
+                "high_reaction_segment_count": getattr(
+                    face_reaction_report,
+                    "high_reaction_segment_count",
+                    0,
+                ),
+                "recommendation": getattr(
+                    face_reaction_report,
+                    "recommendation",
+                    None,
+                ),
+                "warnings": list(getattr(face_reaction_report, "warnings", []) or []),
+                "errors": list(getattr(face_reaction_report, "errors", []) or []),
+            },
+        )
+
+    except Exception as face_reaction_exc:
+        job.face_reaction_status = "failed"
+        job.face_reaction_recommendation = "face_reaction_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-15-C",
+            event_type="FACE_REACTION_FAILED",
+            action="face_reaction_failed",
+            module="gaming_pipeline",
+            status="failed",
+            reason="face_reaction_exception",
+            details={
+                "error": str(face_reaction_exc),
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="face_reaction_done",
+        reason="face_reaction_completed_or_skipped",
+    )
+    # End Face Reaction Analysis
     
     # ── RMS Energy ──────────────────────────────────────────────────────────
     _safe_log_decision(
