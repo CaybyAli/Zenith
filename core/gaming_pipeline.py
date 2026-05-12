@@ -72,6 +72,7 @@ from core.energy_peak_runner import run_energy_peak_detection_for_job
 from core.silence_detection_runner import run_silence_detection_for_job
 from core.silence_classifier_runner import run_silence_classifier_for_job
 from core.filler_word_runner import run_filler_word_detection_for_job
+from core.transcript_runner import apply_transcript_run_report_to_job, run_transcript_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.job_state_transitions import transition_job_state
@@ -1765,6 +1766,132 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="silence_classification_done",
         reason="silence_classification_completed_or_skipped",
     )
+
+    # ── Transcript Lifeline (3-B) ────────────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="transcript",
+        event_type="TRANSCRIPT_STARTED",
+        action="run_transcript",
+        reason="transcript_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "speech_audio_ready": "speech_audio"
+            in list(getattr(job, "ready_audio_targets", []) or []),
+        },
+    )
+
+    try:
+        transcript_run_report = run_transcript_for_job(
+            job=job,
+            allow_raw_video_fallback=True,
+            require_existing_file=True,
+            metadata={
+                "stage": "3-B",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+    except Exception as transcript_exc:
+        transcript_run_report = None
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="transcript",
+            event_type="TRANSCRIPT_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="transcript_runner_exception",
+            details={"error": str(transcript_exc)},
+        )
+
+    if transcript_run_report is not None:
+        apply_transcript_run_report_to_job(job, transcript_run_report)
+
+        _transcript_details = {
+            "status": transcript_run_report.status,
+            "source_type": transcript_run_report.source_type,
+            "source_path": transcript_run_report.source_path,
+            "segment_count": transcript_run_report.segment_count,
+            "word_count": transcript_run_report.word_count,
+            "duration_seconds": transcript_run_report.duration_seconds,
+            "language": transcript_run_report.language,
+            "engine": transcript_run_report.engine,
+            "recommendation": transcript_run_report.recommendation,
+            "warnings": list(transcript_run_report.warnings or []),
+            "errors": list(transcript_run_report.errors or []),
+        }
+
+        _transcript_status_text = str(transcript_run_report.status or "").strip().lower()
+
+        if _transcript_status_text == "ok":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transcript",
+                event_type="TRANSCRIPT_DONE",
+                action="continue_pipeline",
+                reason="transcript_completed",
+                details=_transcript_details,
+            )
+        elif _transcript_status_text == "completed_with_warnings":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transcript",
+                event_type="TRANSCRIPT_DONE",
+                action="continue_pipeline",
+                status="warn",
+                reason=transcript_run_report.recommendation
+                or "transcript_completed_with_warnings",
+                details=_transcript_details,
+            )
+        elif _transcript_status_text in {
+            "blocked_missing_preprocessed_audio",
+            "whisper_unavailable",
+        }:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transcript",
+                event_type="TRANSCRIPT_BLOCKED",
+                action="continue_pipeline",
+                status="warn",
+                reason=transcript_run_report.recommendation
+                or _transcript_status_text,
+                details=_transcript_details,
+            )
+        elif _transcript_status_text == "skipped_no_audio_source":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transcript",
+                event_type="TRANSCRIPT_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=transcript_run_report.recommendation or "transcript_skipped",
+                details=_transcript_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transcript",
+                event_type="TRANSCRIPT_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=transcript_run_report.recommendation or "transcript_failed",
+                details=_transcript_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="transcript_done",
+        reason="transcript_completed_or_skipped",
+    )
+    # ── End Transcript Lifeline ──────────────────────────────────────────────
 
     # ── Filler Word Detection (2B-10-C) ──────────────────────────────────────
     _safe_log_decision(

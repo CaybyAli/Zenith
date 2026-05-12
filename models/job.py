@@ -75,6 +75,17 @@ class Job:
     missing_audio_targets: list[str] = field(default_factory=list)
     failed_audio_targets: list[str] = field(default_factory=list)
 
+    transcript_report: dict[str, Any] = field(default_factory=dict)
+    transcript_status: str | None = None
+    transcript_source_path: str | None = None
+    transcript_source_type: str | None = None
+    transcript_segments: list[dict[str, Any]] = field(default_factory=list)
+    transcript_text: str = ""
+    transcript_segment_count: int = 0
+    transcript_duration_seconds: float = 0.0
+    transcript_language: str | None = None
+    transcript_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -324,6 +335,16 @@ class Job:
             ready_audio_targets=list(data.get("ready_audio_targets") or []),
             missing_audio_targets=list(data.get("missing_audio_targets") or []),
             failed_audio_targets=list(data.get("failed_audio_targets") or []),
+            transcript_report=dict(data.get("transcript_report") or {}),
+            transcript_status=data.get("transcript_status"),
+            transcript_source_path=data.get("transcript_source_path"),
+            transcript_source_type=data.get("transcript_source_type"),
+            transcript_segments=list(data.get("transcript_segments") or []),
+            transcript_text=str(data.get("transcript_text") or ""),
+            transcript_segment_count=int(data.get("transcript_segment_count", 0) or 0),
+            transcript_duration_seconds=float(data.get("transcript_duration_seconds", 0.0) or 0.0),
+            transcript_language=data.get("transcript_language"),
+            transcript_recommendation=data.get("transcript_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
