@@ -76,6 +76,10 @@ from core.transcript_runner import apply_transcript_run_report_to_job, run_trans
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
+from core.scene_change_runner import (
+    apply_scene_change_run_report_to_job,
+    run_scene_change_for_job,
+)
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
@@ -345,6 +349,48 @@ def _beat_detection_decision_details(beat_detection_report) -> dict:
         "recommendation": getattr(beat_detection_report, "recommendation", None),
         "warnings": list(getattr(beat_detection_report, "warnings", []) or []),
         "errors": list(getattr(beat_detection_report, "errors", []) or []),
+    }
+
+def _scene_change_event_type_for_status(status: str | None) -> str:
+    status_text = str(status or "").strip().lower()
+
+    if status_text in {"ok", "completed_with_warnings"}:
+        return "SCENE_CHANGE_DONE"
+
+    if status_text == "skipped_no_video_source":
+        return "SCENE_CHANGE_SKIPPED"
+
+    if status_text == "blocked_missing_video_source":
+        return "SCENE_CHANGE_BLOCKED"
+
+    if status_text == "failed":
+        return "SCENE_CHANGE_FAILED"
+
+    return "SCENE_CHANGE_FAILED"
+
+
+def _scene_change_decision_details(scene_change_report) -> dict:
+    return {
+        "status": getattr(scene_change_report, "status", None),
+        "selected_type": getattr(scene_change_report, "selected_type", None),
+        "selected_path": getattr(scene_change_report, "selected_path", None),
+        "scene_change_count": int(
+            getattr(scene_change_report, "scene_change_count", 0) or 0
+        ),
+        "hard_change_count": int(
+            getattr(scene_change_report, "hard_change_count", 0) or 0
+        ),
+        "soft_transition_count": int(
+            getattr(scene_change_report, "soft_transition_count", 0) or 0
+        ),
+        "false_positive_candidate_count": int(
+            getattr(scene_change_report, "false_positive_candidate_count", 0) or 0
+        ),
+        "threshold": getattr(scene_change_report, "threshold", None),
+        "duration_seconds": getattr(scene_change_report, "duration_seconds", None),
+        "recommendation": getattr(scene_change_report, "recommendation", None),
+        "warnings": list(getattr(scene_change_report, "warnings", []) or []),
+        "errors": list(getattr(scene_change_report, "errors", []) or []),
     }
 
 
@@ -1158,6 +1204,82 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="preprocessing_workspace_and_plans_ready",
     )
 
+    # ── Scene Change Detection (2B-13-C) ─────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="2B-13-C",
+        event_type="SCENE_CHANGE_STARTED",
+        action="run_scene_change_detection",
+        module="gaming_pipeline",
+        reason="scene_change_detection_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "raw_video_path": getattr(job, "raw_video_path", None),
+            "preprocessing_manifest_path": getattr(
+                job,
+                "preprocessing_manifest_path",
+                None,
+            ),
+        },
+    )
+
+    scene_change_report = None
+
+    try:
+        scene_change_report = run_scene_change_for_job(
+            job=job,
+            metadata={
+                "profile_id": getattr(job, "profile_id", None),
+                "quality_mode": getattr(job, "quality_mode", None),
+                "pipeline_step": "scene_change_detection",
+            },
+        )
+
+        apply_scene_change_run_report_to_job(job, scene_change_report)
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-13-C",
+            event_type=_scene_change_event_type_for_status(
+                getattr(scene_change_report, "status", None)
+            ),
+            action="scene_change_detection_completed",
+            module="gaming_pipeline",
+            status=getattr(scene_change_report, "status", None) or "ok",
+            reason="scene_change_detection_completed_or_skipped",
+            details=_scene_change_decision_details(scene_change_report),
+        )
+
+    except Exception as scene_change_exc:
+        job.scene_change_status = "failed"
+        job.scene_change_recommendation = "scene_detection_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="2B-13-C",
+            event_type="SCENE_CHANGE_FAILED",
+            action="scene_change_detection_failed",
+            module="gaming_pipeline",
+            status="failed",
+            reason="scene_change_detection_exception",
+            details={
+                "error": str(scene_change_exc),
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="scene_change_done",
+        reason="scene_change_detection_completed_or_skipped",
+    )
+    # ── End Scene Change Detection ───────────────────────────────────────────
+    
     # ── RMS Energy ──────────────────────────────────────────────────────────
     _safe_log_decision(
         job=job,
