@@ -13,6 +13,7 @@ from core.interaction_classification_signal_adapter import (
     adapt_interaction_classification_report_to_signals,
 )
 from core.keyword_emotion_signal_adapter import adapt_keyword_emotion_report_to_signals
+from core.dead_content_signal_adapter import adapt_dead_content_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
@@ -27,6 +28,7 @@ SOURCE_ENERGY_PEAK = "energy_peak"
 SOURCE_FILLER_WORD = "filler_word"
 SOURCE_INTERACTION_CLASSIFICATION = "interaction_classification"
 SOURCE_KEYWORD_EMOTION = "keyword_emotion"
+SOURCE_DEAD_CONTENT = "dead_content"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
@@ -591,6 +593,38 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_INTERACTION_CLASSIFICATION}")
+
+    dead_content_report = _job_attr(job, "dead_content_report")
+    if not dead_content_report:
+        dead_content_candidates = _job_attr(job, "dead_content_candidates")
+        dead_content_segment_scores = _job_attr(job, "dead_content_segment_scores")
+        if isinstance(dead_content_candidates, list) or isinstance(
+            dead_content_segment_scores,
+            list,
+        ):
+            dead_content_report = {
+                "candidates": dead_content_candidates
+                if isinstance(dead_content_candidates, list)
+                else [],
+                "segment_scores": dead_content_segment_scores
+                if isinstance(dead_content_segment_scores, list)
+                else [],
+            }
+
+    dead_content_signals = _safe_collect(
+        lambda: adapt_dead_content_report_to_signals(dead_content_report),
+        label=SOURCE_DEAD_CONTENT,
+        warnings=warnings,
+        errors=errors,
+    )
+    if dead_content_signals:
+        source_counts[SOURCE_DEAD_CONTENT] = len(dead_content_signals)
+        for signal in dead_content_signals:
+            normalized = _normalize_signal(signal, SOURCE_DEAD_CONTENT)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_DEAD_CONTENT}")
 
     audio_signals = _safe_collect(
         lambda: adapt_audio_normalization_run_report_to_signals(

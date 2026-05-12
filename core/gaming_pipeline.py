@@ -85,6 +85,10 @@ from core.interaction_classification_runner import (
     apply_interaction_classification_run_report_to_job,
     run_interaction_classification_for_job,
 )
+from core.dead_content_runner import (
+    apply_dead_content_run_report_to_job,
+    run_dead_content_detection_for_job,
+)
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -3047,6 +3051,131 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="filler_word_detection_done",
         reason="filler_word_detection_completed_or_skipped",
     )
+
+    # Dead Content Detection (2B-23-C)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="dead_content_detection",
+        event_type="DEAD_CONTENT_STARTED",
+        action="run_dead_content_detection",
+        reason="dead_content_detection_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transcript_segment_count": len(
+                list(getattr(job, "transcript_segments", []) or [])
+            ),
+            "have_filler_word_report": bool(getattr(job, "filler_word_report", None)),
+            "have_keyword_emotion_report": bool(
+                getattr(job, "keyword_emotion_report", None)
+            ),
+            "have_interaction_classification_report": bool(
+                getattr(job, "interaction_classification_report", None)
+            ),
+        },
+    )
+
+    try:
+        dead_content_report = run_dead_content_detection_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-23-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_dead_content_run_report_to_job(job, dead_content_report)
+    except Exception as dead_content_exc:
+        dead_content_report = None
+        job.dead_content_status = "failed"
+        job.dead_content_recommendation = "dead_content_detection_failed"
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="dead_content_detection",
+            event_type="DEAD_CONTENT_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="dead_content_detection_exception",
+            details={"error": str(dead_content_exc)},
+        )
+
+    if dead_content_report is not None:
+        _dead_content_details = {
+            "status": dead_content_report.status,
+            "candidate_count": dead_content_report.candidate_count,
+            "segment_score_count": dead_content_report.segment_score_count,
+            "dead_air_candidate_count": (
+                dead_content_report.dead_air_candidate_count
+            ),
+            "low_value_candidate_count": (
+                dead_content_report.low_value_candidate_count
+            ),
+            "filler_pause_candidate_count": (
+                dead_content_report.filler_pause_candidate_count
+            ),
+            "loading_or_menu_candidate_count": (
+                dead_content_report.loading_or_menu_candidate_count
+            ),
+            "private_or_meta_candidate_count": (
+                dead_content_report.private_or_meta_candidate_count
+            ),
+            "protected_candidate_count": dead_content_report.protected_candidate_count,
+            "high_confidence_candidate_count": (
+                dead_content_report.high_confidence_candidate_count
+            ),
+            "recommendation": dead_content_report.recommendation,
+            "warnings": list(dead_content_report.warnings or []),
+            "errors": list(dead_content_report.errors or []),
+        }
+        _dead_content_status = str(dead_content_report.status or "").strip().lower()
+
+        if _dead_content_status in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="dead_content_detection",
+                event_type="DEAD_CONTENT_DONE",
+                action="continue_pipeline",
+                status="warn"
+                if _dead_content_status == "completed_with_warnings"
+                else "ok",
+                reason=dead_content_report.recommendation
+                or "dead_content_detection_completed",
+                details=_dead_content_details,
+            )
+        elif _dead_content_status == "skipped_no_inputs":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="dead_content_detection",
+                event_type="DEAD_CONTENT_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=dead_content_report.recommendation
+                or "dead_content_skipped_no_inputs",
+                details=_dead_content_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="dead_content_detection",
+                event_type="DEAD_CONTENT_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=dead_content_report.recommendation
+                or "dead_content_detection_failed",
+                details=_dead_content_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="dead_content_done",
+        reason="dead_content_detection_completed_or_skipped",
+    )
+    # End Dead Content Detection
     # ── End Filler Word Detection ────────────────────────────────────────────
 
     # ── Audio Normalization (2B-11-E) ────────────────────────────────────────

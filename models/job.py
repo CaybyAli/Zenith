@@ -139,6 +139,21 @@ class Job:
     interaction_classification_context_needed_count: int = 0
     interaction_classification_recommendation: str | None = None
 
+    dead_content_report: dict[str, Any] = field(default_factory=dict)
+    dead_content_status: str | None = None
+    dead_content_candidates: list[dict[str, Any]] = field(default_factory=list)
+    dead_content_segment_scores: list[dict[str, Any]] = field(default_factory=list)
+    dead_content_candidate_count: int = 0
+    dead_content_segment_score_count: int = 0
+    dead_content_dead_air_candidate_count: int = 0
+    dead_content_low_value_candidate_count: int = 0
+    dead_content_filler_pause_candidate_count: int = 0
+    dead_content_loading_or_menu_candidate_count: int = 0
+    dead_content_private_or_meta_candidate_count: int = 0
+    dead_content_protected_candidate_count: int = 0
+    dead_content_high_confidence_candidate_count: int = 0
+    dead_content_recommendation: str | None = None
+
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
     unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
@@ -545,6 +560,20 @@ class Job:
             interaction_classification_private_or_meta_count=int(data.get("interaction_classification_private_or_meta_count", 0) or 0),
             interaction_classification_context_needed_count=int(data.get("interaction_classification_context_needed_count", 0) or 0),
             interaction_classification_recommendation=data.get("interaction_classification_recommendation"),
+            dead_content_report=dict(data.get("dead_content_report") or {}),
+            dead_content_status=data.get("dead_content_status"),
+            dead_content_candidates=list(data.get("dead_content_candidates") or []),
+            dead_content_segment_scores=list(data.get("dead_content_segment_scores") or []),
+            dead_content_candidate_count=int(data.get("dead_content_candidate_count", 0) or 0),
+            dead_content_segment_score_count=int(data.get("dead_content_segment_score_count", 0) or 0),
+            dead_content_dead_air_candidate_count=int(data.get("dead_content_dead_air_candidate_count", 0) or 0),
+            dead_content_low_value_candidate_count=int(data.get("dead_content_low_value_candidate_count", 0) or 0),
+            dead_content_filler_pause_candidate_count=int(data.get("dead_content_filler_pause_candidate_count", 0) or 0),
+            dead_content_loading_or_menu_candidate_count=int(data.get("dead_content_loading_or_menu_candidate_count", 0) or 0),
+            dead_content_private_or_meta_candidate_count=int(data.get("dead_content_private_or_meta_candidate_count", 0) or 0),
+            dead_content_protected_candidate_count=int(data.get("dead_content_protected_candidate_count", 0) or 0),
+            dead_content_high_confidence_candidate_count=int(data.get("dead_content_high_confidence_candidate_count", 0) or 0),
+            dead_content_recommendation=data.get("dead_content_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),
