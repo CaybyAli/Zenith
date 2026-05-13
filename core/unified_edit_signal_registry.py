@@ -29,6 +29,9 @@ from core.segment_classification_signal_adapter import (
 from core.murch_scoring_signal_adapter import adapt_murch_scoring_report_to_signals
 from core.cut_list_signal_adapter import adapt_cut_list_report_to_signals
 from core.clip_duration_signal_adapter import adapt_clip_duration_report_to_signals
+from core.transition_decision_signal_adapter import (
+    adapt_transition_decision_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -52,6 +55,7 @@ SOURCE_SEGMENT_CLASSIFIER = "segment_classifier"
 SOURCE_MURCH_SCORING = "murch_scoring"
 SOURCE_CUT_LIST_GENERATOR = "cut_list_generator"
 SOURCE_CLIP_DURATION_OPTIMIZER = "clip_duration_optimizer"
+SOURCE_TRANSITION_DECISION = "transition_decision"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -998,7 +1002,33 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_CLIP_DURATION_OPTIMIZER}")
-        
+
+    transition_decision_report = _job_attr(job, "transition_decision_report")
+    if not transition_decision_report:
+        transition_decision_decisions = _job_attr(
+            job,
+            "transition_decision_decisions",
+        )
+        if isinstance(transition_decision_decisions, list) and transition_decision_decisions:
+            transition_decision_report = {
+                "decisions": transition_decision_decisions
+            }
+
+    transition_decision_signals = _safe_collect(
+        lambda: adapt_transition_decision_report_to_signals(transition_decision_report),
+        label=SOURCE_TRANSITION_DECISION,
+        warnings=warnings,
+        errors=errors,
+    )
+    if transition_decision_signals:
+        source_counts[SOURCE_TRANSITION_DECISION] = len(transition_decision_signals)
+        for signal in transition_decision_signals:
+            normalized = _normalize_signal(signal, SOURCE_TRANSITION_DECISION)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_TRANSITION_DECISION}")
+
     silence_class_signals = _collect_silence_classification_signals(job)
     
     if silence_class_signals:

@@ -1,9 +1,9 @@
-"""Gaming Pipeline — core/gaming_pipeline.py
+"""Gaming Pipeline - core/gaming_pipeline.py
 
-Isoliertes Pipeline-Modul für gaming_main und gaming_uncut.
+Isoliertes Pipeline-Modul fÃ¼r gaming_main und gaming_uncut.
 Output: <export_dir>/<job_id>/<job_id>_final.mp4
 
-Entfernt gegenüber app.py (werden in späteren Phasen separat gebaut):
+Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
   - Music: MusicCueEngine, AudioMixPlanner, MusicApplyProcessor, etc.
   - Thumbnails: ThumbnailForge, AIThumbnailForge
   - Shorts: ShortsDecisionEngine, ShortsGenerator
@@ -113,6 +113,10 @@ from core.cut_list_runner import (
 from core.clip_duration_runner import (
     apply_clip_duration_run_report_to_job,
     run_clip_duration_optimization_for_job,
+)
+from core.transition_decision_runner import (
+    apply_transition_decision_run_report_to_job,
+    run_transition_decision_for_job,
 )
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -827,9 +831,9 @@ def _filter_highlights_by_round_phase(
 
 
 def _build_gaming_services() -> dict:
-    """Dependency-Container für die Gaming-Pipeline.
+    """Dependency-Container fÃ¼r die Gaming-Pipeline.
 
-    Gibt ein Dict mit allen benötigten Service-Instanzen zurück.
+    Gibt ein Dict mit allen benÃ¶tigten Service-Instanzen zurÃ¼ck.
     Wird einmal in pipeline_runner.py aufgerufen und an
     run_gaming_pipeline_for_job() weitergegeben.
     """
@@ -851,20 +855,20 @@ def _build_gaming_services() -> dict:
 
 
 def run_gaming_pipeline_for_job(job, services: dict) -> dict:
-    """Führt die vollständige Gaming-Render-Pipeline für einen Job aus.
+    """FÃ¼hrt die vollstÃ¤ndige Gaming-Render-Pipeline fÃ¼r einen Job aus.
 
     Pipeline-Schritte:
-      1) GamingAnalyzer + GamingCutter  → analysis + edit_decision
-      2) EditSignalExtractor            → edit_signals
-      3) HighlightSelector              → highlights
-      4) LongformTimelineBuilder        → edit_timeline  (wenn longform)
-      5) ReframingCore                  → reframe_plan
+      1) GamingAnalyzer + GamingCutter  â†’ analysis + edit_decision
+      2) EditSignalExtractor            â†’ edit_signals
+      3) HighlightSelector              â†’ highlights
+      4) LongformTimelineBuilder        â†’ edit_timeline  (wenn longform)
+      5) ReframingCore                  â†’ reframe_plan
       6) ReactionMomentDetector
-         + ZoomPacingEngine             → dynamic_edit_plan
-      7) FinalRenderDriver / RenderProcessor → final_video_path
-      8) SubtitleProcessor              → subtitles
-      9) TitleGenerator + MetadataGenerator → title + metadata
-     10) Validator                      → validator_result
+         + ZoomPacingEngine             â†’ dynamic_edit_plan
+      7) FinalRenderDriver / RenderProcessor â†’ final_video_path
+      8) SubtitleProcessor              â†’ subtitles
+      9) TitleGenerator + MetadataGenerator â†’ title + metadata
+     10) Validator                      â†’ validator_result
      11) Repositories speichern        (highlight, timeline, reframe, zoom)
      12) Job-Status -> JobStatus.RENDERED
 
@@ -2495,7 +2499,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="silence_classification_completed_or_skipped",
     )
 
-    # ── Transcript Lifeline (3-B) ────────────────────────────────────────────
+    # ── Transcript Lifeline (3-B) ─────────────────────────────────────────
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
@@ -2619,9 +2623,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="transcript_done",
         reason="transcript_completed_or_skipped",
     )
-    # ── End Transcript Lifeline ──────────────────────────────────────────────
+    # ── End Transcript Lifeline ───────────────────────────────────────────
 
-    # ── Filler Word Detection (2B-10-C) ──────────────────────────────────────
+    # ── Filler Word Detection (2B-10-C) ───────────────────────────────────
     # Sentence Boundary Protection (2B-20-C)
     _safe_log_decision(
         job=job,
@@ -3200,9 +3204,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="dead_content_detection_completed_or_skipped",
     )
     # End Dead Content Detection
-    # ── End Filler Word Detection ────────────────────────────────────────────
+    # ── End Filler Word Detection ─────────────────────────────────────────
 
-    # ── Audio Normalization (2B-11-E) ────────────────────────────────────────
+    # ── Audio Normalization (2B-11-E) ─────────────────────────────────────
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
@@ -3279,7 +3283,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="audio_normalization_done",
         reason="audio_normalization_completed_or_skipped",
     )
-    # ── End Audio Normalization ──────────────────────────────────────────────
+    # ── End Audio Normalization ─────────────────────────────────────────
 
     transition_job_state(
         job,
@@ -3355,7 +3359,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="beat_detection_completed_or_skipped",
     )
 
-    # ── Unified Edit Signal Registry (3-C) ───────────────────────────────────
+    # ── Unified Edit Signal Registry (3-C) ────────────────────────────────
     # Content Value Score (2B-24-C)
     _safe_log_decision(
         job=job,
@@ -3695,7 +3699,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="unified_edit_signals_done",
         reason="unified_edit_signals_completed_or_skipped",
     )
-    # ── End Unified Edit Signal Registry ─────────────────────────────────────
+    # ── End Unified Edit Signal Registry ──────────────────────────────────
 
     # ── Segment Classification (2B-25-C) ─────────────────────────────────────
     _safe_log_decision(
@@ -3815,8 +3819,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="segment_classification_done",
         reason="segment_classification_completed_or_skipped",
     )
-    # ── End Segment Classification ───────────────────────────────────────────
-        # ── Murch Scoring (2B-26-C) ──────────────────────────────────────────────
+    # ── End Segment Classification ─────────────────────────────────────────
+    # ── Murch Scoring (2B-26-C) ───────────────────────────────────────────
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
@@ -3929,9 +3933,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="murch_scoring_done",
         reason="murch_scoring_completed_or_skipped",
     )
-    # ── End Murch Scoring ────────────────────────────────────────────────────
+    # ── End Murch Scoring ─────────────────────────────────────────────────
 
-    # ── Cut List Generation (2B-27-C) ────────────────────────────────────────
+    # ── Cut List Generation (2B-27-C) ─────────────────────────────────────
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
@@ -4044,7 +4048,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         step_name="cut_list_generation_done",
         reason="cut_list_generation_completed_or_skipped",
     )
-    # ── End Cut List Generation ───────────────────────────────────────────────
+    # ── End Cut List Generation ───────────────────────────────────────────
 
     # -- Clip Duration Optimization (2B-28-C) ----------------------------------
     _safe_log_decision(
@@ -4158,7 +4162,130 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="clip_duration_optimization_completed_or_skipped",
     )
     # -- End Clip Duration Optimization ----------------------------------------
-    
+
+    # -- Transition Decision Engine (2B-29-C) ----------------------------------
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="transition_decision",
+        event_type="TRANSITION_DECISION_STARTED",
+        action="run_transition_decision",
+        reason="transition_decision_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "clip_duration_recommendation_count": int(
+                getattr(job, "clip_duration_recommendation_count", 0) or 0
+            ),
+            "cut_list_item_count": int(getattr(job, "cut_list_item_count", 0) or 0),
+        },
+    )
+
+    try:
+        transition_decision_report = run_transition_decision_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-29-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_transition_decision_run_report_to_job(
+            job=job,
+            report=transition_decision_report,
+        )
+
+        _transition_decision_details = {
+            "status": transition_decision_report.status,
+            "decision_count": transition_decision_report.decision_count,
+            "hard_cut_review_count": transition_decision_report.hard_cut_review_count,
+            "j_cut_review_count": transition_decision_report.j_cut_review_count,
+            "l_cut_review_count": transition_decision_report.l_cut_review_count,
+            "quick_fade_review_count": (
+                transition_decision_report.quick_fade_review_count
+            ),
+            "no_cut_protect_count": transition_decision_report.no_cut_protect_count,
+            "censor_safe_keep_count": transition_decision_report.censor_safe_keep_count,
+            "technical_transition_review_count": (
+                transition_decision_report.technical_transition_review_count
+            ),
+            "unknown_review_count": transition_decision_report.unknown_review_count,
+            "recommendation": transition_decision_report.recommendation,
+            "warnings": list(transition_decision_report.warnings or []),
+            "errors": list(transition_decision_report.errors or []),
+            "review_only": True,
+        }
+
+        _transition_decision_status_text = str(
+            transition_decision_report.status or ""
+        ).lower()
+
+        if _transition_decision_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transition_decision",
+                event_type="TRANSITION_DECISION_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _transition_decision_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=transition_decision_report.recommendation
+                or "transition_decision_completed",
+                details=_transition_decision_details,
+            )
+        elif _transition_decision_status_text in {
+            "skipped_no_clip_duration_recommendations",
+            "skipped_no_cut_list_items",
+        }:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transition_decision",
+                event_type="TRANSITION_DECISION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=transition_decision_report.recommendation
+                or "transition_decision_skipped_no_inputs",
+                details=_transition_decision_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="transition_decision",
+                event_type="TRANSITION_DECISION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=transition_decision_report.recommendation
+                or "transition_decision_failed",
+                details=_transition_decision_details,
+            )
+
+    except Exception as transition_decision_exc:
+        job.transition_decision_status = "failed"
+        job.transition_decision_recommendation = "transition_decision_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="transition_decision",
+            event_type="TRANSITION_DECISION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="transition_decision_exception",
+            details={"error": str(transition_decision_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="transition_decision_done",
+        reason="transition_decision_completed_or_skipped",
+    )
+    # -- End Transition Decision Engine ----------------------------------------
+
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
@@ -4675,7 +4802,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
 
     # ------------------------------------------------------------------
-    # 4) Longform-Timeline  (nur wenn Voraussetzungen erfüllt)
+    # 4) Longform-Timeline  (nur wenn Voraussetzungen erfÃ¼llt)
     # ------------------------------------------------------------------
     edit_timeline = None
     _fusion_timeline_note = None
@@ -5264,7 +5391,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(f"[DEBUG] =====================================\n")
 
     # ------------------------------------------------------------------
-    # 7) Render — FinalRenderDriver wenn Timeline vorhanden,
+    # 7) Render - FinalRenderDriver wenn Timeline vorhanden,
     #             sonst RenderProcessor als Fallback
     # ------------------------------------------------------------------
     if edit_timeline is not None and job.raw_video_path:
@@ -5337,7 +5464,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             "debug_context": debug_context,
         },
     )
-    print(f"[gaming_pipeline] RENDER    {job.job_id}  → {final_video_path}")
+    print(f"[gaming_pipeline] RENDER    {job.job_id}  â†’ {final_video_path}")
 
     # ------------------------------------------------------------------
     # 8) Untertitel
@@ -5354,14 +5481,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
           f"title='{getattr(title_package, 'primary_title', '')[:40]}'")
 
     # ------------------------------------------------------------------
-    # 10) Validator  (kein Thumbnail → None)
+    # 10) Validator  (kein Thumbnail â†’ None)
     # ------------------------------------------------------------------
     validator_result = validator.validate(
         job,
         final_video_path,
         title_package,
         metadata,
-        None,   # thumbnail_package — wird in Phase 2.5 gebaut
+        None,   # thumbnail_package - wird in Phase 2.5 gebaut
     )
     print(f"[gaming_pipeline] VALIDATE  {job.job_id}  "
           f"status={getattr(validator_result, 'validator_status', '-')}")
@@ -5423,8 +5550,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     # 11) Repositories speichern
     # ------------------------------------------------------------------
-    # Highlight-Daten werden export_path-los gespeichert —
-    # pipeline_runner übergibt export_path nach Rückkehr.
+    # Highlight-Daten werden export_path-los gespeichert -
+    # pipeline_runner Ã¼bergibt export_path nach RÃ¼ckkehr.
     _highlight_repo_data = {
         "edit_signals":          edit_signals,
         "energy_curve_result":   energy_curve_result,
@@ -5488,12 +5615,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     _dynamic_plan_to_save  = dynamic_edit_plan
 
     # ------------------------------------------------------------------
-    # 12) Job-Status ist bereits über state transitions auf RENDERED gesetzt
+    # 12) Job-Status ist bereits Ã¼ber state transitions auf RENDERED gesetzt
     # ------------------------------------------------------------------
     try:
         job_repo.save_job(job=job, export_path=None, publish_package=None, shorts_paths=[])
     except Exception:
-        pass  # pipeline_runner kümmert sich ums finale Speichern
+        pass  # pipeline_runner kÃ¼mmert sich ums finale Speichern
 
     print(f"[gaming_pipeline] DONE      {job.job_id}  status=rendered")
 
@@ -5561,7 +5688,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "metadata":              metadata,
         # Validierung
         "validator_result":      validator_result,
-        # Repo-Daten (für pipeline_runner zum Speichern)
+        # Repo-Daten (fÃ¼r pipeline_runner zum Speichern)
         "_highlight_repo_data":  _highlight_repo_data,
         "_timeline_to_save":     _timeline_to_save,
         "_reframe_to_save":      _reframe_to_save,

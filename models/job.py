@@ -243,7 +243,19 @@ class Job:
     clip_duration_technical_review_count: int = 0
     clip_duration_invalid_timing_count: int = 0
     clip_duration_recommendation: str | None = None
-
+    transition_decision_report: dict[str, Any] = field(default_factory=dict)
+    transition_decision_status: str | None = None
+    transition_decision_decisions: list[dict[str, Any]] = field(default_factory=list)
+    transition_decision_count: int = 0
+    transition_decision_hard_cut_review_count: int = 0
+    transition_decision_j_cut_review_count: int = 0
+    transition_decision_l_cut_review_count: int = 0
+    transition_decision_quick_fade_review_count: int = 0
+    transition_decision_no_cut_protect_count: int = 0
+    transition_decision_censor_safe_keep_count: int = 0
+    transition_decision_technical_review_count: int = 0
+    transition_decision_unknown_review_count: int = 0
+    transition_decision_recommendation: str | None = None
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -742,6 +754,19 @@ class Job:
             clip_duration_technical_review_count=int(data.get("clip_duration_technical_review_count", 0) or 0),
             clip_duration_invalid_timing_count=int(data.get("clip_duration_invalid_timing_count", 0) or 0),
             clip_duration_recommendation=data.get("clip_duration_recommendation"),            
+            transition_decision_report=dict(data.get("transition_decision_report") or {}),
+            transition_decision_status=data.get("transition_decision_status"),
+            transition_decision_decisions=list(data.get("transition_decision_decisions") or []),
+            transition_decision_count=int(data.get("transition_decision_count", 0) or 0),
+            transition_decision_hard_cut_review_count=int(data.get("transition_decision_hard_cut_review_count", 0) or 0),
+            transition_decision_j_cut_review_count=int(data.get("transition_decision_j_cut_review_count", 0) or 0),
+            transition_decision_l_cut_review_count=int(data.get("transition_decision_l_cut_review_count", 0) or 0),
+            transition_decision_quick_fade_review_count=int(data.get("transition_decision_quick_fade_review_count", 0) or 0),
+            transition_decision_no_cut_protect_count=int(data.get("transition_decision_no_cut_protect_count", 0) or 0),
+            transition_decision_censor_safe_keep_count=int(data.get("transition_decision_censor_safe_keep_count", 0) or 0),
+            transition_decision_technical_review_count=int(data.get("transition_decision_technical_review_count", 0) or 0),
+            transition_decision_unknown_review_count=int(data.get("transition_decision_unknown_review_count", 0) or 0),
+            transition_decision_recommendation=data.get("transition_decision_recommendation"),            
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
