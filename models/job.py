@@ -269,6 +269,22 @@ class Job:
     continuity_check_technical_issue_count: int = 0
     continuity_check_protected_context_count: int = 0
     continuity_check_recommendation: str | None = None
+    final_cut_list_report: dict[str, Any] = field(default_factory=dict)
+    final_cut_list_status: str | None = None
+    final_cut_list_items: list[dict[str, Any]] = field(default_factory=list)
+    final_cut_list_item_count: int = 0
+    final_cut_list_keep_review_count: int = 0
+    final_cut_list_keep_high_value_count: int = 0
+    final_cut_list_trim_review_count: int = 0
+    final_cut_list_remove_review_count: int = 0
+    final_cut_list_protect_count: int = 0
+    final_cut_list_censor_keep_count: int = 0
+    final_cut_list_technical_review_count: int = 0
+    final_cut_list_blocked_by_continuity_count: int = 0
+    final_cut_list_unknown_review_count: int = 0
+    final_cut_list_review_required_count: int = 0
+    final_cut_list_blocking_issue_count: int = 0
+    final_cut_list_recommendation: str | None = None
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -793,6 +809,22 @@ class Job:
             continuity_check_technical_issue_count=int(data.get("continuity_check_technical_issue_count", 0) or 0),
             continuity_check_protected_context_count=int(data.get("continuity_check_protected_context_count", 0) or 0),
             continuity_check_recommendation=data.get("continuity_check_recommendation"),
+            final_cut_list_report=dict(data.get("final_cut_list_report") or {}),
+            final_cut_list_status=data.get("final_cut_list_status"),
+            final_cut_list_items=list(data.get("final_cut_list_items") or []),
+            final_cut_list_item_count=int(data.get("final_cut_list_item_count", 0) or 0),
+            final_cut_list_keep_review_count=int(data.get("final_cut_list_keep_review_count", 0) or 0),
+            final_cut_list_keep_high_value_count=int(data.get("final_cut_list_keep_high_value_count", 0) or 0),
+            final_cut_list_trim_review_count=int(data.get("final_cut_list_trim_review_count", 0) or 0),
+            final_cut_list_remove_review_count=int(data.get("final_cut_list_remove_review_count", 0) or 0),
+            final_cut_list_protect_count=int(data.get("final_cut_list_protect_count", 0) or 0),
+            final_cut_list_censor_keep_count=int(data.get("final_cut_list_censor_keep_count", 0) or 0),
+            final_cut_list_technical_review_count=int(data.get("final_cut_list_technical_review_count", 0) or 0),
+            final_cut_list_blocked_by_continuity_count=int(data.get("final_cut_list_blocked_by_continuity_count", 0) or 0),
+            final_cut_list_unknown_review_count=int(data.get("final_cut_list_unknown_review_count", 0) or 0),
+            final_cut_list_review_required_count=int(data.get("final_cut_list_review_required_count", 0) or 0),
+            final_cut_list_blocking_issue_count=int(data.get("final_cut_list_blocking_issue_count", 0) or 0),
+            final_cut_list_recommendation=data.get("final_cut_list_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

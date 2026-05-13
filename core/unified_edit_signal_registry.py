@@ -33,6 +33,7 @@ from core.transition_decision_signal_adapter import (
     adapt_transition_decision_report_to_signals,
 )
 from core.continuity_check_signal_adapter import adapt_continuity_check_report_to_signals
+from core.final_cut_list_signal_adapter import adapt_final_cut_list_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -58,6 +59,7 @@ SOURCE_CUT_LIST_GENERATOR = "cut_list_generator"
 SOURCE_CLIP_DURATION_OPTIMIZER = "clip_duration_optimizer"
 SOURCE_TRANSITION_DECISION = "transition_decision"
 SOURCE_CONTINUITY_CHECK = "continuity_check"
+SOURCE_CUT_LIST_FINALIZER = "cut_list_finalizer"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1056,6 +1058,32 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_CONTINUITY_CHECK}")
+
+    final_cut_list_report = _job_attr(job, "final_cut_list_report")
+    if not final_cut_list_report:
+        final_cut_list_items = _job_attr(
+            job,
+            "final_cut_list_items",
+        )
+        if isinstance(final_cut_list_items, list) and final_cut_list_items:
+            final_cut_list_report = {
+                "final_items": final_cut_list_items
+            }
+
+    final_cut_list_signals = _safe_collect(
+        lambda: adapt_final_cut_list_report_to_signals(final_cut_list_report),
+        label=SOURCE_CUT_LIST_FINALIZER,
+        warnings=warnings,
+        errors=errors,
+    )
+    if final_cut_list_signals:
+        source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
+        for signal in final_cut_list_signals:
+            normalized = _normalize_signal(signal, SOURCE_CUT_LIST_FINALIZER)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CUT_LIST_FINALIZER}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     

@@ -122,6 +122,10 @@ from core.continuity_check_runner import (
     apply_continuity_check_run_report_to_job,
     run_continuity_check_for_job,
 )
+from core.cut_list_finalizer_runner import (
+    apply_cut_list_finalization_run_report_to_job,
+    run_cut_list_finalization_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4416,6 +4420,142 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="continuity_check_completed_or_skipped",
     )
     # -- End Continuity Check ---------------------------------------------------
+
+    # -- Cut List Finalization (2B-31-C) ---------------------------------------
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="cut_list_finalization",
+        event_type="CUT_LIST_FINALIZATION_STARTED",
+        action="run_cut_list_finalization",
+        reason="cut_list_finalization_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "cut_list_item_count": int(getattr(job, "cut_list_item_count", 0) or 0),
+            "continuity_check_issue_count": int(
+                getattr(job, "continuity_check_issue_count", 0) or 0
+            ),
+        },
+    )
+
+    try:
+        final_cut_list_report = run_cut_list_finalization_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-31-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_cut_list_finalization_run_report_to_job(
+            job=job,
+            report=final_cut_list_report,
+        )
+
+        _final_cut_list_details = {
+            "status": final_cut_list_report.status,
+            "final_item_count": final_cut_list_report.final_item_count,
+            "final_keep_review_count": (
+                final_cut_list_report.final_keep_review_count
+            ),
+            "final_keep_high_value_count": (
+                final_cut_list_report.final_keep_high_value_count
+            ),
+            "final_trim_review_count": (
+                final_cut_list_report.final_trim_review_count
+            ),
+            "final_remove_review_count": (
+                final_cut_list_report.final_remove_review_count
+            ),
+            "final_protect_count": final_cut_list_report.final_protect_count,
+            "final_censor_keep_count": (
+                final_cut_list_report.final_censor_keep_count
+            ),
+            "final_technical_review_count": (
+                final_cut_list_report.final_technical_review_count
+            ),
+            "final_blocked_by_continuity_count": (
+                final_cut_list_report.final_blocked_by_continuity_count
+            ),
+            "final_unknown_review_count": (
+                final_cut_list_report.final_unknown_review_count
+            ),
+            "review_required_count": final_cut_list_report.review_required_count,
+            "blocking_issue_count": final_cut_list_report.blocking_issue_count,
+            "recommendation": final_cut_list_report.recommendation,
+            "warnings": list(final_cut_list_report.warnings or []),
+            "errors": list(final_cut_list_report.errors or []),
+            "review_only": True,
+        }
+
+        _final_cut_list_status_text = str(final_cut_list_report.status or "").lower()
+
+        if _final_cut_list_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="cut_list_finalization",
+                event_type="CUT_LIST_FINALIZATION_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _final_cut_list_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=final_cut_list_report.recommendation
+                or "cut_list_finalization_completed",
+                details=_final_cut_list_details,
+            )
+        elif _final_cut_list_status_text in {
+            "skipped_no_cut_list_items",
+            "skipped_no_inputs",
+        }:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="cut_list_finalization",
+                event_type="CUT_LIST_FINALIZATION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=final_cut_list_report.recommendation
+                or "cut_list_finalization_skipped_no_inputs",
+                details=_final_cut_list_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="cut_list_finalization",
+                event_type="CUT_LIST_FINALIZATION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=final_cut_list_report.recommendation
+                or "cut_list_finalization_failed",
+                details=_final_cut_list_details,
+            )
+
+    except Exception as cut_list_finalization_exc:
+        job.final_cut_list_status = "failed"
+        job.final_cut_list_recommendation = "cut_list_finalization_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="cut_list_finalization",
+            event_type="CUT_LIST_FINALIZATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="cut_list_finalization_exception",
+            details={"error": str(cut_list_finalization_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="cut_list_finalization_done",
+        reason="cut_list_finalization_completed_or_skipped",
+    )
+    # -- End Cut List Finalization ---------------------------------------------
 
     _safe_log_decision(
         job=job,
