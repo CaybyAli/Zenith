@@ -312,7 +312,24 @@ class Job:
     timeline_requires_human_approval: bool = True
     timeline_approval_blocking_reasons: list[str] = field(default_factory=list)
     timeline_approval_warnings: list[str] = field(default_factory=list)
-    timeline_approval_warnings: list[str] = field(default_factory=list)  
+
+    timeline_safety_validator_report: dict[str, Any] = field(default_factory=dict)
+    timeline_safety_validator: dict[str, Any] = field(default_factory=dict)
+    timeline_safety_validation_id: str | None = None
+    timeline_safety_validation_status: str | None = None
+    timeline_is_safe_for_future_execution: bool = False
+    timeline_is_safe_for_render: bool = False
+    timeline_safety_requires_manual_review: bool = True
+    timeline_safety_blocking_errors: list[str] = field(default_factory=list)
+    timeline_safety_warnings: list[str] = field(default_factory=list)
+    timeline_safety_item_results: list[dict[str, Any]] = field(default_factory=list)
+    timeline_safety_invalid_timing_count: int = 0
+    timeline_safety_overlap_count: int = 0
+    timeline_safety_gap_count: int = 0
+    timeline_safety_protected_violation_count: int = 0
+    timeline_safety_censor_violation_count: int = 0
+    timeline_safety_continuity_violation_count: int = 0
+    timeline_safety_approval_violation_count: int = 0
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -907,7 +924,56 @@ class Job:
             timeline_approval_blocking_reasons=list(
                 data.get("timeline_approval_blocking_reasons") or []
             ),
-            timeline_approval_warnings=list(data.get("timeline_approval_warnings") or []),           
+            timeline_approval_warnings=list(data.get("timeline_approval_warnings") or []),
+            timeline_safety_validator_report=dict(
+                data.get("timeline_safety_validator_report") or {}
+            ),
+            timeline_safety_validator=dict(
+                data.get("timeline_safety_validator") or {}
+            ),
+            timeline_safety_validation_id=data.get("timeline_safety_validation_id"),
+            timeline_safety_validation_status=data.get(
+                "timeline_safety_validation_status"
+            ),
+            timeline_is_safe_for_future_execution=bool(
+                data.get("timeline_is_safe_for_future_execution", False)
+            ),
+            timeline_is_safe_for_render=bool(
+                data.get("timeline_is_safe_for_render", False)
+            ),
+            timeline_safety_requires_manual_review=bool(
+                data.get("timeline_safety_requires_manual_review", True)
+            ),
+            timeline_safety_blocking_errors=list(
+                data.get("timeline_safety_blocking_errors") or []
+            ),
+            timeline_safety_warnings=list(
+                data.get("timeline_safety_warnings") or []
+            ),
+            timeline_safety_item_results=list(
+                data.get("timeline_safety_item_results") or []
+            ),
+            timeline_safety_invalid_timing_count=int(
+                data.get("timeline_safety_invalid_timing_count", 0) or 0
+            ),
+            timeline_safety_overlap_count=int(
+                data.get("timeline_safety_overlap_count", 0) or 0
+            ),
+            timeline_safety_gap_count=int(
+                data.get("timeline_safety_gap_count", 0) or 0
+            ),
+            timeline_safety_protected_violation_count=int(
+                data.get("timeline_safety_protected_violation_count", 0) or 0
+            ),
+            timeline_safety_censor_violation_count=int(
+                data.get("timeline_safety_censor_violation_count", 0) or 0
+            ),
+            timeline_safety_continuity_violation_count=int(
+                data.get("timeline_safety_continuity_violation_count", 0) or 0
+            ),
+            timeline_safety_approval_violation_count=int(
+                data.get("timeline_safety_approval_violation_count", 0) or 0
+            ),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

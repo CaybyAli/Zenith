@@ -134,6 +134,10 @@ from core.timeline_approval_gate_runner import (
     apply_timeline_approval_gate_run_report_to_job,
     run_timeline_approval_gate_for_job,
 )
+from core.timeline_safety_validator_runner import (
+    apply_timeline_safety_validator_run_report_to_job,
+    run_timeline_safety_validator_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4664,7 +4668,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             )
 
             # ── Timeline Approval Gate (2B-33)
-            
+
             timeline_approval_gate_report = run_timeline_approval_gate_for_job(
                 job,
                 metadata={
@@ -4761,9 +4765,128 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     "no_execution_in_2b_33": True,
                 },
             )
+
             # ── End Timeline Approval Gate
 
+            # ── Timeline Safety Validator (2B-34)
 
+            timeline_safety_validator_report = run_timeline_safety_validator_for_job(
+                job,
+                metadata={
+                    "phase": "2B-34",
+                    "review_only": True,
+                    "safety_validator_only": True,
+                    "media_unchanged": True,
+                    "no_execution_in_2b_34": True,
+                    "no_render_in_2b_34": True,
+                },
+            )
+            apply_timeline_safety_validator_run_report_to_job(
+                job,
+                timeline_safety_validator_report,
+            )
+
+            timeline_safety_validation_status = str(
+                getattr(
+                    timeline_safety_validator_report,
+                    "validation_status",
+                    "",
+                )
+                or getattr(timeline_safety_validator_report, "status", "")
+                or ""
+            )
+
+            if timeline_safety_validation_status == "passed":
+                timeline_safety_event_type = "TIMELINE_SAFETY_VALIDATOR_PASSED"
+                timeline_safety_log_status = "ok"
+            elif timeline_safety_validation_status == "passed_with_warnings":
+                timeline_safety_event_type = (
+                    "TIMELINE_SAFETY_VALIDATOR_PASSED_WITH_WARNINGS"
+                )
+                timeline_safety_log_status = "ok"
+            elif timeline_safety_validation_status == "blocked":
+                timeline_safety_event_type = "TIMELINE_SAFETY_VALIDATOR_BLOCKED"
+                timeline_safety_log_status = "blocked"
+            elif timeline_safety_validation_status == "failed":
+                timeline_safety_event_type = "TIMELINE_SAFETY_VALIDATOR_FAILED"
+                timeline_safety_log_status = "failed"
+            else:
+                timeline_safety_event_type = "TIMELINE_SAFETY_VALIDATOR_BLOCKED"
+                timeline_safety_log_status = "blocked"
+
+            _safe_log_decision(
+                job=job,
+                export_dir=export_dir,
+                phase="2B-34",
+                event_type=timeline_safety_event_type,
+                action="timeline_safety_validator_review_only",
+                status=timeline_safety_log_status,
+                reason=",".join(
+                    list(
+                        getattr(
+                            timeline_safety_validator_report,
+                            "blocking_errors",
+                            [],
+                        )
+                        or []
+                    )
+                )
+                or timeline_safety_validation_status,
+                details={
+                    "status": getattr(
+                        timeline_safety_validator_report,
+                        "status",
+                        None,
+                    ),
+                    "validation_status": timeline_safety_validation_status,
+                    "is_safe_for_future_execution": bool(
+                        getattr(
+                            timeline_safety_validator_report,
+                            "is_safe_for_future_execution",
+                            False,
+                        )
+                    ),
+                    "is_safe_for_render": False,
+                    "requires_manual_review": bool(
+                        getattr(
+                            timeline_safety_validator_report,
+                            "requires_manual_review",
+                            True,
+                        )
+                    ),
+                    "blocking_errors": list(
+                        getattr(
+                            timeline_safety_validator_report,
+                            "blocking_errors",
+                            [],
+                        )
+                        or []
+                    ),
+                    "warnings": list(
+                        getattr(
+                            timeline_safety_validator_report,
+                            "warnings",
+                            [],
+                        )
+                        or []
+                    ),
+                    "review_only": True,
+                    "safety_validator_only": True,
+                    "media_unchanged": True,
+                    "no_execution_in_2b_34": True,
+                    "no_render_in_2b_34": True,
+                },
+            )
+
+            persist_job_state_checkpoint(
+                job=job,
+                export_dir=export_dir,
+                step_name="timeline_safety_validator_done",
+                reason=timeline_safety_validation_status,
+            )
+
+            # ── End Timeline Safety Validator
+            
     except Exception as review_timeline_plan_exc:
             job.review_timeline_plan_status = "failed"
             job.review_timeline_plan_report = {
