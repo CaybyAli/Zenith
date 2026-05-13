@@ -370,6 +370,27 @@ class Job:
     hook_warnings: list[str] = field(default_factory=list)
     hook_recommendation: str | None = None
 
+    emotional_arc_report: dict[str, Any] = field(default_factory=dict)
+    emotional_arc: dict[str, Any] = field(default_factory=dict)
+    emotional_arc_status: str | None = None
+    emotional_arc_points: list[dict[str, Any]] = field(default_factory=list)
+    emotional_arc_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    emotional_arc_average_deviation: float = 0.0
+    emotional_arc_max_deviation: float = 0.0
+    emotional_arc_flatness_score: float = 0.0
+    emotional_arc_hook_strength_score: float = 0.0
+    emotional_arc_climax_strength_score: float = 0.0
+    emotional_arc_breathing_room_score: float = 0.0
+    emotional_arc_review_required: bool = True
+    emotional_arc_can_apply: bool = False
+    emotional_arc_can_reorder_timeline: bool = False
+    emotional_arc_can_trim: bool = False
+    emotional_arc_can_extend: bool = False
+    emotional_arc_can_render: bool = False
+    emotional_arc_blocking_reasons: list[str] = field(default_factory=list)
+    emotional_arc_warnings: list[str] = field(default_factory=list)
+    emotional_arc_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1051,6 +1072,44 @@ class Job:
             hook_blocking_reasons=list(data.get("hook_blocking_reasons") or []),
             hook_warnings=list(data.get("hook_warnings") or []),
             hook_recommendation=data.get("hook_recommendation"),
+            emotional_arc_report=dict(data.get("emotional_arc_report") or {}),
+            emotional_arc=dict(data.get("emotional_arc") or {}),
+            emotional_arc_status=data.get("emotional_arc_status"),
+            emotional_arc_points=list(data.get("emotional_arc_points") or []),
+            emotional_arc_suggestions=list(
+                data.get("emotional_arc_suggestions") or []
+            ),
+            emotional_arc_average_deviation=float(
+                data.get("emotional_arc_average_deviation", 0.0) or 0.0
+            ),
+            emotional_arc_max_deviation=float(
+                data.get("emotional_arc_max_deviation", 0.0) or 0.0
+            ),
+            emotional_arc_flatness_score=float(
+                data.get("emotional_arc_flatness_score", 0.0) or 0.0
+            ),
+            emotional_arc_hook_strength_score=float(
+                data.get("emotional_arc_hook_strength_score", 0.0) or 0.0
+            ),
+            emotional_arc_climax_strength_score=float(
+                data.get("emotional_arc_climax_strength_score", 0.0) or 0.0
+            ),
+            emotional_arc_breathing_room_score=float(
+                data.get("emotional_arc_breathing_room_score", 0.0) or 0.0
+            ),
+            emotional_arc_review_required=bool(
+                data.get("emotional_arc_review_required", True)
+            ),
+            emotional_arc_can_apply=False,
+            emotional_arc_can_reorder_timeline=False,
+            emotional_arc_can_trim=False,
+            emotional_arc_can_extend=False,
+            emotional_arc_can_render=False,
+            emotional_arc_blocking_reasons=list(
+                data.get("emotional_arc_blocking_reasons") or []
+            ),
+            emotional_arc_warnings=list(data.get("emotional_arc_warnings") or []),
+            emotional_arc_recommendation=data.get("emotional_arc_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

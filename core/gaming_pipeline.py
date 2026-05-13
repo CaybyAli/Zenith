@@ -146,6 +146,10 @@ from core.hook_identification_runner import (
     apply_hook_identification_run_report_to_job,
     run_hook_identification_for_job,
 )
+from core.emotional_arc_runner import (
+    apply_emotional_arc_run_report_to_job,
+    run_emotional_arc_builder_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4991,6 +4995,235 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                         "no_execution_in_2b_37": True,
                         "no_render_in_2b_37": True,
                         "no_timeline_reorder_in_2b_37": True,
+                    },
+                )
+
+            try:
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-38",
+                    event_type="EMOTIONAL_ARC_BUILDER_STARTED",
+                    action="run_emotional_arc_builder",
+                    status="started",
+                    reason="Analyze review-only emotional arc after hook identification.",
+                    details={
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "emotional_arc_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_38": True,
+                        "no_render_in_2b_38": True,
+                        "no_timeline_reorder_in_2b_38": True,
+                        "no_arc_apply_in_2b_38": True,
+                    },
+                )
+
+                emotional_arc_report = run_emotional_arc_builder_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-38",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "emotional_arc_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_38": True,
+                        "no_render_in_2b_38": True,
+                        "no_timeline_reorder_in_2b_38": True,
+                        "no_arc_apply_in_2b_38": True,
+                    },
+                )
+                apply_emotional_arc_run_report_to_job(job, emotional_arc_report)
+
+                emotional_arc_status = str(
+                    getattr(emotional_arc_report, "status", "") or ""
+                )
+
+                if emotional_arc_status == "arc_analysis_ready":
+                    emotional_arc_event_type = "EMOTIONAL_ARC_ANALYSIS_READY"
+                    emotional_arc_log_status = "pending_review"
+                elif emotional_arc_status == "arc_analysis_ready_with_warnings":
+                    emotional_arc_event_type = (
+                        "EMOTIONAL_ARC_ANALYSIS_READY_WITH_WARNINGS"
+                    )
+                    emotional_arc_log_status = "pending_review"
+                elif emotional_arc_status in {"blocked", "no_timeline_items"}:
+                    emotional_arc_event_type = "EMOTIONAL_ARC_ANALYSIS_BLOCKED"
+                    emotional_arc_log_status = "blocked"
+                else:
+                    emotional_arc_event_type = "EMOTIONAL_ARC_ANALYSIS_FAILED"
+                    emotional_arc_log_status = "failed"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-38",
+                    event_type=emotional_arc_event_type,
+                    action="emotional_arc_review_only",
+                    status=emotional_arc_log_status,
+                    reason=getattr(
+                        emotional_arc_report,
+                        "recommendation",
+                        "review_emotional_arc_suggestions",
+                    ),
+                    details={
+                        "status": emotional_arc_status,
+                        "arc_point_count": len(
+                            getattr(emotional_arc_report, "arc_points", []) or []
+                        ),
+                        "suggestion_count": len(
+                            getattr(emotional_arc_report, "suggestions", []) or []
+                        ),
+                        "average_deviation": float(
+                            getattr(
+                                emotional_arc_report,
+                                "average_deviation",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "max_deviation": float(
+                            getattr(emotional_arc_report, "max_deviation", 0.0)
+                            or 0.0
+                        ),
+                        "flatness_score": float(
+                            getattr(emotional_arc_report, "flatness_score", 0.0)
+                            or 0.0
+                        ),
+                        "hook_strength_score": float(
+                            getattr(
+                                emotional_arc_report,
+                                "hook_strength_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "climax_strength_score": float(
+                            getattr(
+                                emotional_arc_report,
+                                "climax_strength_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "breathing_room_score": float(
+                            getattr(
+                                emotional_arc_report,
+                                "breathing_room_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "review_required": True,
+                        "can_apply_arc": False,
+                        "can_reorder_timeline": False,
+                        "can_trim": False,
+                        "can_extend": False,
+                        "can_render": False,
+                        "blocking_reasons": list(
+                            getattr(
+                                emotional_arc_report,
+                                "blocking_reasons",
+                                [],
+                            )
+                            or []
+                        ),
+                        "warnings": list(
+                            getattr(emotional_arc_report, "warnings", []) or []
+                        ),
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "emotional_arc_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_38": True,
+                        "no_render_in_2b_38": True,
+                        "no_timeline_reorder_in_2b_38": True,
+                        "no_arc_apply_in_2b_38": True,
+                    },
+                )
+
+                persist_job_state_checkpoint(
+                    job=job,
+                    export_dir=export_dir,
+                    step_name="emotional_arc_builder_done",
+                    reason=getattr(
+                        emotional_arc_report,
+                        "recommendation",
+                        "review_emotional_arc_suggestions",
+                    ),
+                )
+
+            except Exception as emotional_arc_exc:
+                job.emotional_arc_status = "failed"
+                job.emotional_arc_report = {
+                    "status": "failed",
+                    "arc_points": [],
+                    "suggestions": [],
+                    "actual_curve": [],
+                    "target_curve": [],
+                    "average_deviation": 0.0,
+                    "max_deviation": 0.0,
+                    "flatness_score": 0.0,
+                    "hook_strength_score": 0.0,
+                    "climax_strength_score": 0.0,
+                    "breathing_room_score": 0.0,
+                    "review_required": True,
+                    "can_apply_arc": False,
+                    "can_reorder_timeline": False,
+                    "can_trim": False,
+                    "can_extend": False,
+                    "can_render": False,
+                    "blocking_reasons": ["emotional_arc_failed"],
+                    "warnings": [],
+                    "recommendation": "review_emotional_arc_failure",
+                    "metadata": {
+                        "phase": "2B-38",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "emotional_arc_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_38": True,
+                        "no_render_in_2b_38": True,
+                        "no_timeline_reorder_in_2b_38": True,
+                        "no_arc_apply_in_2b_38": True,
+                        "error": str(emotional_arc_exc),
+                    },
+                }
+                job.emotional_arc = dict(job.emotional_arc_report)
+                job.emotional_arc_points = []
+                job.emotional_arc_suggestions = []
+                job.emotional_arc_average_deviation = 0.0
+                job.emotional_arc_max_deviation = 0.0
+                job.emotional_arc_flatness_score = 0.0
+                job.emotional_arc_hook_strength_score = 0.0
+                job.emotional_arc_climax_strength_score = 0.0
+                job.emotional_arc_breathing_room_score = 0.0
+                job.emotional_arc_review_required = True
+                job.emotional_arc_can_apply = False
+                job.emotional_arc_can_reorder_timeline = False
+                job.emotional_arc_can_trim = False
+                job.emotional_arc_can_extend = False
+                job.emotional_arc_can_render = False
+                job.emotional_arc_blocking_reasons = ["emotional_arc_failed"]
+                job.emotional_arc_warnings = []
+                job.emotional_arc_recommendation = "review_emotional_arc_failure"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-38",
+                    event_type="EMOTIONAL_ARC_ANALYSIS_FAILED",
+                    action="emotional_arc_review_only_failed",
+                    status="failed",
+                    reason=str(emotional_arc_exc),
+                    details={
+                        "review_only": True,
+                        "emotional_arc_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_38": True,
+                        "no_render_in_2b_38": True,
+                        "no_timeline_reorder_in_2b_38": True,
+                        "no_arc_apply_in_2b_38": True,
                     },
                 )
 

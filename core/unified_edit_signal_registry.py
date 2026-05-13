@@ -49,6 +49,9 @@ from core.review_timeline_dashboard_package_signal_adapter import (
 from core.hook_identification_signal_adapter import (
     adapt_hook_identification_report_to_signals,
 )
+from core.emotional_arc_signal_adapter import (
+    adapt_emotional_arc_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -80,6 +83,7 @@ SOURCE_TIMELINE_APPROVAL_GATE = "timeline_approval_gate"
 SOURCE_TIMELINE_SAFETY_VALIDATOR = "timeline_safety_validator"
 SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE = "review_timeline_dashboard_package"
 SOURCE_HOOK_IDENTIFICATION = "hook_identification"
+SOURCE_EMOTIONAL_ARC = "emotional_arc"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1239,6 +1243,27 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_HOOK_IDENTIFICATION}")
+
+    emotional_arc_report = _job_attr(job, "emotional_arc_report")
+    if not emotional_arc_report:
+        emotional_arc_report = _job_attr(job, "emotional_arc")
+
+    emotional_arc_signals = _safe_collect(
+        lambda: adapt_emotional_arc_report_to_signals(
+            emotional_arc_report,
+        ),
+        label=SOURCE_EMOTIONAL_ARC,
+        warnings=warnings,
+        errors=errors,
+    )
+    if emotional_arc_signals:
+        source_counts[SOURCE_EMOTIONAL_ARC] = len(emotional_arc_signals)
+        for signal in emotional_arc_signals:
+            normalized = _normalize_signal(signal, SOURCE_EMOTIONAL_ARC)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_EMOTIONAL_ARC}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
