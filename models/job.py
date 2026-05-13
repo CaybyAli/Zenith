@@ -187,6 +187,19 @@ class Job:
     unified_edit_signal_count: int = 0
     unified_edit_signal_summary: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_recommendation: str | None = None
+    segment_classification_report: dict[str, Any] = field(default_factory=dict)
+    segment_classification_status: str | None = None
+    segment_classification_segments: list[dict[str, Any]] = field(default_factory=list)
+    segment_classification_segment_count: int = 0
+    segment_classification_highlight_count: int = 0
+    segment_classification_hook_candidate_count: int = 0
+    segment_classification_protected_context_count: int = 0
+    segment_classification_dead_candidate_count: int = 0
+    segment_classification_filler_count: int = 0
+    segment_classification_transition_count: int = 0
+    segment_classification_censor_required_count: int = 0
+    segment_classification_technical_warning_count: int = 0
+    segment_classification_recommendation: str | None = None
 
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
@@ -632,6 +645,19 @@ class Job:
             unified_edit_signal_count=int(data.get("unified_edit_signal_count", 0) or 0),
             unified_edit_signal_summary=dict(data.get("unified_edit_signal_summary") or {}),
             unified_edit_signal_recommendation=data.get("unified_edit_signal_recommendation"),
+            segment_classification_report=dict(data.get("segment_classification_report") or {}),
+            segment_classification_status=data.get("segment_classification_status"),
+            segment_classification_segments=list(data.get("segment_classification_segments") or []),
+            segment_classification_segment_count=int(data.get("segment_classification_segment_count", 0) or 0),
+            segment_classification_highlight_count=int(data.get("segment_classification_highlight_count", 0) or 0),
+            segment_classification_hook_candidate_count=int(data.get("segment_classification_hook_candidate_count", 0) or 0),
+            segment_classification_protected_context_count=int(data.get("segment_classification_protected_context_count", 0) or 0),
+            segment_classification_dead_candidate_count=int(data.get("segment_classification_dead_candidate_count", 0) or 0),
+            segment_classification_filler_count=int(data.get("segment_classification_filler_count", 0) or 0),
+            segment_classification_transition_count=int(data.get("segment_classification_transition_count", 0) or 0),
+            segment_classification_censor_required_count=int(data.get("segment_classification_censor_required_count", 0) or 0),
+            segment_classification_technical_warning_count=int(data.get("segment_classification_technical_warning_count", 0) or 0),
+            segment_classification_recommendation=data.get("segment_classification_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

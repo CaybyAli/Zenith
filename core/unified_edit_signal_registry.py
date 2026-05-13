@@ -23,6 +23,9 @@ from core.stutter_detection_signal_adapter import adapt_stutter_detection_report
 from core.screen_content_signal_adapter import adapt_screen_content_report_to_signals
 from core.sentence_boundary_signal_adapter import adapt_sentence_boundary_report_to_signals
 from core.visual_energy_signal_adapter import adapt_visual_energy_report_to_signals
+from core.segment_classification_signal_adapter import (
+    adapt_segment_classification_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -42,6 +45,7 @@ SOURCE_STUTTER_DETECTION = "stutter_detection"
 SOURCE_SCREEN_CONTENT = "screen_content"
 SOURCE_SENTENCE_BOUNDARY = "sentence_boundary"
 SOURCE_VISUAL_ENERGY = "visual_energy"
+SOURCE_SEGMENT_CLASSIFIER = "segment_classifier"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -886,6 +890,34 @@ def build_unified_edit_signal_result(
     else:
         warnings.append(f"no_signals_from_{SOURCE_VISUAL_ENERGY}")
 
+    segment_classification_report = _job_attr(job, "segment_classification_report")
+    if not segment_classification_report:
+        segment_classification_segments = _job_attr(
+            job,
+            "segment_classification_segments",
+        )
+        if isinstance(segment_classification_segments, list) and segment_classification_segments:
+            segment_classification_report = {
+                "segments": segment_classification_segments
+            }
+
+    segment_classification_signals = _safe_collect(
+        lambda: adapt_segment_classification_report_to_signals(
+            segment_classification_report,
+        ),
+        label=SOURCE_SEGMENT_CLASSIFIER,
+        warnings=warnings,
+        errors=errors,
+    )
+    if segment_classification_signals:
+        source_counts[SOURCE_SEGMENT_CLASSIFIER] = len(segment_classification_signals)
+        for signal in segment_classification_signals:
+            normalized = _normalize_signal(signal, SOURCE_SEGMENT_CLASSIFIER)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_SEGMENT_CLASSIFIER}")
+        
     silence_class_signals = _collect_silence_classification_signals(job)
     
     if silence_class_signals:

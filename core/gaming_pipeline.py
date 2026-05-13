@@ -98,6 +98,10 @@ from core.profanity_censor_runner import (
     run_profanity_censor_for_job,
 )
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
+from core.segment_classification_runner import (
+    apply_segment_classification_run_report_to_job,
+    run_segment_classification_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -3681,6 +3685,125 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
     # ── End Unified Edit Signal Registry ─────────────────────────────────────
 
+    # ── Segment Classification (2B-25-C) ─────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="segment_classification",
+        event_type="SEGMENT_CLASSIFICATION_STARTED",
+        action="run_segment_classification",
+        reason="segment_classification_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "unified_edit_signal_count": int(
+                getattr(job, "unified_edit_signal_count", 0) or 0
+            ),
+        },
+    )
+
+    try:
+        segment_classification_report = run_segment_classification_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-25-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_segment_classification_run_report_to_job(
+            job=job,
+            report=segment_classification_report,
+        )
+
+        _segment_classification_details = {
+            "status": segment_classification_report.status,
+            "segment_count": segment_classification_report.segment_count,
+            "highlight_count": segment_classification_report.highlight_count,
+            "hook_candidate_count": segment_classification_report.hook_candidate_count,
+            "protected_context_count": (
+                segment_classification_report.protected_context_count
+            ),
+            "dead_candidate_count": segment_classification_report.dead_candidate_count,
+            "filler_count": segment_classification_report.filler_count,
+            "transition_count": segment_classification_report.transition_count,
+            "censor_required_count": (
+                segment_classification_report.censor_required_count
+            ),
+            "technical_warning_count": (
+                segment_classification_report.technical_warning_count
+            ),
+            "recommendation": segment_classification_report.recommendation,
+            "warnings": list(segment_classification_report.warnings or []),
+            "errors": list(segment_classification_report.errors or []),
+        }
+
+        _segment_classification_status_text = str(
+            segment_classification_report.status or ""
+        ).strip().lower()
+
+        if _segment_classification_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="segment_classification",
+                event_type="SEGMENT_CLASSIFICATION_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _segment_classification_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=segment_classification_report.recommendation
+                or "segment_classification_completed",
+                details=_segment_classification_details,
+            )
+        elif _segment_classification_status_text == "skipped_no_unified_signals":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="segment_classification",
+                event_type="SEGMENT_CLASSIFICATION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=segment_classification_report.recommendation
+                or "segment_classifier_skipped_no_unified_signals",
+                details=_segment_classification_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="segment_classification",
+                event_type="SEGMENT_CLASSIFICATION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=segment_classification_report.recommendation
+                or "segment_classification_failed",
+                details=_segment_classification_details,
+            )
+
+    except Exception as segment_classification_exc:
+        job.segment_classification_status = "failed"
+        job.segment_classification_recommendation = "segment_classification_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="segment_classification",
+            event_type="SEGMENT_CLASSIFICATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="segment_classification_exception",
+            details={"error": str(segment_classification_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="segment_classification_done",
+        reason="segment_classification_completed_or_skipped",
+    )
+    # ── End Segment Classification ───────────────────────────────────────────
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,
