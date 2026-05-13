@@ -34,6 +34,9 @@ from core.transition_decision_signal_adapter import (
 )
 from core.continuity_check_signal_adapter import adapt_continuity_check_report_to_signals
 from core.final_cut_list_signal_adapter import adapt_final_cut_list_report_to_signals
+from core.review_timeline_plan_signal_adapter import (
+    adapt_review_timeline_plan_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -60,6 +63,7 @@ SOURCE_CLIP_DURATION_OPTIMIZER = "clip_duration_optimizer"
 SOURCE_TRANSITION_DECISION = "transition_decision"
 SOURCE_CONTINUITY_CHECK = "continuity_check"
 SOURCE_CUT_LIST_FINALIZER = "cut_list_finalizer"
+SOURCE_REVIEW_TIMELINE_PLAN = "review_timeline_plan"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1076,6 +1080,38 @@ def build_unified_edit_signal_result(
         warnings=warnings,
         errors=errors,
     )
+    review_timeline_plan_report = _job_attr(job, "review_timeline_plan_report")
+    if not review_timeline_plan_report:
+        review_timeline_plan_items = _job_attr(job, "review_timeline_plan_items")
+        if isinstance(review_timeline_plan_items, list) and review_timeline_plan_items:
+            review_timeline_plan_report = {
+                "items": review_timeline_plan_items,
+                "metadata": {
+                    "source": SOURCE_REVIEW_TIMELINE_PLAN,
+                    "review_only": True,
+                    "approval_required": True,
+                },
+            }
+
+    review_timeline_plan_signals = _safe_collect(
+        lambda: adapt_review_timeline_plan_report_to_signals(
+            review_timeline_plan_report,
+        ),
+        label=SOURCE_REVIEW_TIMELINE_PLAN,
+        warnings=warnings,
+        errors=errors,
+    )
+    if review_timeline_plan_signals:
+        source_counts[SOURCE_REVIEW_TIMELINE_PLAN] = len(
+            review_timeline_plan_signals
+        )
+        for signal in review_timeline_plan_signals:
+            normalized = _normalize_signal(signal, SOURCE_REVIEW_TIMELINE_PLAN)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_REVIEW_TIMELINE_PLAN}")
+            
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
         for signal in final_cut_list_signals:

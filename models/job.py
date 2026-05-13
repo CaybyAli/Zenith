@@ -285,6 +285,18 @@ class Job:
     final_cut_list_review_required_count: int = 0
     final_cut_list_blocking_issue_count: int = 0
     final_cut_list_recommendation: str | None = None
+    review_timeline_plan_report: dict[str, Any] = field(default_factory=dict)
+    review_timeline_plan: dict[str, Any] = field(default_factory=dict)
+    review_timeline_plan_status: str | None = None
+    review_timeline_plan_id: str | None = None
+    review_timeline_plan_items: list[dict[str, Any]] = field(default_factory=list)
+    review_timeline_plan_item_count: int = 0
+    review_timeline_plan_total_duration_seconds: float = 0.0
+    review_timeline_plan_review_required_count: int = 0
+    review_timeline_plan_protected_count: int = 0
+    review_timeline_plan_censor_required_count: int = 0
+    review_timeline_plan_continuity_blocked_count: int = 0
+    review_timeline_plan_recommendation: str | None = None    
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -825,6 +837,37 @@ class Job:
             final_cut_list_review_required_count=int(data.get("final_cut_list_review_required_count", 0) or 0),
             final_cut_list_blocking_issue_count=int(data.get("final_cut_list_blocking_issue_count", 0) or 0),
             final_cut_list_recommendation=data.get("final_cut_list_recommendation"),
+            review_timeline_plan_report=dict(
+                data.get("review_timeline_plan_report") or {}
+            ),
+            review_timeline_plan=dict(data.get("review_timeline_plan") or {}),
+            review_timeline_plan_status=data.get("review_timeline_plan_status"),
+            review_timeline_plan_id=data.get("review_timeline_plan_id"),
+            review_timeline_plan_items=list(
+                data.get("review_timeline_plan_items") or []
+            ),
+            review_timeline_plan_item_count=int(
+                data.get("review_timeline_plan_item_count", 0) or 0
+            ),
+            review_timeline_plan_total_duration_seconds=float(
+                data.get("review_timeline_plan_total_duration_seconds", 0.0)
+                or 0.0
+            ),
+            review_timeline_plan_review_required_count=int(
+                data.get("review_timeline_plan_review_required_count", 0) or 0
+            ),
+            review_timeline_plan_protected_count=int(
+                data.get("review_timeline_plan_protected_count", 0) or 0
+            ),
+            review_timeline_plan_censor_required_count=int(
+                data.get("review_timeline_plan_censor_required_count", 0) or 0
+            ),
+            review_timeline_plan_continuity_blocked_count=int(
+                data.get("review_timeline_plan_continuity_blocked_count", 0) or 0
+            ),
+            review_timeline_plan_recommendation=data.get(
+                "review_timeline_plan_recommendation"
+            ),            
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

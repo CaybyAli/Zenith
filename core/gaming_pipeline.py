@@ -126,6 +126,10 @@ from core.cut_list_finalizer_runner import (
     apply_cut_list_finalization_run_report_to_job,
     run_cut_list_finalization_for_job,
 )
+from core.review_timeline_plan_runner import (
+    apply_review_timeline_plan_run_report_to_job,
+    run_review_timeline_plan_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4556,6 +4560,136 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="cut_list_finalization_completed_or_skipped",
     )
     # -- End Cut List Finalization ---------------------------------------------
+
+        # ── Review Timeline Plan (2B-32)
+    try:
+            _safe_log_decision(
+                job=job,
+                export_dir=export_dir,
+                phase="2B-32",
+                event_type="REVIEW_TIMELINE_PLAN_STARTED",
+                action="build_review_timeline_plan",
+                status="started",
+                reason="Build review-only timeline plan from final cut list.",
+                details={
+                    "review_only": True,
+                    "approval_required": True,
+                },
+            )
+
+            review_timeline_plan_report = run_review_timeline_plan_for_job(
+                job,
+                metadata={
+                    "phase": "2B-32",
+                    "review_only": True,
+                    "approval_required": True,
+                },
+            )
+            apply_review_timeline_plan_run_report_to_job(
+                job,
+                review_timeline_plan_report,
+            )
+
+            review_timeline_plan_status = str(
+                getattr(review_timeline_plan_report, "status", "") or ""
+            )
+
+            if review_timeline_plan_status == "pending_review":
+                review_timeline_plan_event_type = "REVIEW_TIMELINE_PLAN_DONE"
+                review_timeline_plan_log_status = "ok"
+            elif review_timeline_plan_status == "skipped_no_final_items":
+                review_timeline_plan_event_type = "REVIEW_TIMELINE_PLAN_SKIPPED"
+                review_timeline_plan_log_status = "skipped"
+            else:
+                review_timeline_plan_event_type = "REVIEW_TIMELINE_PLAN_FAILED"
+                review_timeline_plan_log_status = "failed"
+
+            _safe_log_decision(
+                job=job,
+                export_dir=export_dir,
+                phase="2B-32",
+                event_type=review_timeline_plan_event_type,
+                action="review_timeline_plan_pending_review",
+                status=review_timeline_plan_log_status,
+                reason=getattr(
+                    review_timeline_plan_report,
+                    "recommendation",
+                    "review_timeline_plan_pending_review",
+                ),
+                details={
+                    "status": getattr(review_timeline_plan_report, "status", None),
+                    "total_items": getattr(
+                        review_timeline_plan_report,
+                        "total_items",
+                        0,
+                    ),
+                    "review_required_count": getattr(
+                        review_timeline_plan_report,
+                        "review_required_count",
+                        0,
+                    ),
+                    "protected_count": getattr(
+                        review_timeline_plan_report,
+                        "protected_count",
+                        0,
+                    ),
+                    "censor_required_count": getattr(
+                        review_timeline_plan_report,
+                        "censor_required_count",
+                        0,
+                    ),
+                    "continuity_blocked_count": getattr(
+                        review_timeline_plan_report,
+                        "continuity_blocked_count",
+                        0,
+                    ),
+                    "review_only": True,
+                    "approval_required": True,
+                },
+            )
+
+            persist_job_state_checkpoint(
+                job=job,
+                export_dir=export_dir,
+                step_name="review_timeline_plan_done",
+                reason=getattr(
+                    review_timeline_plan_report,
+                    "recommendation",
+                    "review_timeline_plan_pending_review",
+                ),
+            )
+
+    except Exception as review_timeline_plan_exc:
+            job.review_timeline_plan_status = "failed"
+            job.review_timeline_plan_report = {
+                "status": "failed",
+                "source": "review_timeline_plan_builder",
+                "items": [],
+                "total_items": 0,
+                "errors": [str(review_timeline_plan_exc)],
+                "recommendation": "review_timeline_plan_failed",
+                "metadata": {
+                    "phase": "2B-32",
+                    "review_only": True,
+                    "approval_required": True,
+                },
+            }
+
+            _safe_log_decision(
+                job=job,
+                export_dir=export_dir,
+                phase="2B-32",
+                event_type="REVIEW_TIMELINE_PLAN_FAILED",
+                action="review_timeline_plan_failed",
+                status="failed",
+                reason=str(review_timeline_plan_exc),
+                details={
+                    "review_only": True,
+                    "approval_required": True,
+                },
+            )
+
+        # ── End Review Timeline Plan
 
     _safe_log_decision(
         job=job,
