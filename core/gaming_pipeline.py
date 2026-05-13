@@ -106,6 +106,10 @@ from core.murch_scoring_runner import (
     apply_murch_scoring_run_report_to_job,
     run_murch_scoring_for_job,
 )
+from core.cut_list_runner import (
+    apply_cut_list_run_report_to_job,
+    run_cut_list_generation_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -3922,6 +3926,121 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="murch_scoring_completed_or_skipped",
     )
     # ── End Murch Scoring ────────────────────────────────────────────────────
+
+    # ── Cut List Generation (2B-27-C) ────────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="cut_list_generation",
+        event_type="CUT_LIST_GENERATION_STARTED",
+        action="run_cut_list_generation",
+        reason="cut_list_generation_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "segment_classification_segment_count": int(
+                getattr(job, "segment_classification_segment_count", 0) or 0
+            ),
+            "murch_scoring_segment_score_count": int(
+                getattr(job, "murch_scoring_segment_score_count", 0) or 0
+            ),
+        },
+    )
+
+    try:
+        cut_list_report = run_cut_list_generation_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-27-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_cut_list_run_report_to_job(
+            job=job,
+            report=cut_list_report,
+        )
+
+        _cut_list_details = {
+            "status": cut_list_report.status,
+            "item_count": cut_list_report.item_count,
+            "keep_count": cut_list_report.keep_count,
+            "review_keep_count": cut_list_report.review_keep_count,
+            "review_trim_count": cut_list_report.review_trim_count,
+            "review_remove_count": cut_list_report.review_remove_count,
+            "protect_count": cut_list_report.protect_count,
+            "censor_keep_count": cut_list_report.censor_keep_count,
+            "technical_review_count": cut_list_report.technical_review_count,
+            "unknown_review_count": cut_list_report.unknown_review_count,
+            "recommendation": cut_list_report.recommendation,
+            "warnings": list(cut_list_report.warnings or []),
+            "errors": list(cut_list_report.errors or []),
+        }
+
+        _cut_list_status_text = str(cut_list_report.status or "").strip().lower()
+
+        if _cut_list_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="cut_list_generation",
+                event_type="CUT_LIST_GENERATION_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _cut_list_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=cut_list_report.recommendation
+                or "cut_list_generation_completed",
+                details=_cut_list_details,
+            )
+        elif _cut_list_status_text == "skipped_no_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="cut_list_generation",
+                event_type="CUT_LIST_GENERATION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=cut_list_report.recommendation
+                or "cut_list_generation_skipped_no_segments",
+                details=_cut_list_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="cut_list_generation",
+                event_type="CUT_LIST_GENERATION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=cut_list_report.recommendation
+                or "cut_list_generation_failed",
+                details=_cut_list_details,
+            )
+
+    except Exception as cut_list_generation_exc:
+        job.cut_list_status = "failed"
+        job.cut_list_recommendation = "cut_list_generation_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="cut_list_generation",
+            event_type="CUT_LIST_GENERATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="cut_list_generation_exception",
+            details={"error": str(cut_list_generation_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="cut_list_generation_done",
+        reason="cut_list_generation_completed_or_skipped",
+    )
+    # ── End Cut List Generation ───────────────────────────────────────────────
     
     _safe_log_decision(
         job=job,

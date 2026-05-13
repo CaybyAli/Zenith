@@ -27,6 +27,7 @@ from core.segment_classification_signal_adapter import (
     adapt_segment_classification_report_to_signals,
 )
 from core.murch_scoring_signal_adapter import adapt_murch_scoring_report_to_signals
+from core.cut_list_signal_adapter import adapt_cut_list_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -48,6 +49,7 @@ SOURCE_SENTENCE_BOUNDARY = "sentence_boundary"
 SOURCE_VISUAL_ENERGY = "visual_energy"
 SOURCE_SEGMENT_CLASSIFIER = "segment_classifier"
 SOURCE_MURCH_SCORING = "murch_scoring"
+SOURCE_CUT_LIST_GENERATOR = "cut_list_generator"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -947,6 +949,27 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_MURCH_SCORING}")
+
+    cut_list_report = _job_attr(job, "cut_list_report")
+    if not cut_list_report:
+        cut_list_items = _job_attr(job, "cut_list_items")
+        if isinstance(cut_list_items, list) and cut_list_items:
+            cut_list_report = {"items": cut_list_items}
+
+    cut_list_signals = _safe_collect(
+        lambda: adapt_cut_list_report_to_signals(cut_list_report),
+        label=SOURCE_CUT_LIST_GENERATOR,
+        warnings=warnings,
+        errors=errors,
+    )
+    if cut_list_signals:
+        source_counts[SOURCE_CUT_LIST_GENERATOR] = len(cut_list_signals)
+        for signal in cut_list_signals:
+            normalized = _normalize_signal(signal, SOURCE_CUT_LIST_GENERATOR)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CUT_LIST_GENERATOR}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     
