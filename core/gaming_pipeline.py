@@ -93,6 +93,10 @@ from core.content_value_runner import (
     apply_content_value_run_report_to_job,
     run_content_value_for_job,
 )
+from core.profanity_censor_runner import (
+    apply_profanity_censor_run_report_to_job,
+    run_profanity_censor_for_job,
+)
 from core.unified_edit_signal_registry import run_unified_edit_signal_registry_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
@@ -3457,6 +3461,113 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="content_value_completed_or_skipped",
     )
     # End Content Value Score
+
+    # Profanity Censor SFX Signal Foundation (2B-24.5)
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="profanity_censor",
+        event_type="PROFANITY_CENSOR_STARTED",
+        action="run_profanity_censor",
+        reason="profanity_censor_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transcript_segment_count": len(
+                list(getattr(job, "transcript_segments", []) or [])
+            ),
+        },
+    )
+
+    try:
+        profanity_censor_report = run_profanity_censor_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-24.5",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_profanity_censor_run_report_to_job(job, profanity_censor_report)
+    except Exception as profanity_censor_exc:
+        profanity_censor_report = None
+        job.profanity_censor_status = "failed"
+        job.profanity_censor_recommendation = "profanity_censor_failed"
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="profanity_censor",
+            event_type="PROFANITY_CENSOR_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="profanity_censor_exception",
+            details={"error": str(profanity_censor_exc)},
+        )
+
+    if profanity_censor_report is not None:
+        _profanity_censor_details = {
+            "status": profanity_censor_report.status,
+            "match_count": profanity_censor_report.match_count,
+            "severe_match_count": profanity_censor_report.severe_match_count,
+            "mild_match_count": profanity_censor_report.mild_match_count,
+            "censor_required_count": profanity_censor_report.censor_required_count,
+            "word_level_match_count": profanity_censor_report.word_level_match_count,
+            "segment_fallback_match_count": (
+                profanity_censor_report.segment_fallback_match_count
+            ),
+            "recommendation": profanity_censor_report.recommendation,
+            "warnings": list(profanity_censor_report.warnings or []),
+            "errors": list(profanity_censor_report.errors or []),
+        }
+        _profanity_censor_status = str(
+            profanity_censor_report.status or ""
+        ).strip().lower()
+
+        if _profanity_censor_status in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="profanity_censor",
+                event_type="PROFANITY_CENSOR_DONE",
+                action="continue_pipeline",
+                status="warn"
+                if _profanity_censor_status == "completed_with_warnings"
+                else "ok",
+                reason=profanity_censor_report.recommendation
+                or "profanity_censor_completed",
+                details=_profanity_censor_details,
+            )
+        elif _profanity_censor_status == "skipped_no_transcript_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="profanity_censor",
+                event_type="PROFANITY_CENSOR_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=profanity_censor_report.recommendation
+                or "profanity_censor_skipped_no_transcript",
+                details=_profanity_censor_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="profanity_censor",
+                event_type="PROFANITY_CENSOR_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=profanity_censor_report.recommendation
+                or "profanity_censor_failed",
+                details=_profanity_censor_details,
+            )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="profanity_censor_done",
+        reason="profanity_censor_completed_or_skipped",
+    )
+    # End Profanity Censor SFX Signal Foundation
 
     _safe_log_decision(
         job=job,

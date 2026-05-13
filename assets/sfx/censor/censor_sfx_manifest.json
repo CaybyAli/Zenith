@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "default": "quack",
+  "options": {
+    "quack": {
+      "path": "assets/sfx/censor/quack.wav",
+      "description": "Funny duck/quack censor overlay"
+    },
+    "dolphin": {
+      "path": "assets/sfx/censor/dolphin.wav",
+      "description": "Funny dolphin censor overlay"
+    },
+    "beep": {
+      "path": "assets/sfx/censor/beep.wav",
+      "description": "Classic beep censor overlay"
+    }
+  },
+  "notes": [
+    "Audio files may be added later.",
+    "This manifest is for planned censor SFX routing only.",
+    "No audio overlay is rendered in 2B-24.5."
+  ]
+}

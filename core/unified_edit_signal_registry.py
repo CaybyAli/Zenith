@@ -15,6 +15,7 @@ from core.interaction_classification_signal_adapter import (
 from core.keyword_emotion_signal_adapter import adapt_keyword_emotion_report_to_signals
 from core.dead_content_signal_adapter import adapt_dead_content_report_to_signals
 from core.content_value_signal_adapter import adapt_content_value_report_to_signals
+from core.profanity_censor_signal_adapter import adapt_profanity_censor_report_to_signals
 from core.scene_change_signal_adapter import adapt_scene_change_report_to_signals
 from core.motion_analysis_signal_adapter import adapt_motion_analysis_report_to_signals
 from core.face_reaction_signal_adapter import adapt_face_reaction_report_to_signals
@@ -31,6 +32,7 @@ SOURCE_INTERACTION_CLASSIFICATION = "interaction_classification"
 SOURCE_KEYWORD_EMOTION = "keyword_emotion"
 SOURCE_DEAD_CONTENT = "dead_content"
 SOURCE_CONTENT_VALUE = "content_value"
+SOURCE_PROFANITY_CENSOR = "profanity_censor"
 SOURCE_AUDIO_NORMALIZATION = "audio_normalization"
 SOURCE_BEAT_DETECTION = "beat_detection"
 SOURCE_SCENE_CHANGE = "scene_change"
@@ -653,6 +655,43 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_CONTENT_VALUE}")
+
+    profanity_censor_report = _job_attr(job, "profanity_censor_report")
+    if not profanity_censor_report:
+        profanity_censor_matches = _job_attr(job, "profanity_censor_matches")
+        profanity_censor_segment_results = _job_attr(
+            job,
+            "profanity_censor_segment_results",
+        )
+        if isinstance(profanity_censor_matches, list) or isinstance(
+            profanity_censor_segment_results,
+            list,
+        ):
+            profanity_censor_report = {
+                "matches": profanity_censor_matches
+                if isinstance(profanity_censor_matches, list)
+                else [],
+                "segment_results": profanity_censor_segment_results
+                if isinstance(profanity_censor_segment_results, list)
+                else [],
+            }
+
+    profanity_censor_signals = _safe_collect(
+        lambda: adapt_profanity_censor_report_to_signals(
+            profanity_censor_report,
+        ),
+        label=SOURCE_PROFANITY_CENSOR,
+        warnings=warnings,
+        errors=errors,
+    )
+    if profanity_censor_signals:
+        source_counts[SOURCE_PROFANITY_CENSOR] = len(profanity_censor_signals)
+        for signal in profanity_censor_signals:
+            normalized = _normalize_signal(signal, SOURCE_PROFANITY_CENSOR)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_PROFANITY_CENSOR}")
 
     audio_signals = _safe_collect(
         lambda: adapt_audio_normalization_run_report_to_signals(

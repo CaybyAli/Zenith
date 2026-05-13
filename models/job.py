@@ -169,6 +169,18 @@ class Job:
     content_value_min_score: float = 0.0
     content_value_recommendation: str | None = None
 
+    profanity_censor_report: dict[str, Any] = field(default_factory=dict)
+    profanity_censor_status: str | None = None
+    profanity_censor_matches: list[dict[str, Any]] = field(default_factory=list)
+    profanity_censor_segment_results: list[dict[str, Any]] = field(default_factory=list)
+    profanity_censor_match_count: int = 0
+    profanity_censor_severe_match_count: int = 0
+    profanity_censor_mild_match_count: int = 0
+    profanity_censor_required_count: int = 0
+    profanity_censor_word_level_match_count: int = 0
+    profanity_censor_segment_fallback_match_count: int = 0
+    profanity_censor_recommendation: str | None = None
+
     unified_edit_signal_report: dict[str, Any] = field(default_factory=dict)
     unified_edit_signal_status: str | None = None
     unified_edit_signals: list[dict[str, Any]] = field(default_factory=list)
@@ -603,6 +615,17 @@ class Job:
             content_value_max_score=float(data.get("content_value_max_score", 0.0) or 0.0),
             content_value_min_score=float(data.get("content_value_min_score", 0.0) or 0.0),
             content_value_recommendation=data.get("content_value_recommendation"),
+            profanity_censor_report=dict(data.get("profanity_censor_report") or {}),
+            profanity_censor_status=data.get("profanity_censor_status"),
+            profanity_censor_matches=list(data.get("profanity_censor_matches") or []),
+            profanity_censor_segment_results=list(data.get("profanity_censor_segment_results") or []),
+            profanity_censor_match_count=int(data.get("profanity_censor_match_count", 0) or 0),
+            profanity_censor_severe_match_count=int(data.get("profanity_censor_severe_match_count", 0) or 0),
+            profanity_censor_mild_match_count=int(data.get("profanity_censor_mild_match_count", 0) or 0),
+            profanity_censor_required_count=int(data.get("profanity_censor_required_count", 0) or 0),
+            profanity_censor_word_level_match_count=int(data.get("profanity_censor_word_level_match_count", 0) or 0),
+            profanity_censor_segment_fallback_match_count=int(data.get("profanity_censor_segment_fallback_match_count", 0) or 0),
+            profanity_censor_recommendation=data.get("profanity_censor_recommendation"),
             unified_edit_signal_report=dict(data.get("unified_edit_signal_report") or {}),
             unified_edit_signal_status=data.get("unified_edit_signal_status"),
             unified_edit_signals=list(data.get("unified_edit_signals") or []),
