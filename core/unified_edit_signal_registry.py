@@ -28,6 +28,7 @@ from core.segment_classification_signal_adapter import (
 )
 from core.murch_scoring_signal_adapter import adapt_murch_scoring_report_to_signals
 from core.cut_list_signal_adapter import adapt_cut_list_report_to_signals
+from core.clip_duration_signal_adapter import adapt_clip_duration_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -50,6 +51,7 @@ SOURCE_VISUAL_ENERGY = "visual_energy"
 SOURCE_SEGMENT_CLASSIFIER = "segment_classifier"
 SOURCE_MURCH_SCORING = "murch_scoring"
 SOURCE_CUT_LIST_GENERATOR = "cut_list_generator"
+SOURCE_CLIP_DURATION_OPTIMIZER = "clip_duration_optimizer"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -971,6 +973,32 @@ def build_unified_edit_signal_result(
     else:
         warnings.append(f"no_signals_from_{SOURCE_CUT_LIST_GENERATOR}")
 
+    clip_duration_report = _job_attr(job, "clip_duration_report")
+    if not clip_duration_report:
+        clip_duration_recommendations = _job_attr(
+            job,
+            "clip_duration_recommendations",
+        )
+        if isinstance(clip_duration_recommendations, list) and clip_duration_recommendations:
+            clip_duration_report = {
+                "recommendations": clip_duration_recommendations
+            }
+
+    clip_duration_signals = _safe_collect(
+        lambda: adapt_clip_duration_report_to_signals(clip_duration_report),
+        label=SOURCE_CLIP_DURATION_OPTIMIZER,
+        warnings=warnings,
+        errors=errors,
+    )
+    if clip_duration_signals:
+        source_counts[SOURCE_CLIP_DURATION_OPTIMIZER] = len(clip_duration_signals)
+        for signal in clip_duration_signals:
+            normalized = _normalize_signal(signal, SOURCE_CLIP_DURATION_OPTIMIZER)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CLIP_DURATION_OPTIMIZER}")
+        
     silence_class_signals = _collect_silence_classification_signals(job)
     
     if silence_class_signals:

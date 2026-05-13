@@ -110,6 +110,10 @@ from core.cut_list_runner import (
     apply_cut_list_run_report_to_job,
     run_cut_list_generation_for_job,
 )
+from core.clip_duration_runner import (
+    apply_clip_duration_run_report_to_job,
+    run_clip_duration_optimization_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4041,6 +4045,119 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="cut_list_generation_completed_or_skipped",
     )
     # ── End Cut List Generation ───────────────────────────────────────────────
+
+    # -- Clip Duration Optimization (2B-28-C) ----------------------------------
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="clip_duration_optimization",
+        event_type="CLIP_DURATION_OPTIMIZATION_STARTED",
+        action="run_clip_duration_optimization",
+        reason="clip_duration_optimization_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "cut_list_item_count": int(getattr(job, "cut_list_item_count", 0) or 0),
+        },
+    )
+
+    try:
+        clip_duration_report = run_clip_duration_optimization_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-28-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_clip_duration_run_report_to_job(
+            job=job,
+            report=clip_duration_report,
+        )
+
+        _clip_duration_details = {
+            "status": clip_duration_report.status,
+            "recommendation_count": clip_duration_report.recommendation_count,
+            "duration_ok_count": clip_duration_report.duration_ok_count,
+            "too_short_count": clip_duration_report.too_short_count,
+            "too_long_count": clip_duration_report.too_long_count,
+            "trim_review_count": clip_duration_report.trim_review_count,
+            "extend_review_count": clip_duration_report.extend_review_count,
+            "protect_duration_count": clip_duration_report.protect_duration_count,
+            "censor_keep_count": clip_duration_report.censor_keep_count,
+            "technical_review_count": clip_duration_report.technical_review_count,
+            "invalid_timing_count": clip_duration_report.invalid_timing_count,
+            "recommendation": clip_duration_report.recommendation,
+            "warnings": list(clip_duration_report.warnings or []),
+            "errors": list(clip_duration_report.errors or []),
+        }
+
+        _clip_duration_status_text = str(
+            clip_duration_report.status or ""
+        ).strip().lower()
+
+        if _clip_duration_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="clip_duration_optimization",
+                event_type="CLIP_DURATION_OPTIMIZATION_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _clip_duration_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=clip_duration_report.recommendation
+                or "clip_duration_optimization_completed",
+                details=_clip_duration_details,
+            )
+        elif _clip_duration_status_text == "skipped_no_cut_list_items":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="clip_duration_optimization",
+                event_type="CLIP_DURATION_OPTIMIZATION_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=clip_duration_report.recommendation
+                or "clip_duration_optimization_skipped_no_cut_list_items",
+                details=_clip_duration_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="clip_duration_optimization",
+                event_type="CLIP_DURATION_OPTIMIZATION_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=clip_duration_report.recommendation
+                or "clip_duration_optimization_failed",
+                details=_clip_duration_details,
+            )
+
+    except Exception as clip_duration_optimization_exc:
+        job.clip_duration_status = "failed"
+        job.clip_duration_recommendation = "clip_duration_optimization_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="clip_duration_optimization",
+            event_type="CLIP_DURATION_OPTIMIZATION_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="clip_duration_optimization_exception",
+            details={"error": str(clip_duration_optimization_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="clip_duration_optimization_done",
+        reason="clip_duration_optimization_completed_or_skipped",
+    )
+    # -- End Clip Duration Optimization ----------------------------------------
     
     _safe_log_decision(
         job=job,

@@ -229,6 +229,21 @@ class Job:
     cut_list_unknown_review_count: int = 0
     cut_list_recommendation: str | None = None
 
+    clip_duration_report: dict[str, Any] = field(default_factory=dict)
+    clip_duration_status: str | None = None
+    clip_duration_recommendations: list[dict[str, Any]] = field(default_factory=list)
+    clip_duration_recommendation_count: int = 0
+    clip_duration_ok_count: int = 0
+    clip_duration_too_short_count: int = 0
+    clip_duration_too_long_count: int = 0
+    clip_duration_trim_review_count: int = 0
+    clip_duration_extend_review_count: int = 0
+    clip_duration_protect_duration_count: int = 0
+    clip_duration_censor_keep_count: int = 0
+    clip_duration_technical_review_count: int = 0
+    clip_duration_invalid_timing_count: int = 0
+    clip_duration_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -713,6 +728,20 @@ class Job:
             cut_list_technical_review_count=int(data.get("cut_list_technical_review_count", 0) or 0),
             cut_list_unknown_review_count=int(data.get("cut_list_unknown_review_count", 0) or 0),
             cut_list_recommendation=data.get("cut_list_recommendation"),
+            clip_duration_report=dict(data.get("clip_duration_report") or {}),
+            clip_duration_status=data.get("clip_duration_status"),
+            clip_duration_recommendations=list(data.get("clip_duration_recommendations") or []),
+            clip_duration_recommendation_count=int(data.get("clip_duration_recommendation_count", 0) or 0),
+            clip_duration_ok_count=int(data.get("clip_duration_ok_count", 0) or 0),
+            clip_duration_too_short_count=int(data.get("clip_duration_too_short_count", 0) or 0),
+            clip_duration_too_long_count=int(data.get("clip_duration_too_long_count", 0) or 0),
+            clip_duration_trim_review_count=int(data.get("clip_duration_trim_review_count", 0) or 0),
+            clip_duration_extend_review_count=int(data.get("clip_duration_extend_review_count", 0) or 0),
+            clip_duration_protect_duration_count=int(data.get("clip_duration_protect_duration_count", 0) or 0),
+            clip_duration_censor_keep_count=int(data.get("clip_duration_censor_keep_count", 0) or 0),
+            clip_duration_technical_review_count=int(data.get("clip_duration_technical_review_count", 0) or 0),
+            clip_duration_invalid_timing_count=int(data.get("clip_duration_invalid_timing_count", 0) or 0),
+            clip_duration_recommendation=data.get("clip_duration_recommendation"),            
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
