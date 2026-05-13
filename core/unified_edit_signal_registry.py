@@ -46,6 +46,9 @@ from core.timeline_safety_validator_signal_adapter import (
 from core.review_timeline_dashboard_package_signal_adapter import (
     adapt_review_timeline_dashboard_package_report_to_signals,
 )
+from core.hook_identification_signal_adapter import (
+    adapt_hook_identification_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -76,6 +79,7 @@ SOURCE_REVIEW_TIMELINE_PLAN = "review_timeline_plan"
 SOURCE_TIMELINE_APPROVAL_GATE = "timeline_approval_gate"
 SOURCE_TIMELINE_SAFETY_VALIDATOR = "timeline_safety_validator"
 SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE = "review_timeline_dashboard_package"
+SOURCE_HOOK_IDENTIFICATION = "hook_identification"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1212,7 +1216,30 @@ def build_unified_edit_signal_result(
         warnings.append(
             f"no_signals_from_{SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE}"
         )
-        
+
+    hook_identification_report = _job_attr(job, "hook_identification_report")
+    if not hook_identification_report:
+        hook_identification_report = _job_attr(job, "hook_identification")
+
+    hook_identification_signals = _safe_collect(
+        lambda: adapt_hook_identification_report_to_signals(
+            hook_identification_report,
+        ),
+        label=SOURCE_HOOK_IDENTIFICATION,
+        warnings=warnings,
+        errors=errors,
+    )
+    if hook_identification_signals:
+        source_counts[SOURCE_HOOK_IDENTIFICATION] = len(
+            hook_identification_signals
+        )
+        for signal in hook_identification_signals:
+            normalized = _normalize_signal(signal, SOURCE_HOOK_IDENTIFICATION)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_HOOK_IDENTIFICATION}")
+
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
         for signal in final_cut_list_signals:

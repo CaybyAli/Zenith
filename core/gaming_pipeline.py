@@ -142,6 +142,10 @@ from core.review_timeline_dashboard_package_runner import (
     apply_review_timeline_dashboard_package_run_report_to_job,
     run_review_timeline_dashboard_package_for_job,
 )
+from core.hook_identification_runner import (
+    apply_hook_identification_run_report_to_job,
+    run_hook_identification_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4807,7 +4811,189 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 job,
                 review_timeline_dashboard_package_report,
             )
-            
+
+            try:
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-37",
+                    event_type="HOOK_IDENTIFICATION_STARTED",
+                    action="run_hook_identification",
+                    status="started",
+                    reason="Identify review-only hook candidates after dashboard package.",
+                    details={
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "hook_identification_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_37": True,
+                        "no_render_in_2b_37": True,
+                        "no_timeline_reorder_in_2b_37": True,
+                    },
+                )
+
+                hook_identification_report = run_hook_identification_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-37",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "hook_identification_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_37": True,
+                        "no_render_in_2b_37": True,
+                        "no_timeline_reorder_in_2b_37": True,
+                    },
+                )
+                apply_hook_identification_run_report_to_job(
+                    job,
+                    hook_identification_report,
+                )
+
+                hook_identification_status = str(
+                    getattr(hook_identification_report, "status", "") or ""
+                )
+
+                if hook_identification_status == "hook_candidate_found":
+                    hook_identification_event_type = (
+                        "HOOK_IDENTIFICATION_CANDIDATE_FOUND"
+                    )
+                    hook_identification_log_status = "pending_review"
+                elif hook_identification_status == "no_safe_hook_candidate":
+                    hook_identification_event_type = (
+                        "HOOK_IDENTIFICATION_NO_SAFE_CANDIDATE"
+                    )
+                    hook_identification_log_status = "pending_review"
+                elif hook_identification_status == "blocked":
+                    hook_identification_event_type = "HOOK_IDENTIFICATION_BLOCKED"
+                    hook_identification_log_status = "blocked"
+                else:
+                    hook_identification_event_type = "HOOK_IDENTIFICATION_FAILED"
+                    hook_identification_log_status = "failed"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-37",
+                    event_type=hook_identification_event_type,
+                    action="hook_identification_review_only",
+                    status=hook_identification_log_status,
+                    reason=getattr(
+                        hook_identification_report,
+                        "recommendation",
+                        "review_hook_candidate",
+                    ),
+                    details={
+                        "status": hook_identification_status,
+                        "total_candidates": int(
+                            getattr(
+                                hook_identification_report,
+                                "total_candidates",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "best_hook_score": float(
+                            getattr(
+                                hook_identification_report,
+                                "best_hook_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "review_required": True,
+                        "can_apply_hook": False,
+                        "can_reorder_timeline": False,
+                        "can_render": False,
+                        "blocking_reasons": list(
+                            getattr(
+                                hook_identification_report,
+                                "blocking_reasons",
+                                [],
+                            )
+                            or []
+                        ),
+                        "warnings": list(
+                            getattr(hook_identification_report, "warnings", [])
+                            or []
+                        ),
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "hook_identification_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_37": True,
+                        "no_render_in_2b_37": True,
+                        "no_timeline_reorder_in_2b_37": True,
+                    },
+                )
+
+                persist_job_state_checkpoint(
+                    job=job,
+                    export_dir=export_dir,
+                    step_name="hook_identification_done",
+                    reason=getattr(
+                        hook_identification_report,
+                        "recommendation",
+                        "review_hook_candidate",
+                    ),
+                )
+
+            except Exception as hook_identification_exc:
+                job.hook_identification_status = "failed"
+                job.hook_identification_report = {
+                    "status": "failed",
+                    "selected_candidate": None,
+                    "candidates": [],
+                    "total_candidates": 0,
+                    "best_hook_score": 0.0,
+                    "review_required": True,
+                    "can_apply_hook": False,
+                    "can_reorder_timeline": False,
+                    "can_render": False,
+                    "blocking_reasons": ["hook_identification_failed"],
+                    "warnings": [],
+                    "recommendation": "review_hook_identification_failure",
+                    "metadata": {
+                        "phase": "2B-37",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "hook_identification_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_37": True,
+                        "no_render_in_2b_37": True,
+                        "no_timeline_reorder_in_2b_37": True,
+                        "error": str(hook_identification_exc),
+                    },
+                }
+                job.hook_candidates = []
+                job.hook_selected_candidate = None
+                job.hook_best_score = 0.0
+                job.hook_review_required = True
+                job.hook_can_apply = False
+                job.hook_can_reorder_timeline = False
+                job.hook_can_render = False
+                job.hook_blocking_reasons = ["hook_identification_failed"]
+                job.hook_warnings = []
+                job.hook_recommendation = "review_hook_identification_failure"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-37",
+                    event_type="HOOK_IDENTIFICATION_FAILED",
+                    action="hook_identification_review_only_failed",
+                    status="failed",
+                    reason=str(hook_identification_exc),
+                    details={
+                        "review_only": True,
+                        "hook_identification_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_37": True,
+                        "no_render_in_2b_37": True,
+                        "no_timeline_reorder_in_2b_37": True,
+                    },
+                )
+
             timeline_safety_validation_status = str(
                 getattr(
                     timeline_safety_validator_report,

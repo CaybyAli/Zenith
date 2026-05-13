@@ -354,7 +354,22 @@ class Job:
 
     review_timeline_dashboard_warnings: list[str] = field(default_factory=list)
     review_timeline_dashboard_blocking_errors: list[str] = field(default_factory=list)
-    review_timeline_dashboard_actions: list[str] = field(default_factory=list)    
+    review_timeline_dashboard_actions: list[str] = field(default_factory=list)
+
+    hook_identification_report: dict[str, Any] = field(default_factory=dict)
+    hook_identification: dict[str, Any] = field(default_factory=dict)
+    hook_identification_status: str | None = None
+    hook_candidates: list[dict[str, Any]] = field(default_factory=list)
+    hook_selected_candidate: dict[str, Any] | None = None
+    hook_best_score: float = 0.0
+    hook_review_required: bool = True
+    hook_can_apply: bool = False
+    hook_can_reorder_timeline: bool = False
+    hook_can_render: bool = False
+    hook_blocking_reasons: list[str] = field(default_factory=list)
+    hook_warnings: list[str] = field(default_factory=list)
+    hook_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1019,6 +1034,23 @@ class Job:
             review_timeline_dashboard_warnings=list(data.get("review_timeline_dashboard_warnings", []) or []),
             review_timeline_dashboard_blocking_errors=list(data.get("review_timeline_dashboard_blocking_errors", []) or []),
             review_timeline_dashboard_actions=list(data.get("review_timeline_dashboard_actions", []) or []),
+            hook_identification_report=dict(data.get("hook_identification_report") or {}),
+            hook_identification=dict(data.get("hook_identification") or {}),
+            hook_identification_status=data.get("hook_identification_status"),
+            hook_candidates=list(data.get("hook_candidates") or []),
+            hook_selected_candidate=(
+                dict(data.get("hook_selected_candidate") or {})
+                if data.get("hook_selected_candidate") is not None
+                else None
+            ),
+            hook_best_score=float(data.get("hook_best_score", 0.0) or 0.0),
+            hook_review_required=bool(data.get("hook_review_required", True)),
+            hook_can_apply=False,
+            hook_can_reorder_timeline=False,
+            hook_can_render=False,
+            hook_blocking_reasons=list(data.get("hook_blocking_reasons") or []),
+            hook_warnings=list(data.get("hook_warnings") or []),
+            hook_recommendation=data.get("hook_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
