@@ -138,6 +138,10 @@ from core.timeline_safety_validator_runner import (
     apply_timeline_safety_validator_run_report_to_job,
     run_timeline_safety_validator_for_job,
 )
+from core.review_timeline_dashboard_package_runner import (
+    apply_review_timeline_dashboard_package_run_report_to_job,
+    run_review_timeline_dashboard_package_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4786,6 +4790,24 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 timeline_safety_validator_report,
             )
 
+            review_timeline_dashboard_package_report = (
+                run_review_timeline_dashboard_package_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-35",
+                        "pipeline": "gaming_pipeline",
+                        "dashboard_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_35": True,
+                        "no_render_in_2b_35": True,
+                    },
+                )
+            )
+            apply_review_timeline_dashboard_package_run_report_to_job(
+                job,
+                review_timeline_dashboard_package_report,
+            )
+            
             timeline_safety_validation_status = str(
                 getattr(
                     timeline_safety_validator_report,

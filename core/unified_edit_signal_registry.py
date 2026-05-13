@@ -43,6 +43,9 @@ from core.timeline_approval_gate_signal_adapter import (
 from core.timeline_safety_validator_signal_adapter import (
     adapt_timeline_safety_validator_report_to_signals,
 )
+from core.review_timeline_dashboard_package_signal_adapter import (
+    adapt_review_timeline_dashboard_package_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -72,6 +75,7 @@ SOURCE_CUT_LIST_FINALIZER = "cut_list_finalizer"
 SOURCE_REVIEW_TIMELINE_PLAN = "review_timeline_plan"
 SOURCE_TIMELINE_APPROVAL_GATE = "timeline_approval_gate"
 SOURCE_TIMELINE_SAFETY_VALIDATOR = "timeline_safety_validator"
+SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE = "review_timeline_dashboard_package"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1185,7 +1189,30 @@ def build_unified_edit_signal_result(
     else:
         warnings.append(f"no_signals_from_{SOURCE_TIMELINE_SAFETY_VALIDATOR}")
 
-
+    dashboard_package_signals = _safe_collect(
+        lambda: adapt_review_timeline_dashboard_package_report_to_signals(
+            _job_attr(job, "review_timeline_dashboard_package_report"),
+        ),
+        label=SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE,
+        warnings=warnings,
+        errors=errors,
+    )
+    if dashboard_package_signals:
+        source_counts[SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE] = len(
+            dashboard_package_signals
+        )
+        for signal in dashboard_package_signals:
+            normalized = _normalize_signal(
+                signal,
+                SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE,
+            )
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(
+            f"no_signals_from_{SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE}"
+        )
+        
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
         for signal in final_cut_list_signals:

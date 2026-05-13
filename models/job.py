@@ -330,6 +330,31 @@ class Job:
     timeline_safety_censor_violation_count: int = 0
     timeline_safety_continuity_violation_count: int = 0
     timeline_safety_approval_violation_count: int = 0
+    review_timeline_dashboard_package_report: dict[str, Any] = field(default_factory=dict)
+    review_timeline_dashboard_package: dict[str, Any] = field(default_factory=dict)
+    review_timeline_dashboard_package_id: str | None = None
+    review_timeline_dashboard_package_status: str | None = None
+
+    review_timeline_dashboard_review_status: str | None = None
+    review_timeline_dashboard_approval_status: str | None = None
+    review_timeline_dashboard_safety_status: str | None = None
+
+    review_timeline_dashboard_can_proceed_to_execution: bool = False
+    review_timeline_dashboard_can_render: bool = False
+    review_timeline_dashboard_requires_manual_review: bool = True
+
+    review_timeline_dashboard_is_safe_for_future_execution: bool = False
+    review_timeline_dashboard_is_safe_for_render: bool = False
+
+    review_timeline_dashboard_summary: dict[str, Any] = field(default_factory=dict)
+    review_timeline_dashboard_counters: dict[str, Any] = field(default_factory=dict)
+    review_timeline_dashboard_item_cards: list[dict[str, Any]] = field(default_factory=list)
+    review_timeline_dashboard_approval_panel: dict[str, Any] = field(default_factory=dict)
+    review_timeline_dashboard_safety_panel: dict[str, Any] = field(default_factory=dict)
+
+    review_timeline_dashboard_warnings: list[str] = field(default_factory=list)
+    review_timeline_dashboard_blocking_errors: list[str] = field(default_factory=list)
+    review_timeline_dashboard_actions: list[str] = field(default_factory=list)    
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -974,6 +999,26 @@ class Job:
             timeline_safety_approval_violation_count=int(
                 data.get("timeline_safety_approval_violation_count", 0) or 0
             ),
+            review_timeline_dashboard_package_report=dict(data.get("review_timeline_dashboard_package_report", {}) or {}),
+            review_timeline_dashboard_package=dict(data.get("review_timeline_dashboard_package", {}) or {}),
+            review_timeline_dashboard_package_id=data.get("review_timeline_dashboard_package_id"),
+            review_timeline_dashboard_package_status=data.get("review_timeline_dashboard_package_status"),
+            review_timeline_dashboard_review_status=data.get("review_timeline_dashboard_review_status"),
+            review_timeline_dashboard_approval_status=data.get("review_timeline_dashboard_approval_status"),
+            review_timeline_dashboard_safety_status=data.get("review_timeline_dashboard_safety_status"),
+            review_timeline_dashboard_can_proceed_to_execution=bool(data.get("review_timeline_dashboard_can_proceed_to_execution", False)),
+            review_timeline_dashboard_can_render=False,
+            review_timeline_dashboard_requires_manual_review=bool(data.get("review_timeline_dashboard_requires_manual_review", True)),
+            review_timeline_dashboard_is_safe_for_future_execution=bool(data.get("review_timeline_dashboard_is_safe_for_future_execution", False)),
+            review_timeline_dashboard_is_safe_for_render=False,
+            review_timeline_dashboard_summary=dict(data.get("review_timeline_dashboard_summary", {}) or {}),
+            review_timeline_dashboard_counters=dict(data.get("review_timeline_dashboard_counters", {}) or {}),
+            review_timeline_dashboard_item_cards=list(data.get("review_timeline_dashboard_item_cards", []) or []),
+            review_timeline_dashboard_approval_panel=dict(data.get("review_timeline_dashboard_approval_panel", {}) or {}),
+            review_timeline_dashboard_safety_panel=dict(data.get("review_timeline_dashboard_safety_panel", {}) or {}),
+            review_timeline_dashboard_warnings=list(data.get("review_timeline_dashboard_warnings", []) or []),
+            review_timeline_dashboard_blocking_errors=list(data.get("review_timeline_dashboard_blocking_errors", []) or []),
+            review_timeline_dashboard_actions=list(data.get("review_timeline_dashboard_actions", []) or []),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
