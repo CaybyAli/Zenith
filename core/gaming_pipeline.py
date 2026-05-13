@@ -102,6 +102,10 @@ from core.segment_classification_runner import (
     apply_segment_classification_run_report_to_job,
     run_segment_classification_for_job,
 )
+from core.murch_scoring_runner import (
+    apply_murch_scoring_run_report_to_job,
+    run_murch_scoring_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -3804,6 +3808,121 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="segment_classification_completed_or_skipped",
     )
     # ── End Segment Classification ───────────────────────────────────────────
+        # ── Murch Scoring (2B-26-C) ──────────────────────────────────────────────
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="murch_scoring",
+        event_type="MURCH_SCORING_STARTED",
+        action="run_murch_scoring",
+        reason="murch_scoring_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "segment_classification_segment_count": int(
+                getattr(job, "segment_classification_segment_count", 0) or 0
+            ),
+        },
+    )
+
+    try:
+        murch_scoring_report = run_murch_scoring_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-26-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_murch_scoring_run_report_to_job(
+            job=job,
+            report=murch_scoring_report,
+        )
+
+        _murch_scoring_details = {
+            "status": murch_scoring_report.status,
+            "segment_score_count": murch_scoring_report.segment_score_count,
+            "high_score_count": murch_scoring_report.high_score_count,
+            "medium_score_count": murch_scoring_report.medium_score_count,
+            "low_score_count": murch_scoring_report.low_score_count,
+            "protected_context_count": murch_scoring_report.protected_context_count,
+            "censor_required_count": murch_scoring_report.censor_required_count,
+            "technical_warning_count": murch_scoring_report.technical_warning_count,
+            "avg_murch_score": murch_scoring_report.avg_murch_score,
+            "max_murch_score": murch_scoring_report.max_murch_score,
+            "min_murch_score": murch_scoring_report.min_murch_score,
+            "recommendation": murch_scoring_report.recommendation,
+            "warnings": list(murch_scoring_report.warnings or []),
+            "errors": list(murch_scoring_report.errors or []),
+        }
+
+        _murch_scoring_status_text = str(
+            murch_scoring_report.status or ""
+        ).strip().lower()
+
+        if _murch_scoring_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="murch_scoring",
+                event_type="MURCH_SCORING_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _murch_scoring_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=murch_scoring_report.recommendation
+                or "murch_scoring_completed",
+                details=_murch_scoring_details,
+            )
+        elif _murch_scoring_status_text == "skipped_no_segments":
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="murch_scoring",
+                event_type="MURCH_SCORING_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=murch_scoring_report.recommendation
+                or "murch_scoring_skipped_no_segments",
+                details=_murch_scoring_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="murch_scoring",
+                event_type="MURCH_SCORING_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=murch_scoring_report.recommendation
+                or "murch_scoring_failed",
+                details=_murch_scoring_details,
+            )
+
+    except Exception as murch_scoring_exc:
+        job.murch_scoring_status = "failed"
+        job.murch_scoring_recommendation = "murch_scoring_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="murch_scoring",
+            event_type="MURCH_SCORING_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="murch_scoring_exception",
+            details={"error": str(murch_scoring_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="murch_scoring_done",
+        reason="murch_scoring_completed_or_skipped",
+    )
+    # ── End Murch Scoring ────────────────────────────────────────────────────
+    
     _safe_log_decision(
         job=job,
         export_dir=job_state_export_dir,

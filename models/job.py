@@ -200,6 +200,20 @@ class Job:
     segment_classification_censor_required_count: int = 0
     segment_classification_technical_warning_count: int = 0
     segment_classification_recommendation: str | None = None
+    murch_scoring_report: dict[str, Any] = field(default_factory=dict)
+    murch_scoring_status: str | None = None
+    murch_scoring_segment_scores: list[dict[str, Any]] = field(default_factory=list)
+    murch_scoring_segment_score_count: int = 0
+    murch_scoring_high_score_count: int = 0
+    murch_scoring_medium_score_count: int = 0
+    murch_scoring_low_score_count: int = 0
+    murch_scoring_protected_context_count: int = 0
+    murch_scoring_censor_required_count: int = 0
+    murch_scoring_technical_warning_count: int = 0
+    murch_scoring_avg_score: float = 0.0
+    murch_scoring_max_score: float = 0.0
+    murch_scoring_min_score: float = 0.0
+    murch_scoring_recommendation: str | None = None
 
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
@@ -658,6 +672,20 @@ class Job:
             segment_classification_censor_required_count=int(data.get("segment_classification_censor_required_count", 0) or 0),
             segment_classification_technical_warning_count=int(data.get("segment_classification_technical_warning_count", 0) or 0),
             segment_classification_recommendation=data.get("segment_classification_recommendation"),
+            murch_scoring_report=dict(data.get("murch_scoring_report") or {}),
+            murch_scoring_status=data.get("murch_scoring_status"),
+            murch_scoring_segment_scores=list(data.get("murch_scoring_segment_scores") or []),
+            murch_scoring_segment_score_count=int(data.get("murch_scoring_segment_score_count", 0) or 0),
+            murch_scoring_high_score_count=int(data.get("murch_scoring_high_score_count", 0) or 0),
+            murch_scoring_medium_score_count=int(data.get("murch_scoring_medium_score_count", 0) or 0),
+            murch_scoring_low_score_count=int(data.get("murch_scoring_low_score_count", 0) or 0),
+            murch_scoring_protected_context_count=int(data.get("murch_scoring_protected_context_count", 0) or 0),
+            murch_scoring_censor_required_count=int(data.get("murch_scoring_censor_required_count", 0) or 0),
+            murch_scoring_technical_warning_count=int(data.get("murch_scoring_technical_warning_count", 0) or 0),
+            murch_scoring_avg_score=float(data.get("murch_scoring_avg_score", 0.0) or 0.0),
+            murch_scoring_max_score=float(data.get("murch_scoring_max_score", 0.0) or 0.0),
+            murch_scoring_min_score=float(data.get("murch_scoring_min_score", 0.0) or 0.0),
+            murch_scoring_recommendation=data.get("murch_scoring_recommendation"),            
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

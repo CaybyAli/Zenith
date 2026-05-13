@@ -26,6 +26,7 @@ from core.visual_energy_signal_adapter import adapt_visual_energy_report_to_sign
 from core.segment_classification_signal_adapter import (
     adapt_segment_classification_report_to_signals,
 )
+from core.murch_scoring_signal_adapter import adapt_murch_scoring_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -46,6 +47,7 @@ SOURCE_SCREEN_CONTENT = "screen_content"
 SOURCE_SENTENCE_BOUNDARY = "sentence_boundary"
 SOURCE_VISUAL_ENERGY = "visual_energy"
 SOURCE_SEGMENT_CLASSIFIER = "segment_classifier"
+SOURCE_MURCH_SCORING = "murch_scoring"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -917,7 +919,35 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_SEGMENT_CLASSIFIER}")
-        
+
+    murch_scoring_report = _job_attr(job, "murch_scoring_report")
+    if not murch_scoring_report:
+        murch_scoring_segment_scores = _job_attr(
+            job,
+            "murch_scoring_segment_scores",
+        )
+        if isinstance(murch_scoring_segment_scores, list) and murch_scoring_segment_scores:
+            murch_scoring_report = {
+                "segment_scores": murch_scoring_segment_scores
+            }
+
+    murch_scoring_signals = _safe_collect(
+        lambda: adapt_murch_scoring_report_to_signals(
+            murch_scoring_report,
+        ),
+        label=SOURCE_MURCH_SCORING,
+        warnings=warnings,
+        errors=errors,
+    )
+    if murch_scoring_signals:
+        source_counts[SOURCE_MURCH_SCORING] = len(murch_scoring_signals)
+        for signal in murch_scoring_signals:
+            normalized = _normalize_signal(signal, SOURCE_MURCH_SCORING)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_MURCH_SCORING}")
+
     silence_class_signals = _collect_silence_classification_signals(job)
     
     if silence_class_signals:
