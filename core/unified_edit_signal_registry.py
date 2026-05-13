@@ -37,6 +37,9 @@ from core.final_cut_list_signal_adapter import adapt_final_cut_list_report_to_si
 from core.review_timeline_plan_signal_adapter import (
     adapt_review_timeline_plan_report_to_signals,
 )
+from core.timeline_approval_gate_signal_adapter import (
+    adapt_timeline_approval_gate_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -64,6 +67,7 @@ SOURCE_TRANSITION_DECISION = "transition_decision"
 SOURCE_CONTINUITY_CHECK = "continuity_check"
 SOURCE_CUT_LIST_FINALIZER = "cut_list_finalizer"
 SOURCE_REVIEW_TIMELINE_PLAN = "review_timeline_plan"
+SOURCE_TIMELINE_APPROVAL_GATE = "timeline_approval_gate"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1111,7 +1115,40 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_REVIEW_TIMELINE_PLAN}")
-            
+
+    timeline_approval_gate_report = _job_attr(job, "timeline_approval_gate_report")
+    if not timeline_approval_gate_report:
+        timeline_approval_gate = _job_attr(job, "timeline_approval_gate")
+        if isinstance(timeline_approval_gate, dict) and timeline_approval_gate:
+            timeline_approval_gate_report = {
+                "timeline_approval_gate": timeline_approval_gate,
+                "metadata": {
+                    "source": SOURCE_TIMELINE_APPROVAL_GATE,
+                    "review_only": True,
+                    "approval_gate_only": True,
+                    "media_unchanged": True,
+                },
+            }
+
+    timeline_approval_gate_signals = _safe_collect(
+        lambda: adapt_timeline_approval_gate_report_to_signals(
+            timeline_approval_gate_report,
+        ),
+        label=SOURCE_TIMELINE_APPROVAL_GATE,
+        warnings=warnings,
+        errors=errors,
+    )
+    if timeline_approval_gate_signals:
+        source_counts[SOURCE_TIMELINE_APPROVAL_GATE] = len(
+            timeline_approval_gate_signals
+        )
+        for signal in timeline_approval_gate_signals:
+            normalized = _normalize_signal(signal, SOURCE_TIMELINE_APPROVAL_GATE)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_TIMELINE_APPROVAL_GATE}")
+        
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
         for signal in final_cut_list_signals:

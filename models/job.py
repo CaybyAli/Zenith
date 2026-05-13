@@ -296,7 +296,23 @@ class Job:
     review_timeline_plan_protected_count: int = 0
     review_timeline_plan_censor_required_count: int = 0
     review_timeline_plan_continuity_blocked_count: int = 0
-    review_timeline_plan_recommendation: str | None = None    
+    review_timeline_plan_recommendation: str | None = None
+
+    timeline_approval_gate_report: dict[str, Any] = field(default_factory=dict)
+    timeline_approval_gate: dict[str, Any] = field(default_factory=dict)
+    timeline_approval_gate_status: str | None = None
+    timeline_approval_gate_id: str | None = None
+    timeline_approval_status: str | None = None
+    timeline_approval_requested_status: str | None = None
+    timeline_approved_by: str | None = None
+    timeline_rejected_by: str | None = None
+    timeline_manual_change_reason: str | None = None
+    timeline_can_proceed_to_execution: bool = False
+    timeline_can_render: bool = False
+    timeline_requires_human_approval: bool = True
+    timeline_approval_blocking_reasons: list[str] = field(default_factory=list)
+    timeline_approval_warnings: list[str] = field(default_factory=list)
+    timeline_approval_warnings: list[str] = field(default_factory=list)  
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -867,7 +883,31 @@ class Job:
             ),
             review_timeline_plan_recommendation=data.get(
                 "review_timeline_plan_recommendation"
-            ),            
+                    ),
+            timeline_approval_gate_report=dict(
+                data.get("timeline_approval_gate_report") or {}
+            ),
+            timeline_approval_gate=dict(data.get("timeline_approval_gate") or {}),
+            timeline_approval_gate_status=data.get("timeline_approval_gate_status"),
+            timeline_approval_gate_id=data.get("timeline_approval_gate_id"),
+            timeline_approval_status=data.get("timeline_approval_status"),
+            timeline_approval_requested_status=data.get(
+                "timeline_approval_requested_status"
+            ),
+            timeline_approved_by=data.get("timeline_approved_by"),
+            timeline_rejected_by=data.get("timeline_rejected_by"),
+            timeline_manual_change_reason=data.get("timeline_manual_change_reason"),
+            timeline_can_proceed_to_execution=bool(
+                data.get("timeline_can_proceed_to_execution", False)
+            ),
+            timeline_can_render=bool(data.get("timeline_can_render", False)),
+            timeline_requires_human_approval=bool(
+                data.get("timeline_requires_human_approval", True)
+            ),
+            timeline_approval_blocking_reasons=list(
+                data.get("timeline_approval_blocking_reasons") or []
+            ),
+            timeline_approval_warnings=list(data.get("timeline_approval_warnings") or []),           
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

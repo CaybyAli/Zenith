@@ -130,6 +130,10 @@ from core.review_timeline_plan_runner import (
     apply_review_timeline_plan_run_report_to_job,
     run_review_timeline_plan_for_job,
 )
+from core.timeline_approval_gate_runner import (
+    apply_timeline_approval_gate_run_report_to_job,
+    run_timeline_approval_gate_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4658,6 +4662,107 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     "review_timeline_plan_pending_review",
                 ),
             )
+
+            # ── Timeline Approval Gate (2B-33)
+            
+            timeline_approval_gate_report = run_timeline_approval_gate_for_job(
+                job,
+                metadata={
+                    "phase": "2B-33",
+                    "review_only": True,
+                    "approval_gate_only": True,
+                    "media_unchanged": True,
+                    "no_execution_in_2b_33": True,
+                },
+            )
+            apply_timeline_approval_gate_run_report_to_job(
+                job,
+                timeline_approval_gate_report,
+            )
+
+            timeline_approval_gate_status = str(
+                getattr(timeline_approval_gate_report, "gate_status", "")
+                or getattr(timeline_approval_gate_report, "status", "")
+                or ""
+            )
+            timeline_approval_status = str(
+                getattr(timeline_approval_gate_report, "approval_status", "") or ""
+            )
+
+            if timeline_approval_gate_status == "approved":
+                timeline_approval_gate_event_type = "TIMELINE_APPROVAL_GATE_APPROVED"
+                timeline_approval_gate_log_status = "ok"
+            elif timeline_approval_gate_status == "pending_review":
+                timeline_approval_gate_event_type = "TIMELINE_APPROVAL_GATE_PENDING_REVIEW"
+                timeline_approval_gate_log_status = "pending_review"
+            elif timeline_approval_gate_status == "blocked":
+                timeline_approval_gate_event_type = "TIMELINE_APPROVAL_GATE_BLOCKED"
+                timeline_approval_gate_log_status = "blocked"
+            elif timeline_approval_gate_status == "failed":
+                timeline_approval_gate_event_type = "TIMELINE_APPROVAL_GATE_FAILED"
+                timeline_approval_gate_log_status = "failed"
+            else:
+                timeline_approval_gate_event_type = "TIMELINE_APPROVAL_GATE_BLOCKED"
+                timeline_approval_gate_log_status = "blocked"
+
+            _safe_log_decision(
+                job=job,
+                export_dir=export_dir,
+                phase="2B-33",
+                event_type=timeline_approval_gate_event_type,
+                action="timeline_approval_gate_review_only",
+                status=timeline_approval_gate_log_status,
+                reason=",".join(
+                    list(
+                        getattr(
+                            timeline_approval_gate_report,
+                            "blocking_reasons",
+                            [],
+                        )
+                        or []
+                    )
+                )
+                or timeline_approval_status,
+                details={
+                    "status": getattr(timeline_approval_gate_report, "status", None),
+                    "approval_status": timeline_approval_status,
+                    "gate_status": timeline_approval_gate_status,
+                    "can_proceed_to_execution": bool(
+                        getattr(
+                            timeline_approval_gate_report,
+                            "can_proceed_to_execution",
+                            False,
+                        )
+                    ),
+                    "can_render": bool(
+                        getattr(timeline_approval_gate_report, "can_render", False)
+                    ),
+                    "requires_human_approval": bool(
+                        getattr(
+                            timeline_approval_gate_report,
+                            "requires_human_approval",
+                            True,
+                        )
+                    ),
+                    "blocking_reasons": list(
+                        getattr(
+                            timeline_approval_gate_report,
+                            "blocking_reasons",
+                            [],
+                        )
+                        or []
+                    ),
+                    "warnings": list(
+                        getattr(timeline_approval_gate_report, "warnings", []) or []
+                    ),
+                    "review_only": True,
+                    "approval_gate_only": True,
+                    "media_unchanged": True,
+                    "no_execution_in_2b_33": True,
+                },
+            )
+            # ── End Timeline Approval Gate
+
 
     except Exception as review_timeline_plan_exc:
             job.review_timeline_plan_status = "failed"
