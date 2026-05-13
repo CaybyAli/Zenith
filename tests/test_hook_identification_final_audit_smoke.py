@@ -87,7 +87,7 @@ def _hook_relevant_text(path: Path) -> str:
                 _between(
                     text,
                     "HOOK_IDENTIFICATION_STARTED",
-                    "timeline_safety_validation_status",
+                    "EMOTIONAL_ARC_BUILDER_STARTED",
                 ),
             ]
         )
@@ -114,12 +114,12 @@ def _hook_relevant_text(path: Path) -> str:
                 _between(
                     text,
                     "hook_identification_report: dict",
-                    "silence_detection_report: dict",
+                    "emotional_arc_report: dict",
                 ),
                 _between(
                     text,
                     "hook_identification_report=dict",
-                    "silence_detection_report=dict",
+                    "emotional_arc_report=dict",
                 ),
             ]
         )

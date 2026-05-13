@@ -391,6 +391,30 @@ class Job:
     emotional_arc_warnings: list[str] = field(default_factory=list)
     emotional_arc_recommendation: str | None = None
 
+    dynamic_pacing_report: dict[str, Any] = field(default_factory=dict)
+    dynamic_pacing: dict[str, Any] = field(default_factory=dict)
+    dynamic_pacing_status: str | None = None
+    dynamic_pacing_segments: list[dict[str, Any]] = field(default_factory=list)
+    dynamic_pacing_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    dynamic_pacing_average_cut_rate: float = 0.0
+    dynamic_pacing_target_cut_rate_range: dict[str, Any] = field(default_factory=dict)
+    dynamic_pacing_match_score: float = 0.0
+    dynamic_pacing_monotony_score: float = 0.0
+    dynamic_pacing_breathing_room_score: float = 0.0
+    dynamic_pacing_fast_run_count: int = 0
+    dynamic_pacing_slow_run_count: int = 0
+    dynamic_pacing_review_required: bool = True
+    dynamic_pacing_can_apply: bool = False
+    dynamic_pacing_can_split_clips: bool = False
+    dynamic_pacing_can_merge_clips: bool = False
+    dynamic_pacing_can_trim: bool = False
+    dynamic_pacing_can_extend: bool = False
+    dynamic_pacing_can_reorder_timeline: bool = False
+    dynamic_pacing_can_render: bool = False
+    dynamic_pacing_blocking_reasons: list[str] = field(default_factory=list)
+    dynamic_pacing_warnings: list[str] = field(default_factory=list)
+    dynamic_pacing_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1110,6 +1134,49 @@ class Job:
             ),
             emotional_arc_warnings=list(data.get("emotional_arc_warnings") or []),
             emotional_arc_recommendation=data.get("emotional_arc_recommendation"),
+            dynamic_pacing_report=dict(data.get("dynamic_pacing_report") or {}),
+            dynamic_pacing=dict(data.get("dynamic_pacing") or {}),
+            dynamic_pacing_status=data.get("dynamic_pacing_status"),
+            dynamic_pacing_segments=list(data.get("dynamic_pacing_segments") or []),
+            dynamic_pacing_suggestions=list(
+                data.get("dynamic_pacing_suggestions") or []
+            ),
+            dynamic_pacing_average_cut_rate=float(
+                data.get("dynamic_pacing_average_cut_rate", 0.0) or 0.0
+            ),
+            dynamic_pacing_target_cut_rate_range=dict(
+                data.get("dynamic_pacing_target_cut_rate_range") or {}
+            ),
+            dynamic_pacing_match_score=float(
+                data.get("dynamic_pacing_match_score", 0.0) or 0.0
+            ),
+            dynamic_pacing_monotony_score=float(
+                data.get("dynamic_pacing_monotony_score", 0.0) or 0.0
+            ),
+            dynamic_pacing_breathing_room_score=float(
+                data.get("dynamic_pacing_breathing_room_score", 0.0) or 0.0
+            ),
+            dynamic_pacing_fast_run_count=int(
+                data.get("dynamic_pacing_fast_run_count", 0) or 0
+            ),
+            dynamic_pacing_slow_run_count=int(
+                data.get("dynamic_pacing_slow_run_count", 0) or 0
+            ),
+            dynamic_pacing_review_required=bool(
+                data.get("dynamic_pacing_review_required", True)
+            ),
+            dynamic_pacing_can_apply=False,
+            dynamic_pacing_can_split_clips=False,
+            dynamic_pacing_can_merge_clips=False,
+            dynamic_pacing_can_trim=False,
+            dynamic_pacing_can_extend=False,
+            dynamic_pacing_can_reorder_timeline=False,
+            dynamic_pacing_can_render=False,
+            dynamic_pacing_blocking_reasons=list(
+                data.get("dynamic_pacing_blocking_reasons") or []
+            ),
+            dynamic_pacing_warnings=list(data.get("dynamic_pacing_warnings") or []),
+            dynamic_pacing_recommendation=data.get("dynamic_pacing_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

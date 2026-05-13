@@ -150,6 +150,10 @@ from core.emotional_arc_runner import (
     apply_emotional_arc_run_report_to_job,
     run_emotional_arc_builder_for_job,
 )
+from core.dynamic_pacing_runner import (
+    apply_dynamic_pacing_run_report_to_job,
+    run_dynamic_pacing_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -5224,6 +5228,251 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                         "no_render_in_2b_38": True,
                         "no_timeline_reorder_in_2b_38": True,
                         "no_arc_apply_in_2b_38": True,
+                    },
+                )
+
+            try:
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-39",
+                    event_type="DYNAMIC_PACING_ENGINE_STARTED",
+                    action="run_dynamic_pacing",
+                    status="started",
+                    reason="Analyze review-only cut rate after emotional arc.",
+                    details={
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "dynamic_pacing_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_39": True,
+                        "no_render_in_2b_39": True,
+                        "no_timeline_reorder_in_2b_39": True,
+                        "no_pacing_apply_in_2b_39": True,
+                        "no_split_merge_trim_extend_in_2b_39": True,
+                    },
+                )
+
+                dynamic_pacing_report = run_dynamic_pacing_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-39",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "dynamic_pacing_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_39": True,
+                        "no_render_in_2b_39": True,
+                        "no_timeline_reorder_in_2b_39": True,
+                        "no_pacing_apply_in_2b_39": True,
+                        "no_split_merge_trim_extend_in_2b_39": True,
+                    },
+                )
+                apply_dynamic_pacing_run_report_to_job(job, dynamic_pacing_report)
+
+                dynamic_pacing_status = str(
+                    getattr(dynamic_pacing_report, "status", "") or ""
+                )
+
+                if dynamic_pacing_status == "pacing_analysis_ready":
+                    dynamic_pacing_event_type = "DYNAMIC_PACING_ANALYSIS_READY"
+                    dynamic_pacing_log_status = "pending_review"
+                elif dynamic_pacing_status == "pacing_analysis_ready_with_warnings":
+                    dynamic_pacing_event_type = (
+                        "DYNAMIC_PACING_ANALYSIS_READY_WITH_WARNINGS"
+                    )
+                    dynamic_pacing_log_status = "pending_review"
+                elif dynamic_pacing_status in {"blocked", "no_timeline_items"}:
+                    dynamic_pacing_event_type = "DYNAMIC_PACING_ANALYSIS_BLOCKED"
+                    dynamic_pacing_log_status = "blocked"
+                else:
+                    dynamic_pacing_event_type = "DYNAMIC_PACING_ANALYSIS_FAILED"
+                    dynamic_pacing_log_status = "failed"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-39",
+                    event_type=dynamic_pacing_event_type,
+                    action="dynamic_pacing_review_only",
+                    status=dynamic_pacing_log_status,
+                    reason=getattr(
+                        dynamic_pacing_report,
+                        "recommendation",
+                        "review_dynamic_pacing_suggestions",
+                    ),
+                    details={
+                        "status": dynamic_pacing_status,
+                        "pacing_segment_count": len(
+                            getattr(dynamic_pacing_report, "pacing_segments", [])
+                            or []
+                        ),
+                        "suggestion_count": len(
+                            getattr(dynamic_pacing_report, "suggestions", []) or []
+                        ),
+                        "average_cut_rate": float(
+                            getattr(
+                                dynamic_pacing_report,
+                                "average_cut_rate",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "target_cut_rate_range": dict(
+                            getattr(
+                                dynamic_pacing_report,
+                                "target_cut_rate_range",
+                                {},
+                            )
+                            or {}
+                        ),
+                        "pacing_match_score": float(
+                            getattr(
+                                dynamic_pacing_report,
+                                "pacing_match_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "monotony_score": float(
+                            getattr(dynamic_pacing_report, "monotony_score", 0.0)
+                            or 0.0
+                        ),
+                        "breathing_room_score": float(
+                            getattr(
+                                dynamic_pacing_report,
+                                "breathing_room_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "fast_run_count": int(
+                            getattr(dynamic_pacing_report, "fast_run_count", 0)
+                            or 0
+                        ),
+                        "slow_run_count": int(
+                            getattr(dynamic_pacing_report, "slow_run_count", 0)
+                            or 0
+                        ),
+                        "review_required": True,
+                        "can_apply_pacing": False,
+                        "can_split_clips": False,
+                        "can_merge_clips": False,
+                        "can_trim": False,
+                        "can_extend": False,
+                        "can_reorder_timeline": False,
+                        "can_render": False,
+                        "blocking_reasons": list(
+                            getattr(
+                                dynamic_pacing_report,
+                                "blocking_reasons",
+                                [],
+                            )
+                            or []
+                        ),
+                        "warnings": list(
+                            getattr(dynamic_pacing_report, "warnings", []) or []
+                        ),
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "dynamic_pacing_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_39": True,
+                        "no_render_in_2b_39": True,
+                        "no_timeline_reorder_in_2b_39": True,
+                        "no_pacing_apply_in_2b_39": True,
+                        "no_split_merge_trim_extend_in_2b_39": True,
+                    },
+                )
+
+                persist_job_state_checkpoint(
+                    job=job,
+                    export_dir=export_dir,
+                    step_name="dynamic_pacing_engine_done",
+                    reason=getattr(
+                        dynamic_pacing_report,
+                        "recommendation",
+                        "review_dynamic_pacing_suggestions",
+                    ),
+                )
+
+            except Exception as dynamic_pacing_exc:
+                job.dynamic_pacing_status = "failed"
+                job.dynamic_pacing_report = {
+                    "status": "failed",
+                    "pacing_segments": [],
+                    "suggestions": [],
+                    "average_cut_rate": 0.0,
+                    "target_cut_rate_range": {"min": 0.0, "max": 0.0},
+                    "pacing_match_score": 0.0,
+                    "monotony_score": 0.0,
+                    "breathing_room_score": 0.0,
+                    "fast_run_count": 0,
+                    "slow_run_count": 0,
+                    "review_required": True,
+                    "can_apply_pacing": False,
+                    "can_split_clips": False,
+                    "can_merge_clips": False,
+                    "can_trim": False,
+                    "can_extend": False,
+                    "can_reorder_timeline": False,
+                    "can_render": False,
+                    "blocking_reasons": ["dynamic_pacing_failed"],
+                    "warnings": [],
+                    "recommendation": "review_dynamic_pacing_failure",
+                    "metadata": {
+                        "phase": "2B-39",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "dynamic_pacing_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_39": True,
+                        "no_render_in_2b_39": True,
+                        "no_timeline_reorder_in_2b_39": True,
+                        "no_pacing_apply_in_2b_39": True,
+                        "no_split_merge_trim_extend_in_2b_39": True,
+                        "error": str(dynamic_pacing_exc),
+                    },
+                }
+                job.dynamic_pacing = dict(job.dynamic_pacing_report)
+                job.dynamic_pacing_segments = []
+                job.dynamic_pacing_suggestions = []
+                job.dynamic_pacing_average_cut_rate = 0.0
+                job.dynamic_pacing_target_cut_rate_range = {"min": 0.0, "max": 0.0}
+                job.dynamic_pacing_match_score = 0.0
+                job.dynamic_pacing_monotony_score = 0.0
+                job.dynamic_pacing_breathing_room_score = 0.0
+                job.dynamic_pacing_fast_run_count = 0
+                job.dynamic_pacing_slow_run_count = 0
+                job.dynamic_pacing_review_required = True
+                job.dynamic_pacing_can_apply = False
+                job.dynamic_pacing_can_split_clips = False
+                job.dynamic_pacing_can_merge_clips = False
+                job.dynamic_pacing_can_trim = False
+                job.dynamic_pacing_can_extend = False
+                job.dynamic_pacing_can_reorder_timeline = False
+                job.dynamic_pacing_can_render = False
+                job.dynamic_pacing_blocking_reasons = ["dynamic_pacing_failed"]
+                job.dynamic_pacing_warnings = []
+                job.dynamic_pacing_recommendation = "review_dynamic_pacing_failure"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-39",
+                    event_type="DYNAMIC_PACING_ANALYSIS_FAILED",
+                    action="dynamic_pacing_review_only_failed",
+                    status="failed",
+                    reason=str(dynamic_pacing_exc),
+                    details={
+                        "review_only": True,
+                        "dynamic_pacing_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_39": True,
+                        "no_render_in_2b_39": True,
+                        "no_timeline_reorder_in_2b_39": True,
+                        "no_pacing_apply_in_2b_39": True,
+                        "no_split_merge_trim_extend_in_2b_39": True,
                     },
                 )
 

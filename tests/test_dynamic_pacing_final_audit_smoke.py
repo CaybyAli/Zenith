@@ -2,26 +2,26 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from models.emotional_arc import EmotionalArcReport
+from models.dynamic_pacing import DynamicPacingReport
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 PRODUCT_FILES = [
-    ROOT / "models" / "emotional_arc.py",
-    ROOT / "core" / "emotional_arc_builder.py",
-    ROOT / "core" / "emotional_arc_runner.py",
-    ROOT / "core" / "emotional_arc_signal_adapter.py",
+    ROOT / "models" / "dynamic_pacing.py",
+    ROOT / "core" / "dynamic_pacing_engine.py",
+    ROOT / "core" / "dynamic_pacing_runner.py",
+    ROOT / "core" / "dynamic_pacing_signal_adapter.py",
     ROOT / "core" / "gaming_pipeline.py",
     ROOT / "core" / "unified_edit_signal_registry.py",
     ROOT / "models" / "job.py",
 ]
 
-EMOTIONAL_ARC_FULL_SCAN_FILES = {
-    ROOT / "models" / "emotional_arc.py",
-    ROOT / "core" / "emotional_arc_builder.py",
-    ROOT / "core" / "emotional_arc_runner.py",
-    ROOT / "core" / "emotional_arc_signal_adapter.py",
+DYNAMIC_PACING_FULL_SCAN_FILES = {
+    ROOT / "models" / "dynamic_pacing.py",
+    ROOT / "core" / "dynamic_pacing_engine.py",
+    ROOT / "core" / "dynamic_pacing_runner.py",
+    ROOT / "core" / "dynamic_pacing_signal_adapter.py",
 }
 
 FORBIDDEN_MEDIA_TOKENS = [
@@ -47,15 +47,20 @@ FORBIDDEN_MEDIA_TOKENS = [
     "move_clip",
     "split_clip",
     "merge_clip",
-    "apply_arc",
-    "execute_arc",
+    "apply_pacing",
+    "execute_pacing",
 ]
 
 ALLOWED_SAFETY_FIELD_TOKENS = [
-    "can_apply_arc",
+    "can_apply_pacing",
+    "dynamic_pacing_can_apply",
+    "can_split_clips",
+    "dynamic_pacing_can_split_clips",
+    "can_merge_clips",
+    "dynamic_pacing_can_merge_clips",
     "can_reorder_timeline",
-    "emotional_arc_can_reorder_timeline",
-    "no_timeline_reorder_in_2b_38",
+    "dynamic_pacing_can_reorder_timeline",
+    "no_timeline_reorder_in_2b_39",
 ]
 
 
@@ -73,10 +78,10 @@ def _between(text: str, start_token: str, end_token: str | None = None) -> str:
     return text[start:end]
 
 
-def _emotional_arc_relevant_text(path: Path) -> str:
+def _dynamic_pacing_relevant_text(path: Path) -> str:
     text = _text(path)
 
-    if path in EMOTIONAL_ARC_FULL_SCAN_FILES:
+    if path in DYNAMIC_PACING_FULL_SCAN_FILES:
         return text
 
     if path.name == "gaming_pipeline.py":
@@ -84,13 +89,13 @@ def _emotional_arc_relevant_text(path: Path) -> str:
             [
                 _between(
                     text,
-                    "from core.emotional_arc_runner import",
+                    "from core.dynamic_pacing_runner import",
                     "from core.audio_normalization_runner import",
                 ),
                 _between(
                     text,
-                    "EMOTIONAL_ARC_BUILDER_STARTED",
                     "DYNAMIC_PACING_ENGINE_STARTED",
+                    "timeline_safety_validation_status",
                 ),
             ]
         )
@@ -100,12 +105,12 @@ def _emotional_arc_relevant_text(path: Path) -> str:
             [
                 _between(
                     text,
-                    "from core.emotional_arc_signal_adapter import",
+                    "from core.dynamic_pacing_signal_adapter import",
                     "from models.unified_edit_signal_result import",
                 ),
                 _between(
                     text,
-                    "emotional_arc_report = _job_attr",
+                    "dynamic_pacing_report = _job_attr",
                     "if final_cut_list_signals:",
                 ),
             ]
@@ -116,13 +121,13 @@ def _emotional_arc_relevant_text(path: Path) -> str:
             [
                 _between(
                     text,
-                    "emotional_arc_report: dict",
                     "dynamic_pacing_report: dict",
+                    "silence_detection_report: dict",
                 ),
                 _between(
                     text,
-                    "emotional_arc_report=dict",
                     "dynamic_pacing_report=dict",
+                    "silence_detection_report=dict",
                 ),
             ]
         )
@@ -137,13 +142,13 @@ def _without_allowed_safety_fields(text: str) -> str:
     return cleaned
 
 
-def test_emotional_arc_product_files_exist() -> None:
+def test_dynamic_pacing_product_files_exist() -> None:
     missing = [path.relative_to(ROOT).as_posix() for path in PRODUCT_FILES if not path.exists()]
 
     assert missing == []
 
 
-def test_emotional_arc_product_files_have_no_bom_and_end_with_newline() -> None:
+def test_dynamic_pacing_product_files_have_no_bom_and_end_with_newline() -> None:
     violations: list[str] = []
 
     for path in PRODUCT_FILES:
@@ -156,11 +161,11 @@ def test_emotional_arc_product_files_have_no_bom_and_end_with_newline() -> None:
     assert violations == []
 
 
-def test_emotional_arc_has_no_forbidden_media_operations() -> None:
+def test_dynamic_pacing_has_no_forbidden_media_operations() -> None:
     violations: list[str] = []
 
     for path in PRODUCT_FILES:
-        text = _without_allowed_safety_fields(_emotional_arc_relevant_text(path))
+        text = _without_allowed_safety_fields(_dynamic_pacing_relevant_text(path))
         for token in FORBIDDEN_MEDIA_TOKENS:
             if token in text:
                 violations.append(f"{path.relative_to(ROOT)}:{token}")
@@ -168,15 +173,17 @@ def test_emotional_arc_has_no_forbidden_media_operations() -> None:
     assert violations == []
 
 
-def test_emotional_arc_report_forces_review_only_contract() -> None:
-    report = EmotionalArcReport.from_dict(
+def test_dynamic_pacing_report_forces_review_only_contract() -> None:
+    report = DynamicPacingReport.from_dict(
         {
-            "status": "arc_analysis_ready",
+            "status": "pacing_analysis_ready",
             "review_required": False,
-            "can_apply_arc": True,
-            "can_reorder_timeline": True,
+            "can_apply_pacing": True,
+            "can_split_clips": True,
+            "can_merge_clips": True,
             "can_trim": True,
             "can_extend": True,
+            "can_reorder_timeline": True,
             "can_render": True,
             "metadata": {},
         }
@@ -184,34 +191,37 @@ def test_emotional_arc_report_forces_review_only_contract() -> None:
     data = report.to_dict()
 
     assert data["review_required"] is True
-    assert data["can_apply_arc"] is False
-    assert data["can_reorder_timeline"] is False
+    assert data["can_apply_pacing"] is False
+    assert data["can_split_clips"] is False
+    assert data["can_merge_clips"] is False
     assert data["can_trim"] is False
     assert data["can_extend"] is False
+    assert data["can_reorder_timeline"] is False
     assert data["can_render"] is False
     assert data["metadata"]["review_only"] is True
-    assert data["metadata"]["emotional_arc_only"] is True
+    assert data["metadata"]["dynamic_pacing_only"] is True
     assert data["metadata"]["media_unchanged"] is True
-    assert data["metadata"]["no_execution_in_2b_38"] is True
-    assert data["metadata"]["no_render_in_2b_38"] is True
-    assert data["metadata"]["no_timeline_reorder_in_2b_38"] is True
-    assert data["metadata"]["no_arc_apply_in_2b_38"] is True
+    assert data["metadata"]["no_execution_in_2b_39"] is True
+    assert data["metadata"]["no_render_in_2b_39"] is True
+    assert data["metadata"]["no_timeline_reorder_in_2b_39"] is True
+    assert data["metadata"]["no_pacing_apply_in_2b_39"] is True
+    assert data["metadata"]["no_split_merge_trim_extend_in_2b_39"] is True
 
 
-def test_emotional_arc_static_pipeline_order_after_hook_identification() -> None:
+def test_dynamic_pacing_static_pipeline_order_after_emotional_arc() -> None:
     text = _text(ROOT / "core" / "gaming_pipeline.py")
 
-    hook_index = text.index("run_hook_identification_for_job(")
-    hook_apply_index = text.index("apply_hook_identification_run_report_to_job(")
     arc_index = text.index("run_emotional_arc_builder_for_job(")
     arc_apply_index = text.index("apply_emotional_arc_run_report_to_job(")
+    pacing_index = text.index("run_dynamic_pacing_for_job(")
+    pacing_apply_index = text.index("apply_dynamic_pacing_run_report_to_job(")
 
-    assert hook_index < hook_apply_index < arc_index < arc_apply_index
+    assert arc_index < arc_apply_index < pacing_index < pacing_apply_index
 
 
-def test_emotional_arc_static_registry_source_exists() -> None:
+def test_dynamic_pacing_static_registry_source_exists() -> None:
     text = _text(ROOT / "core" / "unified_edit_signal_registry.py")
 
-    assert 'SOURCE_EMOTIONAL_ARC = "emotional_arc"' in text
-    assert "adapt_emotional_arc_report_to_signals" in text
-    assert "emotional_arc_report" in text
+    assert 'SOURCE_DYNAMIC_PACING = "dynamic_pacing"' in text
+    assert "adapt_dynamic_pacing_report_to_signals" in text
+    assert "dynamic_pacing_report" in text

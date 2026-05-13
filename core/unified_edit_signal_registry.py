@@ -52,6 +52,9 @@ from core.hook_identification_signal_adapter import (
 from core.emotional_arc_signal_adapter import (
     adapt_emotional_arc_report_to_signals,
 )
+from core.dynamic_pacing_signal_adapter import (
+    adapt_dynamic_pacing_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -84,6 +87,7 @@ SOURCE_TIMELINE_SAFETY_VALIDATOR = "timeline_safety_validator"
 SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE = "review_timeline_dashboard_package"
 SOURCE_HOOK_IDENTIFICATION = "hook_identification"
 SOURCE_EMOTIONAL_ARC = "emotional_arc"
+SOURCE_DYNAMIC_PACING = "dynamic_pacing"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1264,6 +1268,27 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_EMOTIONAL_ARC}")
+
+    dynamic_pacing_report = _job_attr(job, "dynamic_pacing_report")
+    if not dynamic_pacing_report:
+        dynamic_pacing_report = _job_attr(job, "dynamic_pacing")
+
+    dynamic_pacing_signals = _safe_collect(
+        lambda: adapt_dynamic_pacing_report_to_signals(
+            dynamic_pacing_report,
+        ),
+        label=SOURCE_DYNAMIC_PACING,
+        warnings=warnings,
+        errors=errors,
+    )
+    if dynamic_pacing_signals:
+        source_counts[SOURCE_DYNAMIC_PACING] = len(dynamic_pacing_signals)
+        for signal in dynamic_pacing_signals:
+            normalized = _normalize_signal(signal, SOURCE_DYNAMIC_PACING)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_DYNAMIC_PACING}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
