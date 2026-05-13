@@ -256,6 +256,19 @@ class Job:
     transition_decision_technical_review_count: int = 0
     transition_decision_unknown_review_count: int = 0
     transition_decision_recommendation: str | None = None
+    continuity_check_report: dict[str, Any] = field(default_factory=dict)
+    continuity_check_status: str | None = None
+    continuity_check_issues: list[dict[str, Any]] = field(default_factory=list)
+    continuity_check_issue_count: int = 0
+    continuity_check_blocking_issue_count: int = 0
+    continuity_check_sentence_break_risk_count: int = 0
+    continuity_check_context_jump_risk_count: int = 0
+    continuity_check_censor_context_risk_count: int = 0
+    continuity_check_timing_issue_count: int = 0
+    continuity_check_transition_conflict_count: int = 0
+    continuity_check_technical_issue_count: int = 0
+    continuity_check_protected_context_count: int = 0
+    continuity_check_recommendation: str | None = None
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -766,7 +779,20 @@ class Job:
             transition_decision_censor_safe_keep_count=int(data.get("transition_decision_censor_safe_keep_count", 0) or 0),
             transition_decision_technical_review_count=int(data.get("transition_decision_technical_review_count", 0) or 0),
             transition_decision_unknown_review_count=int(data.get("transition_decision_unknown_review_count", 0) or 0),
-            transition_decision_recommendation=data.get("transition_decision_recommendation"),            
+            transition_decision_recommendation=data.get("transition_decision_recommendation"),
+            continuity_check_report=dict(data.get("continuity_check_report") or {}),
+            continuity_check_status=data.get("continuity_check_status"),
+            continuity_check_issues=list(data.get("continuity_check_issues") or []),
+            continuity_check_issue_count=int(data.get("continuity_check_issue_count", 0) or 0),
+            continuity_check_blocking_issue_count=int(data.get("continuity_check_blocking_issue_count", 0) or 0),
+            continuity_check_sentence_break_risk_count=int(data.get("continuity_check_sentence_break_risk_count", 0) or 0),
+            continuity_check_context_jump_risk_count=int(data.get("continuity_check_context_jump_risk_count", 0) or 0),
+            continuity_check_censor_context_risk_count=int(data.get("continuity_check_censor_context_risk_count", 0) or 0),
+            continuity_check_timing_issue_count=int(data.get("continuity_check_timing_issue_count", 0) or 0),
+            continuity_check_transition_conflict_count=int(data.get("continuity_check_transition_conflict_count", 0) or 0),
+            continuity_check_technical_issue_count=int(data.get("continuity_check_technical_issue_count", 0) or 0),
+            continuity_check_protected_context_count=int(data.get("continuity_check_protected_context_count", 0) or 0),
+            continuity_check_recommendation=data.get("continuity_check_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

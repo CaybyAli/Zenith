@@ -118,6 +118,10 @@ from core.transition_decision_runner import (
     apply_transition_decision_run_report_to_job,
     run_transition_decision_for_job,
 )
+from core.continuity_check_runner import (
+    apply_continuity_check_run_report_to_job,
+    run_continuity_check_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -4285,6 +4289,133 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         reason="transition_decision_completed_or_skipped",
     )
     # -- End Transition Decision Engine ----------------------------------------
+
+    # -- Continuity Check (2B-30-C) --------------------------------------------
+    _safe_log_decision(
+        job=job,
+        export_dir=job_state_export_dir,
+        phase="continuity_check",
+        event_type="CONTINUITY_CHECK_STARTED",
+        action="run_continuity_check",
+        reason="continuity_check_started",
+        details={
+            "job_id": getattr(job, "job_id", None),
+            "transition_decision_count": int(
+                getattr(job, "transition_decision_count", 0) or 0
+            ),
+            "cut_list_item_count": int(getattr(job, "cut_list_item_count", 0) or 0),
+        },
+    )
+
+    try:
+        continuity_check_report = run_continuity_check_for_job(
+            job=job,
+            metadata={
+                "stage": "2B-30-C",
+                "job_id": getattr(job, "job_id", None),
+            },
+        )
+        apply_continuity_check_run_report_to_job(
+            job=job,
+            report=continuity_check_report,
+        )
+
+        _continuity_check_details = {
+            "status": continuity_check_report.status,
+            "issue_count": continuity_check_report.issue_count,
+            "blocking_issue_count": continuity_check_report.blocking_issue_count,
+            "sentence_break_risk_count": (
+                continuity_check_report.sentence_break_risk_count
+            ),
+            "context_jump_risk_count": (
+                continuity_check_report.context_jump_risk_count
+            ),
+            "censor_context_risk_count": (
+                continuity_check_report.censor_context_risk_count
+            ),
+            "timing_issue_count": continuity_check_report.timing_issue_count,
+            "transition_conflict_count": (
+                continuity_check_report.transition_conflict_count
+            ),
+            "technical_issue_count": continuity_check_report.technical_issue_count,
+            "protected_context_count": continuity_check_report.protected_context_count,
+            "recommendation": continuity_check_report.recommendation,
+            "warnings": list(continuity_check_report.warnings or []),
+            "errors": list(continuity_check_report.errors or []),
+            "review_only": True,
+        }
+
+        _continuity_check_status_text = str(
+            continuity_check_report.status or ""
+        ).lower()
+
+        if _continuity_check_status_text in {"ok", "completed_with_warnings"}:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="continuity_check",
+                event_type="CONTINUITY_CHECK_DONE",
+                action="continue_pipeline",
+                status=(
+                    "warn"
+                    if _continuity_check_status_text == "completed_with_warnings"
+                    else "ok"
+                ),
+                reason=continuity_check_report.recommendation
+                or "continuity_check_completed",
+                details=_continuity_check_details,
+            )
+        elif _continuity_check_status_text in {
+            "skipped_no_transition_decisions",
+            "skipped_no_cut_list_items",
+        }:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="continuity_check",
+                event_type="CONTINUITY_CHECK_SKIPPED",
+                action="continue_pipeline",
+                status="warn",
+                reason=continuity_check_report.recommendation
+                or "continuity_check_skipped_no_inputs",
+                details=_continuity_check_details,
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="continuity_check",
+                event_type="CONTINUITY_CHECK_FAILED",
+                action="continue_pipeline",
+                status="warn",
+                reason=continuity_check_report.recommendation
+                or "continuity_check_failed",
+                details=_continuity_check_details,
+            )
+
+    except Exception as continuity_check_exc:
+        job.continuity_check_status = "failed"
+        job.continuity_check_recommendation = "continuity_check_failed"
+
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="continuity_check",
+            event_type="CONTINUITY_CHECK_FAILED",
+            action="continue_pipeline",
+            status="warn",
+            reason="continuity_check_exception",
+            details={"error": str(continuity_check_exc)},
+        )
+
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name="continuity_check_done",
+        reason="continuity_check_completed_or_skipped",
+    )
+    # -- End Continuity Check ---------------------------------------------------
 
     _safe_log_decision(
         job=job,

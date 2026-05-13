@@ -32,6 +32,7 @@ from core.clip_duration_signal_adapter import adapt_clip_duration_report_to_sign
 from core.transition_decision_signal_adapter import (
     adapt_transition_decision_report_to_signals,
 )
+from core.continuity_check_signal_adapter import adapt_continuity_check_report_to_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -56,6 +57,7 @@ SOURCE_MURCH_SCORING = "murch_scoring"
 SOURCE_CUT_LIST_GENERATOR = "cut_list_generator"
 SOURCE_CLIP_DURATION_OPTIMIZER = "clip_duration_optimizer"
 SOURCE_TRANSITION_DECISION = "transition_decision"
+SOURCE_CONTINUITY_CHECK = "continuity_check"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1028,6 +1030,32 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_TRANSITION_DECISION}")
+
+    continuity_check_report = _job_attr(job, "continuity_check_report")
+    if not continuity_check_report:
+        continuity_check_issues = _job_attr(
+            job,
+            "continuity_check_issues",
+        )
+        if isinstance(continuity_check_issues, list) and continuity_check_issues:
+            continuity_check_report = {
+                "issues": continuity_check_issues
+            }
+
+    continuity_check_signals = _safe_collect(
+        lambda: adapt_continuity_check_report_to_signals(continuity_check_report),
+        label=SOURCE_CONTINUITY_CHECK,
+        warnings=warnings,
+        errors=errors,
+    )
+    if continuity_check_signals:
+        source_counts[SOURCE_CONTINUITY_CHECK] = len(continuity_check_signals)
+        for signal in continuity_check_signals:
+            normalized = _normalize_signal(signal, SOURCE_CONTINUITY_CHECK)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CONTINUITY_CHECK}")
 
     silence_class_signals = _collect_silence_classification_signals(job)
     
