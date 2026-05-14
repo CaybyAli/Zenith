@@ -55,6 +55,9 @@ from core.emotional_arc_signal_adapter import (
 from core.dynamic_pacing_signal_adapter import (
     adapt_dynamic_pacing_report_to_signals,
 )
+from core.pattern_interrupt_signal_adapter import (
+    adapt_pattern_interrupt_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -88,6 +91,7 @@ SOURCE_REVIEW_TIMELINE_DASHBOARD_PACKAGE = "review_timeline_dashboard_package"
 SOURCE_HOOK_IDENTIFICATION = "hook_identification"
 SOURCE_EMOTIONAL_ARC = "emotional_arc"
 SOURCE_DYNAMIC_PACING = "dynamic_pacing"
+SOURCE_PATTERN_INTERRUPT = "pattern_interrupt"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1289,6 +1293,27 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_DYNAMIC_PACING}")
+
+    pattern_interrupt_report = _job_attr(job, "pattern_interrupt_report")
+    if not pattern_interrupt_report:
+        pattern_interrupt_report = _job_attr(job, "pattern_interrupt")
+
+    pattern_interrupt_signals = _safe_collect(
+        lambda: adapt_pattern_interrupt_report_to_signals(
+            pattern_interrupt_report,
+        ),
+        label=SOURCE_PATTERN_INTERRUPT,
+        warnings=warnings,
+        errors=errors,
+    )
+    if pattern_interrupt_signals:
+        source_counts[SOURCE_PATTERN_INTERRUPT] = len(pattern_interrupt_signals)
+        for signal in pattern_interrupt_signals:
+            normalized = _normalize_signal(signal, SOURCE_PATTERN_INTERRUPT)
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_PATTERN_INTERRUPT}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

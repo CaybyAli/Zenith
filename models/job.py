@@ -415,6 +415,29 @@ class Job:
     dynamic_pacing_warnings: list[str] = field(default_factory=list)
     dynamic_pacing_recommendation: str | None = None
 
+    pattern_interrupt_report: dict[str, Any] = field(default_factory=dict)
+    pattern_interrupt: dict[str, Any] = field(default_factory=dict)
+    pattern_interrupt_status: str | None = None
+    pattern_interrupt_windows: list[dict[str, Any]] = field(default_factory=list)
+    pattern_interrupt_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    pattern_interrupt_total_windows: int = 0
+    pattern_interrupt_needed_count: int = 0
+    pattern_interrupt_monotony_score: float = 0.0
+    pattern_interrupt_average_window_duration_seconds: float = 0.0
+    pattern_interrupt_recommended_count: int = 0
+    pattern_interrupt_review_required: bool = True
+    pattern_interrupt_can_apply: bool = False
+    pattern_interrupt_can_insert_zoom: bool = False
+    pattern_interrupt_can_insert_text_overlay: bool = False
+    pattern_interrupt_can_insert_sfx: bool = False
+    pattern_interrupt_can_reorder_timeline: bool = False
+    pattern_interrupt_can_trim: bool = False
+    pattern_interrupt_can_extend: bool = False
+    pattern_interrupt_can_render: bool = False
+    pattern_interrupt_blocking_reasons: list[str] = field(default_factory=list)
+    pattern_interrupt_warnings: list[str] = field(default_factory=list)
+    pattern_interrupt_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1177,6 +1200,54 @@ class Job:
             ),
             dynamic_pacing_warnings=list(data.get("dynamic_pacing_warnings") or []),
             dynamic_pacing_recommendation=data.get("dynamic_pacing_recommendation"),
+            pattern_interrupt_report=dict(data.get("pattern_interrupt_report") or {}),
+            pattern_interrupt=dict(data.get("pattern_interrupt") or {}),
+            pattern_interrupt_status=data.get("pattern_interrupt_status"),
+            pattern_interrupt_windows=list(
+                data.get("pattern_interrupt_windows") or []
+            ),
+            pattern_interrupt_suggestions=list(
+                data.get("pattern_interrupt_suggestions") or []
+            ),
+            pattern_interrupt_total_windows=int(
+                data.get("pattern_interrupt_total_windows", 0) or 0
+            ),
+            pattern_interrupt_needed_count=int(
+                data.get("pattern_interrupt_needed_count", 0) or 0
+            ),
+            pattern_interrupt_monotony_score=float(
+                data.get("pattern_interrupt_monotony_score", 0.0) or 0.0
+            ),
+            pattern_interrupt_average_window_duration_seconds=float(
+                data.get(
+                    "pattern_interrupt_average_window_duration_seconds",
+                    0.0,
+                )
+                or 0.0
+            ),
+            pattern_interrupt_recommended_count=int(
+                data.get("pattern_interrupt_recommended_count", 0) or 0
+            ),
+            pattern_interrupt_review_required=bool(
+                data.get("pattern_interrupt_review_required", True)
+            ),
+            pattern_interrupt_can_apply=False,
+            pattern_interrupt_can_insert_zoom=False,
+            pattern_interrupt_can_insert_text_overlay=False,
+            pattern_interrupt_can_insert_sfx=False,
+            pattern_interrupt_can_reorder_timeline=False,
+            pattern_interrupt_can_trim=False,
+            pattern_interrupt_can_extend=False,
+            pattern_interrupt_can_render=False,
+            pattern_interrupt_blocking_reasons=list(
+                data.get("pattern_interrupt_blocking_reasons") or []
+            ),
+            pattern_interrupt_warnings=list(
+                data.get("pattern_interrupt_warnings") or []
+            ),
+            pattern_interrupt_recommendation=data.get(
+                "pattern_interrupt_recommendation"
+            ),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

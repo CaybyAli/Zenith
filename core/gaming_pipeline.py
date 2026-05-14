@@ -154,6 +154,10 @@ from core.dynamic_pacing_runner import (
     apply_dynamic_pacing_run_report_to_job,
     run_dynamic_pacing_for_job,
 )
+from core.pattern_interrupt_runner import (
+    run_pattern_interrupt_for_job,
+    store_pattern_interrupt_run_report_to_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -5473,6 +5477,259 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                         "no_timeline_reorder_in_2b_39": True,
                         "no_pacing_apply_in_2b_39": True,
                         "no_split_merge_trim_extend_in_2b_39": True,
+                    },
+                )
+
+            try:
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-40",
+                    event_type="PATTERN_INTERRUPT_ENGINE_STARTED",
+                    action="run_pattern_interrupt",
+                    status="started",
+                    reason="Analyze review-only monotony after dynamic pacing.",
+                    details={
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "pattern_interrupt_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_40": True,
+                        "no_render_in_2b_40": True,
+                        "no_timeline_reorder_in_2b_40": True,
+                        "no_pattern_apply_in_2b_40": True,
+                        "no_zoom_insert_in_2b_40": True,
+                        "no_text_overlay_insert_in_2b_40": True,
+                        "no_sfx_insert_in_2b_40": True,
+                    },
+                )
+
+                pattern_interrupt_report = run_pattern_interrupt_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-40",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "pattern_interrupt_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_40": True,
+                        "no_render_in_2b_40": True,
+                        "no_timeline_reorder_in_2b_40": True,
+                        "no_pattern_apply_in_2b_40": True,
+                        "no_zoom_insert_in_2b_40": True,
+                        "no_text_overlay_insert_in_2b_40": True,
+                        "no_sfx_insert_in_2b_40": True,
+                    },
+                )
+                store_pattern_interrupt_run_report_to_job(
+                    job,
+                    pattern_interrupt_report,
+                )
+
+                pattern_interrupt_status = str(
+                    getattr(pattern_interrupt_report, "status", "") or ""
+                )
+
+                if pattern_interrupt_status == "pattern_interrupt_analysis_ready":
+                    pattern_interrupt_event_type = (
+                        "PATTERN_INTERRUPT_ANALYSIS_READY"
+                    )
+                    pattern_interrupt_log_status = "pending_review"
+                elif pattern_interrupt_status == (
+                    "pattern_interrupt_ready_with_warnings"
+                ):
+                    pattern_interrupt_event_type = (
+                        "PATTERN_INTERRUPT_ANALYSIS_READY_WITH_WARNINGS"
+                    )
+                    pattern_interrupt_log_status = "pending_review"
+                elif pattern_interrupt_status in {"blocked", "no_timeline_items"}:
+                    pattern_interrupt_event_type = (
+                        "PATTERN_INTERRUPT_ANALYSIS_BLOCKED"
+                    )
+                    pattern_interrupt_log_status = "blocked"
+                else:
+                    pattern_interrupt_event_type = (
+                        "PATTERN_INTERRUPT_ANALYSIS_FAILED"
+                    )
+                    pattern_interrupt_log_status = "failed"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-40",
+                    event_type=pattern_interrupt_event_type,
+                    action="pattern_interrupt_review_only",
+                    status=pattern_interrupt_log_status,
+                    reason=getattr(
+                        pattern_interrupt_report,
+                        "recommendation",
+                        "review_pattern_interrupt_suggestions",
+                    ),
+                    details={
+                        "status": pattern_interrupt_status,
+                        "window_count": len(
+                            getattr(pattern_interrupt_report, "windows", []) or []
+                        ),
+                        "suggestion_count": len(
+                            getattr(pattern_interrupt_report, "suggestions", [])
+                            or []
+                        ),
+                        "interrupt_needed_count": int(
+                            getattr(
+                                pattern_interrupt_report,
+                                "interrupt_needed_count",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "monotony_score": float(
+                            getattr(pattern_interrupt_report, "monotony_score", 0.0)
+                            or 0.0
+                        ),
+                        "average_window_duration_seconds": float(
+                            getattr(
+                                pattern_interrupt_report,
+                                "average_window_duration_seconds",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "recommended_interrupt_count": int(
+                            getattr(
+                                pattern_interrupt_report,
+                                "recommended_interrupt_count",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "review_required": True,
+                        "can_apply_interrupts": False,
+                        "can_insert_zoom": False,
+                        "can_insert_text_overlay": False,
+                        "can_insert_sfx": False,
+                        "can_reorder_timeline": False,
+                        "can_trim": False,
+                        "can_extend": False,
+                        "can_render": False,
+                        "blocking_reasons": list(
+                            getattr(
+                                pattern_interrupt_report,
+                                "blocking_reasons",
+                                [],
+                            )
+                            or []
+                        ),
+                        "warnings": list(
+                            getattr(pattern_interrupt_report, "warnings", []) or []
+                        ),
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "pattern_interrupt_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_40": True,
+                        "no_render_in_2b_40": True,
+                        "no_timeline_reorder_in_2b_40": True,
+                        "no_pattern_apply_in_2b_40": True,
+                        "no_zoom_insert_in_2b_40": True,
+                        "no_text_overlay_insert_in_2b_40": True,
+                        "no_sfx_insert_in_2b_40": True,
+                    },
+                )
+
+                persist_job_state_checkpoint(
+                    job=job,
+                    export_dir=export_dir,
+                    step_name="pattern_interrupt_engine_done",
+                    reason=getattr(
+                        pattern_interrupt_report,
+                        "recommendation",
+                        "review_pattern_interrupt_suggestions",
+                    ),
+                )
+
+            except Exception as pattern_interrupt_exc:
+                job.pattern_interrupt_status = "failed"
+                job.pattern_interrupt_report = {
+                    "status": "failed",
+                    "windows": [],
+                    "suggestions": [],
+                    "total_windows": 0,
+                    "interrupt_needed_count": 0,
+                    "monotony_score": 0.0,
+                    "average_window_duration_seconds": 0.0,
+                    "recommended_interrupt_count": 0,
+                    "review_required": True,
+                    "can_apply_interrupts": False,
+                    "can_insert_zoom": False,
+                    "can_insert_text_overlay": False,
+                    "can_insert_sfx": False,
+                    "can_reorder_timeline": False,
+                    "can_trim": False,
+                    "can_extend": False,
+                    "can_render": False,
+                    "blocking_reasons": ["pattern_interrupt_failed"],
+                    "warnings": [],
+                    "recommendation": "review_pattern_interrupt_failure",
+                    "metadata": {
+                        "phase": "2B-40",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "pattern_interrupt_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_40": True,
+                        "no_render_in_2b_40": True,
+                        "no_timeline_reorder_in_2b_40": True,
+                        "no_pattern_apply_in_2b_40": True,
+                        "no_zoom_insert_in_2b_40": True,
+                        "no_text_overlay_insert_in_2b_40": True,
+                        "no_sfx_insert_in_2b_40": True,
+                        "error": str(pattern_interrupt_exc),
+                    },
+                }
+                job.pattern_interrupt = dict(job.pattern_interrupt_report)
+                job.pattern_interrupt_windows = []
+                job.pattern_interrupt_suggestions = []
+                job.pattern_interrupt_total_windows = 0
+                job.pattern_interrupt_needed_count = 0
+                job.pattern_interrupt_monotony_score = 0.0
+                job.pattern_interrupt_average_window_duration_seconds = 0.0
+                job.pattern_interrupt_recommended_count = 0
+                job.pattern_interrupt_review_required = True
+                job.pattern_interrupt_can_apply = False
+                job.pattern_interrupt_can_insert_zoom = False
+                job.pattern_interrupt_can_insert_text_overlay = False
+                job.pattern_interrupt_can_insert_sfx = False
+                job.pattern_interrupt_can_reorder_timeline = False
+                job.pattern_interrupt_can_trim = False
+                job.pattern_interrupt_can_extend = False
+                job.pattern_interrupt_can_render = False
+                job.pattern_interrupt_blocking_reasons = [
+                    "pattern_interrupt_failed"
+                ]
+                job.pattern_interrupt_warnings = []
+                job.pattern_interrupt_recommendation = (
+                    "review_pattern_interrupt_failure"
+                )
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-40",
+                    event_type="PATTERN_INTERRUPT_ANALYSIS_FAILED",
+                    action="pattern_interrupt_review_only_failed",
+                    status="failed",
+                    reason=str(pattern_interrupt_exc),
+                    details={
+                        "review_only": True,
+                        "pattern_interrupt_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_40": True,
+                        "no_render_in_2b_40": True,
+                        "no_timeline_reorder_in_2b_40": True,
+                        "no_pattern_apply_in_2b_40": True,
+                        "no_zoom_insert_in_2b_40": True,
+                        "no_text_overlay_insert_in_2b_40": True,
+                        "no_sfx_insert_in_2b_40": True,
                     },
                 )
 
