@@ -638,6 +638,35 @@ class Job:
     render_execution_warnings: list[str] = field(default_factory=list)
     render_execution_recommendation: str | None = None
 
+    render_execution_requested_mode: str = "dry_run"
+    render_execution_allow_real_render: bool = False
+    render_execution_allow_ffmpeg: bool = False
+    render_execution_allow_process_spawn: bool = False
+    render_execution_allow_media_write: bool = False
+
+    controlled_render_executor_report: dict[str, Any] = field(default_factory=dict)
+    controlled_render_executor: dict[str, Any] = field(default_factory=dict)
+    controlled_render_executor_status: str | None = None
+    controlled_render_execution_request: dict[str, Any] = field(default_factory=dict)
+    controlled_render_execution_steps: list[dict[str, Any]] = field(default_factory=list)
+    controlled_render_total_steps: int = 0
+    controlled_render_planned_step_count: int = 0
+    controlled_render_executed_step_count: int = 0
+    controlled_render_skipped_step_count: int = 0
+    controlled_render_dry_run_only: bool = True
+    controlled_render_real_render_requested: bool = False
+    controlled_render_real_render_allowed: bool = False
+    controlled_render_can_execute_real_render: bool = False
+    controlled_render_can_render: bool = False
+    controlled_render_can_run_ffmpeg: bool = False
+    controlled_render_can_spawn_process: bool = False
+    controlled_render_can_write_media: bool = False
+    controlled_render_output_created: bool = False
+    controlled_render_output_path: str | None = None
+    controlled_render_blocking_reasons: list[str] = field(default_factory=list)
+    controlled_render_warnings: list[str] = field(default_factory=list)
+    controlled_render_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1758,6 +1787,57 @@ class Job:
             render_execution_blocking_reasons=list(data.get("render_execution_blocking_reasons") or []),
             render_execution_warnings=list(data.get("render_execution_warnings") or []),
             render_execution_recommendation=data.get("render_execution_recommendation"),
+
+            render_execution_requested_mode=str(
+                data.get("render_execution_requested_mode", "dry_run") or "dry_run"
+            ),
+            render_execution_allow_real_render=bool(
+                data.get("render_execution_allow_real_render", False)
+            ),
+            render_execution_allow_ffmpeg=bool(
+                data.get("render_execution_allow_ffmpeg", False)
+            ),
+            render_execution_allow_process_spawn=bool(
+                data.get("render_execution_allow_process_spawn", False)
+            ),
+            render_execution_allow_media_write=bool(
+                data.get("render_execution_allow_media_write", False)
+            ),
+
+            controlled_render_executor_report=dict(data.get("controlled_render_executor_report") or {}),
+            controlled_render_executor=dict(data.get("controlled_render_executor") or {}),
+            controlled_render_executor_status=data.get("controlled_render_executor_status"),
+            controlled_render_execution_request=dict(data.get("controlled_render_execution_request") or {}),
+            controlled_render_execution_steps=list(data.get("controlled_render_execution_steps") or []),
+            controlled_render_total_steps=int(data.get("controlled_render_total_steps", 0) or 0),
+            controlled_render_planned_step_count=int(
+                data.get("controlled_render_planned_step_count", 0) or 0
+            ),
+            controlled_render_executed_step_count=int(
+                data.get("controlled_render_executed_step_count", 0) or 0
+            ),
+            controlled_render_skipped_step_count=int(
+                data.get("controlled_render_skipped_step_count", 0) or 0
+            ),
+            controlled_render_dry_run_only=bool(
+                data.get("controlled_render_dry_run_only", True)
+            ),
+            controlled_render_real_render_requested=bool(
+                data.get("controlled_render_real_render_requested", False)
+            ),
+            controlled_render_real_render_allowed=False,
+            controlled_render_can_execute_real_render=False,
+            controlled_render_can_render=False,
+            controlled_render_can_run_ffmpeg=False,
+            controlled_render_can_spawn_process=False,
+            controlled_render_can_write_media=False,
+            controlled_render_output_created=False,
+            controlled_render_output_path=None,
+            controlled_render_blocking_reasons=list(
+                data.get("controlled_render_blocking_reasons") or []
+            ),
+            controlled_render_warnings=list(data.get("controlled_render_warnings") or []),
+            controlled_render_recommendation=data.get("controlled_render_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),

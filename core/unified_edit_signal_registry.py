@@ -80,6 +80,9 @@ from core.render_asset_manifest_signal_adapter import (
 from core.render_execution_permission_gate_signal_adapter import (
     build_render_execution_permission_gate_signals,
 )
+from core.controlled_render_executor_signal_adapter import (
+    build_controlled_render_executor_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -122,6 +125,7 @@ SOURCE_RENDER_PLAN = "render_plan"
 SOURCE_RENDER_COMMAND_BLUEPRINT = "render_command_blueprint"
 SOURCE_RENDER_ASSET_MANIFEST = "render_asset_manifest"
 SOURCE_RENDER_EXECUTION_PERMISSION_GATE = "render_execution_permission_gate"
+SOURCE_CONTROLLED_RENDER_EXECUTOR = "controlled_render_executor"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1573,6 +1577,39 @@ def build_unified_edit_signal_result(
             )
     else:
         warnings.append(f"no_signals_from_{SOURCE_RENDER_EXECUTION_PERMISSION_GATE}")
+
+    controlled_render_executor_report = _job_attr(
+        job,
+        "controlled_render_executor_report",
+    )
+    if not controlled_render_executor_report:
+        controlled_render_executor_report = _job_attr(
+            job,
+            "controlled_render_executor",
+        )
+
+    if controlled_render_executor_report:
+        controlled_render_executor_signals = _safe_collect(
+            lambda: {"signals": build_controlled_render_executor_signals(job)},
+            label=SOURCE_CONTROLLED_RENDER_EXECUTOR,
+            warnings=warnings,
+            errors=errors,
+        )
+        if controlled_render_executor_signals:
+            source_counts[SOURCE_CONTROLLED_RENDER_EXECUTOR] = len(
+                controlled_render_executor_signals
+            )
+            for signal in controlled_render_executor_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_CONTROLLED_RENDER_EXECUTOR,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(f"no_signals_from_{SOURCE_CONTROLLED_RENDER_EXECUTOR}")
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CONTROLLED_RENDER_EXECUTOR}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

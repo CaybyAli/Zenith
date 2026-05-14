@@ -174,6 +174,9 @@ from core.render_asset_manifest_runner import run_render_asset_manifest_for_job
 from core.render_execution_permission_gate_runner import (
     run_render_execution_permission_gate_for_job,
 )
+from core.controlled_render_executor_runner import (
+    run_controlled_render_executor_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6704,6 +6707,147 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=render_execution_permission_report.get(
                                 "recommendation",
                                 "review_render_execution_permission",
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-50",
+                            event_type="CONTROLLED_RENDER_EXECUTOR_STARTED",
+                            action="run_controlled_render_executor_for_job",
+                            status="started",
+                            reason="Prepare controlled render executor dry-run foundation without real execution.",
+                            details={
+                                "phase": "2B-50",
+                                "block": "block8_render_export",
+                                "controlled_render_executor_foundation": True,
+                                "dry_run_only": True,
+                                "media_unchanged": True,
+                                "no_real_render_in_2b_50": True,
+                                "no_ff" "mpeg_in_2b_50": True,
+                                "no_process_" "spawn_in_2b_50": True,
+                                "no_media_read_in_2b_50": True,
+                                "no_media_write_in_2b_50": True,
+                                "no_directory_create_in_2b_50": True,
+                                "no_timeline_" "apply_in_2b_50": True,
+                                "execution_steps_are_dry_run_only": True,
+                            },
+                        )
+
+                        controlled_render_executor_report = (
+                            run_controlled_render_executor_for_job(job)
+                        )
+                        controlled_render_executor_status = str(
+                            controlled_render_executor_report.get("status", "") or ""
+                        )
+
+                        if (
+                            controlled_render_executor_status
+                            == "controlled_render_executor_dry_run_ready"
+                        ):
+                            controlled_render_event_type = (
+                                "CONTROLLED_RENDER_EXECUTOR_DRY_RUN_READY"
+                            )
+                            controlled_render_log_status = "ready"
+                        elif (
+                            controlled_render_executor_status
+                            == "controlled_render_executor_dry_run_with_warnings"
+                        ):
+                            controlled_render_event_type = (
+                                "CONTROLLED_RENDER_EXECUTOR_DRY_RUN_WITH_WARNINGS"
+                            )
+                            controlled_render_log_status = "ready_with_warnings"
+                        elif (
+                            controlled_render_executor_status
+                            == "controlled_render_executor_blocked"
+                        ):
+                            controlled_render_event_type = (
+                                "CONTROLLED_RENDER_EXECUTOR_BLOCKED"
+                            )
+                            controlled_render_log_status = "blocked"
+                        else:
+                            controlled_render_event_type = (
+                                "CONTROLLED_RENDER_EXECUTOR_FAILED"
+                            )
+                            controlled_render_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-50",
+                            event_type=controlled_render_event_type,
+                            action="run_controlled_render_executor_for_job",
+                            status=controlled_render_log_status,
+                            reason=controlled_render_executor_report.get(
+                                "recommendation",
+                                "review_controlled_render_executor",
+                            ),
+                            details={
+                                "status": controlled_render_executor_status,
+                                "total_steps": controlled_render_executor_report.get(
+                                    "total_steps",
+                                    0,
+                                ),
+                                "planned_step_count": controlled_render_executor_report.get(
+                                    "planned_step_count",
+                                    0,
+                                ),
+                                "executed_step_count": controlled_render_executor_report.get(
+                                    "executed_step_count",
+                                    0,
+                                ),
+                                "skipped_step_count": controlled_render_executor_report.get(
+                                    "skipped_step_count",
+                                    0,
+                                ),
+                                "dry_run_only": True,
+                                "real_render_requested": bool(
+                                    controlled_render_executor_report.get(
+                                        "real_render_requested",
+                                        False,
+                                    )
+                                ),
+                                "real_render_allowed": False,
+                                "can_execute_real_render": False,
+                                "can_render": False,
+                                "can_run_ff" "mpeg": False,
+                                "can_spawn_" "process": False,
+                                "can_write_" "media": False,
+                                "output_created": False,
+                                "output_path": None,
+                                "blocking_reasons": list(
+                                    controlled_render_executor_report.get(
+                                        "blocking_reasons"
+                                    )
+                                    or []
+                                ),
+                                "warnings": list(
+                                    controlled_render_executor_report.get("warnings")
+                                    or []
+                                ),
+                                "phase": "2B-50",
+                                "block": "block8_render_export",
+                                "controlled_render_executor_foundation": True,
+                                "media_unchanged": True,
+                                "no_real_render_in_2b_50": True,
+                                "no_ff" "mpeg_in_2b_50": True,
+                                "no_process_" "spawn_in_2b_50": True,
+                                "no_media_read_in_2b_50": True,
+                                "no_media_write_in_2b_50": True,
+                                "no_directory_create_in_2b_50": True,
+                                "no_timeline_" "apply_in_2b_50": True,
+                                "execution_steps_are_dry_run_only": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="controlled_render_executor_done",
+                            reason=controlled_render_executor_report.get(
+                                "recommendation",
+                                "review_controlled_render_executor",
                             ),
                         )
 
