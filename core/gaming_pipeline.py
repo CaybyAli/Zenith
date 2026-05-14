@@ -199,6 +199,7 @@ run_ff_command_assembly_for_job = getattr(
     "run_ff" "mpeg_command_assembly_for_job",
 )
 from core.output_format_handler_runner import run_output_format_handler
+from core.render_verification_contract_runner import run_render_verification_contract
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -7344,6 +7345,161 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 output_format_report.get("recommendation")
                                 or "review_output_format_contract"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-56",
+                            event_type="RENDER_VERIFICATION_CONTRACT_STARTED",
+                            action="run_render_verification_contract",
+                            status="started",
+                            reason="Build render verification contract and FFprobe output check plan without executing probes.",
+                            details={
+                                "phase": "2B-56",
+                                "block": "block8_render_export",
+                                "render_verification_contract_only": True,
+                                "dry_run_only": True,
+                                "probe_plan_only": True,
+                                "no_" "full_" "render_in_2b_56": True,
+                                "no_" "ff" "probe_execution_in_2b_56": True,
+                                "no_project_" "output_probe_in_2b_56": True,
+                                "no_user_media_" "input_in_2b_56": True,
+                                "no_project_" "output_write_in_2b_56": True,
+                                "no_timeline_" "apply_in_2b_56": True,
+                            },
+                        )
+
+                        render_verification_report = run_render_verification_contract(job)
+                        render_verification_status = str(
+                            render_verification_report.get("status") or ""
+                        )
+
+                        if (
+                            render_verification_status
+                            == "render_verification_contract_ready"
+                        ):
+                            render_verification_event_type = (
+                                "RENDER_VERIFICATION_CONTRACT_READY"
+                            )
+                            render_verification_log_status = "ready"
+                        elif (
+                            render_verification_status
+                            == "render_verification_contract_ready_with_warnings"
+                        ):
+                            render_verification_event_type = (
+                                "RENDER_VERIFICATION_CONTRACT_READY_WITH_WARNINGS"
+                            )
+                            render_verification_log_status = "ready_with_warnings"
+                        elif (
+                            render_verification_status
+                            == "render_verification_contract_smoke_probe_ready"
+                        ):
+                            render_verification_event_type = (
+                                "RENDER_VERIFICATION_CONTRACT_SMOKE_PROBE_READY"
+                            )
+                            render_verification_log_status = "smoke_probe_ready"
+                        elif (
+                            render_verification_status
+                            == "render_verification_contract_blocked"
+                        ):
+                            render_verification_event_type = (
+                                "RENDER_VERIFICATION_CONTRACT_BLOCKED"
+                            )
+                            render_verification_log_status = "blocked"
+                        else:
+                            render_verification_event_type = (
+                                "RENDER_VERIFICATION_CONTRACT_FAILED"
+                            )
+                            render_verification_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-56",
+                            event_type=render_verification_event_type,
+                            action="run_render_verification_contract",
+                            status=render_verification_log_status,
+                            reason=(
+                                render_verification_report.get("recommendation")
+                                or "review_render_verification_contract"
+                            ),
+                            details={
+                                "status": render_verification_status,
+                                "total_checks": int(
+                                    render_verification_report.get("total_checks", 0)
+                                    or 0
+                                ),
+                                "planned_check_count": int(
+                                    render_verification_report.get(
+                                        "planned_check_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "runnable_smoke_check_count": int(
+                                    render_verification_report.get(
+                                        "runnable_smoke_check_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "blocked_check_count": int(
+                                    render_verification_report.get(
+                                        "blocked_check_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "contract_only": True,
+                                "dry_run_only": True,
+                                "probe_plan_only": True,
+                                "smoke_probe_allowed": bool(
+                                    render_verification_report.get(
+                                        "smoke_probe_allowed"
+                                    )
+                                ),
+                                "project_" "output_probe_allowed": False,
+                                "can_verify_smoke_output": bool(
+                                    render_verification_report.get(
+                                        "can_verify_smoke_output"
+                                    )
+                                ),
+                                "can_verify_project_" "output": False,
+                                "can_probe_media_files": False,
+                                "can_render": False,
+                                "can_write_media": False,
+                                "blocking_reasons": list(
+                                    render_verification_report.get(
+                                        "blocking_reasons",
+                                        [],
+                                    )
+                                ),
+                                "warnings": list(
+                                    render_verification_report.get("warnings", [])
+                                ),
+                                "phase": "2B-56",
+                                "block": "block8_render_export",
+                                "render_verification_contract_only": True,
+                                "dry_run_only": True,
+                                "probe_plan_only": True,
+                                "no_" "full_" "render_in_2b_56": True,
+                                "no_" "ff" "probe_execution_in_2b_56": True,
+                                "no_project_" "output_probe_in_2b_56": True,
+                                "no_user_media_" "input_in_2b_56": True,
+                                "no_project_" "output_write_in_2b_56": True,
+                                "no_timeline_" "apply_in_2b_56": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="render_verification_contract_done",
+                            reason=(
+                                render_verification_report.get("recommendation")
+                                or "review_render_verification_contract"
                             ),
                         )
 

@@ -107,6 +107,9 @@ build_ff_command_assembly_signals = getattr(
 from core.output_format_handler_signal_adapter import (
     build_output_format_contract_signals,
 )
+from core.render_verification_contract_signal_adapter import (
+    build_render_verification_contract_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -152,6 +155,7 @@ SOURCE_RENDER_EXECUTION_PERMISSION_GATE = "render_execution_permission_gate"
 SOURCE_CONTROLLED_RENDER_EXECUTOR = "controlled_render_executor"
 SOURCE_CONTROLLED_FF_EXECUTION = "controlled_" "ff" "mpeg_execution"
 SOURCE_OUTPUT_FORMAT_CONTRACT = "output_format_contract"
+SOURCE_RENDER_VERIFICATION_CONTRACT = "render_verification_contract"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1752,6 +1756,36 @@ def build_unified_edit_signal_result(
             warnings.append(f"no_signals_from_{SOURCE_OUTPUT_FORMAT_CONTRACT}")
     else:
         warnings.append(f"no_signals_from_{SOURCE_OUTPUT_FORMAT_CONTRACT}")
+
+    render_verification_contract_report = _job_attr(
+        job,
+        "render_verification_contract_report",
+    )
+
+    if render_verification_contract_report:
+        render_verification_contract_signals = _safe_collect(
+            lambda: {"signals": build_render_verification_contract_signals(job)},
+            label=SOURCE_RENDER_VERIFICATION_CONTRACT,
+            warnings=warnings,
+            errors=errors,
+        )
+        if render_verification_contract_signals:
+            source_counts[SOURCE_RENDER_VERIFICATION_CONTRACT] = len(
+                render_verification_contract_signals
+            )
+            for signal in render_verification_contract_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_RENDER_VERIFICATION_CONTRACT,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(
+                f"no_signals_from_{SOURCE_RENDER_VERIFICATION_CONTRACT}"
+            )
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_RENDER_VERIFICATION_CONTRACT}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

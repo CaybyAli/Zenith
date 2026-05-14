@@ -764,6 +764,33 @@ class Job:
     output_format_warnings: list[str] = field(default_factory=list)
     output_format_recommendation: str | None = None
 
+    render_verification_contract_report: dict[str, Any] = field(default_factory=dict)
+    render_verification_contract_status: str | None = None
+    render_verification_expected_spec: dict[str, Any] = field(default_factory=dict)
+    render_verification_checks: list[dict[str, Any]] = field(default_factory=list)
+    render_verification_probe_plan: dict[str, Any] = field(default_factory=dict)
+    render_verification_total_checks: int = 0
+    render_verification_planned_check_count: int = 0
+    render_verification_runnable_smoke_check_count: int = 0
+    render_verification_blocked_check_count: int = 0
+    render_verification_contract_only: bool = True
+    render_verification_dry_run_only: bool = True
+    render_verification_smoke_probe_allowed: bool = False
+    render_verification_project_output_probe_allowed: bool = False
+    render_verification_can_verify_smoke_output: bool = False
+    render_verification_can_verify_project_output: bool = False
+    render_verification_can_probe_media_files: bool = False
+    render_verification_can_render: bool = False
+    render_verification_can_write_media: bool = False
+    render_verification_blocking_reasons: list[str] = field(default_factory=list)
+    render_verification_warnings: list[str] = field(default_factory=list)
+    render_verification_recommendation: str | None = None
+
+    render_verification_allow_smoke_probe: bool = False
+    render_verification_allow_project_output_probe: bool = False
+    render_verification_expected_duration_seconds: float | None = None
+    render_verification_duration_tolerance_seconds: float = 1.0
+
     output_preset_requested: str | None = None
     output_platform_requested: str | None = None
     output_resolution_requested: str | None = None
@@ -2126,6 +2153,74 @@ class Job:
             ),
             output_format_warnings=list(data.get("output_format_warnings") or []),
             output_format_recommendation=data.get("output_format_recommendation"),
+
+            render_verification_contract_report=dict(
+                data.get("render_verification_contract_report") or {}
+            ),
+            render_verification_contract_status=data.get(
+                "render_verification_contract_status"
+            ),
+            render_verification_expected_spec=dict(
+                data.get("render_verification_expected_spec") or {}
+            ),
+            render_verification_checks=list(
+                data.get("render_verification_checks") or []
+            ),
+            render_verification_probe_plan=dict(
+                data.get("render_verification_probe_plan") or {}
+            ),
+            render_verification_total_checks=int(
+                data.get("render_verification_total_checks", 0) or 0
+            ),
+            render_verification_planned_check_count=int(
+                data.get("render_verification_planned_check_count", 0) or 0
+            ),
+            render_verification_runnable_smoke_check_count=int(
+                data.get("render_verification_runnable_smoke_check_count", 0) or 0
+            ),
+            render_verification_blocked_check_count=int(
+                data.get("render_verification_blocked_check_count", 0) or 0
+            ),
+            render_verification_contract_only=bool(
+                data.get("render_verification_contract_only", True)
+            ),
+            render_verification_dry_run_only=bool(
+                data.get("render_verification_dry_run_only", True)
+            ),
+            render_verification_smoke_probe_allowed=bool(
+                data.get("render_verification_smoke_probe_allowed", False)
+            ),
+            render_verification_project_output_probe_allowed=False,
+            render_verification_can_verify_smoke_output=bool(
+                data.get("render_verification_can_verify_smoke_output", False)
+            ),
+            render_verification_can_verify_project_output=False,
+            render_verification_can_probe_media_files=False,
+            render_verification_can_render=False,
+            render_verification_can_write_media=False,
+            render_verification_blocking_reasons=list(
+                data.get("render_verification_blocking_reasons") or []
+            ),
+            render_verification_warnings=list(
+                data.get("render_verification_warnings") or []
+            ),
+            render_verification_recommendation=data.get(
+                "render_verification_recommendation"
+            ),
+            render_verification_allow_smoke_probe=bool(
+                data.get("render_verification_allow_smoke_probe", False)
+            ),
+            render_verification_allow_project_output_probe=bool(
+                data.get("render_verification_allow_project_output_probe", False)
+            ),
+            render_verification_expected_duration_seconds=(
+                float(data["render_verification_expected_duration_seconds"])
+                if data.get("render_verification_expected_duration_seconds") is not None
+                else None
+            ),
+            render_verification_duration_tolerance_seconds=float(
+                data.get("render_verification_duration_tolerance_seconds", 1.0) or 1.0
+            ),
 
             output_preset_requested=data.get("output_preset_requested"),
             output_platform_requested=data.get("output_platform_requested"),
