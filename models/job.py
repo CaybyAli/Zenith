@@ -565,6 +565,30 @@ class Job:
     render_plan_warnings: list[str] = field(default_factory=list)
     render_plan_recommendation: str | None = None
 
+    render_command_blueprint_report: dict[str, Any] = field(default_factory=dict)
+    render_command_blueprint: dict[str, Any] = field(default_factory=dict)
+    render_blueprint_status: str | None = None
+    render_blueprint_steps: list[dict[str, Any]] = field(default_factory=list)
+    render_blueprint_total_steps: int = 0
+    render_blueprint_trim_step_count: int = 0
+    render_blueprint_concat_step_count: int = 0
+    render_blueprint_transition_step_count: int = 0
+    render_blueprint_audio_mix_step_count: int = 0
+    render_blueprint_censor_sfx_step_count: int = 0
+    render_blueprint_subtitle_step_count: int = 0
+    render_blueprint_encode_step_count: int = 0
+    render_blueprint_dry_run_only: bool = True
+    render_blueprint_non_executable: bool = True
+    render_blueprint_ready_for_renderer_implementation: bool = False
+    render_blueprint_can_execute_contract: bool = False
+    render_blueprint_can_render: bool = False
+    render_blueprint_can_run_ffmpeg: bool = False
+    render_blueprint_can_spawn_process: bool = False
+    render_blueprint_can_write_media: bool = False
+    render_blueprint_blocking_reasons: list[str] = field(default_factory=list)
+    render_blueprint_warnings: list[str] = field(default_factory=list)
+    render_blueprint_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1590,6 +1614,32 @@ class Job:
             render_plan_blocking_reasons=list(data.get("render_plan_blocking_reasons") or []),
             render_plan_warnings=list(data.get("render_plan_warnings") or []),
             render_plan_recommendation=data.get("render_plan_recommendation"),
+
+            render_command_blueprint_report=dict(data.get("render_command_blueprint_report") or {}),
+            render_command_blueprint=dict(data.get("render_command_blueprint") or {}),
+            render_blueprint_status=data.get("render_blueprint_status"),
+            render_blueprint_steps=list(data.get("render_blueprint_steps") or []),
+            render_blueprint_total_steps=int(data.get("render_blueprint_total_steps", 0) or 0),
+            render_blueprint_trim_step_count=int(data.get("render_blueprint_trim_step_count", 0) or 0),
+            render_blueprint_concat_step_count=int(data.get("render_blueprint_concat_step_count", 0) or 0),
+            render_blueprint_transition_step_count=int(data.get("render_blueprint_transition_step_count", 0) or 0),
+            render_blueprint_audio_mix_step_count=int(data.get("render_blueprint_audio_mix_step_count", 0) or 0),
+            render_blueprint_censor_sfx_step_count=int(data.get("render_blueprint_censor_sfx_step_count", 0) or 0),
+            render_blueprint_subtitle_step_count=int(data.get("render_blueprint_subtitle_step_count", 0) or 0),
+            render_blueprint_encode_step_count=int(data.get("render_blueprint_encode_step_count", 0) or 0),
+            render_blueprint_dry_run_only=bool(data.get("render_blueprint_dry_run_only", True)),
+            render_blueprint_non_executable=bool(data.get("render_blueprint_non_executable", True)),
+            render_blueprint_ready_for_renderer_implementation=bool(
+                data.get("render_blueprint_ready_for_renderer_implementation", False)
+            ),
+            render_blueprint_can_execute_contract=False,
+            render_blueprint_can_render=False,
+            render_blueprint_can_run_ffmpeg=False,
+            render_blueprint_can_spawn_process=False,
+            render_blueprint_can_write_media=False,
+            render_blueprint_blocking_reasons=list(data.get("render_blueprint_blocking_reasons") or []),
+            render_blueprint_warnings=list(data.get("render_blueprint_warnings") or []),
+            render_blueprint_recommendation=data.get("render_blueprint_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),

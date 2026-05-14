@@ -169,6 +169,7 @@ from core.but_therefore_story_runner import (
 from core.final_quality_validator_runner import run_final_quality_validator
 from core.render_readiness_guard_runner import run_render_readiness_guard
 from core.render_plan_runner import run_render_plan_for_job
+from core.render_command_blueprint_runner import run_render_command_blueprint_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6320,6 +6321,115 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=render_plan_report.get(
                                 "recommendation",
                                 "review_render_plan",
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-47",
+                            event_type="RENDER_COMMAND_BLUEPRINT_STARTED",
+                            action="run_render_command_blueprint_for_job",
+                            status="started",
+                            reason="Build non-executable render blueprint contract without rendering.",
+                            details={
+                                "phase": "2B-47",
+                                "block": "block8_render_export",
+                                "render_command_blueprint_only": True,
+                                "dry_run_only": True,
+                                "non_executable": True,
+                                "renderer_contract_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_47": True,
+                                "no_render_in_2b_47": True,
+                                "no_ff" "mpeg_in_2b_47": True,
+                                "no_process_spawn_in_2b_47": True,
+                                "no_media_write_in_2b_47": True,
+                                "no_timeline_" "apply_in_2b_47": True,
+                                "no_executable_" "commands_in_2b_47": True,
+                            },
+                        )
+
+                        render_blueprint_report = run_render_command_blueprint_for_job(job)
+                        render_blueprint_status = str(
+                            render_blueprint_report.get("status", "") or ""
+                        )
+
+                        if render_blueprint_status == "render_blueprint_ready":
+                            render_blueprint_event_type = "RENDER_BLUEPRINT_READY"
+                            render_blueprint_log_status = "ready"
+                        elif render_blueprint_status == "render_blueprint_ready_with_warnings":
+                            render_blueprint_event_type = "RENDER_BLUEPRINT_READY_WITH_WARNINGS"
+                            render_blueprint_log_status = "ready_with_warnings"
+                        elif render_blueprint_status == "render_blueprint_blocked":
+                            render_blueprint_event_type = "RENDER_BLUEPRINT_BLOCKED"
+                            render_blueprint_log_status = "blocked"
+                        else:
+                            render_blueprint_event_type = "RENDER_BLUEPRINT_FAILED"
+                            render_blueprint_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-47",
+                            event_type=render_blueprint_event_type,
+                            action="run_render_command_blueprint_for_job",
+                            status=render_blueprint_log_status,
+                            reason=render_blueprint_report.get(
+                                "recommendation",
+                                "review_render_command_blueprint",
+                            ),
+                            details={
+                                "status": render_blueprint_status,
+                                "total_steps": render_blueprint_report.get("total_steps", 0),
+                                "trim_step_count": render_blueprint_report.get("trim_step_count", 0),
+                                "concat_step_count": render_blueprint_report.get("concat_step_count", 0),
+                                "transition_step_count": render_blueprint_report.get("transition_step_count", 0),
+                                "audio_mix_step_count": render_blueprint_report.get("audio_mix_step_count", 0),
+                                "censor_sfx_step_count": render_blueprint_report.get("censor_sfx_step_count", 0),
+                                "subtitle_step_count": render_blueprint_report.get("subtitle_step_count", 0),
+                                "encode_step_count": render_blueprint_report.get("encode_step_count", 0),
+                                "dry_run_only": True,
+                                "non_executable": True,
+                                "ready_for_renderer_implementation": bool(
+                                    render_blueprint_report.get(
+                                        "ready_for_renderer_implementation",
+                                        False,
+                                    )
+                                ),
+                                "can_execute_contract": False,
+                                "can_render": False,
+                                "can_run_" "ff" "mpeg": False,
+                                "can_spawn_process": False,
+                                "can_write_media": False,
+                                "blocking_reasons": list(
+                                    render_blueprint_report.get("blocking_reasons") or []
+                                ),
+                                "warnings": list(
+                                    render_blueprint_report.get("warnings") or []
+                                ),
+                                "phase": "2B-47",
+                                "block": "block8_render_export",
+                                "render_command_blueprint_only": True,
+                                "renderer_contract_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_47": True,
+                                "no_render_in_2b_47": True,
+                                "no_ff" "mpeg_in_2b_47": True,
+                                "no_process_spawn_in_2b_47": True,
+                                "no_media_write_in_2b_47": True,
+                                "no_timeline_" "apply_in_2b_47": True,
+                                "no_executable_" "commands_in_2b_47": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="render_command_blueprint_done",
+                            reason=render_blueprint_report.get(
+                                "recommendation",
+                                "review_render_command_blueprint",
                             ),
                         )
 
