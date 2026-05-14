@@ -184,6 +184,13 @@ run_ff_tool_capability_resolver = getattr(
     ),
     "run_ff" "mpeg_capability_resolver",
 )
+run_ff_command_assembly_for_job = getattr(
+    __import__(
+        "core.ff" "mpeg_command_assembly_runner",
+        fromlist=["run_ff" "mpeg_command_assembly_for_job"],
+    ),
+    "run_ff" "mpeg_command_assembly_for_job",
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6968,6 +6975,122 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 tool_capability_report.recommendation
                                 or "review_ff" "mpeg_capabilities"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-53",
+                            event_type="FF" "MPEG_COMMAND_ASSEMBLY_STARTED",
+                            action="run_ff" "mpeg_command_assembly_for_job",
+                            status="started",
+                            reason="Build preview-only FF" "mpeg argv assembly gate without execution.",
+                            details={
+                                "phase": "2B-53",
+                                "block": "block8_render_export",
+                                "ff" "mpeg_command_assembly_only": True,
+                                "dry_run_only": True,
+                                "assembly_only": True,
+                                "preview_only": True,
+                                "no_render_in_2b_53": True,
+                                "no_process_spawn_in_2b_53": True,
+                                "no_media_read_in_2b_53": True,
+                                "no_media_write_in_2b_53": True,
+                                "no_directory_create_in_2b_53": True,
+                                "no_timeline_apply_in_2b_53": True,
+                            },
+                        )
+
+                        ff_command_assembly_report = (
+                            run_ff_command_assembly_for_job(job)
+                        )
+                        ff_command_assembly_status = str(
+                            ff_command_assembly_report.status or ""
+                        )
+
+                        if (
+                            ff_command_assembly_status
+                            == "ff" "mpeg_command_assembly_ready"
+                        ):
+                            ff_command_event_type = "FF" "MPEG_COMMAND_ASSEMBLY_READY"
+                            ff_command_log_status = "ready"
+                        elif (
+                            ff_command_assembly_status
+                            == "ff" "mpeg_command_assembly_ready_with_warnings"
+                        ):
+                            ff_command_event_type = (
+                                "FF" "MPEG_COMMAND_ASSEMBLY_READY_WITH_WARNINGS"
+                            )
+                            ff_command_log_status = "ready_with_warnings"
+                        elif (
+                            ff_command_assembly_status
+                            == "ff" "mpeg_command_assembly_blocked"
+                        ):
+                            ff_command_event_type = "FF" "MPEG_COMMAND_ASSEMBLY_BLOCKED"
+                            ff_command_log_status = "blocked"
+                        else:
+                            ff_command_event_type = "FF" "MPEG_COMMAND_ASSEMBLY_FAILED"
+                            ff_command_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-53",
+                            event_type=ff_command_event_type,
+                            action="run_ff" "mpeg_command_assembly_for_job",
+                            status=ff_command_log_status,
+                            reason=(
+                                ff_command_assembly_report.recommendation
+                                or "review_ff" "mpeg_command_assembly"
+                            ),
+                            details={
+                                "status": ff_command_assembly_status,
+                                "total_assemblies": int(
+                                    ff_command_assembly_report.total_assemblies
+                                ),
+                                "safe_assembly_count": int(
+                                    ff_command_assembly_report.safe_assembly_count
+                                ),
+                                "blocked_assembly_count": int(
+                                    ff_command_assembly_report.blocked_assembly_count
+                                ),
+                                "dry_run_only": True,
+                                "assembly_only": True,
+                                "preview_only": True,
+                                "ready_for_controlled_execution_stage": bool(
+                                    ff_command_assembly_report.ready_for_controlled_execution_stage
+                                ),
+                                "can_execute_commands": False,
+                                "can_spawn_process": False,
+                                "can_render": False,
+                                "can_write_media": False,
+                                "can_probe_media_files": False,
+                                "blocking_reasons": list(
+                                    ff_command_assembly_report.blocking_reasons
+                                ),
+                                "warnings": list(
+                                    ff_command_assembly_report.warnings
+                                ),
+                                "phase": "2B-53",
+                                "block": "block8_render_export",
+                                "ff" "mpeg_command_assembly_only": True,
+                                "no_render_in_2b_53": True,
+                                "no_process_spawn_in_2b_53": True,
+                                "no_media_read_in_2b_53": True,
+                                "no_media_write_in_2b_53": True,
+                                "no_directory_create_in_2b_53": True,
+                                "no_timeline_apply_in_2b_53": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="ff" "mpeg_command_assembly_done",
+                            reason=(
+                                ff_command_assembly_report.recommendation
+                                or "review_ff" "mpeg_command_assembly"
                             ),
                         )
 

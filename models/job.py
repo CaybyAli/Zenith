@@ -693,6 +693,25 @@ class Job:
     ffmpeg_warnings: list[str] = field(default_factory=list)
     ffmpeg_recommendation: str | None = None
 
+    ffmpeg_command_assembly_report: dict[str, Any] = field(default_factory=dict)
+    ffmpeg_command_assembly_status: str | None = None
+    ffmpeg_command_assemblies: list[dict[str, Any]] = field(default_factory=list)
+    ffmpeg_command_total_assemblies: int = 0
+    ffmpeg_command_safe_assembly_count: int = 0
+    ffmpeg_command_blocked_assembly_count: int = 0
+    ffmpeg_command_dry_run_only: bool = True
+    ffmpeg_command_assembly_only: bool = True
+    ffmpeg_command_preview_only: bool = True
+    ffmpeg_command_ready_for_controlled_execution_stage: bool = False
+    ffmpeg_command_can_execute_commands: bool = False
+    ffmpeg_command_can_spawn_process: bool = False
+    ffmpeg_command_can_render: bool = False
+    ffmpeg_command_can_write_media: bool = False
+    ffmpeg_command_can_probe_media_files: bool = False
+    ffmpeg_command_blocking_reasons: list[str] = field(default_factory=list)
+    ffmpeg_command_warnings: list[str] = field(default_factory=list)
+    ffmpeg_command_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1906,6 +1925,43 @@ class Job:
             ffmpeg_blocking_reasons=list(data.get("ffmpeg_blocking_reasons") or []),
             ffmpeg_warnings=list(data.get("ffmpeg_warnings") or []),
             ffmpeg_recommendation=data.get("ffmpeg_recommendation"),
+
+            ffmpeg_command_assembly_report=dict(
+                data.get("ffmpeg_command_assembly_report") or {}
+            ),
+            ffmpeg_command_assembly_status=data.get("ffmpeg_command_assembly_status"),
+            ffmpeg_command_assemblies=list(data.get("ffmpeg_command_assemblies") or []),
+            ffmpeg_command_total_assemblies=int(
+                data.get("ffmpeg_command_total_assemblies", 0) or 0
+            ),
+            ffmpeg_command_safe_assembly_count=int(
+                data.get("ffmpeg_command_safe_assembly_count", 0) or 0
+            ),
+            ffmpeg_command_blocked_assembly_count=int(
+                data.get("ffmpeg_command_blocked_assembly_count", 0) or 0
+            ),
+            ffmpeg_command_dry_run_only=bool(
+                data.get("ffmpeg_command_dry_run_only", True)
+            ),
+            ffmpeg_command_assembly_only=bool(
+                data.get("ffmpeg_command_assembly_only", True)
+            ),
+            ffmpeg_command_preview_only=bool(
+                data.get("ffmpeg_command_preview_only", True)
+            ),
+            ffmpeg_command_ready_for_controlled_execution_stage=bool(
+                data.get("ffmpeg_command_ready_for_controlled_execution_stage", False)
+            ),
+            ffmpeg_command_can_execute_commands=False,
+            ffmpeg_command_can_spawn_process=False,
+            ffmpeg_command_can_render=False,
+            ffmpeg_command_can_write_media=False,
+            ffmpeg_command_can_probe_media_files=False,
+            ffmpeg_command_blocking_reasons=list(
+                data.get("ffmpeg_command_blocking_reasons") or []
+            ),
+            ffmpeg_command_warnings=list(data.get("ffmpeg_command_warnings") or []),
+            ffmpeg_command_recommendation=data.get("ffmpeg_command_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),
