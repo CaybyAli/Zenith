@@ -589,6 +589,28 @@ class Job:
     render_blueprint_warnings: list[str] = field(default_factory=list)
     render_blueprint_recommendation: str | None = None
 
+    render_asset_manifest_report: dict[str, Any] = field(default_factory=dict)
+    render_asset_manifest: dict[str, Any] = field(default_factory=dict)
+    render_asset_manifest_status: str | None = None
+    render_asset_references: list[dict[str, Any]] = field(default_factory=list)
+    render_output_path_plans: list[dict[str, Any]] = field(default_factory=list)
+    render_asset_total_assets: int = 0
+    render_asset_required_count: int = 0
+    render_asset_missing_required_hint_count: int = 0
+    render_asset_unsafe_path_count: int = 0
+    render_asset_output_plan_count: int = 0
+    render_asset_dry_run_only: bool = True
+    render_asset_manifest_only: bool = True
+    render_asset_paths_are_hints_only: bool = True
+    render_asset_can_create_directories: bool = False
+    render_asset_can_write_files: bool = False
+    render_asset_can_open_media: bool = False
+    render_asset_can_render: bool = False
+    render_asset_can_run_ffmpeg: bool = False
+    render_asset_blocking_reasons: list[str] = field(default_factory=list)
+    render_asset_warnings: list[str] = field(default_factory=list)
+    render_asset_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1640,6 +1662,32 @@ class Job:
             render_blueprint_blocking_reasons=list(data.get("render_blueprint_blocking_reasons") or []),
             render_blueprint_warnings=list(data.get("render_blueprint_warnings") or []),
             render_blueprint_recommendation=data.get("render_blueprint_recommendation"),
+
+            render_asset_manifest_report=dict(data.get("render_asset_manifest_report") or {}),
+            render_asset_manifest=dict(data.get("render_asset_manifest") or {}),
+            render_asset_manifest_status=data.get("render_asset_manifest_status"),
+            render_asset_references=list(data.get("render_asset_references") or []),
+            render_output_path_plans=list(data.get("render_output_path_plans") or []),
+            render_asset_total_assets=int(data.get("render_asset_total_assets", 0) or 0),
+            render_asset_required_count=int(data.get("render_asset_required_count", 0) or 0),
+            render_asset_missing_required_hint_count=int(
+                data.get("render_asset_missing_required_hint_count", 0) or 0
+            ),
+            render_asset_unsafe_path_count=int(data.get("render_asset_unsafe_path_count", 0) or 0),
+            render_asset_output_plan_count=int(data.get("render_asset_output_plan_count", 0) or 0),
+            render_asset_dry_run_only=bool(data.get("render_asset_dry_run_only", True)),
+            render_asset_manifest_only=bool(data.get("render_asset_manifest_only", True)),
+            render_asset_paths_are_hints_only=bool(
+                data.get("render_asset_paths_are_hints_only", True)
+            ),
+            render_asset_can_create_directories=False,
+            render_asset_can_write_files=False,
+            render_asset_can_open_media=False,
+            render_asset_can_render=False,
+            render_asset_can_run_ffmpeg=False,
+            render_asset_blocking_reasons=list(data.get("render_asset_blocking_reasons") or []),
+            render_asset_warnings=list(data.get("render_asset_warnings") or []),
+            render_asset_recommendation=data.get("render_asset_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),

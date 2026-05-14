@@ -170,6 +170,7 @@ from core.final_quality_validator_runner import run_final_quality_validator
 from core.render_readiness_guard_runner import run_render_readiness_guard
 from core.render_plan_runner import run_render_plan_for_job
 from core.render_command_blueprint_runner import run_render_command_blueprint_for_job
+from core.render_asset_manifest_runner import run_render_asset_manifest_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6430,6 +6431,117 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=render_blueprint_report.get(
                                 "recommendation",
                                 "review_render_command_blueprint",
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-48",
+                            event_type="RENDER_ASSET_MANIFEST_STARTED",
+                            action="run_render_asset_manifest_for_job",
+                            status="started",
+                            reason="Build safe output manifest from render assets and path hints.",
+                            details={
+                                "phase": "2B-48",
+                                "block": "block8_render_export",
+                                "render_asset_manifest_only": True,
+                                "dry_run_only": True,
+                                "paths_are_hints_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_48": True,
+                                "no_render_in_2b_48": True,
+                                "no_ff" "mpeg_in_2b_48": True,
+                                "no_media_read_in_2b_48": True,
+                                "no_media_write_in_2b_48": True,
+                                "no_directory_create_in_2b_48": True,
+                                "no_timeline_" "apply_in_2b_48": True,
+                            },
+                        )
+
+                        render_asset_manifest_report = run_render_asset_manifest_for_job(job)
+                        render_asset_manifest_status = str(
+                            render_asset_manifest_report.get("status", "") or ""
+                        )
+
+                        if render_asset_manifest_status == "render_asset_manifest_ready":
+                            render_asset_event_type = "RENDER_ASSET_MANIFEST_READY"
+                            render_asset_log_status = "ready"
+                        elif render_asset_manifest_status == "render_asset_manifest_ready_with_warnings":
+                            render_asset_event_type = "RENDER_ASSET_MANIFEST_READY_WITH_WARNINGS"
+                            render_asset_log_status = "ready_with_warnings"
+                        elif render_asset_manifest_status == "render_asset_manifest_blocked":
+                            render_asset_event_type = "RENDER_ASSET_MANIFEST_BLOCKED"
+                            render_asset_log_status = "blocked"
+                        else:
+                            render_asset_event_type = "RENDER_ASSET_MANIFEST_FAILED"
+                            render_asset_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-48",
+                            event_type=render_asset_event_type,
+                            action="run_render_asset_manifest_for_job",
+                            status=render_asset_log_status,
+                            reason=render_asset_manifest_report.get(
+                                "recommendation",
+                                "review_render_asset_manifest",
+                            ),
+                            details={
+                                "status": render_asset_manifest_status,
+                                "total_assets": render_asset_manifest_report.get("total_assets", 0),
+                                "required_asset_count": render_asset_manifest_report.get(
+                                    "required_asset_count",
+                                    0,
+                                ),
+                                "missing_required_hint_count": render_asset_manifest_report.get(
+                                    "missing_required_hint_count",
+                                    0,
+                                ),
+                                "unsafe_path_count": render_asset_manifest_report.get(
+                                    "unsafe_path_count",
+                                    0,
+                                ),
+                                "output_plan_count": render_asset_manifest_report.get(
+                                    "output_plan_count",
+                                    0,
+                                ),
+                                "dry_run_only": True,
+                                "manifest_only": True,
+                                "paths_are_hints_only": True,
+                                "can_create_directories": False,
+                                "can_write_files": False,
+                                "can_open_media": False,
+                                "can_render": False,
+                                "can_run_ff" "mpeg": False,
+                                "blocking_reasons": list(
+                                    render_asset_manifest_report.get("blocking_reasons") or []
+                                ),
+                                "warnings": list(
+                                    render_asset_manifest_report.get("warnings") or []
+                                ),
+                                "phase": "2B-48",
+                                "block": "block8_render_export",
+                                "render_asset_manifest_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_48": True,
+                                "no_render_in_2b_48": True,
+                                "no_ff" "mpeg_in_2b_48": True,
+                                "no_media_read_in_2b_48": True,
+                                "no_media_write_in_2b_48": True,
+                                "no_directory_create_in_2b_48": True,
+                                "no_timeline_" "apply_in_2b_48": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="render_asset_manifest_done",
+                            reason=render_asset_manifest_report.get(
+                                "recommendation",
+                                "review_render_asset_manifest",
                             ),
                         )
 
