@@ -95,7 +95,7 @@ def _dynamic_pacing_relevant_text(path: Path) -> str:
                 _between(
                     text,
                     "DYNAMIC_PACING_ENGINE_STARTED",
-                    "timeline_safety_validation_status",
+                    "PATTERN_INTERRUPT_ENGINE_STARTED",
                 ),
             ]
         )
@@ -122,12 +122,12 @@ def _dynamic_pacing_relevant_text(path: Path) -> str:
                 _between(
                     text,
                     "dynamic_pacing_report: dict",
-                    "silence_detection_report: dict",
+                    "pattern_interrupt_report: dict",
                 ),
                 _between(
                     text,
                     "dynamic_pacing_report=dict",
-                    "silence_detection_report=dict",
+                    "pattern_interrupt_report=dict",
                 ),
             ]
         )

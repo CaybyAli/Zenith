@@ -58,6 +58,9 @@ from core.dynamic_pacing_signal_adapter import (
 from core.pattern_interrupt_signal_adapter import (
     adapt_pattern_interrupt_report_to_signals,
 )
+from core.reaction_shot_placement_signal_adapter import (
+    adapt_reaction_shot_placement_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -92,6 +95,7 @@ SOURCE_HOOK_IDENTIFICATION = "hook_identification"
 SOURCE_EMOTIONAL_ARC = "emotional_arc"
 SOURCE_DYNAMIC_PACING = "dynamic_pacing"
 SOURCE_PATTERN_INTERRUPT = "pattern_interrupt"
+SOURCE_REACTION_SHOT_PLACEMENT = "reaction_shot_placement"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1314,6 +1318,38 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_PATTERN_INTERRUPT}")
+
+    reaction_shot_placement_report = _job_attr(
+        job,
+        "reaction_shot_placement_report",
+    )
+    if not reaction_shot_placement_report:
+        reaction_shot_placement_report = _job_attr(
+            job,
+            "reaction_shot_placement",
+        )
+
+    reaction_shot_placement_signals = _safe_collect(
+        lambda: adapt_reaction_shot_placement_report_to_signals(
+            reaction_shot_placement_report,
+        ),
+        label=SOURCE_REACTION_SHOT_PLACEMENT,
+        warnings=warnings,
+        errors=errors,
+    )
+    if reaction_shot_placement_signals:
+        source_counts[SOURCE_REACTION_SHOT_PLACEMENT] = len(
+            reaction_shot_placement_signals
+        )
+        for signal in reaction_shot_placement_signals:
+            normalized = _normalize_signal(
+                signal,
+                SOURCE_REACTION_SHOT_PLACEMENT,
+            )
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_REACTION_SHOT_PLACEMENT}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

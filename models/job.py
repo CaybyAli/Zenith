@@ -438,6 +438,27 @@ class Job:
     pattern_interrupt_warnings: list[str] = field(default_factory=list)
     pattern_interrupt_recommendation: str | None = None
 
+    reaction_shot_placement_report: dict[str, Any] = field(default_factory=dict)
+    reaction_shot_placement: dict[str, Any] = field(default_factory=dict)
+    reaction_shot_placement_status: str | None = None
+    reaction_shot_candidates: list[dict[str, Any]] = field(default_factory=list)
+    reaction_shot_placements: list[dict[str, Any]] = field(default_factory=list)
+    reaction_shot_total_candidates: int = 0
+    reaction_shot_total_placements: int = 0
+    reaction_shot_best_placement_score: float = 0.0
+    reaction_shot_missing_placeholder_count: int = 0
+    reaction_shot_review_required: bool = True
+    reaction_shot_can_apply: bool = False
+    reaction_shot_can_move_clip: bool = False
+    reaction_shot_can_insert_clip: bool = False
+    reaction_shot_can_trim: bool = False
+    reaction_shot_can_extend: bool = False
+    reaction_shot_can_reorder_timeline: bool = False
+    reaction_shot_can_render: bool = False
+    reaction_shot_blocking_reasons: list[str] = field(default_factory=list)
+    reaction_shot_warnings: list[str] = field(default_factory=list)
+    reaction_shot_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1247,6 +1268,52 @@ class Job:
             ),
             pattern_interrupt_recommendation=data.get(
                 "pattern_interrupt_recommendation"
+            ),
+            reaction_shot_placement_report=dict(
+                data.get("reaction_shot_placement_report") or {}
+            ),
+            reaction_shot_placement=dict(
+                data.get("reaction_shot_placement") or {}
+            ),
+            reaction_shot_placement_status=data.get(
+                "reaction_shot_placement_status"
+            ),
+            reaction_shot_candidates=list(
+                data.get("reaction_shot_candidates") or []
+            ),
+            reaction_shot_placements=list(
+                data.get("reaction_shot_placements") or []
+            ),
+            reaction_shot_total_candidates=int(
+                data.get("reaction_shot_total_candidates", 0) or 0
+            ),
+            reaction_shot_total_placements=int(
+                data.get("reaction_shot_total_placements", 0) or 0
+            ),
+            reaction_shot_best_placement_score=float(
+                data.get("reaction_shot_best_placement_score", 0.0) or 0.0
+            ),
+            reaction_shot_missing_placeholder_count=int(
+                data.get("reaction_shot_missing_placeholder_count", 0) or 0
+            ),
+            reaction_shot_review_required=bool(
+                data.get("reaction_shot_review_required", True)
+            ),
+            reaction_shot_can_apply=False,
+            reaction_shot_can_move_clip=False,
+            reaction_shot_can_insert_clip=False,
+            reaction_shot_can_trim=False,
+            reaction_shot_can_extend=False,
+            reaction_shot_can_reorder_timeline=False,
+            reaction_shot_can_render=False,
+            reaction_shot_blocking_reasons=list(
+                data.get("reaction_shot_blocking_reasons") or []
+            ),
+            reaction_shot_warnings=list(
+                data.get("reaction_shot_warnings") or []
+            ),
+            reaction_shot_recommendation=data.get(
+                "reaction_shot_recommendation"
             ),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),

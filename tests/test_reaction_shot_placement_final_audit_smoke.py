@@ -2,26 +2,26 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from models.pattern_interrupt import PatternInterruptReport
+from models.reaction_shot_placement import ReactionShotPlacementReport
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 PRODUCT_FILES = [
-    ROOT / "models" / "pattern_interrupt.py",
-    ROOT / "core" / "pattern_interrupt_engine.py",
-    ROOT / "core" / "pattern_interrupt_runner.py",
-    ROOT / "core" / "pattern_interrupt_signal_adapter.py",
+    ROOT / "models" / "reaction_shot_placement.py",
+    ROOT / "core" / "reaction_shot_placement_engine.py",
+    ROOT / "core" / "reaction_shot_placement_runner.py",
+    ROOT / "core" / "reaction_shot_placement_signal_adapter.py",
     ROOT / "core" / "gaming_pipeline.py",
     ROOT / "core" / "unified_edit_signal_registry.py",
     ROOT / "models" / "job.py",
 ]
 
-PATTERN_INTERRUPT_FULL_SCAN_FILES = {
-    ROOT / "models" / "pattern_interrupt.py",
-    ROOT / "core" / "pattern_interrupt_engine.py",
-    ROOT / "core" / "pattern_interrupt_runner.py",
-    ROOT / "core" / "pattern_interrupt_signal_adapter.py",
+REACTION_SHOT_FULL_SCAN_FILES = {
+    ROOT / "models" / "reaction_shot_placement.py",
+    ROOT / "core" / "reaction_shot_placement_engine.py",
+    ROOT / "core" / "reaction_shot_placement_runner.py",
+    ROOT / "core" / "reaction_shot_placement_signal_adapter.py",
 }
 
 FORBIDDEN_MEDIA_TOKENS = [
@@ -47,28 +47,37 @@ FORBIDDEN_MEDIA_TOKENS = [
     "move_clip",
     "split_clip",
     "merge_clip",
-    "apply_pattern",
-    "execute_pattern",
+    "apply_reaction",
+    "execute_reaction",
+    "insert_reaction",
+    "place_reaction",
+    "move_facecam",
     "insert_zoom",
     "apply_zoom",
-    "insert_text_overlay",
-    "apply_text_overlay",
+    "insert_overlay",
+    "apply_overlay",
     "insert_sfx",
     "apply_sfx",
-    "add_overlay",
-    "add_effect",
 ]
 
 ALLOWED_SAFETY_FIELD_TOKENS = [
-    "can_insert_zoom",
-    "pattern_interrupt_can_insert_zoom",
-    "can_insert_text_overlay",
-    "pattern_interrupt_can_insert_text_overlay",
-    "can_insert_sfx",
-    "pattern_interrupt_can_insert_sfx",
+    "can_apply_reaction_shots",
+    "reaction_shot_can_apply",
+    "can_render",
+    "reaction_shot_can_render",
+    "no_render_in_2b_41",
+    "can_insert_clip",
+    "reaction_shot_can_insert_clip",
+    "no_reaction_insert_in_2b_41",
+    "can_move_clip",
+    "reaction_shot_can_move_clip",
     "can_reorder_timeline",
-    "pattern_interrupt_can_reorder_timeline",
-    "no_timeline_reorder_in_2b_40",
+    "reaction_shot_can_reorder_timeline",
+    "no_timeline_reorder_in_2b_41",
+    "no_reaction_apply_in_2b_41",
+    "no_facecam_move_in_2b_41",
+    "no_zoom_insert_in_2b_41",
+    "no_sfx_insert_in_2b_40",
 ]
 
 
@@ -86,10 +95,10 @@ def _between(text: str, start_token: str, end_token: str | None = None) -> str:
     return text[start:end]
 
 
-def _pattern_interrupt_relevant_text(path: Path) -> str:
+def _reaction_shot_relevant_text(path: Path) -> str:
     text = _text(path)
 
-    if path in PATTERN_INTERRUPT_FULL_SCAN_FILES:
+    if path in REACTION_SHOT_FULL_SCAN_FILES:
         return text
 
     if path.name == "gaming_pipeline.py":
@@ -97,13 +106,13 @@ def _pattern_interrupt_relevant_text(path: Path) -> str:
             [
                 _between(
                     text,
-                    "from core.pattern_interrupt_runner import",
+                    "from core.reaction_shot_placement_runner import",
                     "from core.audio_normalization_runner import",
                 ),
                 _between(
                     text,
-                    "PATTERN_INTERRUPT_ENGINE_STARTED",
                     "run_reaction_shot_placement_for_job(",
+                    'step_name="reaction_shot_placement_engine_done"',
                 ),
             ]
         )
@@ -113,12 +122,12 @@ def _pattern_interrupt_relevant_text(path: Path) -> str:
             [
                 _between(
                     text,
-                    "from core.pattern_interrupt_signal_adapter import",
+                    "from core.reaction_shot_placement_signal_adapter import",
                     "from models.unified_edit_signal_result import",
                 ),
                 _between(
                     text,
-                    "pattern_interrupt_report = _job_attr",
+                    "reaction_shot_placement_report = _job_attr",
                     "if final_cut_list_signals:",
                 ),
             ]
@@ -129,13 +138,13 @@ def _pattern_interrupt_relevant_text(path: Path) -> str:
             [
                 _between(
                     text,
-                    "pattern_interrupt_report: dict",
                     "reaction_shot_placement_report: dict",
+                    "silence_detection_report: dict",
                 ),
                 _between(
                     text,
-                    "pattern_interrupt_report=dict",
                     "reaction_shot_placement_report=dict",
+                    "silence_detection_report=dict",
                 ),
             ]
         )
@@ -150,15 +159,17 @@ def _without_allowed_safety_fields(text: str) -> str:
     return cleaned
 
 
-def test_pattern_interrupt_product_files_exist() -> None:
+def test_reaction_shot_product_files_exist() -> None:
     missing = [
-        path.relative_to(ROOT).as_posix() for path in PRODUCT_FILES if not path.exists()
+        path.relative_to(ROOT).as_posix()
+        for path in PRODUCT_FILES
+        if not path.exists()
     ]
 
     assert missing == []
 
 
-def test_pattern_interrupt_product_files_have_no_bom_and_end_with_newline() -> None:
+def test_reaction_shot_product_files_have_no_bom_and_end_with_newline() -> None:
     violations: list[str] = []
 
     for path in PRODUCT_FILES:
@@ -171,12 +182,12 @@ def test_pattern_interrupt_product_files_have_no_bom_and_end_with_newline() -> N
     assert violations == []
 
 
-def test_pattern_interrupt_has_no_forbidden_media_operations() -> None:
+def test_reaction_shot_has_no_forbidden_media_operations() -> None:
     violations: list[str] = []
 
     for path in PRODUCT_FILES:
         text = _without_allowed_safety_fields(
-            _pattern_interrupt_relevant_text(path)
+            _reaction_shot_relevant_text(path)
         )
         for token in FORBIDDEN_MEDIA_TOKENS:
             if token in text:
@@ -185,18 +196,17 @@ def test_pattern_interrupt_has_no_forbidden_media_operations() -> None:
     assert violations == []
 
 
-def test_pattern_interrupt_report_forces_review_only_contract() -> None:
-    report = PatternInterruptReport.from_dict(
+def test_reaction_shot_report_forces_review_only_contract() -> None:
+    report = ReactionShotPlacementReport.from_dict(
         {
-            "status": "pattern_interrupt_analysis_ready",
+            "status": "reaction_placement_ready",
             "review_required": False,
-            "can_apply_interrupts": True,
-            "can_insert_zoom": True,
-            "can_insert_text_overlay": True,
-            "can_insert_sfx": True,
-            "can_reorder_timeline": True,
+            "can_apply_reaction_shots": True,
+            "can_move_clip": True,
+            "can_insert_clip": True,
             "can_trim": True,
             "can_extend": True,
+            "can_reorder_timeline": True,
             "can_render": True,
             "metadata": {},
         }
@@ -204,40 +214,41 @@ def test_pattern_interrupt_report_forces_review_only_contract() -> None:
     data = report.to_dict()
 
     assert data["review_required"] is True
-    assert data["can_apply_interrupts"] is False
-    assert data["can_insert_zoom"] is False
-    assert data["can_insert_text_overlay"] is False
-    assert data["can_insert_sfx"] is False
-    assert data["can_reorder_timeline"] is False
+    assert data["can_apply_reaction_shots"] is False
+    assert data["can_move_clip"] is False
+    assert data["can_insert_clip"] is False
     assert data["can_trim"] is False
     assert data["can_extend"] is False
+    assert data["can_reorder_timeline"] is False
     assert data["can_render"] is False
     assert data["metadata"]["review_only"] is True
-    assert data["metadata"]["pattern_interrupt_only"] is True
+    assert data["metadata"]["reaction_shot_placement_only"] is True
     assert data["metadata"]["media_unchanged"] is True
-    assert data["metadata"]["no_execution_in_2b_40"] is True
-    assert data["metadata"]["no_render_in_2b_40"] is True
-    assert data["metadata"]["no_timeline_reorder_in_2b_40"] is True
-    assert data["metadata"]["no_pattern_apply_in_2b_40"] is True
-    assert data["metadata"]["no_zoom_insert_in_2b_40"] is True
-    assert data["metadata"]["no_text_overlay_insert_in_2b_40"] is True
-    assert data["metadata"]["no_sfx_insert_in_2b_40"] is True
+    assert data["metadata"]["no_execution_in_2b_41"] is True
+    assert data["metadata"]["no_render_in_2b_41"] is True
+    assert data["metadata"]["no_timeline_reorder_in_2b_41"] is True
+    assert data["metadata"]["no_reaction_apply_in_2b_41"] is True
+    assert data["metadata"]["no_reaction_insert_in_2b_41"] is True
+    assert data["metadata"]["no_facecam_move_in_2b_41"] is True
+    assert data["metadata"]["no_zoom_insert_in_2b_41"] is True
 
 
-def test_pattern_interrupt_static_pipeline_order_after_dynamic_pacing() -> None:
+def test_reaction_shot_static_pipeline_order_after_pattern_interrupt() -> None:
     text = _text(ROOT / "core" / "gaming_pipeline.py")
 
-    pacing_index = text.index("run_dynamic_pacing_for_job(")
-    pacing_apply_index = text.index("apply_dynamic_pacing_run_report_to_job(")
     pattern_index = text.index("run_pattern_interrupt_for_job(")
     pattern_apply_index = text.index("store_pattern_interrupt_run_report_to_job(")
+    reaction_index = text.index("run_reaction_shot_placement_for_job(")
+    reaction_apply_index = text.index(
+        "store_reaction_shot_placement_run_report_to_job("
+    )
 
-    assert pacing_index < pacing_apply_index < pattern_index < pattern_apply_index
+    assert pattern_index < pattern_apply_index < reaction_index < reaction_apply_index
 
 
-def test_pattern_interrupt_static_registry_source_exists() -> None:
+def test_reaction_shot_static_registry_source_exists() -> None:
     text = _text(ROOT / "core" / "unified_edit_signal_registry.py")
 
-    assert 'SOURCE_PATTERN_INTERRUPT = "pattern_interrupt"' in text
-    assert "adapt_pattern_interrupt_report_to_signals" in text
-    assert "pattern_interrupt_report" in text
+    assert 'SOURCE_REACTION_SHOT_PLACEMENT = "reaction_shot_placement"' in text
+    assert "adapt_reaction_shot_placement_report_to_signals" in text
+    assert "reaction_shot_placement_report" in text

@@ -158,6 +158,10 @@ from core.pattern_interrupt_runner import (
     run_pattern_interrupt_for_job,
     store_pattern_interrupt_run_report_to_job,
 )
+from core.reaction_shot_placement_runner import (
+    run_reaction_shot_placement_for_job,
+    store_reaction_shot_placement_run_report_to_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -5647,6 +5651,170 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     ),
                 )
 
+                reaction_shot_placement_report = run_reaction_shot_placement_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-41",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "reaction_shot_placement_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_41": True,
+                        "no_render_in_2b_41": True,
+                        "no_timeline_reorder_in_2b_41": True,
+                        "no_reaction_apply_in_2b_41": True,
+                        "no_reaction_insert_in_2b_41": True,
+                        "no_facecam_move_in_2b_41": True,
+                        "no_zoom_insert_in_2b_41": True,
+                    },
+                )
+                store_reaction_shot_placement_run_report_to_job(
+                    job,
+                    reaction_shot_placement_report,
+                )
+
+                reaction_shot_placement_status = str(
+                    getattr(reaction_shot_placement_report, "status", "") or ""
+                )
+
+                if reaction_shot_placement_status == "reaction_placement_ready":
+                    reaction_shot_placement_event_type = (
+                        "REACTION_SHOT_PLACEMENT_READY"
+                    )
+                    reaction_shot_placement_log_status = "pending_review"
+                elif reaction_shot_placement_status == (
+                    "reaction_placement_ready_with_warnings"
+                ):
+                    reaction_shot_placement_event_type = (
+                        "REACTION_SHOT_PLACEMENT_READY_WITH_WARNINGS"
+                    )
+                    reaction_shot_placement_log_status = "pending_review"
+                elif reaction_shot_placement_status in {
+                    "blocked",
+                    "no_timeline_items",
+                    "no_reaction_candidates",
+                }:
+                    reaction_shot_placement_event_type = (
+                        "REACTION_SHOT_PLACEMENT_BLOCKED"
+                    )
+                    reaction_shot_placement_log_status = "blocked"
+                else:
+                    reaction_shot_placement_event_type = (
+                        "REACTION_SHOT_PLACEMENT_FAILED"
+                    )
+                    reaction_shot_placement_log_status = "failed"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-41",
+                    event_type=reaction_shot_placement_event_type,
+                    action="reaction_shot_placement_review_only",
+                    status=reaction_shot_placement_log_status,
+                    reason=getattr(
+                        reaction_shot_placement_report,
+                        "recommendation",
+                        "review_reaction_shot_placement",
+                    ),
+                    details={
+                        "status": reaction_shot_placement_status,
+                        "candidate_count": len(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "candidates",
+                                [],
+                            )
+                            or []
+                        ),
+                        "placement_count": len(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "placements",
+                                [],
+                            )
+                            or []
+                        ),
+                        "total_candidates": int(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "total_candidates",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "total_placements": int(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "total_placements",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "best_placement_score": float(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "best_placement_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "missing_reaction_placeholder_count": int(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "missing_reaction_placeholder_count",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "review_required": True,
+                        "can_apply_reaction_shots": False,
+                        "can_move_clip": False,
+                        "can_insert_clip": False,
+                        "can_trim": False,
+                        "can_extend": False,
+                        "can_reorder_timeline": False,
+                        "can_render": False,
+                        "blocking_reasons": list(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "blocking_reasons",
+                                [],
+                            )
+                            or []
+                        ),
+                        "warnings": list(
+                            getattr(
+                                reaction_shot_placement_report,
+                                "warnings",
+                                [],
+                            )
+                            or []
+                        ),
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "reaction_shot_placement_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_41": True,
+                        "no_render_in_2b_41": True,
+                        "no_timeline_reorder_in_2b_41": True,
+                        "no_reaction_apply_in_2b_41": True,
+                        "no_reaction_insert_in_2b_41": True,
+                        "no_facecam_move_in_2b_41": True,
+                        "no_zoom_insert_in_2b_41": True,
+                    },
+                )
+
+                persist_job_state_checkpoint(
+                    job=job,
+                    export_dir=export_dir,
+                    step_name="reaction_shot_placement_engine_done",
+                    reason=getattr(
+                        reaction_shot_placement_report,
+                        "recommendation",
+                        "review_reaction_shot_placement",
+                    ),
+                )
+                
             except Exception as pattern_interrupt_exc:
                 job.pattern_interrupt_status = "failed"
                 job.pattern_interrupt_report = {
