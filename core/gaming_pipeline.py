@@ -198,6 +198,7 @@ run_ff_command_assembly_for_job = getattr(
     ),
     "run_ff" "mpeg_command_assembly_for_job",
 )
+from core.output_format_handler_runner import run_output_format_handler
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -7229,6 +7230,120 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 controlled_ff_exec_report.recommendation
                                 or "review_controlled_" "ff" "mpeg_execution"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-55",
+                            event_type="OUTPUT_FORMAT_CONTRACT_STARTED",
+                            action="run_output_format_handler",
+                            status="started",
+                            reason="Build output format handler and render preset contract only.",
+                            details={
+                                "phase": "2B-55",
+                                "block": "block8_render_export",
+                                "output_format_contract_only": True,
+                                "render_preset_contract_only": True,
+                                "dry_run_only": True,
+                                "no_" "full_" "render_in_2b_55": True,
+                                "no_" "ff" "mpeg_execution_in_2b_55": True,
+                                "no_user_media_" "input_in_2b_55": True,
+                                "no_project_" "output_in_2b_55": True,
+                                "no_timeline_" "apply_in_2b_55": True,
+                            },
+                        )
+
+                        output_format_report = run_output_format_handler(job)
+                        output_format_status = str(
+                            output_format_report.get("status") or ""
+                        )
+
+                        if output_format_status == "output_format_contract_ready":
+                            output_format_event_type = "OUTPUT_FORMAT_CONTRACT_READY"
+                            output_format_log_status = "ready"
+                        elif (
+                            output_format_status
+                            == "output_format_contract_ready_with_warnings"
+                        ):
+                            output_format_event_type = (
+                                "OUTPUT_FORMAT_CONTRACT_READY_WITH_WARNINGS"
+                            )
+                            output_format_log_status = "ready_with_warnings"
+                        elif output_format_status == "output_format_contract_blocked":
+                            output_format_event_type = "OUTPUT_FORMAT_CONTRACT_BLOCKED"
+                            output_format_log_status = "blocked"
+                        else:
+                            output_format_event_type = "OUTPUT_FORMAT_CONTRACT_FAILED"
+                            output_format_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-55",
+                            event_type=output_format_event_type,
+                            action="run_output_format_handler",
+                            status=output_format_log_status,
+                            reason=(
+                                output_format_report.get("recommendation")
+                                or "review_output_format_contract"
+                            ),
+                            details={
+                                "status": output_format_status,
+                                "selected_preset": output_format_report.get(
+                                    "preset",
+                                    {},
+                                ).get("preset_id"),
+                                "available_presets": list(
+                                    output_format_report.get("available_presets", [])
+                                ),
+                                "selected_profile": output_format_report.get(
+                                    "selected_profile"
+                                ),
+                                "selected_platform": output_format_report.get(
+                                    "selected_platform"
+                                ),
+                                "selected_target_format": output_format_report.get(
+                                    "selected_target_format"
+                                ),
+                                "can_prepare_output_format": bool(
+                                    output_format_report.get(
+                                        "can_prepare_output_format"
+                                    )
+                                ),
+                                "can_render": False,
+                                "can_write_project_output": False,
+                                "can_process_user_media": False,
+                                "can_execute_" "ff" "mpeg": False,
+                                "dry_run_only": True,
+                                "contract_only": True,
+                                "blocking_reasons": list(
+                                    output_format_report.get("blocking_reasons", [])
+                                ),
+                                "warnings": list(
+                                    output_format_report.get("warnings", [])
+                                ),
+                                "phase": "2B-55",
+                                "block": "block8_render_export",
+                                "output_format_contract_only": True,
+                                "render_preset_contract_only": True,
+                                "dry_run_only": True,
+                                "no_" "full_" "render_in_2b_55": True,
+                                "no_" "ff" "mpeg_execution_in_2b_55": True,
+                                "no_user_media_" "input_in_2b_55": True,
+                                "no_project_" "output_in_2b_55": True,
+                                "no_timeline_" "apply_in_2b_55": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="output_format_contract_done",
+                            reason=(
+                                output_format_report.get("recommendation")
+                                or "review_output_format_contract"
                             ),
                         )
 

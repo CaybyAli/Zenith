@@ -740,6 +740,38 @@ class Job:
     controlled_ffmpeg_warnings: list[str] = field(default_factory=list)
     controlled_ffmpeg_recommendation: str | None = None
 
+    output_format_contract_report: dict[str, Any] = field(default_factory=dict)
+    output_format_contract_status: str | None = None
+    output_format_selected_preset: str | None = None
+    output_format_available_presets: list[str] = field(default_factory=list)
+    output_format_selected_profile: str | None = None
+    output_format_selected_platform: str | None = None
+    output_format_selected_target_format: str | None = None
+    output_video_spec: dict[str, Any] = field(default_factory=dict)
+    output_audio_spec: dict[str, Any] = field(default_factory=dict)
+    output_container_spec: dict[str, Any] = field(default_factory=dict)
+    output_filename_hint: str | None = None
+    output_safe_filename_hint: str | None = None
+    output_path_hint: str | None = None
+    output_can_prepare_output_format: bool = False
+    output_can_render: bool = False
+    output_can_write_project_output: bool = False
+    output_can_process_user_media: bool = False
+    output_can_execute_ffmpeg: bool = False
+    output_dry_run_only: bool = True
+    output_contract_only: bool = True
+    output_format_blocking_reasons: list[str] = field(default_factory=list)
+    output_format_warnings: list[str] = field(default_factory=list)
+    output_format_recommendation: str | None = None
+
+    output_preset_requested: str | None = None
+    output_platform_requested: str | None = None
+    output_resolution_requested: str | None = None
+    output_fps_requested: int | None = None
+    output_codec_preference: str | None = None
+    output_audio_lufs_requested: float | None = None
+    output_container_requested: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -2060,6 +2092,48 @@ class Job:
             controlled_ffmpeg_recommendation=data.get(
                 "controlled_ffmpeg_recommendation"
             ),
+
+            output_format_contract_report=dict(
+                data.get("output_format_contract_report") or {}
+            ),
+            output_format_contract_status=data.get("output_format_contract_status"),
+            output_format_selected_preset=data.get("output_format_selected_preset"),
+            output_format_available_presets=list(
+                data.get("output_format_available_presets") or []
+            ),
+            output_format_selected_profile=data.get("output_format_selected_profile"),
+            output_format_selected_platform=data.get("output_format_selected_platform"),
+            output_format_selected_target_format=data.get(
+                "output_format_selected_target_format"
+            ),
+            output_video_spec=dict(data.get("output_video_spec") or {}),
+            output_audio_spec=dict(data.get("output_audio_spec") or {}),
+            output_container_spec=dict(data.get("output_container_spec") or {}),
+            output_filename_hint=data.get("output_filename_hint"),
+            output_safe_filename_hint=data.get("output_safe_filename_hint"),
+            output_path_hint=data.get("output_path_hint"),
+            output_can_prepare_output_format=bool(
+                data.get("output_can_prepare_output_format", False)
+            ),
+            output_can_render=False,
+            output_can_write_project_output=False,
+            output_can_process_user_media=False,
+            output_can_execute_ffmpeg=False,
+            output_dry_run_only=bool(data.get("output_dry_run_only", True)),
+            output_contract_only=bool(data.get("output_contract_only", True)),
+            output_format_blocking_reasons=list(
+                data.get("output_format_blocking_reasons") or []
+            ),
+            output_format_warnings=list(data.get("output_format_warnings") or []),
+            output_format_recommendation=data.get("output_format_recommendation"),
+
+            output_preset_requested=data.get("output_preset_requested"),
+            output_platform_requested=data.get("output_platform_requested"),
+            output_resolution_requested=data.get("output_resolution_requested"),
+            output_fps_requested=data.get("output_fps_requested"),
+            output_codec_preference=data.get("output_codec_preference"),
+            output_audio_lufs_requested=data.get("output_audio_lufs_requested"),
+            output_container_requested=data.get("output_container_requested"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),

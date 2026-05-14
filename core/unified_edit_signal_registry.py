@@ -104,6 +104,9 @@ build_ff_command_assembly_signals = getattr(
     ),
     "build_ff" "mpeg_command_assembly_signals",
 )
+from core.output_format_handler_signal_adapter import (
+    build_output_format_contract_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -148,6 +151,7 @@ SOURCE_RENDER_ASSET_MANIFEST = "render_asset_manifest"
 SOURCE_RENDER_EXECUTION_PERMISSION_GATE = "render_execution_permission_gate"
 SOURCE_CONTROLLED_RENDER_EXECUTOR = "controlled_render_executor"
 SOURCE_CONTROLLED_FF_EXECUTION = "controlled_" "ff" "mpeg_execution"
+SOURCE_OUTPUT_FORMAT_CONTRACT = "output_format_contract"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1720,6 +1724,34 @@ def build_unified_edit_signal_result(
             )
     else:
         warnings.append(f"no_signals_from_{SOURCE_CONTROLLED_FF_EXECUTION}")
+
+    output_format_contract_report = _job_attr(
+        job,
+        "output_format_contract_report",
+    )
+
+    if output_format_contract_report:
+        output_format_contract_signals = _safe_collect(
+            lambda: {"signals": build_output_format_contract_signals(job)},
+            label=SOURCE_OUTPUT_FORMAT_CONTRACT,
+            warnings=warnings,
+            errors=errors,
+        )
+        if output_format_contract_signals:
+            source_counts[SOURCE_OUTPUT_FORMAT_CONTRACT] = len(
+                output_format_contract_signals
+            )
+            for signal in output_format_contract_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_OUTPUT_FORMAT_CONTRACT,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(f"no_signals_from_{SOURCE_OUTPUT_FORMAT_CONTRACT}")
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_OUTPUT_FORMAT_CONTRACT}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
