@@ -171,6 +171,9 @@ from core.render_readiness_guard_runner import run_render_readiness_guard
 from core.render_plan_runner import run_render_plan_for_job
 from core.render_command_blueprint_runner import run_render_command_blueprint_for_job
 from core.render_asset_manifest_runner import run_render_asset_manifest_for_job
+from core.render_execution_permission_gate_runner import (
+    run_render_execution_permission_gate_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6542,6 +6545,165 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=render_asset_manifest_report.get(
                                 "recommendation",
                                 "review_render_asset_manifest",
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-49",
+                            event_type="RENDER_EXECUTION_PERMISSION_GATE_STARTED",
+                            action="run_render_execution_permission_gate_for_job",
+                            status="started",
+                            reason="Check final human approval before real render preparation.",
+                            details={
+                                "phase": "2B-49",
+                                "block": "block8_render_export",
+                                "render_execution_permission_gate_only": True,
+                                "final_human_approval_gate": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_49": True,
+                                "no_render_in_2b_49": True,
+                                "no_ff" "mpeg_in_2b_49": True,
+                                "no_process_" "spawn_in_2b_49": True,
+                                "no_media_read_in_2b_49": True,
+                                "no_media_write_in_2b_49": True,
+                                "no_directory_create_in_2b_49": True,
+                                "no_timeline_" "apply_in_2b_49": True,
+                            },
+                        )
+
+                        render_execution_permission_report = (
+                            run_render_execution_permission_gate_for_job(job)
+                        )
+                        render_execution_permission_status = str(
+                            render_execution_permission_report.get("status", "") or ""
+                        )
+
+                        if (
+                            render_execution_permission_status
+                            == "render_execution_permission_ready"
+                        ):
+                            render_execution_event_type = (
+                                "RENDER_EXECUTION_PERMISSION_READY"
+                            )
+                            render_execution_log_status = "ready"
+                        elif (
+                            render_execution_permission_status
+                            == "render_execution_permission_ready_with_warnings"
+                        ):
+                            render_execution_event_type = (
+                                "RENDER_EXECUTION_PERMISSION_READY_WITH_WARNINGS"
+                            )
+                            render_execution_log_status = "ready_with_warnings"
+                        elif (
+                            render_execution_permission_status
+                            == "render_execution_permission_blocked"
+                        ):
+                            render_execution_event_type = (
+                                "RENDER_EXECUTION_PERMISSION_BLOCKED"
+                            )
+                            render_execution_log_status = "blocked"
+                        else:
+                            render_execution_event_type = (
+                                "RENDER_EXECUTION_PERMISSION_FAILED"
+                            )
+                            render_execution_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-49",
+                            event_type=render_execution_event_type,
+                            action="run_render_execution_permission_gate_for_job",
+                            status=render_execution_log_status,
+                            reason=render_execution_permission_report.get(
+                                "recommendation",
+                                "review_render_execution_permission",
+                            ),
+                            details={
+                                "status": render_execution_permission_status,
+                                "total_checks": render_execution_permission_report.get(
+                                    "total_checks",
+                                    0,
+                                ),
+                                "passed_count": render_execution_permission_report.get(
+                                    "passed_count",
+                                    0,
+                                ),
+                                "warning_count": render_execution_permission_report.get(
+                                    "warning_count",
+                                    0,
+                                ),
+                                "blocking_count": render_execution_permission_report.get(
+                                    "blocking_count",
+                                    0,
+                                ),
+                                "review_required": bool(
+                                    render_execution_permission_report.get(
+                                        "review_required",
+                                        True,
+                                    )
+                                ),
+                                "ready_for_real_render_stage": bool(
+                                    render_execution_permission_report.get(
+                                        "ready_for_real_render_stage",
+                                        False,
+                                    )
+                                ),
+                                "can_prepare_real_render_execution": bool(
+                                    render_execution_permission_report.get(
+                                        "can_prepare_real_render_execution",
+                                        False,
+                                    )
+                                ),
+                                "can_render": False,
+                                "can_run_ff" "mpeg": False,
+                                "can_spawn_" "process": False,
+                                "can_write_" "media": False,
+                                "can_apply_" "timeline": False,
+                                "human_approved": bool(
+                                    render_execution_permission_report.get(
+                                        "human_approved",
+                                        False,
+                                    )
+                                ),
+                                "approved_by": render_execution_permission_report.get(
+                                    "approved_by"
+                                ),
+                                "blocking_reasons": list(
+                                    render_execution_permission_report.get(
+                                        "blocking_reasons"
+                                    )
+                                    or []
+                                ),
+                                "warnings": list(
+                                    render_execution_permission_report.get("warnings")
+                                    or []
+                                ),
+                                "phase": "2B-49",
+                                "block": "block8_render_export",
+                                "render_execution_permission_gate_only": True,
+                                "final_human_approval_gate": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_49": True,
+                                "no_render_in_2b_49": True,
+                                "no_ff" "mpeg_in_2b_49": True,
+                                "no_process_" "spawn_in_2b_49": True,
+                                "no_media_read_in_2b_49": True,
+                                "no_media_write_in_2b_49": True,
+                                "no_directory_create_in_2b_49": True,
+                                "no_timeline_" "apply_in_2b_49": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="render_execution_permission_gate_done",
+                            reason=render_execution_permission_report.get(
+                                "recommendation",
+                                "review_render_execution_permission",
                             ),
                         )
 

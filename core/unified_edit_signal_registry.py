@@ -77,6 +77,9 @@ from core.render_command_blueprint_signal_adapter import (
 from core.render_asset_manifest_signal_adapter import (
     build_render_asset_manifest_signals,
 )
+from core.render_execution_permission_gate_signal_adapter import (
+    build_render_execution_permission_gate_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -118,6 +121,7 @@ SOURCE_RENDER_READINESS_GUARD = "render_readiness_guard"
 SOURCE_RENDER_PLAN = "render_plan"
 SOURCE_RENDER_COMMAND_BLUEPRINT = "render_command_blueprint"
 SOURCE_RENDER_ASSET_MANIFEST = "render_asset_manifest"
+SOURCE_RENDER_EXECUTION_PERMISSION_GATE = "render_execution_permission_gate"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1534,6 +1538,41 @@ def build_unified_edit_signal_result(
             warnings.append(f"no_signals_from_{SOURCE_RENDER_ASSET_MANIFEST}")
     else:
         warnings.append(f"no_signals_from_{SOURCE_RENDER_ASSET_MANIFEST}")
+
+    render_execution_permission_report = _job_attr(
+        job,
+        "render_execution_permission_report",
+    )
+    if not render_execution_permission_report:
+        render_execution_permission_report = _job_attr(
+            job,
+            "render_execution_permission_gate",
+        )
+
+    if render_execution_permission_report:
+        render_execution_permission_signals = _safe_collect(
+            lambda: {"signals": build_render_execution_permission_gate_signals(job)},
+            label=SOURCE_RENDER_EXECUTION_PERMISSION_GATE,
+            warnings=warnings,
+            errors=errors,
+        )
+        if render_execution_permission_signals:
+            source_counts[SOURCE_RENDER_EXECUTION_PERMISSION_GATE] = len(
+                render_execution_permission_signals
+            )
+            for signal in render_execution_permission_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_RENDER_EXECUTION_PERMISSION_GATE,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(
+                f"no_signals_from_{SOURCE_RENDER_EXECUTION_PERMISSION_GATE}"
+            )
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_RENDER_EXECUTION_PERMISSION_GATE}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

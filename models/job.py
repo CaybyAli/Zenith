@@ -611,6 +611,33 @@ class Job:
     render_asset_warnings: list[str] = field(default_factory=list)
     render_asset_recommendation: str | None = None
 
+    render_execution_permission_report: dict[str, Any] = field(default_factory=dict)
+    render_execution_permission_gate: dict[str, Any] = field(default_factory=dict)
+    render_execution_permission_status: str | None = None
+    render_execution_permission_checks: list[dict[str, Any]] = field(default_factory=list)
+    render_execution_permission_total_checks: int = 0
+    render_execution_permission_passed_count: int = 0
+    render_execution_permission_warning_count: int = 0
+    render_execution_permission_blocking_count: int = 0
+    render_execution_permission_review_required: bool = True
+    render_execution_ready_for_real_render_stage: bool = False
+    render_execution_can_prepare_real_render_execution: bool = False
+    render_execution_can_render: bool = False
+    render_execution_can_run_ffmpeg: bool = False
+    render_execution_can_spawn_process: bool = False
+    render_execution_can_write_media: bool = False
+    render_execution_can_apply_timeline: bool = False
+    render_execution_human_approved: bool = False
+    render_execution_requested_status: str | None = None
+    render_execution_approved_by: str | None = None
+    render_execution_approved_at: str | None = None
+    render_execution_approval_reason: str | None = None
+    render_execution_rejected_by: str | None = None
+    render_execution_rejection_reason: str | None = None
+    render_execution_blocking_reasons: list[str] = field(default_factory=list)
+    render_execution_warnings: list[str] = field(default_factory=list)
+    render_execution_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1688,6 +1715,49 @@ class Job:
             render_asset_blocking_reasons=list(data.get("render_asset_blocking_reasons") or []),
             render_asset_warnings=list(data.get("render_asset_warnings") or []),
             render_asset_recommendation=data.get("render_asset_recommendation"),
+
+            render_execution_permission_report=dict(data.get("render_execution_permission_report") or {}),
+            render_execution_permission_gate=dict(data.get("render_execution_permission_gate") or {}),
+            render_execution_permission_status=data.get("render_execution_permission_status"),
+            render_execution_permission_checks=list(data.get("render_execution_permission_checks") or []),
+            render_execution_permission_total_checks=int(
+                data.get("render_execution_permission_total_checks", 0) or 0
+            ),
+            render_execution_permission_passed_count=int(
+                data.get("render_execution_permission_passed_count", 0) or 0
+            ),
+            render_execution_permission_warning_count=int(
+                data.get("render_execution_permission_warning_count", 0) or 0
+            ),
+            render_execution_permission_blocking_count=int(
+                data.get("render_execution_permission_blocking_count", 0) or 0
+            ),
+            render_execution_permission_review_required=bool(
+                data.get("render_execution_permission_review_required", True)
+            ),
+            render_execution_ready_for_real_render_stage=bool(
+                data.get("render_execution_ready_for_real_render_stage", False)
+            ),
+            render_execution_can_prepare_real_render_execution=bool(
+                data.get("render_execution_can_prepare_real_render_execution", False)
+            ),
+            render_execution_can_render=False,
+            render_execution_can_run_ffmpeg=False,
+            render_execution_can_spawn_process=False,
+            render_execution_can_write_media=False,
+            render_execution_can_apply_timeline=False,
+            render_execution_human_approved=bool(
+                data.get("render_execution_human_approved", False)
+            ),
+            render_execution_requested_status=data.get("render_execution_requested_status"),
+            render_execution_approved_by=data.get("render_execution_approved_by"),
+            render_execution_approved_at=data.get("render_execution_approved_at"),
+            render_execution_approval_reason=data.get("render_execution_approval_reason"),
+            render_execution_rejected_by=data.get("render_execution_rejected_by"),
+            render_execution_rejection_reason=data.get("render_execution_rejection_reason"),
+            render_execution_blocking_reasons=list(data.get("render_execution_blocking_reasons") or []),
+            render_execution_warnings=list(data.get("render_execution_warnings") or []),
+            render_execution_recommendation=data.get("render_execution_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),
