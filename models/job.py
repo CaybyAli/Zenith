@@ -544,6 +544,27 @@ class Job:
     render_readiness_warnings: list[str] = field(default_factory=list)
     render_readiness_recommendation: str | None = None
 
+    render_plan_report: dict[str, Any] = field(default_factory=dict)
+    render_plan: dict[str, Any] = field(default_factory=dict)
+    render_plan_status: str | None = None
+    render_plan_sources: list[dict[str, Any]] = field(default_factory=list)
+    render_plan_segments: list[dict[str, Any]] = field(default_factory=list)
+    render_plan_output_targets: list[dict[str, Any]] = field(default_factory=list)
+    render_plan_operation_intents: list[dict[str, Any]] = field(default_factory=list)
+    render_plan_total_segments: int = 0
+    render_plan_total_duration_seconds: float = 0.0
+    render_plan_estimated_output_duration_seconds: float = 0.0
+    render_plan_dry_run_only: bool = True
+    render_plan_ready_for_renderer_contract: bool = False
+    render_plan_can_execute_plan: bool = False
+    render_plan_can_render: bool = False
+    render_plan_can_run_ffmpeg: bool = False
+    render_plan_can_write_media: bool = False
+    render_plan_can_apply_timeline: bool = False
+    render_plan_blocking_reasons: list[str] = field(default_factory=list)
+    render_plan_warnings: list[str] = field(default_factory=list)
+    render_plan_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1542,6 +1563,33 @@ class Job:
             ),
             render_readiness_warnings=list(data.get("render_readiness_warnings") or []),
             render_readiness_recommendation=data.get("render_readiness_recommendation"),
+
+            render_plan_report=dict(data.get("render_plan_report") or {}),
+            render_plan=dict(data.get("render_plan") or {}),
+            render_plan_status=data.get("render_plan_status"),
+            render_plan_sources=list(data.get("render_plan_sources") or []),
+            render_plan_segments=list(data.get("render_plan_segments") or []),
+            render_plan_output_targets=list(data.get("render_plan_output_targets") or []),
+            render_plan_operation_intents=list(data.get("render_plan_operation_intents") or []),
+            render_plan_total_segments=int(data.get("render_plan_total_segments", 0) or 0),
+            render_plan_total_duration_seconds=float(
+                data.get("render_plan_total_duration_seconds", 0.0) or 0.0
+            ),
+            render_plan_estimated_output_duration_seconds=float(
+                data.get("render_plan_estimated_output_duration_seconds", 0.0) or 0.0
+            ),
+            render_plan_dry_run_only=bool(data.get("render_plan_dry_run_only", True)),
+            render_plan_ready_for_renderer_contract=bool(
+                data.get("render_plan_ready_for_renderer_contract", False)
+            ),
+            render_plan_can_execute_plan=False,
+            render_plan_can_render=False,
+            render_plan_can_run_ffmpeg=False,
+            render_plan_can_write_media=False,
+            render_plan_can_apply_timeline=False,
+            render_plan_blocking_reasons=list(data.get("render_plan_blocking_reasons") or []),
+            render_plan_warnings=list(data.get("render_plan_warnings") or []),
+            render_plan_recommendation=data.get("render_plan_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),
