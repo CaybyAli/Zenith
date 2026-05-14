@@ -110,6 +110,9 @@ from core.output_format_handler_signal_adapter import (
 from core.render_verification_contract_signal_adapter import (
     build_render_verification_contract_signals,
 )
+from core.render_dashboard_delivery_package_signal_adapter import (
+    build_render_dashboard_delivery_package_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -156,6 +159,7 @@ SOURCE_CONTROLLED_RENDER_EXECUTOR = "controlled_render_executor"
 SOURCE_CONTROLLED_FF_EXECUTION = "controlled_" "ff" "mpeg_execution"
 SOURCE_OUTPUT_FORMAT_CONTRACT = "output_format_contract"
 SOURCE_RENDER_VERIFICATION_CONTRACT = "render_verification_contract"
+SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE = "render_dashboard_delivery_package"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1786,6 +1790,36 @@ def build_unified_edit_signal_result(
             )
     else:
         warnings.append(f"no_signals_from_{SOURCE_RENDER_VERIFICATION_CONTRACT}")
+
+    render_dashboard_delivery_package_report = _job_attr(
+        job,
+        "render_dashboard_delivery_package_report",
+    )
+
+    if render_dashboard_delivery_package_report:
+        render_dashboard_delivery_package_signals = _safe_collect(
+            lambda: {"signals": build_render_dashboard_delivery_package_signals(job)},
+            label=SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE,
+            warnings=warnings,
+            errors=errors,
+        )
+        if render_dashboard_delivery_package_signals:
+            source_counts[SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE] = len(
+                render_dashboard_delivery_package_signals
+            )
+            for signal in render_dashboard_delivery_package_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(
+                f"no_signals_from_{SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE}"
+            )
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

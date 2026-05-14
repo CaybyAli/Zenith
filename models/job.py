@@ -791,6 +791,31 @@ class Job:
     render_verification_expected_duration_seconds: float | None = None
     render_verification_duration_tolerance_seconds: float = 1.0
 
+    render_dashboard_delivery_package_report: dict[str, Any] = field(default_factory=dict)
+    render_dashboard_delivery_package_status: str | None = None
+    render_dashboard_delivery_cards: list[dict[str, Any]] = field(default_factory=list)
+    render_dashboard_delivery_panels: list[dict[str, Any]] = field(default_factory=list)
+    render_dashboard_delivery_actions: list[dict[str, Any]] = field(default_factory=list)
+    render_dashboard_delivery_safety_summary: dict[str, Any] = field(default_factory=dict)
+    render_dashboard_delivery_output_summary: dict[str, Any] = field(default_factory=dict)
+    render_dashboard_delivery_verification_summary: dict[str, Any] = field(default_factory=dict)
+    render_dashboard_delivery_ffmpeg_summary: dict[str, Any] = field(default_factory=dict)
+    render_dashboard_delivery_total_warnings: int = 0
+    render_dashboard_delivery_total_blocking_reasons: int = 0
+    render_dashboard_delivery_dashboard_ready: bool = False
+    render_dashboard_delivery_dashboard_only: bool = True
+    render_dashboard_delivery_package_only: bool = True
+    render_dashboard_delivery_can_write_dashboard_file: bool = False
+    render_dashboard_delivery_can_move_video: bool = False
+    render_dashboard_delivery_can_copy_output: bool = False
+    render_dashboard_delivery_can_extract_thumbnail: bool = False
+    render_dashboard_delivery_can_render: bool = False
+    render_dashboard_delivery_can_run_ffmpeg: bool = False
+    render_dashboard_delivery_can_run_ffprobe: bool = False
+    render_dashboard_delivery_warnings: list[str] = field(default_factory=list)
+    render_dashboard_delivery_blocking_reasons: list[str] = field(default_factory=list)
+    render_dashboard_delivery_recommendation: str | None = None
+
     output_preset_requested: str | None = None
     output_platform_requested: str | None = None
     output_resolution_requested: str | None = None
@@ -2220,6 +2245,65 @@ class Job:
             ),
             render_verification_duration_tolerance_seconds=float(
                 data.get("render_verification_duration_tolerance_seconds", 1.0) or 1.0
+            ),
+
+            render_dashboard_delivery_package_report=dict(
+                data.get("render_dashboard_delivery_package_report") or {}
+            ),
+            render_dashboard_delivery_package_status=data.get(
+                "render_dashboard_delivery_package_status"
+            ),
+            render_dashboard_delivery_cards=list(
+                data.get("render_dashboard_delivery_cards") or []
+            ),
+            render_dashboard_delivery_panels=list(
+                data.get("render_dashboard_delivery_panels") or []
+            ),
+            render_dashboard_delivery_actions=list(
+                data.get("render_dashboard_delivery_actions") or []
+            ),
+            render_dashboard_delivery_safety_summary=dict(
+                data.get("render_dashboard_delivery_safety_summary") or {}
+            ),
+            render_dashboard_delivery_output_summary=dict(
+                data.get("render_dashboard_delivery_output_summary") or {}
+            ),
+            render_dashboard_delivery_verification_summary=dict(
+                data.get("render_dashboard_delivery_verification_summary") or {}
+            ),
+            render_dashboard_delivery_ffmpeg_summary=dict(
+                data.get("render_dashboard_delivery_ffmpeg_summary") or {}
+            ),
+            render_dashboard_delivery_total_warnings=int(
+                data.get("render_dashboard_delivery_total_warnings", 0) or 0
+            ),
+            render_dashboard_delivery_total_blocking_reasons=int(
+                data.get("render_dashboard_delivery_total_blocking_reasons", 0) or 0
+            ),
+            render_dashboard_delivery_dashboard_ready=bool(
+                data.get("render_dashboard_delivery_dashboard_ready", False)
+            ),
+            render_dashboard_delivery_dashboard_only=bool(
+                data.get("render_dashboard_delivery_dashboard_only", True)
+            ),
+            render_dashboard_delivery_package_only=bool(
+                data.get("render_dashboard_delivery_package_only", True)
+            ),
+            render_dashboard_delivery_can_write_dashboard_file=False,
+            render_dashboard_delivery_can_move_video=False,
+            render_dashboard_delivery_can_copy_output=False,
+            render_dashboard_delivery_can_extract_thumbnail=False,
+            render_dashboard_delivery_can_render=False,
+            render_dashboard_delivery_can_run_ffmpeg=False,
+            render_dashboard_delivery_can_run_ffprobe=False,
+            render_dashboard_delivery_warnings=list(
+                data.get("render_dashboard_delivery_warnings") or []
+            ),
+            render_dashboard_delivery_blocking_reasons=list(
+                data.get("render_dashboard_delivery_blocking_reasons") or []
+            ),
+            render_dashboard_delivery_recommendation=data.get(
+                "render_dashboard_delivery_recommendation"
             ),
 
             output_preset_requested=data.get("output_preset_requested"),

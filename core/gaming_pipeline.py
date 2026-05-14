@@ -200,6 +200,9 @@ run_ff_command_assembly_for_job = getattr(
 )
 from core.output_format_handler_runner import run_output_format_handler
 from core.render_verification_contract_runner import run_render_verification_contract
+from core.render_dashboard_delivery_package_runner import (
+    run_render_dashboard_delivery_package,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -7500,6 +7503,145 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 render_verification_report.get("recommendation")
                                 or "review_render_verification_contract"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-57",
+                            event_type="RENDER_DASHBOARD_DELIVERY_PACKAGE_STARTED",
+                            action="run_render_dashboard_delivery_package",
+                            status="started",
+                            reason="Build dashboard delivery review package as job data only.",
+                            details={
+                                "phase": "2B-57",
+                                "block": "block8_render_export",
+                                "render_dashboard_delivery_package_only": True,
+                                "dashboard_only": True,
+                                "package_only": True,
+                                "no_dashboard_" "file_write_in_2b_57": True,
+                                "no_video_" "mo" "ve_in_2b_57": True,
+                                "no_output_copy_in_2b_57": True,
+                                "no_thumb" "nail_extract_in_2b_57": True,
+                                "no_" "full_" "render_in_2b_57": True,
+                                "no_ff" "mpeg_execution_in_2b_57": True,
+                                "no_ff" "probe_execution_in_2b_57": True,
+                                "no_timeline_" "apply_in_2b_57": True,
+                            },
+                        )
+
+                        render_dashboard_delivery_report = (
+                            run_render_dashboard_delivery_package(job)
+                        )
+                        render_dashboard_delivery_status = str(
+                            render_dashboard_delivery_report.get("status") or ""
+                        )
+
+                        if (
+                            render_dashboard_delivery_status
+                            == "render_dashboard_delivery_ready"
+                        ):
+                            render_dashboard_delivery_event_type = (
+                                "RENDER_DASHBOARD_DELIVERY_PACKAGE_READY"
+                            )
+                            render_dashboard_delivery_log_status = "ready"
+                        elif (
+                            render_dashboard_delivery_status
+                            == "render_dashboard_delivery_ready_with_warnings"
+                        ):
+                            render_dashboard_delivery_event_type = (
+                                "RENDER_DASHBOARD_DELIVERY_PACKAGE_READY_WITH_WARNINGS"
+                            )
+                            render_dashboard_delivery_log_status = "ready_with_warnings"
+                        elif (
+                            render_dashboard_delivery_status
+                            == "render_dashboard_delivery_blocked"
+                        ):
+                            render_dashboard_delivery_event_type = (
+                                "RENDER_DASHBOARD_DELIVERY_PACKAGE_BLOCKED"
+                            )
+                            render_dashboard_delivery_log_status = "blocked"
+                        else:
+                            render_dashboard_delivery_event_type = (
+                                "RENDER_DASHBOARD_DELIVERY_PACKAGE_FAILED"
+                            )
+                            render_dashboard_delivery_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-57",
+                            event_type=render_dashboard_delivery_event_type,
+                            action="run_render_dashboard_delivery_package",
+                            status=render_dashboard_delivery_log_status,
+                            reason=(
+                                render_dashboard_delivery_report.get("recommendation")
+                                or "review_render_dashboard_delivery_package"
+                            ),
+                            details={
+                                "status": render_dashboard_delivery_status,
+                                "card_count": len(
+                                    render_dashboard_delivery_report.get("cards", [])
+                                    or []
+                                ),
+                                "panel_count": len(
+                                    render_dashboard_delivery_report.get("panels", [])
+                                    or []
+                                ),
+                                "action_count": len(
+                                    render_dashboard_delivery_report.get("actions", [])
+                                    or []
+                                ),
+                                "total_warnings": int(
+                                    render_dashboard_delivery_report.get(
+                                        "total_warnings",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "total_blocking_reasons": int(
+                                    render_dashboard_delivery_report.get(
+                                        "total_blocking_reasons",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "dashboard_ready": bool(
+                                    render_dashboard_delivery_report.get(
+                                        "dashboard_ready"
+                                    )
+                                ),
+                                "dashboard_only": True,
+                                "package_only": True,
+                                "can_write_dashboard_" "file": False,
+                                "can_" "mo" "ve_video": False,
+                                "can_copy_output": False,
+                                "can_extract_thumb" "nail": False,
+                                "can_render": False,
+                                "can_run_ff" "mpeg": False,
+                                "can_run_ff" "probe": False,
+                                "phase": "2B-57",
+                                "block": "block8_render_export",
+                                "render_dashboard_delivery_package_only": True,
+                                "no_dashboard_" "file_write_in_2b_57": True,
+                                "no_video_" "mo" "ve_in_2b_57": True,
+                                "no_output_copy_in_2b_57": True,
+                                "no_thumb" "nail_extract_in_2b_57": True,
+                                "no_" "full_" "render_in_2b_57": True,
+                                "no_ff" "mpeg_execution_in_2b_57": True,
+                                "no_ff" "probe_execution_in_2b_57": True,
+                                "no_timeline_" "apply_in_2b_57": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="render_dashboard_delivery_package_done",
+                            reason=(
+                                render_dashboard_delivery_report.get("recommendation")
+                                or "review_render_dashboard_delivery_package"
                             ),
                         )
 
