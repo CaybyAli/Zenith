@@ -64,6 +64,9 @@ from core.reaction_shot_placement_signal_adapter import (
 from core.but_therefore_story_signal_adapter import (
     adapt_but_therefore_story_report_to_signals,
 )
+from core.final_quality_validator_signal_adapter import (
+    build_final_quality_validator_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -100,6 +103,7 @@ SOURCE_DYNAMIC_PACING = "dynamic_pacing"
 SOURCE_PATTERN_INTERRUPT = "pattern_interrupt"
 SOURCE_REACTION_SHOT_PLACEMENT = "reaction_shot_placement"
 SOURCE_BUT_THEREFORE_STORY = "but_therefore_story"
+SOURCE_FINAL_QUALITY_VALIDATOR = "final_quality_validator"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1386,6 +1390,33 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_BUT_THEREFORE_STORY}")
+
+    final_quality_report = _job_attr(job, "final_quality_validation_report")
+    if not final_quality_report:
+        final_quality_report = _job_attr(job, "final_quality_validator")
+
+    if final_quality_report:
+        final_quality_validator_signals = _safe_collect(
+            lambda: {"signals": build_final_quality_validator_signals(job)},
+            label=SOURCE_FINAL_QUALITY_VALIDATOR,
+            warnings=warnings,
+            errors=errors,
+        )
+        if final_quality_validator_signals:
+            source_counts[SOURCE_FINAL_QUALITY_VALIDATOR] = len(
+                final_quality_validator_signals
+            )
+            for signal in final_quality_validator_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_FINAL_QUALITY_VALIDATOR,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(f"no_signals_from_{SOURCE_FINAL_QUALITY_VALIDATOR}")
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_FINAL_QUALITY_VALIDATOR}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

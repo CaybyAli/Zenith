@@ -166,6 +166,7 @@ from core.but_therefore_story_runner import (
     run_but_therefore_story_for_job,
     store_but_therefore_story_run_report_to_job,
 )
+from core.final_quality_validator_runner import run_final_quality_validator
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -5992,6 +5993,188 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                         "review_but_therefore_story",
                     ),
                 )
+
+                try:
+                    _safe_log_decision(
+                        job=job,
+                        export_dir=export_dir,
+                        phase="2B-43",
+                        event_type="FINAL_QUALITY_VALIDATOR_STARTED",
+                        action="run_final_quality_validator",
+                        status="started",
+                        reason="Validate final review-only story and pacing quality after But/Therefore story engine.",
+                        details={
+                            "phase": "2B-43",
+                            "block": "block7_story_pacing",
+                            "review_only": True,
+                            "final_quality_validator_only": True,
+                            "media_unchanged": True,
+                            "no_execution_in_2b_43": True,
+                            "no_render_in_2b_43": True,
+                            "no_timeline_reorder_in_2b_43": True,
+                            "no_quality_fix_apply_in_2b_43": True,
+                        },
+                    )
+
+                    final_quality_report = run_final_quality_validator(job)
+                    final_quality_status = str(
+                        final_quality_report.get("status", "") or ""
+                    )
+
+                    if final_quality_status == "final_quality_ready":
+                        final_quality_event_type = "FINAL_QUALITY_READY"
+                        final_quality_log_status = "pending_review"
+                    elif final_quality_status == "final_quality_ready_with_warnings":
+                        final_quality_event_type = "FINAL_QUALITY_READY_WITH_WARNINGS"
+                        final_quality_log_status = "pending_review"
+                    elif final_quality_status in {"final_quality_blocked", "no_timeline_items"}:
+                        final_quality_event_type = "FINAL_QUALITY_BLOCKED"
+                        final_quality_log_status = "blocked"
+                    else:
+                        final_quality_event_type = "FINAL_QUALITY_FAILED"
+                        final_quality_log_status = "failed"
+
+                    _safe_log_decision(
+                        job=job,
+                        export_dir=export_dir,
+                        phase="2B-43",
+                        event_type=final_quality_event_type,
+                        action="final_quality_review_only",
+                        status=final_quality_log_status,
+                        reason=final_quality_report.get(
+                            "recommendation",
+                            "review_final_quality",
+                        ),
+                        details={
+                            "status": final_quality_status,
+                            "total_checks": int(final_quality_report.get("total_checks", 0) or 0),
+                            "passed_count": int(final_quality_report.get("passed_count", 0) or 0),
+                            "warning_count": int(final_quality_report.get("warning_count", 0) or 0),
+                            "blocking_count": int(final_quality_report.get("blocking_count", 0) or 0),
+                            "audio_score": float(final_quality_report.get("audio_score", 0.0) or 0.0),
+                            "video_score": float(final_quality_report.get("video_score", 0.0) or 0.0),
+                            "story_score": float(final_quality_report.get("story_score", 0.0) or 0.0),
+                            "pacing_score": float(final_quality_report.get("pacing_score", 0.0) or 0.0),
+                            "safety_score": float(final_quality_report.get("safety_score", 1.0) or 1.0),
+                            "overall_quality_score": float(
+                                final_quality_report.get("overall_quality_score", 0.0) or 0.0
+                            ),
+                            "review_required": True,
+                            "can_apply_fixes": False,
+                            "can_render": False,
+                            "can_execute_timeline": False,
+                            "can_reorder_timeline": False,
+                            "can_trim": False,
+                            "can_extend": False,
+                            "can_insert_effects": False,
+                            "blocking_reasons": list(
+                                final_quality_report.get("blocking_reasons") or []
+                            ),
+                            "warnings": list(final_quality_report.get("warnings") or []),
+                            "phase": "2B-43",
+                            "block": "block7_story_pacing",
+                            "review_only": True,
+                            "final_quality_validator_only": True,
+                            "media_unchanged": True,
+                            "no_execution_in_2b_43": True,
+                            "no_render_in_2b_43": True,
+                            "no_timeline_reorder_in_2b_43": True,
+                            "no_quality_fix_apply_in_2b_43": True,
+                        },
+                    )
+
+                    persist_job_state_checkpoint(
+                        job=job,
+                        export_dir=export_dir,
+                        step_name="final_quality_validator_done",
+                        reason=final_quality_report.get(
+                            "recommendation",
+                            "review_final_quality",
+                        ),
+                    )
+
+                except Exception as final_quality_exc:
+                    job.final_quality_validation_status = "failed"
+                    job.final_quality_validation_report = {
+                        "status": "failed",
+                        "checks": [],
+                        "suggestions": [],
+                        "audio_score": 0.0,
+                        "video_score": 0.0,
+                        "story_score": 0.0,
+                        "pacing_score": 0.0,
+                        "safety_score": 1.0,
+                        "overall_quality_score": 0.0,
+                        "total_checks": 0,
+                        "passed_count": 0,
+                        "warning_count": 0,
+                        "blocking_count": 1,
+                        "review_required": True,
+                        "can_apply_fixes": False,
+                        "can_render": False,
+                        "can_execute_timeline": False,
+                        "can_reorder_timeline": False,
+                        "can_trim": False,
+                        "can_extend": False,
+                        "can_insert_effects": False,
+                        "warnings": [],
+                        "blocking_reasons": ["final_quality_validator_failed"],
+                        "recommendation": "review_final_quality_failure",
+                        "metadata": {
+                            "phase": "2B-43",
+                            "block": "block7_story_pacing",
+                            "review_only": True,
+                            "final_quality_validator_only": True,
+                            "media_unchanged": True,
+                            "no_execution_in_2b_43": True,
+                            "no_render_in_2b_43": True,
+                            "no_timeline_reorder_in_2b_43": True,
+                            "no_quality_fix_apply_in_2b_43": True,
+                            "error": str(final_quality_exc),
+                        },
+                    }
+                    job.final_quality_validator = dict(job.final_quality_validation_report)
+                    job.final_quality_checks = []
+                    job.final_quality_suggestions = []
+                    job.final_quality_audio_score = 0.0
+                    job.final_quality_video_score = 0.0
+                    job.final_quality_story_score = 0.0
+                    job.final_quality_pacing_score = 0.0
+                    job.final_quality_safety_score = 1.0
+                    job.final_quality_overall_score = 0.0
+                    job.final_quality_passed_count = 0
+                    job.final_quality_warning_count = 0
+                    job.final_quality_blocking_count = 1
+                    job.final_quality_review_required = True
+                    job.final_quality_can_apply_fixes = False
+                    job.final_quality_can_render = False
+                    job.final_quality_can_execute_timeline = False
+                    job.final_quality_can_reorder_timeline = False
+                    job.final_quality_can_trim = False
+                    job.final_quality_can_extend = False
+                    job.final_quality_can_insert_effects = False
+                    job.final_quality_blocking_reasons = ["final_quality_validator_failed"]
+                    job.final_quality_warnings = []
+                    job.final_quality_recommendation = "review_final_quality_failure"
+
+                    _safe_log_decision(
+                        job=job,
+                        export_dir=export_dir,
+                        phase="2B-43",
+                        event_type="FINAL_QUALITY_FAILED",
+                        action="final_quality_review_only_failed",
+                        status="failed",
+                        reason=str(final_quality_exc),
+                        details={
+                            "review_only": True,
+                            "final_quality_validator_only": True,
+                            "media_unchanged": True,
+                            "no_execution_in_2b_43": True,
+                            "no_render_in_2b_43": True,
+                            "no_timeline_reorder_in_2b_43": True,
+                            "no_quality_fix_apply_in_2b_43": True,
+                        },
+                    )
 
             except Exception as pattern_interrupt_exc:
                 job.pattern_interrupt_status = "failed"

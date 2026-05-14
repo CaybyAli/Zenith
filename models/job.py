@@ -488,6 +488,32 @@ class Job:
     story_warnings: list[str] = field(default_factory=list)
     story_recommendation: str | None = None
 
+    final_quality_validation_report: dict[str, Any] = field(default_factory=dict)
+    final_quality_validator: dict[str, Any] = field(default_factory=dict)
+    final_quality_validation_status: str | None = None
+    final_quality_checks: list[dict[str, Any]] = field(default_factory=list)
+    final_quality_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    final_quality_audio_score: float = 0.0
+    final_quality_video_score: float = 0.0
+    final_quality_story_score: float = 0.0
+    final_quality_pacing_score: float = 0.0
+    final_quality_safety_score: float = 1.0
+    final_quality_overall_score: float = 0.0
+    final_quality_passed_count: int = 0
+    final_quality_warning_count: int = 0
+    final_quality_blocking_count: int = 0
+    final_quality_review_required: bool = True
+    final_quality_can_apply_fixes: bool = False
+    final_quality_can_render: bool = False
+    final_quality_can_execute_timeline: bool = False
+    final_quality_can_reorder_timeline: bool = False
+    final_quality_can_trim: bool = False
+    final_quality_can_extend: bool = False
+    final_quality_can_insert_effects: bool = False
+    final_quality_blocking_reasons: list[str] = field(default_factory=list)
+    final_quality_warnings: list[str] = field(default_factory=list)
+    final_quality_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1388,6 +1414,59 @@ class Job:
             ),
             story_warnings=list(data.get("story_warnings") or []),
             story_recommendation=data.get("story_recommendation"),
+            final_quality_validation_report=dict(
+                data.get("final_quality_validation_report") or {}
+            ),
+            final_quality_validator=dict(data.get("final_quality_validator") or {}),
+            final_quality_validation_status=data.get(
+                "final_quality_validation_status"
+            ),
+            final_quality_checks=list(data.get("final_quality_checks") or []),
+            final_quality_suggestions=list(
+                data.get("final_quality_suggestions") or []
+            ),
+            final_quality_audio_score=float(
+                data.get("final_quality_audio_score", 0.0) or 0.0
+            ),
+            final_quality_video_score=float(
+                data.get("final_quality_video_score", 0.0) or 0.0
+            ),
+            final_quality_story_score=float(
+                data.get("final_quality_story_score", 0.0) or 0.0
+            ),
+            final_quality_pacing_score=float(
+                data.get("final_quality_pacing_score", 0.0) or 0.0
+            ),
+            final_quality_safety_score=float(
+                data.get("final_quality_safety_score", 1.0) or 1.0
+            ),
+            final_quality_overall_score=float(
+                data.get("final_quality_overall_score", 0.0) or 0.0
+            ),
+            final_quality_passed_count=int(
+                data.get("final_quality_passed_count", 0) or 0
+            ),
+            final_quality_warning_count=int(
+                data.get("final_quality_warning_count", 0) or 0
+            ),
+            final_quality_blocking_count=int(
+                data.get("final_quality_blocking_count", 0) or 0
+            ),
+            final_quality_review_required=bool(
+                data.get("final_quality_review_required", True)
+            ),
+            final_quality_can_apply_fixes=False,
+            final_quality_can_render=False,
+            final_quality_can_execute_timeline=False,
+            final_quality_can_reorder_timeline=False,
+            final_quality_can_trim=False,
+            final_quality_can_extend=False,
+            final_quality_can_insert_effects=False,
+            final_quality_blocking_reasons=list(
+                data.get("final_quality_blocking_reasons") or []
+            ),
+            final_quality_warnings=list(data.get("final_quality_warnings") or []),
+            final_quality_recommendation=data.get("final_quality_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),

@@ -78,6 +78,13 @@ ALLOWED_SAFETY_FIELD_TOKENS = [
     "no_facecam_move_in_2b_41",
     "no_zoom_insert_in_2b_41",
     "no_sfx_insert_in_2b_40",
+    "final_quality_can_apply_fixes",
+    "final_quality_can_render",
+    "final_quality_can_execute_timeline",
+    "final_quality_can_reorder_timeline",
+    "final_quality_can_trim",
+    "final_quality_can_extend",
+    "final_quality_can_insert_effects",
 ]
 
 
