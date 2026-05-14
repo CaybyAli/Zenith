@@ -162,6 +162,10 @@ from core.reaction_shot_placement_runner import (
     run_reaction_shot_placement_for_job,
     store_reaction_shot_placement_run_report_to_job,
 )
+from core.but_therefore_story_runner import (
+    run_but_therefore_story_for_job,
+    store_but_therefore_story_run_report_to_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -5815,6 +5819,180 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     ),
                 )
                 
+                but_therefore_story_report = run_but_therefore_story_for_job(
+                    job,
+                    metadata={
+                        "phase": "2B-42",
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "but_therefore_story_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_42": True,
+                        "no_render_in_2b_42": True,
+                        "no_timeline_reorder_in_2b_42": True,
+                        "no_story_apply_in_2b_42": True,
+                        "no_and_moment_remove_in_2b_42": True,
+                    },
+                )
+                store_but_therefore_story_run_report_to_job(
+                    job,
+                    but_therefore_story_report,
+                )
+
+                but_therefore_story_status = str(
+                    getattr(but_therefore_story_report, "status", "") or ""
+                )
+
+                if but_therefore_story_status == "story_analysis_ready":
+                    but_therefore_story_event_type = "BUT_THEREFORE_STORY_READY"
+                    but_therefore_story_log_status = "pending_review"
+                elif but_therefore_story_status == "story_analysis_ready_with_warnings":
+                    but_therefore_story_event_type = (
+                        "BUT_THEREFORE_STORY_READY_WITH_WARNINGS"
+                    )
+                    but_therefore_story_log_status = "pending_review"
+                elif but_therefore_story_status in {
+                    "blocked",
+                    "no_timeline_items",
+                }:
+                    but_therefore_story_event_type = "BUT_THEREFORE_STORY_BLOCKED"
+                    but_therefore_story_log_status = "blocked"
+                else:
+                    but_therefore_story_event_type = "BUT_THEREFORE_STORY_FAILED"
+                    but_therefore_story_log_status = "failed"
+
+                _safe_log_decision(
+                    job=job,
+                    export_dir=export_dir,
+                    phase="2B-42",
+                    event_type=but_therefore_story_event_type,
+                    action="but_therefore_story_review_only",
+                    status=but_therefore_story_log_status,
+                    reason=getattr(
+                        but_therefore_story_report,
+                        "recommendation",
+                        "review_but_therefore_story",
+                    ),
+                    details={
+                        "status": but_therefore_story_status,
+                        "total_moments": int(
+                            getattr(but_therefore_story_report, "total_moments", 0)
+                            or 0
+                        ),
+                        "but_count": int(
+                            getattr(but_therefore_story_report, "but_count", 0)
+                            or 0
+                        ),
+                        "therefore_count": int(
+                            getattr(but_therefore_story_report, "therefore_count", 0)
+                            or 0
+                        ),
+                        "and_count": int(
+                            getattr(but_therefore_story_report, "and_count", 0)
+                            or 0
+                        ),
+                        "reaction_count": int(
+                            getattr(but_therefore_story_report, "reaction_count", 0)
+                            or 0
+                        ),
+                        "payoff_count": int(
+                            getattr(but_therefore_story_report, "payoff_count", 0)
+                            or 0
+                        ),
+                        "strong_story_count": int(
+                            getattr(
+                                but_therefore_story_report,
+                                "strong_story_count",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "but_therefore_ratio": float(
+                            getattr(
+                                but_therefore_story_report,
+                                "but_therefore_ratio",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "story_flow_score": float(
+                            getattr(
+                                but_therefore_story_report,
+                                "story_flow_score",
+                                0.0,
+                            )
+                            or 0.0
+                        ),
+                        "and_streak_max": int(
+                            getattr(
+                                but_therefore_story_report,
+                                "and_streak_max",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "orphan_reaction_count": int(
+                            getattr(
+                                but_therefore_story_report,
+                                "orphan_reaction_count",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "missing_payoff_count": int(
+                            getattr(
+                                but_therefore_story_report,
+                                "missing_payoff_count",
+                                0,
+                            )
+                            or 0
+                        ),
+                        "review_required": True,
+                        "can_apply_story_changes": False,
+                        "can_remove_and_moments": False,
+                        "can_reorder_timeline": False,
+                        "can_trim": False,
+                        "can_extend": False,
+                        "can_render": False,
+                        "blocking_reasons": list(
+                            getattr(
+                                but_therefore_story_report,
+                                "blocking_reasons",
+                                [],
+                            )
+                            or []
+                        ),
+                        "warnings": list(
+                            getattr(
+                                but_therefore_story_report,
+                                "warnings",
+                                [],
+                            )
+                            or []
+                        ),
+                        "block": "block7_story_pacing",
+                        "review_only": True,
+                        "but_therefore_story_only": True,
+                        "media_unchanged": True,
+                        "no_execution_in_2b_42": True,
+                        "no_render_in_2b_42": True,
+                        "no_timeline_reorder_in_2b_42": True,
+                        "no_story_apply_in_2b_42": True,
+                        "no_and_moment_remove_in_2b_42": True,
+                    },
+                )
+
+                persist_job_state_checkpoint(
+                    job=job,
+                    export_dir=export_dir,
+                    step_name="but_therefore_story_engine_done",
+                    reason=getattr(
+                        but_therefore_story_report,
+                        "recommendation",
+                        "review_but_therefore_story",
+                    ),
+                )
+
             except Exception as pattern_interrupt_exc:
                 job.pattern_interrupt_status = "failed"
                 job.pattern_interrupt_report = {

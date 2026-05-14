@@ -61,6 +61,9 @@ from core.pattern_interrupt_signal_adapter import (
 from core.reaction_shot_placement_signal_adapter import (
     adapt_reaction_shot_placement_report_to_signals,
 )
+from core.but_therefore_story_signal_adapter import (
+    adapt_but_therefore_story_report_to_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -96,6 +99,7 @@ SOURCE_EMOTIONAL_ARC = "emotional_arc"
 SOURCE_DYNAMIC_PACING = "dynamic_pacing"
 SOURCE_PATTERN_INTERRUPT = "pattern_interrupt"
 SOURCE_REACTION_SHOT_PLACEMENT = "reaction_shot_placement"
+SOURCE_BUT_THEREFORE_STORY = "but_therefore_story"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1350,6 +1354,38 @@ def build_unified_edit_signal_result(
                 raw_signals.append(normalized)
     else:
         warnings.append(f"no_signals_from_{SOURCE_REACTION_SHOT_PLACEMENT}")
+
+    but_therefore_story_report = _job_attr(
+        job,
+        "but_therefore_story_report",
+    )
+    if not but_therefore_story_report:
+        but_therefore_story_report = _job_attr(
+            job,
+            "but_therefore_story",
+        )
+
+    but_therefore_story_signals = _safe_collect(
+        lambda: adapt_but_therefore_story_report_to_signals(
+            but_therefore_story_report,
+        ),
+        label=SOURCE_BUT_THEREFORE_STORY,
+        warnings=warnings,
+        errors=errors,
+    )
+    if but_therefore_story_signals:
+        source_counts[SOURCE_BUT_THEREFORE_STORY] = len(
+            but_therefore_story_signals
+        )
+        for signal in but_therefore_story_signals:
+            normalized = _normalize_signal(
+                signal,
+                SOURCE_BUT_THEREFORE_STORY,
+            )
+            if normalized is not None:
+                raw_signals.append(normalized)
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_BUT_THEREFORE_STORY}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

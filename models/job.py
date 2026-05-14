@@ -459,6 +459,35 @@ class Job:
     reaction_shot_warnings: list[str] = field(default_factory=list)
     reaction_shot_recommendation: str | None = None
 
+    but_therefore_story_report: dict[str, Any] = field(default_factory=dict)
+    but_therefore_story: dict[str, Any] = field(default_factory=dict)
+    but_therefore_story_status: str | None = None
+    story_moments: list[dict[str, Any]] = field(default_factory=list)
+    story_transitions: list[dict[str, Any]] = field(default_factory=list)
+    story_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    story_total_moments: int = 0
+    story_but_count: int = 0
+    story_therefore_count: int = 0
+    story_and_count: int = 0
+    story_reaction_count: int = 0
+    story_payoff_count: int = 0
+    story_strong_count: int = 0
+    story_but_therefore_ratio: float = 0.0
+    story_flow_score: float = 0.0
+    story_and_streak_max: int = 0
+    story_orphan_reaction_count: int = 0
+    story_missing_payoff_count: int = 0
+    story_review_required: bool = True
+    story_can_apply_changes: bool = False
+    story_can_remove_and_moments: bool = False
+    story_can_reorder_timeline: bool = False
+    story_can_trim: bool = False
+    story_can_extend: bool = False
+    story_can_render: bool = False
+    story_blocking_reasons: list[str] = field(default_factory=list)
+    story_warnings: list[str] = field(default_factory=list)
+    story_recommendation: str | None = None
+
     silence_detection_report: dict[str, Any] = field(default_factory=dict)
     silence_detection_result: dict[str, Any] = field(default_factory=dict)
     silence_detection_status: str | None = None
@@ -1315,6 +1344,50 @@ class Job:
             reaction_shot_recommendation=data.get(
                 "reaction_shot_recommendation"
             ),
+            but_therefore_story_report=dict(
+                data.get("but_therefore_story_report") or {}
+            ),
+            but_therefore_story=dict(
+                data.get("but_therefore_story") or {}
+            ),
+            but_therefore_story_status=data.get(
+                "but_therefore_story_status"
+            ),
+            story_moments=list(data.get("story_moments") or []),
+            story_transitions=list(data.get("story_transitions") or []),
+            story_suggestions=list(data.get("story_suggestions") or []),
+            story_total_moments=int(data.get("story_total_moments", 0) or 0),
+            story_but_count=int(data.get("story_but_count", 0) or 0),
+            story_therefore_count=int(data.get("story_therefore_count", 0) or 0),
+            story_and_count=int(data.get("story_and_count", 0) or 0),
+            story_reaction_count=int(data.get("story_reaction_count", 0) or 0),
+            story_payoff_count=int(data.get("story_payoff_count", 0) or 0),
+            story_strong_count=int(data.get("story_strong_count", 0) or 0),
+            story_but_therefore_ratio=float(
+                data.get("story_but_therefore_ratio", 0.0) or 0.0
+            ),
+            story_flow_score=float(data.get("story_flow_score", 0.0) or 0.0),
+            story_and_streak_max=int(data.get("story_and_streak_max", 0) or 0),
+            story_orphan_reaction_count=int(
+                data.get("story_orphan_reaction_count", 0) or 0
+            ),
+            story_missing_payoff_count=int(
+                data.get("story_missing_payoff_count", 0) or 0
+            ),
+            story_review_required=bool(
+                data.get("story_review_required", True)
+            ),
+            story_can_apply_changes=False,
+            story_can_remove_and_moments=False,
+            story_can_reorder_timeline=False,
+            story_can_trim=False,
+            story_can_extend=False,
+            story_can_render=False,
+            story_blocking_reasons=list(
+                data.get("story_blocking_reasons") or []
+            ),
+            story_warnings=list(data.get("story_warnings") or []),
+            story_recommendation=data.get("story_recommendation"),
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
