@@ -203,6 +203,7 @@ from core.render_verification_contract_runner import run_render_verification_con
 from core.render_dashboard_delivery_package_runner import (
     run_render_dashboard_delivery_package,
 )
+from core.feedback_intake_runner import run_feedback_intake_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -7632,6 +7633,117 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                                 "no_ff" "mpeg_execution_in_2b_57": True,
                                 "no_ff" "probe_execution_in_2b_57": True,
                                 "no_timeline_" "apply_in_2b_57": True,
+                            },
+                        )
+
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-59",
+                            event_type="FEEDBACK_INTAKE_STARTED",
+                            action="run_feedback_intake_for_job",
+                            status="started",
+                            reason="Capture review feedback as safe job data only.",
+                            details={
+                                "phase": "2B-59",
+                                "block": "block9_learning_feedback",
+                                "feedback_intake_only": True,
+                                "review_feedback_only": True,
+                                "no_style_" "dna_update_in_2b_59": True,
+                                "no_profile_change_in_2b_59": True,
+                                "no_cutting_rule_change_in_2b_59": True,
+                                "no_timeline_modify_in_2b_59": True,
+                                "no_" "render_trigger_in_2b_59": True,
+                                "no_publish_in_2b_59": True,
+                            },
+                        )
+
+                        feedback_intake_report = run_feedback_intake_for_job(job)
+                        feedback_intake_status = str(
+                            feedback_intake_report.get("status") or ""
+                        )
+
+                        if feedback_intake_status == "feedback_intake_ready":
+                            feedback_intake_event_type = "FEEDBACK_INTAKE_READY"
+                            feedback_intake_log_status = "ready"
+                        elif feedback_intake_status == "feedback_intake_ready_with_warnings":
+                            feedback_intake_event_type = (
+                                "FEEDBACK_INTAKE_READY_WITH_WARNINGS"
+                            )
+                            feedback_intake_log_status = "ready_with_warnings"
+                        elif feedback_intake_status == "feedback_intake_waiting_for_feedback":
+                            feedback_intake_event_type = (
+                                "FEEDBACK_INTAKE_WAITING_FOR_FEEDBACK"
+                            )
+                            feedback_intake_log_status = "waiting_for_feedback"
+                        elif feedback_intake_status == "feedback_intake_blocked":
+                            feedback_intake_event_type = "FEEDBACK_INTAKE_BLOCKED"
+                            feedback_intake_log_status = "blocked"
+                        else:
+                            feedback_intake_event_type = "FEEDBACK_INTAKE_FAILED"
+                            feedback_intake_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-59",
+                            event_type=feedback_intake_event_type,
+                            action="run_feedback_intake_for_job",
+                            status=feedback_intake_log_status,
+                            reason=(
+                                feedback_intake_report.get("recommendation")
+                                or "review_feedback_intake"
+                            ),
+                            details={
+                                "status": feedback_intake_status,
+                                "submission_count": int(
+                                    feedback_intake_report.get("submission_count", 0)
+                                    or 0
+                                ),
+                                "timestamp_feedback_count": int(
+                                    feedback_intake_report.get(
+                                        "timestamp_feedback_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "positive_feedback_count": int(
+                                    feedback_intake_report.get(
+                                        "positive_feedback_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "negative_feedback_count": int(
+                                    feedback_intake_report.get(
+                                        "negative_feedback_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "neutral_feedback_count": int(
+                                    feedback_intake_report.get(
+                                        "neutral_feedback_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "ready_for_style_" "dna_update": bool(
+                                    feedback_intake_report.get(
+                                        "ready_for_style_" "dna_update"
+                                    )
+                                ),
+                                "can_update_style_" "dna": False,
+                                "can_change_profile": False,
+                                "can_change_cutting_rules": False,
+                                "can_modify_timeline": False,
+                                "can_" "trigger_render": False,
+                                "can_publish": False,
+                                "phase": "2B-59",
+                                "block": "block9_learning_feedback",
+                                "feedback_intake_only": True,
+                                "review_feedback_only": True,
                             },
                         )
 

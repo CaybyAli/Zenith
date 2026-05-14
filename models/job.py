@@ -816,6 +816,37 @@ class Job:
     render_dashboard_delivery_blocking_reasons: list[str] = field(default_factory=list)
     render_dashboard_delivery_recommendation: str | None = None
 
+    feedback_intake_report: dict[str, Any] = field(default_factory=dict)
+    feedback_intake_status: str | None = None
+    feedback_submissions: list[dict[str, Any]] = field(default_factory=list)
+    feedback_submission_count: int = 0
+    feedback_timestamp_feedback_count: int = 0
+    feedback_positive_feedback_count: int = 0
+    feedback_negative_feedback_count: int = 0
+    feedback_neutral_feedback_count: int = 0
+    feedback_average_video_score: float | None = None
+    feedback_tags_summary: dict[str, int] = field(default_factory=dict)
+    feedback_category_summary: dict[str, int] = field(default_factory=dict)
+    feedback_review_required: bool = True
+    feedback_ready_for_style_dna_update: bool = False
+    feedback_can_update_style_dna: bool = False
+    feedback_can_change_profile: bool = False
+    feedback_can_change_cutting_rules: bool = False
+    feedback_can_modify_timeline: bool = False
+    feedback_can_trigger_render: bool = False
+    feedback_can_publish: bool = False
+    feedback_warnings: list[str] = field(default_factory=list)
+    feedback_blocking_reasons: list[str] = field(default_factory=list)
+    feedback_recommendation: str | None = None
+
+    feedback_submission: dict[str, Any] = field(default_factory=dict)
+    feedback_video_score: float | None = None
+    feedback_comment: str | None = None
+    feedback_timestamp_items: list[dict[str, Any]] = field(default_factory=list)
+    feedback_tags: list[str] = field(default_factory=list)
+    feedback_submitted_by: str | None = None
+    feedback_submitted_at: str | None = None
+
     output_preset_requested: str | None = None
     output_platform_requested: str | None = None
     output_resolution_requested: str | None = None
@@ -2305,6 +2336,63 @@ class Job:
             render_dashboard_delivery_recommendation=data.get(
                 "render_dashboard_delivery_recommendation"
             ),
+
+            feedback_intake_report=dict(data.get("feedback_intake_report") or {}),
+            feedback_intake_status=data.get("feedback_intake_status"),
+            feedback_submissions=list(data.get("feedback_submissions") or []),
+            feedback_submission_count=int(
+                data.get("feedback_submission_count", 0) or 0
+            ),
+            feedback_timestamp_feedback_count=int(
+                data.get("feedback_timestamp_feedback_count", 0) or 0
+            ),
+            feedback_positive_feedback_count=int(
+                data.get("feedback_positive_feedback_count", 0) or 0
+            ),
+            feedback_negative_feedback_count=int(
+                data.get("feedback_negative_feedback_count", 0) or 0
+            ),
+            feedback_neutral_feedback_count=int(
+                data.get("feedback_neutral_feedback_count", 0) or 0
+            ),
+            feedback_average_video_score=(
+                float(data["feedback_average_video_score"])
+                if data.get("feedback_average_video_score") is not None
+                else None
+            ),
+            feedback_tags_summary=dict(data.get("feedback_tags_summary") or {}),
+            feedback_category_summary=dict(data.get("feedback_category_summary") or {}),
+            feedback_review_required=bool(
+                data.get("feedback_review_required", True)
+            ),
+            feedback_ready_for_style_dna_update=bool(
+                data.get("feedback_ready_for_style_dna_update", False)
+            ),
+            feedback_can_update_style_dna=False,
+            feedback_can_change_profile=False,
+            feedback_can_change_cutting_rules=False,
+            feedback_can_modify_timeline=False,
+            feedback_can_trigger_render=False,
+            feedback_can_publish=False,
+            feedback_warnings=list(data.get("feedback_warnings") or []),
+            feedback_blocking_reasons=list(
+                data.get("feedback_blocking_reasons") or []
+            ),
+            feedback_recommendation=data.get("feedback_recommendation"),
+
+            feedback_submission=dict(data.get("feedback_submission") or {}),
+            feedback_video_score=(
+                float(data["feedback_video_score"])
+                if data.get("feedback_video_score") is not None
+                else None
+            ),
+            feedback_comment=data.get("feedback_comment"),
+            feedback_timestamp_items=list(
+                data.get("feedback_timestamp_items") or []
+            ),
+            feedback_tags=list(data.get("feedback_tags") or []),
+            feedback_submitted_by=data.get("feedback_submitted_by"),
+            feedback_submitted_at=data.get("feedback_submitted_at"),
 
             output_preset_requested=data.get("output_preset_requested"),
             output_platform_requested=data.get("output_platform_requested"),

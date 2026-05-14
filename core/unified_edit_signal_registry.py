@@ -113,6 +113,7 @@ from core.render_verification_contract_signal_adapter import (
 from core.render_dashboard_delivery_package_signal_adapter import (
     build_render_dashboard_delivery_package_signals,
 )
+from core.feedback_intake_signal_adapter import build_feedback_intake_signals
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -160,6 +161,7 @@ SOURCE_CONTROLLED_FF_EXECUTION = "controlled_" "ff" "mpeg_execution"
 SOURCE_OUTPUT_FORMAT_CONTRACT = "output_format_contract"
 SOURCE_RENDER_VERIFICATION_CONTRACT = "render_verification_contract"
 SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE = "render_dashboard_delivery_package"
+SOURCE_FEEDBACK_INTAKE = "feedback_intake"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1820,6 +1822,26 @@ def build_unified_edit_signal_result(
             )
     else:
         warnings.append(f"no_signals_from_{SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE}")
+
+    feedback_intake_report = _job_attr(job, "feedback_intake_report")
+
+    if feedback_intake_report:
+        feedback_intake_signals = _safe_collect(
+            lambda: {"signals": build_feedback_intake_signals(job)},
+            label=SOURCE_FEEDBACK_INTAKE,
+            warnings=warnings,
+            errors=errors,
+        )
+        if feedback_intake_signals:
+            source_counts[SOURCE_FEEDBACK_INTAKE] = len(feedback_intake_signals)
+            for signal in feedback_intake_signals:
+                normalized = _normalize_signal(signal, SOURCE_FEEDBACK_INTAKE)
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(f"no_signals_from_{SOURCE_FEEDBACK_INTAKE}")
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_FEEDBACK_INTAKE}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
