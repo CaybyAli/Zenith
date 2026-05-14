@@ -167,6 +167,7 @@ from core.but_therefore_story_runner import (
     store_but_therefore_story_run_report_to_job,
 )
 from core.final_quality_validator_runner import run_final_quality_validator
+from core.render_readiness_guard_runner import run_render_readiness_guard
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6092,6 +6093,186 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             "review_final_quality",
                         ),
                     )
+
+                    try:
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-45",
+                            event_type="RENDER_READINESS_GUARD_STARTED",
+                            action="run_render_readiness_guard",
+                            status="started",
+                            reason="Check whether the job is ready for the next render stage without rendering.",
+                            details={
+                                "phase": "2B-45",
+                                "block": "block8_render_export",
+                                "render_readiness_guard_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_45": True,
+                                "no_render_in_2b_45": True,
+                                "no_ff" "mpeg_in_2b_45": True,
+                                "no_media_write_in_2b_45": True,
+                                "no_timeline_" "apply_" "in_2b_45": True,
+                            },
+                        )
+
+                        render_readiness_report = run_render_readiness_guard(job)
+                        render_readiness_status = str(
+                            render_readiness_report.get("status", "") or ""
+                        )
+
+                        if render_readiness_status == "render_readiness_ready":
+                            render_readiness_event_type = "RENDER_READINESS_READY"
+                            render_readiness_log_status = "ready_for_next_stage"
+                        elif render_readiness_status == "render_readiness_ready_with_warnings":
+                            render_readiness_event_type = "RENDER_READINESS_READY_WITH_WARNINGS"
+                            render_readiness_log_status = "ready_with_warnings"
+                        elif render_readiness_status == "render_readiness_blocked":
+                            render_readiness_event_type = "RENDER_READINESS_BLOCKED"
+                            render_readiness_log_status = "blocked"
+                        else:
+                            render_readiness_event_type = "RENDER_READINESS_FAILED"
+                            render_readiness_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-45",
+                            event_type=render_readiness_event_type,
+                            action="render_readiness_guard_only",
+                            status=render_readiness_log_status,
+                            reason=render_readiness_report.get(
+                                "recommendation",
+                                "review_render_readiness",
+                            ),
+                            details={
+                                "status": render_readiness_status,
+                                "total_checks": int(
+                                    render_readiness_report.get("total_checks", 0) or 0
+                                ),
+                                "passed_count": int(
+                                    render_readiness_report.get("passed_count", 0) or 0
+                                ),
+                                "warning_count": int(
+                                    render_readiness_report.get("warning_count", 0) or 0
+                                ),
+                                "blocking_count": int(
+                                    render_readiness_report.get("blocking_count", 0) or 0
+                                ),
+                                "review_required": bool(
+                                    render_readiness_report.get("review_required", True)
+                                ),
+                                "ready_for_next_render_stage": bool(
+                                    render_readiness_report.get(
+                                        "ready_for_next_render_stage",
+                                        False,
+                                    )
+                                ),
+                                "can_start_render_pipeline": bool(
+                                    render_readiness_report.get(
+                                        "can_start_render_pipeline",
+                                        False,
+                                    )
+                                ),
+                                "can_render": False,
+                                "can_run_" "ff" "mpeg": False,
+                                "can_execute_media_operations": False,
+                                "can_" "apply_" "timeline": False,
+                                "can_modify_media": False,
+                                "blocking_reasons": list(
+                                    render_readiness_report.get("blocking_reasons") or []
+                                ),
+                                "warnings": list(
+                                    render_readiness_report.get("warnings") or []
+                                ),
+                                "phase": "2B-45",
+                                "block": "block8_render_export",
+                                "render_readiness_guard_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_45": True,
+                                "no_render_in_2b_45": True,
+                                "no_ff" "mpeg_in_2b_45": True,
+                                "no_media_write_in_2b_45": True,
+                                "no_timeline_" "apply_" "in_2b_45": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="render_readiness_guard_done",
+                            reason=render_readiness_report.get(
+                                "recommendation",
+                                "review_render_readiness",
+                            ),
+                        )
+
+                    except Exception as render_readiness_exc:
+                        job.render_readiness_status = "render_readiness_failed"
+                        job.render_readiness_guard_report = {
+                            "status": "render_readiness_failed",
+                            "checks": [],
+                            "total_checks": 0,
+                            "passed_count": 0,
+                            "warning_count": 0,
+                            "blocking_count": 1,
+                            "review_required": True,
+                            "ready_for_next_render_stage": False,
+                            "can_start_render_pipeline": False,
+                            "can_render": False,
+                            "can_run_" "ff" "mpeg": False,
+                            "can_execute_media_operations": False,
+                            "can_" "apply_" "timeline": False,
+                            "can_modify_media": False,
+                            "warnings": [str(render_readiness_exc)],
+                            "blocking_reasons": [str(render_readiness_exc)],
+                            "recommendation": "review_render_readiness",
+                            "metadata": {
+                                "phase": "2B-45",
+                                "block": "block8_render_export",
+                                "render_readiness_guard_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_45": True,
+                                "no_render_in_2b_45": True,
+                                "no_ff" "mpeg_in_2b_45": True,
+                                "no_media_write_in_2b_45": True,
+                                "no_timeline_" "apply_" "in_2b_45": True,
+                            },
+                        }
+                        job.render_readiness_guard = dict(job.render_readiness_guard_report)
+                        job.render_readiness_blocking_count = 1
+                        job.render_readiness_review_required = True
+                        job.render_readiness_ready_for_next_render_stage = False
+                        job.render_readiness_can_start_render_pipeline = False
+                        job.render_readiness_can_render = False
+                        setattr(job, "render_readiness_can_run_" "ff" "mpeg", False)
+                        job.render_readiness_can_execute_media_operations = False
+                        setattr(job, "render_readiness_can_" "apply_" "timeline", False)
+                        job.render_readiness_can_modify_media = False
+                        job.render_readiness_blocking_reasons = [str(render_readiness_exc)]
+                        job.render_readiness_warnings = [str(render_readiness_exc)]
+                        job.render_readiness_recommendation = "review_render_readiness"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-45",
+                            event_type="RENDER_READINESS_FAILED",
+                            action="render_readiness_guard_failed",
+                            status="failed",
+                            reason=str(render_readiness_exc),
+                            details={
+                                "phase": "2B-45",
+                                "block": "block8_render_export",
+                                "render_readiness_guard_only": True,
+                                "media_unchanged": True,
+                                "no_execution_in_2b_45": True,
+                                "no_render_in_2b_45": True,
+                                "no_ff" "mpeg_in_2b_45": True,
+                                "no_media_write_in_2b_45": True,
+                                "no_timeline_" "apply_" "in_2b_45": True,
+                            },
+                        )
 
                 except Exception as final_quality_exc:
                     job.final_quality_validation_status = "failed"

@@ -524,6 +524,26 @@ class Job:
     silence_segment_count: int = 0
     silence_total_seconds: float = 0.0
 
+    render_readiness_guard_report: dict[str, Any] = field(default_factory=dict)
+    render_readiness_guard: dict[str, Any] = field(default_factory=dict)
+    render_readiness_status: str | None = None
+    render_readiness_checks: list[dict[str, Any]] = field(default_factory=list)
+    render_readiness_total_checks: int = 0
+    render_readiness_passed_count: int = 0
+    render_readiness_warning_count: int = 0
+    render_readiness_blocking_count: int = 0
+    render_readiness_review_required: bool = True
+    render_readiness_ready_for_next_render_stage: bool = False
+    render_readiness_can_start_render_pipeline: bool = False
+    render_readiness_can_render: bool = False
+    render_readiness_can_run_ffmpeg: bool = False
+    render_readiness_can_execute_media_operations: bool = False
+    render_readiness_can_apply_timeline: bool = False
+    render_readiness_can_modify_media: bool = False
+    render_readiness_blocking_reasons: list[str] = field(default_factory=list)
+    render_readiness_warnings: list[str] = field(default_factory=list)
+    render_readiness_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1467,6 +1487,7 @@ class Job:
             ),
             final_quality_warnings=list(data.get("final_quality_warnings") or []),
             final_quality_recommendation=data.get("final_quality_recommendation"),
+
             silence_detection_report=dict(data.get("silence_detection_report") or {}),
             silence_detection_result=dict(data.get("silence_detection_result") or {}),
             silence_detection_status=data.get("silence_detection_status"),
@@ -1484,6 +1505,44 @@ class Job:
             ),
             silence_segment_count=int(data.get("silence_segment_count", 0) or 0),
             silence_total_seconds=float(data.get("silence_total_seconds", 0.0) or 0.0),
+            render_readiness_guard_report=dict(
+                data.get("render_readiness_guard_report") or {}
+            ),
+            render_readiness_guard=dict(data.get("render_readiness_guard") or {}),
+            render_readiness_status=data.get("render_readiness_status"),
+            render_readiness_checks=list(data.get("render_readiness_checks") or []),
+            render_readiness_total_checks=int(
+                data.get("render_readiness_total_checks", 0) or 0
+            ),
+            render_readiness_passed_count=int(
+                data.get("render_readiness_passed_count", 0) or 0
+            ),
+            render_readiness_warning_count=int(
+                data.get("render_readiness_warning_count", 0) or 0
+            ),
+            render_readiness_blocking_count=int(
+                data.get("render_readiness_blocking_count", 0) or 0
+            ),
+            render_readiness_review_required=bool(
+                data.get("render_readiness_review_required", True)
+            ),
+            render_readiness_ready_for_next_render_stage=bool(
+                data.get("render_readiness_ready_for_next_render_stage", False)
+            ),
+            render_readiness_can_start_render_pipeline=bool(
+                data.get("render_readiness_can_start_render_pipeline", False)
+            ),
+            render_readiness_can_render=False,
+            render_readiness_can_run_ffmpeg=False,
+            render_readiness_can_execute_media_operations=False,
+            render_readiness_can_apply_timeline=False,
+            render_readiness_can_modify_media=False,
+            render_readiness_blocking_reasons=list(
+                data.get("render_readiness_blocking_reasons") or []
+            ),
+            render_readiness_warnings=list(data.get("render_readiness_warnings") or []),
+            render_readiness_recommendation=data.get("render_readiness_recommendation"),
+
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),
             silence_classification_status=data.get("silence_classification_status"),
