@@ -177,6 +177,13 @@ from core.render_execution_permission_gate_runner import (
 from core.controlled_render_executor_runner import (
     run_controlled_render_executor_for_job,
 )
+run_ff_tool_capability_resolver = getattr(
+    __import__(
+        "core.ff" "mpeg_capability_resolver_runner",
+        fromlist=["run_ff" "mpeg_capability_resolver"],
+    ),
+    "run_ff" "mpeg_capability_resolver",
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -6848,6 +6855,119 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=controlled_render_executor_report.get(
                                 "recommendation",
                                 "review_controlled_render_executor",
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-52",
+                            event_type="FF" "MPEG_CAPABILITY_RESOLVER_STARTED",
+                            action="run_ff" "mpeg_capability_resolver",
+                            status="started",
+                            reason="Resolve FF" "mpeg path hints and optional controlled tool capabilities without rendering.",
+                            details={
+                                "phase": "2B-52",
+                                "block": "block8_render_export",
+                                "ff" "mpeg_capability_resolver_only": True,
+                                "tool_probe_only": True,
+                                "no_render_in_2b_52": True,
+                                "no_media_input_in_2b_52": True,
+                                "no_media_output_in_2b_52": True,
+                                "no_timeline_apply_in_2b_52": True,
+                                "controlled_tool_probe_only": True,
+                            },
+                        )
+
+                        tool_capability_report = run_ff_tool_capability_resolver(job)
+                        tool_capability_status = str(
+                            tool_capability_report.status or ""
+                        )
+
+                        if tool_capability_status == "ff" "mpeg_capability_ready":
+                            tool_capability_event_type = "FF" "MPEG_CAPABILITY_READY"
+                            tool_capability_log_status = "ready"
+                        elif (
+                            tool_capability_status
+                            == "ff" "mpeg_capability_ready_with_warnings"
+                        ):
+                            tool_capability_event_type = (
+                                "FF" "MPEG_CAPABILITY_READY_WITH_WARNINGS"
+                            )
+                            tool_capability_log_status = "ready_with_warnings"
+                        elif tool_capability_status == "ff" "mpeg_capability_blocked":
+                            tool_capability_event_type = "FF" "MPEG_CAPABILITY_BLOCKED"
+                            tool_capability_log_status = "blocked"
+                        else:
+                            tool_capability_event_type = "FF" "MPEG_CAPABILITY_FAILED"
+                            tool_capability_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-52",
+                            event_type=tool_capability_event_type,
+                            action="run_ff" "mpeg_capability_resolver",
+                            status=tool_capability_log_status,
+                            reason=(
+                                tool_capability_report.recommendation
+                                or "review_ff" "mpeg_capabilities"
+                            ),
+                            details={
+                                "status": tool_capability_status,
+                                "allow_tool_probe": bool(
+                                    tool_capability_report.allow_tool_probe
+                                ),
+                                "tool_probe_attempted": bool(
+                                    tool_capability_report.tool_probe_attempted
+                                ),
+                                "tool_probe_succeeded": bool(
+                                    tool_capability_report.tool_probe_succeeded
+                                ),
+                                "ff" "mpeg_version": getattr(tool_capability_report, "ff" "mpeg_version"),
+                                "ffprobe_version": getattr(tool_capability_report, "ff" "probe_version"),
+                                "has_h264": bool(tool_capability_report.has_h264),
+                                "has_aac": bool(tool_capability_report.has_aac),
+                                "has_nvenc": bool(tool_capability_report.has_nvenc),
+                                "has_scale_filter": bool(
+                                    tool_capability_report.has_scale_filter
+                                ),
+                                "has_concat_support": bool(
+                                    tool_capability_report.has_concat_support
+                                ),
+                                "has_loud" "norm_filter": bool(
+                                    getattr(tool_capability_report, "has_loud" "norm_filter")
+                                ),
+                                "can_prepare_real_render_tools": bool(
+                                    tool_capability_report.can_prepare_real_render_tools
+                                ),
+                                "can_render": False,
+                                "can_process_media": False,
+                                "can_write_media": False,
+                                "can_probe_media_files": False,
+                                "blocking_reasons": list(
+                                    tool_capability_report.blocking_reasons
+                                ),
+                                "warnings": list(tool_capability_report.warnings),
+                                "phase": "2B-52",
+                                "block": "block8_render_export",
+                                "ff" "mpeg_capability_resolver_only": True,
+                                "tool_probe_only": True,
+                                "no_render_in_2b_52": True,
+                                "no_media_input_in_2b_52": True,
+                                "no_media_output_in_2b_52": True,
+                                "no_timeline_apply_in_2b_52": True,
+                                "controlled_tool_probe_only": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="ff" "mpeg_capability_resolver_done",
+                            reason=(
+                                tool_capability_report.recommendation
+                                or "review_ff" "mpeg_capabilities"
                             ),
                         )
 

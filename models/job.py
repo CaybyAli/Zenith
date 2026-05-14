@@ -667,6 +667,32 @@ class Job:
     controlled_render_warnings: list[str] = field(default_factory=list)
     controlled_render_recommendation: str | None = None
 
+    ffmpeg_capability_resolver_report: dict[str, Any] = field(default_factory=dict)
+    ffmpeg_capability_status: str | None = None
+    ffmpeg_path_hint: str | None = None
+    ffprobe_path_hint: str | None = None
+    ffmpeg_resolver_allow_tool_probe: bool = False
+    ffmpeg_expected_path: str | None = None
+    ffmpeg_tool_probe_attempted: bool = False
+    ffmpeg_tool_probe_succeeded: bool = False
+    ffmpeg_version: str | None = None
+    ffprobe_version: str | None = None
+    ffmpeg_capabilities: list[dict[str, Any]] = field(default_factory=list)
+    ffmpeg_has_h264: bool = False
+    ffmpeg_has_aac: bool = False
+    ffmpeg_has_nvenc: bool = False
+    ffmpeg_has_scale_filter: bool = False
+    ffmpeg_has_concat_support: bool = False
+    ffmpeg_has_loudnorm_filter: bool = False
+    ffmpeg_can_prepare_real_render_tools: bool = False
+    ffmpeg_can_render: bool = False
+    ffmpeg_can_process_media: bool = False
+    ffmpeg_can_write_media: bool = False
+    ffmpeg_can_probe_media_files: bool = False
+    ffmpeg_blocking_reasons: list[str] = field(default_factory=list)
+    ffmpeg_warnings: list[str] = field(default_factory=list)
+    ffmpeg_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1838,6 +1864,48 @@ class Job:
             ),
             controlled_render_warnings=list(data.get("controlled_render_warnings") or []),
             controlled_render_recommendation=data.get("controlled_render_recommendation"),
+
+            ffmpeg_capability_resolver_report=dict(
+                data.get("ffmpeg_capability_resolver_report") or {}
+            ),
+            ffmpeg_capability_status=data.get("ffmpeg_capability_status"),
+            ffmpeg_path_hint=data.get("ffmpeg_path_hint"),
+            ffprobe_path_hint=data.get("ffprobe_path_hint"),
+            ffmpeg_resolver_allow_tool_probe=bool(
+                data.get("ffmpeg_resolver_allow_tool_probe", False)
+            ),
+            ffmpeg_expected_path=data.get("ffmpeg_expected_path"),
+            ffmpeg_tool_probe_attempted=bool(
+                data.get("ffmpeg_tool_probe_attempted", False)
+            ),
+            ffmpeg_tool_probe_succeeded=bool(
+                data.get("ffmpeg_tool_probe_succeeded", False)
+            ),
+            ffmpeg_version=data.get("ffmpeg_version"),
+            ffprobe_version=data.get("ffprobe_version"),
+            ffmpeg_capabilities=list(data.get("ffmpeg_capabilities") or []),
+            ffmpeg_has_h264=bool(data.get("ffmpeg_has_h264", False)),
+            ffmpeg_has_aac=bool(data.get("ffmpeg_has_aac", False)),
+            ffmpeg_has_nvenc=bool(data.get("ffmpeg_has_nvenc", False)),
+            ffmpeg_has_scale_filter=bool(
+                data.get("ffmpeg_has_scale_filter", False)
+            ),
+            ffmpeg_has_concat_support=bool(
+                data.get("ffmpeg_has_concat_support", False)
+            ),
+            ffmpeg_has_loudnorm_filter=bool(
+                data.get("ffmpeg_has_loudnorm_filter", False)
+            ),
+            ffmpeg_can_prepare_real_render_tools=bool(
+                data.get("ffmpeg_can_prepare_real_render_tools", False)
+            ),
+            ffmpeg_can_render=False,
+            ffmpeg_can_process_media=False,
+            ffmpeg_can_write_media=False,
+            ffmpeg_can_probe_media_files=False,
+            ffmpeg_blocking_reasons=list(data.get("ffmpeg_blocking_reasons") or []),
+            ffmpeg_warnings=list(data.get("ffmpeg_warnings") or []),
+            ffmpeg_recommendation=data.get("ffmpeg_recommendation"),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),

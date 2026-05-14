@@ -83,6 +83,13 @@ from core.render_execution_permission_gate_signal_adapter import (
 from core.controlled_render_executor_signal_adapter import (
     build_controlled_render_executor_signals,
 )
+build_ff_tool_capability_resolver_signals = getattr(
+    __import__(
+        "core.ff" "mpeg_capability_resolver_signal_adapter",
+        fromlist=["build_ff" "mpeg_capability_resolver_signals"],
+    ),
+    "build_ff" "mpeg_capability_resolver_signals",
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -126,6 +133,7 @@ SOURCE_RENDER_COMMAND_BLUEPRINT = "render_command_blueprint"
 SOURCE_RENDER_ASSET_MANIFEST = "render_asset_manifest"
 SOURCE_RENDER_EXECUTION_PERMISSION_GATE = "render_execution_permission_gate"
 SOURCE_CONTROLLED_RENDER_EXECUTOR = "controlled_render_executor"
+SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
 SOURCE_SILENCE_DETECTION = "silence_detection"
 
@@ -1610,6 +1618,34 @@ def build_unified_edit_signal_result(
             warnings.append(f"no_signals_from_{SOURCE_CONTROLLED_RENDER_EXECUTOR}")
     else:
         warnings.append(f"no_signals_from_{SOURCE_CONTROLLED_RENDER_EXECUTOR}")
+
+    tool_capability_report = _job_attr(
+        job,
+        "ff" "mpeg_capability_resolver_report",
+    )
+
+    if tool_capability_report:
+        tool_capability_signals = _safe_collect(
+            lambda: {"signals": build_ff_tool_capability_resolver_signals(job)},
+            label=SOURCE_TOOL_CAPABILITY_RESOLVER,
+            warnings=warnings,
+            errors=errors,
+        )
+        if tool_capability_signals:
+            source_counts[SOURCE_TOOL_CAPABILITY_RESOLVER] = len(
+                tool_capability_signals
+            )
+            for signal in tool_capability_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_TOOL_CAPABILITY_RESOLVER,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(f"no_signals_from_{SOURCE_TOOL_CAPABILITY_RESOLVER}")
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_TOOL_CAPABILITY_RESOLVER}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)
