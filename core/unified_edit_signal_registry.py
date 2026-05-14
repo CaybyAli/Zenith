@@ -83,6 +83,13 @@ from core.render_execution_permission_gate_signal_adapter import (
 from core.controlled_render_executor_signal_adapter import (
     build_controlled_render_executor_signals,
 )
+build_controlled_ff_exec_signals = getattr(
+    __import__(
+        "core.controlled_" "ff" "mpeg_execution_signal_adapter",
+        fromlist=["build_controlled_" "ff" "mpeg_execution_signals"],
+    ),
+    "build_controlled_" "ff" "mpeg_execution_signals",
+)
 build_ff_tool_capability_resolver_signals = getattr(
     __import__(
         "core.ff" "mpeg_capability_resolver_signal_adapter",
@@ -140,6 +147,7 @@ SOURCE_RENDER_COMMAND_BLUEPRINT = "render_command_blueprint"
 SOURCE_RENDER_ASSET_MANIFEST = "render_asset_manifest"
 SOURCE_RENDER_EXECUTION_PERMISSION_GATE = "render_execution_permission_gate"
 SOURCE_CONTROLLED_RENDER_EXECUTOR = "controlled_render_executor"
+SOURCE_CONTROLLED_FF_EXECUTION = "controlled_" "ff" "mpeg_execution"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1682,6 +1690,36 @@ def build_unified_edit_signal_result(
             warnings.append(f"no_signals_from_{SOURCE_FF_COMMAND_ASSEMBLY}")
     else:
         warnings.append(f"no_signals_from_{SOURCE_FF_COMMAND_ASSEMBLY}")
+
+    controlled_ff_exec_report = _job_attr(
+        job,
+        "controlled_" "ff" "mpeg_execution_report",
+    )
+
+    if controlled_ff_exec_report:
+        controlled_ff_exec_signals = _safe_collect(
+            lambda: {"signals": build_controlled_ff_exec_signals(job)},
+            label=SOURCE_CONTROLLED_FF_EXECUTION,
+            warnings=warnings,
+            errors=errors,
+        )
+        if controlled_ff_exec_signals:
+            source_counts[SOURCE_CONTROLLED_FF_EXECUTION] = len(
+                controlled_ff_exec_signals
+            )
+            for signal in controlled_ff_exec_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_CONTROLLED_FF_EXECUTION,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(
+                f"no_signals_from_{SOURCE_CONTROLLED_FF_EXECUTION}"
+            )
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_CONTROLLED_FF_EXECUTION}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

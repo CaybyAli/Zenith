@@ -712,6 +712,34 @@ class Job:
     ffmpeg_command_warnings: list[str] = field(default_factory=list)
     ffmpeg_command_recommendation: str | None = None
 
+    ffmpeg_execution_requested_mode: str = "dry_run"
+    ffmpeg_execution_allow_real_render: bool = False
+    ffmpeg_execution_allow_ffmpeg_execution: bool = False
+    ffmpeg_execution_allow_process_spawn: bool = False
+    ffmpeg_execution_allow_media_write: bool = False
+    ffmpeg_execution_smoke_output_dir_hint: str | None = None
+    ffmpeg_execution_smoke_duration_seconds: float = 1.0
+
+    controlled_ffmpeg_execution_report: dict[str, Any] = field(default_factory=dict)
+    controlled_ffmpeg_execution_status: str | None = None
+    controlled_ffmpeg_execution_request: dict[str, Any] = field(default_factory=dict)
+    controlled_ffmpeg_execution_result: dict[str, Any] = field(default_factory=dict)
+    controlled_ffmpeg_dry_run_only: bool = True
+    controlled_ffmpeg_smoke_test_only: bool = True
+    controlled_ffmpeg_real_execution_requested: bool = False
+    controlled_ffmpeg_real_execution_allowed: bool = False
+    controlled_ffmpeg_real_execution_performed: bool = False
+    controlled_ffmpeg_can_execute_full_render: bool = False
+    controlled_ffmpeg_can_render_timeline: bool = False
+    controlled_ffmpeg_can_process_user_media: bool = False
+    controlled_ffmpeg_can_write_project_output: bool = False
+    controlled_ffmpeg_can_spawn_process: bool = False
+    controlled_ffmpeg_output_created: bool = False
+    controlled_ffmpeg_output_path: str | None = None
+    controlled_ffmpeg_blocking_reasons: list[str] = field(default_factory=list)
+    controlled_ffmpeg_warnings: list[str] = field(default_factory=list)
+    controlled_ffmpeg_recommendation: str | None = None
+
     silence_classification_report: dict[str, Any] = field(default_factory=dict)
     silence_classification_result: dict[str, Any] = field(default_factory=dict)
     silence_classification_status: str | None = None
@@ -1962,6 +1990,76 @@ class Job:
             ),
             ffmpeg_command_warnings=list(data.get("ffmpeg_command_warnings") or []),
             ffmpeg_command_recommendation=data.get("ffmpeg_command_recommendation"),
+
+            ffmpeg_execution_requested_mode=str(
+                data.get("ffmpeg_execution_requested_mode", "dry_run") or "dry_run"
+            ),
+            ffmpeg_execution_allow_real_render=bool(
+                data.get("ffmpeg_execution_allow_real_render", False)
+            ),
+            ffmpeg_execution_allow_ffmpeg_execution=bool(
+                data.get("ffmpeg_execution_allow_ffmpeg_execution", False)
+            ),
+            ffmpeg_execution_allow_process_spawn=bool(
+                data.get("ffmpeg_execution_allow_process_spawn", False)
+            ),
+            ffmpeg_execution_allow_media_write=bool(
+                data.get("ffmpeg_execution_allow_media_write", False)
+            ),
+            ffmpeg_execution_smoke_output_dir_hint=data.get(
+                "ffmpeg_execution_smoke_output_dir_hint"
+            ),
+            ffmpeg_execution_smoke_duration_seconds=float(
+                data.get("ffmpeg_execution_smoke_duration_seconds", 1.0) or 1.0
+            ),
+
+            controlled_ffmpeg_execution_report=dict(
+                data.get("controlled_ffmpeg_execution_report") or {}
+            ),
+            controlled_ffmpeg_execution_status=data.get(
+                "controlled_ffmpeg_execution_status"
+            ),
+            controlled_ffmpeg_execution_request=dict(
+                data.get("controlled_ffmpeg_execution_request") or {}
+            ),
+            controlled_ffmpeg_execution_result=dict(
+                data.get("controlled_ffmpeg_execution_result") or {}
+            ),
+            controlled_ffmpeg_dry_run_only=bool(
+                data.get("controlled_ffmpeg_dry_run_only", True)
+            ),
+            controlled_ffmpeg_smoke_test_only=bool(
+                data.get("controlled_ffmpeg_smoke_test_only", True)
+            ),
+            controlled_ffmpeg_real_execution_requested=bool(
+                data.get("controlled_ffmpeg_real_execution_requested", False)
+            ),
+            controlled_ffmpeg_real_execution_allowed=bool(
+                data.get("controlled_ffmpeg_real_execution_allowed", False)
+            ),
+            controlled_ffmpeg_real_execution_performed=bool(
+                data.get("controlled_ffmpeg_real_execution_performed", False)
+            ),
+            controlled_ffmpeg_can_execute_full_render=False,
+            controlled_ffmpeg_can_render_timeline=False,
+            controlled_ffmpeg_can_process_user_media=False,
+            controlled_ffmpeg_can_write_project_output=False,
+            controlled_ffmpeg_can_spawn_process=bool(
+                data.get("controlled_ffmpeg_can_spawn_process", False)
+            ),
+            controlled_ffmpeg_output_created=bool(
+                data.get("controlled_ffmpeg_output_created", False)
+            ),
+            controlled_ffmpeg_output_path=data.get("controlled_ffmpeg_output_path"),
+            controlled_ffmpeg_blocking_reasons=list(
+                data.get("controlled_ffmpeg_blocking_reasons") or []
+            ),
+            controlled_ffmpeg_warnings=list(
+                data.get("controlled_ffmpeg_warnings") or []
+            ),
+            controlled_ffmpeg_recommendation=data.get(
+                "controlled_ffmpeg_recommendation"
+            ),
 
             silence_classification_report=dict(data.get("silence_classification_report") or {}),
             silence_classification_result=dict(data.get("silence_classification_result") or {}),

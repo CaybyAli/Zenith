@@ -177,6 +177,13 @@ from core.render_execution_permission_gate_runner import (
 from core.controlled_render_executor_runner import (
     run_controlled_render_executor_for_job,
 )
+run_controlled_ff_exec_for_job = getattr(
+    __import__(
+        "core.controlled_" "ff" "mpeg_execution_runner",
+        fromlist=["run_controlled_" "ff" "mpeg_execution_for_job"],
+    ),
+    "run_controlled_" "ff" "mpeg_execution_for_job",
+)
 run_ff_tool_capability_resolver = getattr(
     __import__(
         "core.ff" "mpeg_capability_resolver_runner",
@@ -7091,6 +7098,137 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 ff_command_assembly_report.recommendation
                                 or "review_ff" "mpeg_command_assembly"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-54",
+                            event_type="CONTROLLED_FF" "MPEG_EXECUTION_STARTED",
+                            action="run_controlled_ff_exec_for_job",
+                            status="started",
+                            reason="Run controlled FF" "mpeg execution gate with dry-run default and optional smoke-test only.",
+                            details={
+                                "phase": "2B-54",
+                                "block": "block8_render_export",
+                                "controlled_" "ff" "mpeg_execution_gate": True,
+                                "default_dry_run": True,
+                                "smoke_test_only_when_explicitly_allowed": True,
+                                "no_full_render_in_2b_54": True,
+                                "no_user_media_input_in_2b_54": True,
+                                "no_project_output_in_2b_54": True,
+                                "no_timeline_apply_in_2b_54": True,
+                            },
+                        )
+
+                        controlled_ff_exec_report = (
+                            run_controlled_ff_exec_for_job(job)
+                        )
+                        controlled_ff_exec_status = str(
+                            controlled_ff_exec_report.status or ""
+                        )
+
+                        if (
+                            controlled_ff_exec_status
+                            == "controlled_" "ff" "mpeg_execution_dry_run_ready"
+                        ):
+                            controlled_ff_exec_event_type = (
+                                "CONTROLLED_FF" "MPEG_EXECUTION_DRY_RUN_READY"
+                            )
+                            controlled_ff_exec_log_status = "dry_run_ready"
+                        elif (
+                            controlled_ff_exec_status
+                            == "controlled_" "ff" "mpeg_execution_smoke_succeeded"
+                        ):
+                            controlled_ff_exec_event_type = (
+                                "CONTROLLED_FF" "MPEG_EXECUTION_SMOKE_SUCCEEDED"
+                            )
+                            controlled_ff_exec_log_status = "smoke_succeeded"
+                        elif (
+                            controlled_ff_exec_status
+                            == "controlled_" "ff" "mpeg_execution_smoke_failed"
+                        ):
+                            controlled_ff_exec_event_type = (
+                                "CONTROLLED_FF" "MPEG_EXECUTION_SMOKE_FAILED"
+                            )
+                            controlled_ff_exec_log_status = "smoke_failed"
+                        elif (
+                            controlled_ff_exec_status
+                            == "controlled_" "ff" "mpeg_execution_blocked"
+                        ):
+                            controlled_ff_exec_event_type = (
+                                "CONTROLLED_FF" "MPEG_EXECUTION_BLOCKED"
+                            )
+                            controlled_ff_exec_log_status = "blocked"
+                        else:
+                            controlled_ff_exec_event_type = (
+                                "CONTROLLED_FF" "MPEG_EXECUTION_FAILED"
+                            )
+                            controlled_ff_exec_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-54",
+                            event_type=controlled_ff_exec_event_type,
+                            action="run_controlled_ff_exec_for_job",
+                            status=controlled_ff_exec_log_status,
+                            reason=(
+                                controlled_ff_exec_report.recommendation
+                                or "review_controlled_" "ff" "mpeg_execution"
+                            ),
+                            details={
+                                "status": controlled_ff_exec_status,
+                                "dry_run_only": bool(
+                                    controlled_ff_exec_report.dry_run_only
+                                ),
+                                "smoke_test_only": True,
+                                "real_execution_requested": bool(
+                                    controlled_ff_exec_report.real_execution_requested
+                                ),
+                                "real_execution_allowed": bool(
+                                    controlled_ff_exec_report.real_execution_allowed
+                                ),
+                                "real_execution_performed": bool(
+                                    controlled_ff_exec_report.real_execution_performed
+                                ),
+                                "output_created": bool(
+                                    controlled_ff_exec_report.output_created
+                                ),
+                                "output_path": controlled_ff_exec_report.output_path,
+                                "can_execute_full_render": False,
+                                "can_render_timeline": False,
+                                "can_process_user_media": False,
+                                "can_write_project_output": False,
+                                "can_spawn_process": bool(
+                                    controlled_ff_exec_report.can_spawn_process
+                                ),
+                                "blocking_reasons": list(
+                                    controlled_ff_exec_report.blocking_reasons
+                                ),
+                                "warnings": list(
+                                    controlled_ff_exec_report.warnings
+                                ),
+                                "phase": "2B-54",
+                                "block": "block8_render_export",
+                                "controlled_" "ff" "mpeg_execution_gate": True,
+                                "default_dry_run": True,
+                                "smoke_test_only_when_explicitly_allowed": True,
+                                "no_full_render_in_2b_54": True,
+                                "no_user_media_input_in_2b_54": True,
+                                "no_project_output_in_2b_54": True,
+                                "no_timeline_apply_in_2b_54": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="controlled_" "ff" "mpeg_execution_done",
+                            reason=(
+                                controlled_ff_exec_report.recommendation
+                                or "review_controlled_" "ff" "mpeg_execution"
                             ),
                         )
 
