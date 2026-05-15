@@ -1,0 +1,10 @@
+D:\Zenith\tests\test_block8_pre_execution_safety_contract_audit_smoke.py
+D:\Zenith\tests\test_block8_render_export_registry_audit_smoke.py
+D:\Zenith\tests\test_clip_duration_signal_adapter_smoke.py
+D:\Zenith\tests\test_decision_logger_smoke.py
+D:\Zenith\tests\test_profanity_censor_runner_smoke.py
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py
+D:\Zenith\tests\test_render_verification_contract_registry_integration_smoke.py
+D:\Zenith\tests\test_rms_energy_context_adapter_smoke.py
+D:\Zenith\tests\test_screen_content_runner_smoke.py
+D:\Zenith\tests\test_timeline_approval_gate_runner_smoke.py

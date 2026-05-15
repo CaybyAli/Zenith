@@ -1,0 +1,78 @@
+
+## Step 2 Repo Inventory
+python_files=1090
+python_lines=214450
+
+## Top-level folder sizes
+core: 8.967.290 bytes
+models: 2.977.121 bytes
+tests: 627.900.279 bytes
+shared: 48.365 bytes
+storage: 11.077 bytes
+inbox: 2.744.836.705 bytes
+exports: 174.973.489 bytes
+profiles: 6.222 bytes
+data: 160.119.827 bytes
+logs: 103.565 bytes
+
+## tests inventory
+tests_py_files=446
+audit_smoke_files=105
+block_audit_files=41
+
+## block final audit files
+test_block45_content_safety_final_audit_smoke.py
+test_block6_review_timeline_final_audit_smoke.py
+test_block7_story_pacing_final_audit_smoke.py
+test_block8_pre_execution_final_audit_smoke.py
+test_block8_render_export_final_audit_smoke.py
+test_block9_learning_feedback_final_audit_smoke.py
+
+## profiles
+default.json
+gaming_main.json
+gaming_uncut.json
+reaction_uncut.json
+vlog_main.json
+vlog_uncut.json
+
+## profiles/gaming_main.json
+{
+  "profile_id": "gaming_main",
+  "channel_type": "gaming_main",
+  "display_name": "Main Channel Gaming",
+  "quality_mode": "pro",
+  "cut_aggressiveness": 0.85,
+  "dead_time_removal_strength": 0.90,
+  "speech_protection_strength": 0.85,
+  "story_context_weight": 0.70,
+  "gameplay_context_weight": 0.90,
+  "reaction_context_weight": 0.80,
+  "music_enabled": true,
+  "dynamic_zoom_allowed": true,
+  "facecam_emphasis_allowed": true,
+  "gameplay_focus_allowed": true,
+  "fixed_facecam_mode": false,
+  "subtitles_default": false,
+  "review_strictness": "strict",
+  "requires_human_approval": true,
+  "source_aspect_ratio": "32:9",
+  "target_format": "16:9",
+  "reframing_mode": "intelligent_crop",
+  "gameplay_zoom_enabled": true,
+  "gameplay_zoom_mode": "aggressive",
+  "camera_zoom_enabled": true,
+  "camera_zoom_mode": "aggressive",
+  "camera_zoom_trigger": ["reaction", "shock", "laugh", "fail"],
+  "camera_zoom_strength": 0.25,
+  "grading_strength": 0.3,
+  "min_clip_duration": 2.0,
+  "max_clip_duration": 45.0,
+  "version": "1.0.0"
+}
+
+## TODO/FIXME/XXX/NotImplementedError
+matches=3
+core\faceless_pipeline.py:9:    raise NotImplementedError(
+core\uncut_pipeline.py:9:    raise NotImplementedError(
+core\vlog_pipeline.py:11:    raise NotImplementedError(

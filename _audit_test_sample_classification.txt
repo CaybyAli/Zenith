@@ -1,0 +1,11 @@
+file,type,why
+ test_block8_pre_execution_safety_contract_audit_smoke.py,unit/static-contract,Builds in-memory dict fixtures and calls gate/executor builders; no media files; asserts dry-run flags.
+ test_block8_render_export_registry_audit_smoke.py,unit/static-contract,Reads registry source text and builds registry result from synthetic reports; no real pipeline or media.
+ test_clip_duration_signal_adapter_smoke.py,unit,Tests signal adapter mappings with synthetic dict/model data; no files except source hygiene reads.
+ test_decision_logger_smoke.py,integration-small,Writes decision logs/jsonl to tmp_path and reads them back; no pipeline/media.
+ test_profanity_censor_runner_smoke.py,unit,Uses synthetic Job/transcript data and model roundtrips; no audio/video.
+ test_profile_manager_pipeline_integration_smoke.py,integration-small,Calls profile loader/snapshot helpers and writes snapshot to tmp_path; does not run pipeline.
+ test_render_verification_contract_registry_integration_smoke.py,unit/integration-small,Combines render verification runner, signal adapter, registry using synthetic report data; no media execution.
+ test_rms_energy_context_adapter_smoke.py,unit/integration-small,Combines adapter output with silence context/classifier using synthetic RMS points; no real audio file.
+ test_screen_content_runner_smoke.py,integration-with-media-stub,Mostly monkeypatched classifier on fake mp4 placeholders; one OpenCV mini-video runner test, no pipeline.
+ test_timeline_approval_gate_runner_smoke.py,unit,Tests approval gate runner with synthetic Job/review plan state; no execution.

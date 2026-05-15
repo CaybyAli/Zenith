@@ -1,0 +1,25 @@
+
+## core/controlled_render_executor.py
+.\core\controlled_render_executor_runner.py:5:from core.controlled_render_executor import build_controlled_render_executor
+.\core\gaming_pipeline.py:177:from core.controlled_render_executor_runner import (
+.\core\unified_edit_signal_registry.py:83:from core.controlled_render_executor_signal_adapter import (
+## core/controlled_ffmpeg_execution.py
+.\core\controlled_ffmpeg_execution_runner.py:7:from core.controlled_ffmpeg_execution import (
+## core/render_dashboard_delivery_package.py
+.\core\gaming_pipeline.py:203:from core.render_dashboard_delivery_package_runner import (
+.\core\render_dashboard_delivery_package_runner.py:5:from core.render_dashboard_delivery_package_builder import (
+.\core\unified_edit_signal_registry.py:113:from core.render_dashboard_delivery_package_signal_adapter import (
+## core/style_dna_persistence_gate.py
+.\core\gaming_pipeline.py:212:from core.style_dna_persistence_gate_runner import (
+.\core\style_dna_persistence_gate_runner.py:5:from core.style_dna_persistence_gate import build_style_dna_persistence_gate_report
+.\core\unified_edit_signal_registry.py:122:from core.style_dna_persistence_gate_signal_adapter import (
+## core/learning_pattern_recognition.py
+.\core\gaming_pipeline.py:215:from core.learning_pattern_recognition_runner import (
+.\core\learning_pattern_recognition_runner.py:5:from core.learning_pattern_recognition import build_learning_pattern_recognition_report
+.\core\unified_edit_signal_registry.py:125:from core.learning_pattern_recognition_signal_adapter import (
+## core/render_verification_contract.py
+.\core\gaming_pipeline.py:202:from core.render_verification_contract_runner import run_render_verification_contract
+.\core\render_verification_contract_runner.py:5:from core.render_verification_contract import build_render_verification_contract
+.\core\unified_edit_signal_registry.py:110:from core.render_verification_contract_signal_adapter import (
+## core/ffmpeg_command_assembly.py
+.\core\ffmpeg_command_assembly_runner.py:5:from core.ffmpeg_command_assembly import build_ffmpeg_command_assembly_report
