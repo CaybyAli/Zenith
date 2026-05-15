@@ -839,6 +839,31 @@ class Job:
     feedback_blocking_reasons: list[str] = field(default_factory=list)
     feedback_recommendation: str | None = None
 
+    style_dna_feedback_update_report: dict[str, Any] = field(default_factory=dict)
+    style_dna_feedback_update_status: str | None = None
+    style_dna_update_draft: dict[str, Any] = field(default_factory=dict)
+    style_dna_update_proposals: list[dict[str, Any]] = field(default_factory=list)
+    style_dna_update_proposal_count: int = 0
+    style_dna_update_confidence: float = 0.0
+    style_dna_update_overfitting_risk: str | None = None
+    style_dna_update_ready_for_human_review: bool = False
+    style_dna_update_ready_for_later_apply: bool = False
+    style_dna_update_can_write_style_dna: bool = False
+    style_dna_update_can_update_profile: bool = False
+    style_dna_update_can_change_cutting_rules: bool = False
+    style_dna_update_can_modify_timeline: bool = False
+    style_dna_update_can_trigger_render: bool = False
+    style_dna_update_can_publish: bool = False
+    style_dna_update_warnings: list[str] = field(default_factory=list)
+    style_dna_update_blocking_reasons: list[str] = field(default_factory=list)
+    style_dna_update_recommendation: str | None = None
+
+    existing_style_dna_snapshot: dict[str, Any] = field(default_factory=dict)
+    style_dna_profile_name: str | None = None
+    style_dna_update_requested_by: str | None = None
+    style_dna_update_requested_at: str | None = None
+    style_dna_update_allow_file_write: bool = False
+
     feedback_submission: dict[str, Any] = field(default_factory=dict)
     feedback_video_score: float | None = None
     feedback_comment: str | None = None
@@ -2379,6 +2404,61 @@ class Job:
                 data.get("feedback_blocking_reasons") or []
             ),
             feedback_recommendation=data.get("feedback_recommendation"),
+
+            style_dna_feedback_update_report=dict(
+                data.get("style_dna_feedback_update_report") or {}
+            ),
+            style_dna_feedback_update_status=data.get(
+                "style_dna_feedback_update_status"
+            ),
+            style_dna_update_draft=dict(data.get("style_dna_update_draft") or {}),
+            style_dna_update_proposals=list(
+                data.get("style_dna_update_proposals") or []
+            ),
+            style_dna_update_proposal_count=int(
+                data.get("style_dna_update_proposal_count", 0) or 0
+            ),
+            style_dna_update_confidence=float(
+                data.get("style_dna_update_confidence", 0.0) or 0.0
+            ),
+            style_dna_update_overfitting_risk=data.get(
+                "style_dna_update_overfitting_risk"
+            ),
+            style_dna_update_ready_for_human_review=bool(
+                data.get("style_dna_update_ready_for_human_review", False)
+            ),
+            style_dna_update_ready_for_later_apply=bool(
+                data.get("style_dna_update_ready_for_later_apply", False)
+            ),
+            style_dna_update_can_write_style_dna=False,
+            style_dna_update_can_update_profile=False,
+            style_dna_update_can_change_cutting_rules=False,
+            style_dna_update_can_modify_timeline=False,
+            style_dna_update_can_trigger_render=False,
+            style_dna_update_can_publish=False,
+            style_dna_update_warnings=list(
+                data.get("style_dna_update_warnings") or []
+            ),
+            style_dna_update_blocking_reasons=list(
+                data.get("style_dna_update_blocking_reasons") or []
+            ),
+            style_dna_update_recommendation=data.get(
+                "style_dna_update_recommendation"
+            ),
+
+            existing_style_dna_snapshot=dict(
+                data.get("existing_style_dna_snapshot") or {}
+            ),
+            style_dna_profile_name=data.get("style_dna_profile_name"),
+            style_dna_update_requested_by=data.get(
+                "style_dna_update_requested_by"
+            ),
+            style_dna_update_requested_at=data.get(
+                "style_dna_update_requested_at"
+            ),
+            style_dna_update_allow_file_write=bool(
+                data.get("style_dna_update_allow_file_write", False)
+            ),
 
             feedback_submission=dict(data.get("feedback_submission") or {}),
             feedback_video_score=(

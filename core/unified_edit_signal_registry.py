@@ -114,6 +114,9 @@ from core.render_dashboard_delivery_package_signal_adapter import (
     build_render_dashboard_delivery_package_signals,
 )
 from core.feedback_intake_signal_adapter import build_feedback_intake_signals
+from core.style_dna_feedback_updater_signal_adapter import (
+    build_style_dna_feedback_update_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -162,6 +165,7 @@ SOURCE_OUTPUT_FORMAT_CONTRACT = "output_format_contract"
 SOURCE_RENDER_VERIFICATION_CONTRACT = "render_verification_contract"
 SOURCE_RENDER_DASHBOARD_DELIVERY_PACKAGE = "render_dashboard_delivery_package"
 SOURCE_FEEDBACK_INTAKE = "feedback_intake"
+SOURCE_STYLE_DNA_FEEDBACK_UPDATE = "style_dna_feedback_update"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1842,6 +1846,34 @@ def build_unified_edit_signal_result(
             warnings.append(f"no_signals_from_{SOURCE_FEEDBACK_INTAKE}")
     else:
         warnings.append(f"no_signals_from_{SOURCE_FEEDBACK_INTAKE}")
+
+    style_dna_feedback_update_report = _job_attr(
+        job,
+        "style_dna_feedback_update_report",
+    )
+
+    if style_dna_feedback_update_report:
+        style_dna_feedback_update_signals = _safe_collect(
+            lambda: {"signals": build_style_dna_feedback_update_signals(job)},
+            label=SOURCE_STYLE_DNA_FEEDBACK_UPDATE,
+            warnings=warnings,
+            errors=errors,
+        )
+        if style_dna_feedback_update_signals:
+            source_counts[SOURCE_STYLE_DNA_FEEDBACK_UPDATE] = len(
+                style_dna_feedback_update_signals
+            )
+            for signal in style_dna_feedback_update_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_STYLE_DNA_FEEDBACK_UPDATE,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(f"no_signals_from_{SOURCE_STYLE_DNA_FEEDBACK_UPDATE}")
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_STYLE_DNA_FEEDBACK_UPDATE}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

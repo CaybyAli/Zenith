@@ -204,6 +204,9 @@ from core.render_dashboard_delivery_package_runner import (
     run_render_dashboard_delivery_package,
 )
 from core.feedback_intake_runner import run_feedback_intake_for_job
+from core.style_dna_feedback_updater_runner import (
+    run_style_dna_feedback_updater_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -7744,6 +7747,129 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                                 "block": "block9_learning_feedback",
                                 "feedback_intake_only": True,
                                 "review_feedback_only": True,
+                            },
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-60",
+                            event_type="STYLE_DNA_FEEDBACK_UPDATE_STARTED",
+                            action="run_style_dna_feedback_updater_for_job",
+                            status="started",
+                            reason="Build safe Style-DNA update proposal draft from feedback.",
+                            details={
+                                "phase": "2B-60",
+                                "block": "block9_learning_feedback",
+                                "style_dna_update_proposal_only": True,
+                                "style_dna_draft_only": True,
+                                "no_style_dna_file_write_in_2b_60": True,
+                                "no_profile_change_in_2b_60": True,
+                                "no_cutting_rule_activation_in_2b_60": True,
+                                "no_timeline_modify_in_2b_60": True,
+                                "no_render_trigger_in_2b_60": True,
+                                "no_publish_in_2b_60": True,
+                            },
+                        )
+
+                        style_dna_feedback_update_report = (
+                            run_style_dna_feedback_updater_for_job(job)
+                        )
+                        style_dna_feedback_update_status = str(
+                            style_dna_feedback_update_report.get("status") or ""
+                        )
+
+                        if (
+                            style_dna_feedback_update_status
+                            == "style_dna_update_draft_ready"
+                        ):
+                            style_dna_feedback_update_event_type = (
+                                "STYLE_DNA_UPDATE_DRAFT_READY"
+                            )
+                            style_dna_feedback_update_log_status = "draft_ready"
+                        elif (
+                            style_dna_feedback_update_status
+                            == "style_dna_update_draft_ready_with_warnings"
+                        ):
+                            style_dna_feedback_update_event_type = (
+                                "STYLE_DNA_UPDATE_DRAFT_READY_WITH_WARNINGS"
+                            )
+                            style_dna_feedback_update_log_status = (
+                                "draft_ready_with_warnings"
+                            )
+                        elif (
+                            style_dna_feedback_update_status
+                            == "style_dna_update_waiting_for_feedback"
+                        ):
+                            style_dna_feedback_update_event_type = (
+                                "STYLE_DNA_UPDATE_WAITING_FOR_FEEDBACK"
+                            )
+                            style_dna_feedback_update_log_status = (
+                                "waiting_for_feedback"
+                            )
+                        elif (
+                            style_dna_feedback_update_status
+                            == "style_dna_update_blocked"
+                        ):
+                            style_dna_feedback_update_event_type = (
+                                "STYLE_DNA_UPDATE_BLOCKED"
+                            )
+                            style_dna_feedback_update_log_status = "blocked"
+                        else:
+                            style_dna_feedback_update_event_type = (
+                                "STYLE_DNA_UPDATE_FAILED"
+                            )
+                            style_dna_feedback_update_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-60",
+                            event_type=style_dna_feedback_update_event_type,
+                            action="run_style_dna_feedback_updater_for_job",
+                            status=style_dna_feedback_update_log_status,
+                            reason=(
+                                style_dna_feedback_update_report.get("recommendation")
+                                or "review_style_dna_update_draft"
+                            ),
+                            details={
+                                "status": style_dna_feedback_update_status,
+                                "proposal_count": int(
+                                    style_dna_feedback_update_report.get(
+                                        "proposal_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "confidence": float(
+                                    style_dna_feedback_update_report.get(
+                                        "confidence",
+                                        0.0,
+                                    )
+                                    or 0.0
+                                ),
+                                "ready_for_human_review": bool(
+                                    style_dna_feedback_update_report.get(
+                                        "ready_for_human_review",
+                                        False,
+                                    )
+                                ),
+                                "ready_for_later_apply": bool(
+                                    style_dna_feedback_update_report.get(
+                                        "ready_for_later_apply",
+                                        False,
+                                    )
+                                ),
+                                "can_write_style_" "dna": False,
+                                "can_update_profile": False,
+                                "can_change_cutting_rules": False,
+                                "can_modify_timeline": False,
+                                "can_" "trigger_render": False,
+                                "can_publish": False,
+                                "phase": "2B-60",
+                                "block": "block9_learning_feedback",
+                                "style_dna_update_proposal_only": True,
+                                "style_dna_draft_only": True,
                             },
                         )
 
