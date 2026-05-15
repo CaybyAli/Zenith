@@ -39,7 +39,13 @@ from core.job_recovery import (
 from core.error_logger import log_error
 from core.job_log_index import update_job_log_index
 from core.render_versioning import next_render_version, versioned_final_path
-from shared.enums import ChannelType, JobStatus, Mode, TargetFormat
+from shared.enums import (
+    ChannelType,
+    JobStatus,
+    Mode,
+    TargetFormat,
+    classify_job_status_for_runner,
+)
 
 from core.gaming_pipeline import (
     run_gaming_pipeline_for_job,
@@ -349,20 +355,31 @@ def run_pending_jobs(
             if job.status == JobStatus.RENDERED:
                 transition_job_state(
                     job,
-                    JobStatus.ASSEMBLED,
+                    JobStatus.APPROVAL_PENDING,
                     module="pipeline_runner",
-                    reason="export_finished",
+                    reason="legacy_rendered_without_validation_failure",
                 )
-            else:
-                job.status = JobStatus.ASSEMBLED
+            elif job.status in {
+                JobStatus.APPROVAL_PENDING,
+                JobStatus.APPROVED,
+                JobStatus.PUBLISHED,
+                JobStatus.VALIDATION_FAILED,
+                JobStatus.FAILED,
+                JobStatus.CRASHED,
+            }:
                 job.touch()
+            else:
+                job.touch()
+
+            runner_status = classify_job_status_for_runner(job.status)
+            job_status_value = str(getattr(job.status, "value", job.status))
 
             persist_job_state_checkpoint(
                 job=job,
                 job_store=job_store,
                 export_dir=export_dir,
-                step_name="assembled",
-                reason="export_finished",
+                step_name=f"runner_{runner_status}",
+                reason=f"pipeline_finished_status_{job_status_value}",
             )
 
             recovery_report = build_recovery_report(job, export_dir=export_dir)
@@ -373,11 +390,15 @@ def run_pending_jobs(
             _write_export_job_json(job, export_dir)
 
             results.append({
-                "job_id":   job.job_id,
-                "channel":  channel,
-                "status":   "ok",
-                "pipeline": channel,
-                "result":   result,
+                "job_id":     job.job_id,
+                "channel":    channel,
+                "status":     runner_status,
+                "job_status": job_status_value,
+                "pipeline":   channel,
+                "result":     result,
+                "error":      "" if runner_status == "ok" else (
+                    getattr(job, "error_message", None) or job_status_value
+                ),
             })
 
         except NotImplementedError as exc:
@@ -398,7 +419,7 @@ def run_pending_jobs(
             })
 
         except Exception as exc:
-            job.status = JobStatus.FAILED
+            job.status = JobStatus.CRASHED
             job.error_message = str(exc)
             job.touch()
 
