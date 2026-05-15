@@ -49,10 +49,15 @@ class JobStatus(str, Enum):
     RENDERING = "rendering"
 
     RENDERED = "rendered"
+    VALIDATION_FAILED = "validation_failed"
+    APPROVAL_PENDING = "approval_pending"
+    APPROVED = "approved"
     ASSEMBLED = "assembled"
     DONE = "done"
     PUBLISHED = "published"
     FAILED = "failed"
+    CRASHED = "crashed"
+    SKIPPED = "skipped"
 
 
 class AssetType(str, Enum):
@@ -80,3 +85,48 @@ class ValidatorStatus(str, Enum):
     NOT_VALIDATED = "not_validated"
     PASSED = "passed"
     FAILED = "failed"
+
+# 2.C.1 Runner status contract
+#
+# Technical render completion alone is not a successful job.
+# Current pre-2.C.6 mode:
+# - ok: rendered + validated + Phase-2B ready, represented as APPROVAL_PENDING
+# - failed: validator/stabilization failed or Python crash
+# - skipped: nothing to process / already existing job
+#
+# After the future approval CLI, APPROVAL_PENDING can be split from final user-approved ok.
+RUNNER_OK_JOB_STATUSES = {
+    JobStatus.APPROVAL_PENDING,
+    JobStatus.APPROVED,
+    JobStatus.PUBLISHED,
+}
+
+RUNNER_FAILED_JOB_STATUSES = {
+    JobStatus.VALIDATION_FAILED,
+    JobStatus.CRASHED,
+    JobStatus.FAILED,
+}
+
+RUNNER_SKIPPED_JOB_STATUSES = {
+    JobStatus.SKIPPED,
+}
+
+
+def _job_status_value(status) -> str:
+    return str(getattr(status, "value", status))
+
+
+def classify_job_status_for_runner(status) -> str:
+    value = _job_status_value(status)
+
+    if value in {item.value for item in RUNNER_OK_JOB_STATUSES}:
+        return "ok"
+
+    if value in {item.value for item in RUNNER_SKIPPED_JOB_STATUSES}:
+        return "skip"
+
+    if value in {item.value for item in RUNNER_FAILED_JOB_STATUSES}:
+        return "error"
+
+    return "error"
+
