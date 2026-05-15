@@ -1027,6 +1027,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gaming_main",
     )
     job_state_export_dir = os.path.join("exports", str(job_state_channel), job.job_id)
+    export_dir = job_state_export_dir
 
     _safe_log_decision(
         job=job,

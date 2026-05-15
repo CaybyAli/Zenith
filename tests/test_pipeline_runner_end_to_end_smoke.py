@@ -1,0 +1,86 @@
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+
+pytestmark = pytest.mark.smoke
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _ffmpeg_exe() -> str:
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception as exc:  # pragma: no cover - depends on CI image
+        ffmpeg = shutil.which("ffmpeg")
+        if ffmpeg:
+            return ffmpeg
+        pytest.skip(f"ffmpeg unavailable for e2e smoke clip generation: {exc}")
+
+
+def _write_smoke_clip(path: Path) -> None:
+    cmd = [
+        _ffmpeg_exe(),
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc=size=160x90:rate=10",
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100",
+        "-t",
+        "5",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:v",
+        "mpeg4",
+        "-q:v",
+        "5",
+        "-c:a",
+        "aac",
+        str(path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    assert path.is_file()
+
+
+def test_pipeline_runner_e2e_smoke_does_not_raise_export_dir_unbound(
+    tmp_path: Path,
+) -> None:
+    workdir = tmp_path / "workspace"
+    workdir.mkdir()
+    shutil.copytree(REPO_ROOT / "profiles", workdir / "profiles")
+    video_path = workdir / "tmp" / "pipeline_runner_e2e_smoke.mp4"
+    video_path.parent.mkdir()
+    _write_smoke_clip(video_path)
+
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "pipeline_runner.py"), str(video_path)],
+        cwd=workdir,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    combined_output = f"{result.stdout}\n{result.stderr}"
+
+    assert "[pipeline_runner] CLI JOB" in combined_output
+    assert "[pipeline_runner] GAMING MAIN" in combined_output
+    assert "[pipeline_runner] Done" in combined_output
+    assert "UnboundLocalError" not in combined_output
+    assert "cannot access local variable 'export_dir'" not in combined_output
