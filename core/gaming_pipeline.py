@@ -17,7 +17,7 @@ import json
 import logging
 import os
 
-from shared.enums import ChannelType, JobStatus, TargetFormat
+from shared.enums import ChannelType, JobStatus, TargetFormat, ValidatorStatus
 
 from core.gaming_analyzer import GamingAnalyzer
 from core.gaming_cutter import GamingCutter
@@ -10142,14 +10142,55 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     _dynamic_plan_to_save  = dynamic_edit_plan
 
     # ------------------------------------------------------------------
-    # 12) Job-Status ist bereits Ã¼ber state transitions auf RENDERED gesetzt
+    # 12) Finaler Job-Status nach Validator/Stabilization
     # ------------------------------------------------------------------
+    _validator_status_text = str(
+        getattr(validator_result, "validator_status", "") or ""
+    ).strip().lower()
+    _validator_ok = _validator_status_text in {"passed", "ok"}
+    _phase_2b_ready = bool(
+        getattr(
+            phase_2b_stabilization_result,
+            "phase_2b_ready_to_close",
+            False,
+        )
+    )
+
+    if _validator_ok and _phase_2b_ready:
+        _final_job_status = JobStatus.APPROVAL_PENDING
+        _final_job_reason = "rendered_validated_waiting_for_approval"
+        job.validator_status = ValidatorStatus.PASSED
+        job.error_message = None
+    else:
+        _final_job_status = JobStatus.VALIDATION_FAILED
+        _final_job_reason = (
+            _validator_reason
+            if not _validator_ok
+            else "phase_2b_stabilization_not_ready"
+        )
+        job.validator_status = ValidatorStatus.FAILED
+        job.error_message = _final_job_reason
+
+    transition_job_state(
+        job,
+        _final_job_status,
+        module="gaming_pipeline",
+        reason=_final_job_reason,
+    )
+    persist_job_state_checkpoint(
+        job=job,
+        job_store=job_state_store,
+        export_dir=job_state_export_dir,
+        step_name=_final_job_status.value,
+        reason=_final_job_reason,
+    )
+
     try:
         job_repo.save_job(job=job, export_path=None, publish_package=None, shorts_paths=[])
     except Exception:
         pass  # pipeline_runner kÃ¼mmert sich ums finale Speichern
 
-    print(f"[gaming_pipeline] DONE      {job.job_id}  status=rendered")
+    print(f"[gaming_pipeline] DONE      {job.job_id}  status={_final_job_status.value}")
 
     return {
         # JSON Profile
@@ -10215,6 +10256,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "metadata":              metadata,
         # Validierung
         "validator_result":      validator_result,
+        "job_status":             getattr(job.status, "value", job.status),
+        "final_job_status":       _final_job_status.value,
         # Repo-Daten (fÃ¼r pipeline_runner zum Speichern)
         "_highlight_repo_data":  _highlight_repo_data,
         "_timeline_to_save":     _timeline_to_save,
