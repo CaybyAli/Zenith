@@ -79,3 +79,6 @@ _diag_*.py
 _repair_*.txt
 _repair_*.log
 _temp_*.py
+
+# Runtime preprocessing output
+preprocessed/
