@@ -50,12 +50,31 @@ ALLOWED_JOB_STATUS_TRANSITIONS = {
     JobStatus.RENDERING.value: {
         JobStatus.RENDERED.value,
         JobStatus.FAILED.value,
+        JobStatus.CRASHED.value,
     },
     JobStatus.RENDERED.value: {
+        JobStatus.VALIDATION_FAILED.value,
+        JobStatus.APPROVAL_PENDING.value,
         JobStatus.ASSEMBLED.value,
         JobStatus.DONE.value,
         JobStatus.PUBLISHED.value,
         JobStatus.FAILED.value,
+        JobStatus.CRASHED.value,
+    },
+    JobStatus.APPROVAL_PENDING.value: {
+        JobStatus.APPROVED.value,
+        JobStatus.PUBLISHED.value,
+        JobStatus.FAILED.value,
+        JobStatus.CRASHED.value,
+    },
+    JobStatus.APPROVED.value: {
+        JobStatus.PUBLISHED.value,
+        JobStatus.FAILED.value,
+        JobStatus.CRASHED.value,
+    },
+    JobStatus.VALIDATION_FAILED.value: {
+        JobStatus.FAILED.value,
+        JobStatus.CRASHED.value,
     },
     JobStatus.ASSEMBLED.value: {
         JobStatus.DONE.value,
