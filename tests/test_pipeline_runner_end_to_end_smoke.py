@@ -82,5 +82,12 @@ def test_pipeline_runner_e2e_smoke_does_not_raise_export_dir_unbound(
     assert "[pipeline_runner] CLI JOB" in combined_output
     assert "[pipeline_runner] GAMING MAIN" in combined_output
     assert "[pipeline_runner] Done" in combined_output
+    assert "[gaming_pipeline] VALIDATE" in combined_output
+    assert "status=failed" in combined_output
+    assert "[gaming_pipeline] DONE" in combined_output
+    assert "status=validation_failed" in combined_output
+    assert "ok=0" in combined_output
+    assert "failed=1" in combined_output
+    assert result.returncode != 0
     assert "UnboundLocalError" not in combined_output
     assert "cannot access local variable 'export_dir'" not in combined_output
