@@ -926,6 +926,39 @@ class Job:
     style_dna_persistence_blocking_reasons: list[str] = field(default_factory=list)
     style_dna_persistence_recommendation: str | None = None
 
+    learning_pattern_recognition_report: dict[str, Any] = field(default_factory=dict)
+    learning_pattern_status: str | None = None
+    learning_pattern_profile: str | None = None
+    learning_pattern_feedback_sample_count: int = 0
+    learning_pattern_trends: list[dict[str, Any]] = field(default_factory=list)
+    learning_pattern_clusters: list[dict[str, Any]] = field(default_factory=list)
+    learning_pattern_trend_count: int = 0
+    learning_pattern_cluster_count: int = 0
+    learning_pattern_top_positive_patterns: list[str] = field(default_factory=list)
+    learning_pattern_top_negative_patterns: list[str] = field(default_factory=list)
+    learning_pattern_repeated_issue_count: int = 0
+    learning_pattern_repeated_success_count: int = 0
+    learning_pattern_confidence: float = 0.0
+    learning_pattern_overfitting_risk: str | None = None
+    learning_pattern_ready_for_future_style_dna_proposal: bool = False
+    learning_pattern_can_update_style_dna: bool = False
+    learning_pattern_can_write_style_dna: bool = False
+    learning_pattern_can_change_profile: bool = False
+    learning_pattern_can_change_cutting_rules: bool = False
+    learning_pattern_can_modify_timeline: bool = False
+    learning_pattern_can_trigger_render: bool = False
+    learning_pattern_can_publish: bool = False
+    learning_pattern_warnings: list[str] = field(default_factory=list)
+    learning_pattern_blocking_reasons: list[str] = field(default_factory=list)
+    learning_pattern_recommendation: str | None = None
+
+    feedback_history_snapshot: Any = field(default_factory=dict)
+    style_dna_learning_history_snapshot: Any = field(default_factory=dict)
+    learning_pattern_min_occurrences: int = 2
+    learning_pattern_min_confidence: float = 0.50
+    learning_pattern_requested_by: str | None = None
+    learning_pattern_requested_at: str | None = None
+
     existing_style_dna_snapshot: dict[str, Any] = field(default_factory=dict)
     style_dna_profile_name: str | None = None
     style_dna_update_requested_by: str | None = None
@@ -2654,6 +2687,81 @@ class Job:
             style_dna_persistence_recommendation=data.get(
                 "style_dna_persistence_recommendation"
             ),
+
+            learning_pattern_recognition_report=dict(
+                data.get("learning_pattern_recognition_report") or {}
+            ),
+            learning_pattern_status=data.get("learning_pattern_status"),
+            learning_pattern_profile=data.get("learning_pattern_profile"),
+            learning_pattern_feedback_sample_count=int(
+                data.get("learning_pattern_feedback_sample_count", 0) or 0
+            ),
+            learning_pattern_trends=list(data.get("learning_pattern_trends") or []),
+            learning_pattern_clusters=list(data.get("learning_pattern_clusters") or []),
+            learning_pattern_trend_count=int(
+                data.get("learning_pattern_trend_count", 0) or 0
+            ),
+            learning_pattern_cluster_count=int(
+                data.get("learning_pattern_cluster_count", 0) or 0
+            ),
+            learning_pattern_top_positive_patterns=list(
+                data.get("learning_pattern_top_positive_patterns") or []
+            ),
+            learning_pattern_top_negative_patterns=list(
+                data.get("learning_pattern_top_negative_patterns") or []
+            ),
+            learning_pattern_repeated_issue_count=int(
+                data.get("learning_pattern_repeated_issue_count", 0) or 0
+            ),
+            learning_pattern_repeated_success_count=int(
+                data.get("learning_pattern_repeated_success_count", 0) or 0
+            ),
+            learning_pattern_confidence=float(
+                data.get("learning_pattern_confidence", 0.0) or 0.0
+            ),
+            learning_pattern_overfitting_risk=data.get(
+                "learning_pattern_overfitting_risk"
+            ),
+            learning_pattern_ready_for_future_style_dna_proposal=bool(
+                data.get(
+                    "learning_pattern_ready_for_future_style_dna_proposal",
+                    False,
+                )
+            ),
+            learning_pattern_can_update_style_dna=False,
+            learning_pattern_can_write_style_dna=False,
+            learning_pattern_can_change_profile=False,
+            learning_pattern_can_change_cutting_rules=False,
+            learning_pattern_can_modify_timeline=False,
+            learning_pattern_can_trigger_render=False,
+            learning_pattern_can_publish=False,
+            learning_pattern_warnings=list(data.get("learning_pattern_warnings") or []),
+            learning_pattern_blocking_reasons=list(
+                data.get("learning_pattern_blocking_reasons") or []
+            ),
+            learning_pattern_recommendation=data.get("learning_pattern_recommendation"),
+
+            feedback_history_snapshot=(
+                data.get("feedback_history_snapshot")
+                if isinstance(data.get("feedback_history_snapshot"), (dict, list))
+                else {}
+            ),
+            style_dna_learning_history_snapshot=(
+                data.get("style_dna_learning_history_snapshot")
+                if isinstance(
+                    data.get("style_dna_learning_history_snapshot"),
+                    (dict, list),
+                )
+                else {}
+            ),
+            learning_pattern_min_occurrences=int(
+                data.get("learning_pattern_min_occurrences", 2) or 2
+            ),
+            learning_pattern_min_confidence=float(
+                data.get("learning_pattern_min_confidence", 0.50) or 0.50
+            ),
+            learning_pattern_requested_by=data.get("learning_pattern_requested_by"),
+            learning_pattern_requested_at=data.get("learning_pattern_requested_at"),
 
             existing_style_dna_snapshot=dict(
                 data.get("existing_style_dna_snapshot") or {}

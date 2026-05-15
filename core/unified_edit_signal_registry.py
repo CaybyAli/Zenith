@@ -122,6 +122,9 @@ from core.style_dna_apply_plan_signal_adapter import build_style_dna_apply_plan_
 from core.style_dna_persistence_gate_signal_adapter import (
     build_style_dna_persistence_gate_signals,
 )
+from core.learning_pattern_recognition_signal_adapter import (
+    build_learning_pattern_recognition_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -174,6 +177,7 @@ SOURCE_STYLE_DNA_FEEDBACK_UPDATE = "style_dna_feedback_update"
 SOURCE_STYLE_DNA_REVIEW_GATE = "style_dna_review_gate"
 SOURCE_STYLE_DNA_APPLY_PLAN = "style_dna_apply_plan"
 SOURCE_STYLE_DNA_PERSISTENCE_GATE = "style_dna_persistence_gate"
+SOURCE_LEARNING_PATTERN_RECOGNITION = "learning_pattern_recognition"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1968,6 +1972,36 @@ def build_unified_edit_signal_result(
             )
     else:
         warnings.append(f"no_signals_from_{SOURCE_STYLE_DNA_PERSISTENCE_GATE}")
+
+    learning_pattern_recognition_report = _job_attr(
+        job,
+        "learning_pattern_recognition_report",
+    )
+
+    if learning_pattern_recognition_report:
+        learning_pattern_recognition_signals = _safe_collect(
+            lambda: {"signals": build_learning_pattern_recognition_signals(job)},
+            label=SOURCE_LEARNING_PATTERN_RECOGNITION,
+            warnings=warnings,
+            errors=errors,
+        )
+        if learning_pattern_recognition_signals:
+            source_counts[SOURCE_LEARNING_PATTERN_RECOGNITION] = len(
+                learning_pattern_recognition_signals
+            )
+            for signal in learning_pattern_recognition_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_LEARNING_PATTERN_RECOGNITION,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(
+                f"no_signals_from_{SOURCE_LEARNING_PATTERN_RECOGNITION}"
+            )
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_LEARNING_PATTERN_RECOGNITION}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

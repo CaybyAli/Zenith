@@ -212,6 +212,9 @@ from core.style_dna_apply_plan_runner import run_style_dna_apply_plan_for_job
 from core.style_dna_persistence_gate_runner import (
     run_style_dna_persistence_gate_for_job,
 )
+from core.learning_pattern_recognition_runner import (
+    run_learning_pattern_recognition_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -8291,6 +8294,152 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                                     "recommendation"
                                 )
                                 or "review_style_dna_persistence_gate"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-64",
+                            event_type="LEARNING_PATTERN_RECOGNITION_STARTED",
+                            action="run_learning_pattern_recognition_for_job",
+                            status="started",
+                            reason=(
+                                "Build Learning Pattern Recognition and Feedback "
+                                "Trend Analyzer as data only."
+                            ),
+                            details={
+                                "phase": "2B-64",
+                                "block": "block9_learning_feedback",
+                                "learning_pattern_recognition_only": True,
+                                "feedback_trend_analysis_only": True,
+                                "no_style_" "dna_file_write_in_2b_64": True,
+                                "no_profile_change_in_2b_64": True,
+                                "no_cutting_rule_activation_in_2b_64": True,
+                                "no_timeline_modify_in_2b_64": True,
+                                "no_" "render_trigger_in_2b_64": True,
+                                "no_publish_in_2b_64": True,
+                            },
+                        )
+
+                        learning_pattern_recognition_report = (
+                            run_learning_pattern_recognition_for_job(job)
+                        )
+                        learning_pattern_status = str(
+                            learning_pattern_recognition_report.get("status") or ""
+                        )
+
+                        if learning_pattern_status == "learning_pattern_ready":
+                            learning_pattern_event_type = (
+                                "LEARNING_PATTERN_RECOGNITION_READY"
+                            )
+                            learning_pattern_log_status = "ready"
+                        elif (
+                            learning_pattern_status
+                            == "learning_pattern_ready_with_warnings"
+                        ):
+                            learning_pattern_event_type = (
+                                "LEARNING_PATTERN_RECOGNITION_READY_WITH_WARNINGS"
+                            )
+                            learning_pattern_log_status = "ready_with_warnings"
+                        elif (
+                            learning_pattern_status
+                            == "learning_pattern_waiting_for_feedback"
+                        ):
+                            learning_pattern_event_type = (
+                                "LEARNING_PATTERN_RECOGNITION_WAITING_FOR_FEEDBACK"
+                            )
+                            learning_pattern_log_status = "waiting_for_feedback"
+                        elif learning_pattern_status == "learning_pattern_blocked":
+                            learning_pattern_event_type = (
+                                "LEARNING_PATTERN_RECOGNITION_BLOCKED"
+                            )
+                            learning_pattern_log_status = "blocked"
+                        else:
+                            learning_pattern_event_type = (
+                                "LEARNING_PATTERN_RECOGNITION_FAILED"
+                            )
+                            learning_pattern_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-64",
+                            event_type=learning_pattern_event_type,
+                            action="run_learning_pattern_recognition_for_job",
+                            status=learning_pattern_log_status,
+                            reason=(
+                                learning_pattern_recognition_report.get(
+                                    "recommendation"
+                                )
+                                or "review_learning_pattern_recognition"
+                            ),
+                            details={
+                                "status": learning_pattern_status,
+                                "feedback_sample_count": int(
+                                    learning_pattern_recognition_report.get(
+                                        "feedback_sample_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "trend_count": int(
+                                    learning_pattern_recognition_report.get(
+                                        "trend_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "cluster_count": int(
+                                    learning_pattern_recognition_report.get(
+                                        "cluster_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "confidence": float(
+                                    learning_pattern_recognition_report.get(
+                                        "confidence",
+                                        0.0,
+                                    )
+                                    or 0.0
+                                ),
+                                "overfitting_risk": str(
+                                    learning_pattern_recognition_report.get(
+                                        "overfitting_risk",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                "ready_for_future_style_" "dna_proposal": bool(
+                                    learning_pattern_recognition_report.get(
+                                        "ready_for_future_style_dna_proposal",
+                                        False,
+                                    )
+                                ),
+                                "can_update_style_" "dna": False,
+                                "can_write_style_" "dna": False,
+                                "can_change_profile": False,
+                                "can_change_cutting_rules": False,
+                                "can_modify_timeline": False,
+                                "can_" "trigger_render": False,
+                                "can_publish": False,
+                                "phase": "2B-64",
+                                "block": "block9_learning_feedback",
+                                "learning_pattern_recognition_only": True,
+                                "feedback_trend_analysis_only": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="learning_pattern_recognition_done",
+                            reason=(
+                                learning_pattern_recognition_report.get(
+                                    "recommendation"
+                                )
+                                or "review_learning_pattern_recognition"
                             ),
                         )
 
