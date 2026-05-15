@@ -903,6 +903,29 @@ class Job:
     style_dna_apply_blocking_reasons: list[str] = field(default_factory=list)
     style_dna_apply_recommendation: str | None = None
 
+    style_dna_persistence_gate_report: dict[str, Any] = field(default_factory=dict)
+    style_dna_persistence_gate: dict[str, Any] = field(default_factory=dict)
+    style_dna_persistence_status: str | None = None
+    style_dna_persistence_requested_status: str = "pending_write_review"
+    style_dna_persistence_approved_by: str | None = None
+    style_dna_persistence_comment: str | None = None
+    style_dna_persistence_requested_at: str | None = None
+    style_dna_persistence_write_intent: dict[str, Any] = field(default_factory=dict)
+    style_dna_persistence_write_preview_hash: str | None = None
+    style_dna_persistence_target_path_hint: str | None = None
+    style_dna_persistence_backup_required: bool = True
+    style_dna_persistence_write_permission_ready_for_future: bool = False
+    style_dna_persistence_can_write_style_dna: bool = False
+    style_dna_persistence_can_apply_style_dna: bool = False
+    style_dna_persistence_can_update_profile: bool = False
+    style_dna_persistence_can_change_cutting_rules: bool = False
+    style_dna_persistence_can_modify_timeline: bool = False
+    style_dna_persistence_can_trigger_render: bool = False
+    style_dna_persistence_can_publish: bool = False
+    style_dna_persistence_warnings: list[str] = field(default_factory=list)
+    style_dna_persistence_blocking_reasons: list[str] = field(default_factory=list)
+    style_dna_persistence_recommendation: str | None = None
+
     existing_style_dna_snapshot: dict[str, Any] = field(default_factory=dict)
     style_dna_profile_name: str | None = None
     style_dna_update_requested_by: str | None = None
@@ -2578,6 +2601,59 @@ class Job:
                 data.get("style_dna_apply_blocking_reasons") or []
             ),
             style_dna_apply_recommendation=data.get("style_dna_apply_recommendation"),
+
+            style_dna_persistence_gate_report=dict(
+                data.get("style_dna_persistence_gate_report") or {}
+            ),
+            style_dna_persistence_gate=dict(
+                data.get("style_dna_persistence_gate") or {}
+            ),
+            style_dna_persistence_status=data.get("style_dna_persistence_status"),
+            style_dna_persistence_requested_status=str(
+                data.get("style_dna_persistence_requested_status")
+                or "pending_write_review"
+            ),
+            style_dna_persistence_approved_by=data.get(
+                "style_dna_persistence_approved_by"
+            ),
+            style_dna_persistence_comment=data.get("style_dna_persistence_comment"),
+            style_dna_persistence_requested_at=data.get(
+                "style_dna_persistence_requested_at"
+            ),
+            style_dna_persistence_write_intent=dict(
+                data.get("style_dna_persistence_write_intent") or {}
+            ),
+            style_dna_persistence_write_preview_hash=data.get(
+                "style_dna_persistence_write_preview_hash"
+            ),
+            style_dna_persistence_target_path_hint=data.get(
+                "style_dna_persistence_target_path_hint"
+            ),
+            style_dna_persistence_backup_required=bool(
+                data.get("style_dna_persistence_backup_required", True)
+            ),
+            style_dna_persistence_write_permission_ready_for_future=bool(
+                data.get(
+                    "style_dna_persistence_write_permission_ready_for_future",
+                    False,
+                )
+            ),
+            style_dna_persistence_can_write_style_dna=False,
+            style_dna_persistence_can_apply_style_dna=False,
+            style_dna_persistence_can_update_profile=False,
+            style_dna_persistence_can_change_cutting_rules=False,
+            style_dna_persistence_can_modify_timeline=False,
+            style_dna_persistence_can_trigger_render=False,
+            style_dna_persistence_can_publish=False,
+            style_dna_persistence_warnings=list(
+                data.get("style_dna_persistence_warnings") or []
+            ),
+            style_dna_persistence_blocking_reasons=list(
+                data.get("style_dna_persistence_blocking_reasons") or []
+            ),
+            style_dna_persistence_recommendation=data.get(
+                "style_dna_persistence_recommendation"
+            ),
 
             existing_style_dna_snapshot=dict(
                 data.get("existing_style_dna_snapshot") or {}

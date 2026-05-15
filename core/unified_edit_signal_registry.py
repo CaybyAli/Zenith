@@ -119,6 +119,9 @@ from core.style_dna_feedback_updater_signal_adapter import (
 )
 from core.style_dna_review_gate_signal_adapter import build_style_dna_review_gate_signals
 from core.style_dna_apply_plan_signal_adapter import build_style_dna_apply_plan_signals
+from core.style_dna_persistence_gate_signal_adapter import (
+    build_style_dna_persistence_gate_signals,
+)
 from models.unified_edit_signal_result import UnifiedEditSignalResult
 
 
@@ -170,6 +173,7 @@ SOURCE_FEEDBACK_INTAKE = "feedback_intake"
 SOURCE_STYLE_DNA_FEEDBACK_UPDATE = "style_dna_feedback_update"
 SOURCE_STYLE_DNA_REVIEW_GATE = "style_dna_review_gate"
 SOURCE_STYLE_DNA_APPLY_PLAN = "style_dna_apply_plan"
+SOURCE_STYLE_DNA_PERSISTENCE_GATE = "style_dna_persistence_gate"
 SOURCE_TOOL_CAPABILITY_RESOLVER = "ff" "mpeg_capability_resolver"
 SOURCE_FF_COMMAND_ASSEMBLY = "ff" "mpeg_command_assembly"
 SOURCE_SILENCE_CLASSIFICATION = "silence_classification"
@@ -1934,6 +1938,36 @@ def build_unified_edit_signal_result(
             warnings.append(f"no_signals_from_{SOURCE_STYLE_DNA_APPLY_PLAN}")
     else:
         warnings.append(f"no_signals_from_{SOURCE_STYLE_DNA_APPLY_PLAN}")
+
+    style_dna_persistence_gate_report = _job_attr(
+        job,
+        "style_dna_persistence_gate_report",
+    )
+
+    if style_dna_persistence_gate_report:
+        style_dna_persistence_gate_signals = _safe_collect(
+            lambda: {"signals": build_style_dna_persistence_gate_signals(job)},
+            label=SOURCE_STYLE_DNA_PERSISTENCE_GATE,
+            warnings=warnings,
+            errors=errors,
+        )
+        if style_dna_persistence_gate_signals:
+            source_counts[SOURCE_STYLE_DNA_PERSISTENCE_GATE] = len(
+                style_dna_persistence_gate_signals
+            )
+            for signal in style_dna_persistence_gate_signals:
+                normalized = _normalize_signal(
+                    signal,
+                    SOURCE_STYLE_DNA_PERSISTENCE_GATE,
+                )
+                if normalized is not None:
+                    raw_signals.append(normalized)
+        else:
+            warnings.append(
+                f"no_signals_from_{SOURCE_STYLE_DNA_PERSISTENCE_GATE}"
+            )
+    else:
+        warnings.append(f"no_signals_from_{SOURCE_STYLE_DNA_PERSISTENCE_GATE}")
 
     if final_cut_list_signals:
         source_counts[SOURCE_CUT_LIST_FINALIZER] = len(final_cut_list_signals)

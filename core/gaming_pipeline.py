@@ -209,6 +209,9 @@ from core.style_dna_feedback_updater_runner import (
 )
 from core.style_dna_review_gate_runner import run_style_dna_review_gate_for_job
 from core.style_dna_apply_plan_runner import run_style_dna_apply_plan_for_job
+from core.style_dna_persistence_gate_runner import (
+    run_style_dna_persistence_gate_for_job,
+)
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -8144,6 +8147,150 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 style_dna_apply_plan_report.get("recommendation")
                                 or "review_style_dna_apply_plan"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-63",
+                            event_type="STYLE_DNA_PERSISTENCE_GATE_STARTED",
+                            action="run_style_dna_persistence_gate_for_job",
+                            status="started",
+                            reason=(
+                                "Build final human Style-DNA write permission gate "
+                                "as data only."
+                            ),
+                            details={
+                                "phase": "2B-63",
+                                "block": "block9_learning_feedback",
+                                "style_dna_persistence_gate_only": True,
+                                "final_human_write_permission_gate": True,
+                                "write_intent_only": True,
+                                "no_style_" "dna_file_write_in_2b_63": True,
+                                "no_backup_write_in_2b_63": True,
+                                "no_profile_change_in_2b_63": True,
+                                "no_cutting_rule_activation_in_2b_63": True,
+                                "no_timeline_modify_in_2b_63": True,
+                                "no_" "render_trigger_in_2b_63": True,
+                                "no_publish_in_2b_63": True,
+                            },
+                        )
+
+                        style_dna_persistence_gate_report = (
+                            run_style_dna_persistence_gate_for_job(job)
+                        )
+                        style_dna_persistence_gate_status = str(
+                            style_dna_persistence_gate_report.get("status") or ""
+                        )
+
+                        if (
+                            style_dna_persistence_gate_status
+                            == "style_dna_persistence_approved_write"
+                        ):
+                            style_dna_persistence_gate_event_type = (
+                                "STYLE_DNA_PERSISTENCE_APPROVED_WRITE"
+                            )
+                            style_dna_persistence_gate_log_status = "approved_write"
+                        elif (
+                            style_dna_persistence_gate_status
+                            == "style_dna_persistence_pending_write_review"
+                        ):
+                            style_dna_persistence_gate_event_type = (
+                                "STYLE_DNA_PERSISTENCE_PENDING_WRITE_REVIEW"
+                            )
+                            style_dna_persistence_gate_log_status = (
+                                "pending_write_review"
+                            )
+                        elif (
+                            style_dna_persistence_gate_status
+                            == "style_dna_persistence_rejected_write"
+                        ):
+                            style_dna_persistence_gate_event_type = (
+                                "STYLE_DNA_PERSISTENCE_REJECTED_WRITE"
+                            )
+                            style_dna_persistence_gate_log_status = "rejected_write"
+                        elif (
+                            style_dna_persistence_gate_status
+                            == "style_dna_persistence_needs_manual_changes"
+                        ):
+                            style_dna_persistence_gate_event_type = (
+                                "STYLE_DNA_PERSISTENCE_NEEDS_MANUAL_CHANGES"
+                            )
+                            style_dna_persistence_gate_log_status = (
+                                "needs_manual_changes"
+                            )
+                        elif (
+                            style_dna_persistence_gate_status
+                            == "style_dna_persistence_blocked"
+                        ):
+                            style_dna_persistence_gate_event_type = (
+                                "STYLE_DNA_PERSISTENCE_BLOCKED"
+                            )
+                            style_dna_persistence_gate_log_status = "blocked"
+                        else:
+                            style_dna_persistence_gate_event_type = (
+                                "STYLE_DNA_PERSISTENCE_FAILED"
+                            )
+                            style_dna_persistence_gate_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-63",
+                            event_type=style_dna_persistence_gate_event_type,
+                            action="run_style_dna_persistence_gate_for_job",
+                            status=style_dna_persistence_gate_log_status,
+                            reason=(
+                                style_dna_persistence_gate_report.get("recommendation")
+                                or "review_style_dna_persistence_gate"
+                            ),
+                            details={
+                                "status": style_dna_persistence_gate_status,
+                                "source_apply_plan_status": str(
+                                    style_dna_persistence_gate_report.get(
+                                        "source_apply_plan_status",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                "source_operation_count": int(
+                                    style_dna_persistence_gate_report.get(
+                                        "source_operation_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "write_permission_ready_for_future": bool(
+                                    style_dna_persistence_gate_report.get(
+                                        "write_permission_ready_for_future",
+                                        False,
+                                    )
+                                ),
+                                "can_write_style_" "dna": False,
+                                "can_apply_style_" "dna": False,
+                                "can_update_profile": False,
+                                "can_change_cutting_rules": False,
+                                "can_modify_timeline": False,
+                                "can_" "trigger_render": False,
+                                "can_publish": False,
+                                "phase": "2B-63",
+                                "block": "block9_learning_feedback",
+                                "style_dna_persistence_gate_only": True,
+                                "final_human_write_permission_gate": True,
+                                "write_intent_only": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="style_dna_persistence_gate_done",
+                            reason=(
+                                style_dna_persistence_gate_report.get(
+                                    "recommendation"
+                                )
+                                or "review_style_dna_persistence_gate"
                             ),
                         )
 
