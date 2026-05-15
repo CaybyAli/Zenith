@@ -858,6 +858,30 @@ class Job:
     style_dna_update_blocking_reasons: list[str] = field(default_factory=list)
     style_dna_update_recommendation: str | None = None
 
+    style_dna_review_gate_report: dict[str, Any] = field(default_factory=dict)
+    style_dna_review_gate: dict[str, Any] = field(default_factory=dict)
+    style_dna_review_status: str | None = None
+    style_dna_review_requested_status: str = "pending_review"
+    style_dna_reviewed_by: str | None = None
+    style_dna_review_comment: str | None = None
+    style_dna_review_requested_at: str | None = None
+    style_dna_review_proposal_decisions: list[dict[str, Any]] = field(default_factory=list)
+    style_dna_review_approved_proposal_count: int = 0
+    style_dna_review_rejected_proposal_count: int = 0
+    style_dna_review_needs_changes_count: int = 0
+    style_dna_review_required: bool = True
+    style_dna_review_ready_for_later_apply: bool = False
+    style_dna_review_can_apply_style_dna: bool = False
+    style_dna_review_can_write_style_dna: bool = False
+    style_dna_review_can_update_profile: bool = False
+    style_dna_review_can_change_cutting_rules: bool = False
+    style_dna_review_can_modify_timeline: bool = False
+    style_dna_review_can_trigger_render: bool = False
+    style_dna_review_can_publish: bool = False
+    style_dna_review_warnings: list[str] = field(default_factory=list)
+    style_dna_review_blocking_reasons: list[str] = field(default_factory=list)
+    style_dna_review_recommendation: str | None = None
+
     existing_style_dna_snapshot: dict[str, Any] = field(default_factory=dict)
     style_dna_profile_name: str | None = None
     style_dna_update_requested_by: str | None = None
@@ -2444,6 +2468,52 @@ class Job:
             ),
             style_dna_update_recommendation=data.get(
                 "style_dna_update_recommendation"
+            ),
+
+            style_dna_review_gate_report=dict(
+                data.get("style_dna_review_gate_report") or {}
+            ),
+            style_dna_review_gate=dict(data.get("style_dna_review_gate") or {}),
+            style_dna_review_status=data.get("style_dna_review_status"),
+            style_dna_review_requested_status=str(
+                data.get("style_dna_review_requested_status") or "pending_review"
+            ),
+            style_dna_reviewed_by=data.get("style_dna_reviewed_by"),
+            style_dna_review_comment=data.get("style_dna_review_comment"),
+            style_dna_review_requested_at=data.get("style_dna_review_requested_at"),
+            style_dna_review_proposal_decisions=list(
+                data.get("style_dna_review_proposal_decisions") or []
+            ),
+            style_dna_review_approved_proposal_count=int(
+                data.get("style_dna_review_approved_proposal_count", 0) or 0
+            ),
+            style_dna_review_rejected_proposal_count=int(
+                data.get("style_dna_review_rejected_proposal_count", 0) or 0
+            ),
+            style_dna_review_needs_changes_count=int(
+                data.get("style_dna_review_needs_changes_count", 0) or 0
+            ),
+            style_dna_review_required=bool(
+                data.get("style_dna_review_required", True)
+            ),
+            style_dna_review_ready_for_later_apply=bool(
+                data.get("style_dna_review_ready_for_later_apply", False)
+            ),
+            style_dna_review_can_apply_style_dna=False,
+            style_dna_review_can_write_style_dna=False,
+            style_dna_review_can_update_profile=False,
+            style_dna_review_can_change_cutting_rules=False,
+            style_dna_review_can_modify_timeline=False,
+            style_dna_review_can_trigger_render=False,
+            style_dna_review_can_publish=False,
+            style_dna_review_warnings=list(
+                data.get("style_dna_review_warnings") or []
+            ),
+            style_dna_review_blocking_reasons=list(
+                data.get("style_dna_review_blocking_reasons") or []
+            ),
+            style_dna_review_recommendation=data.get(
+                "style_dna_review_recommendation"
             ),
 
             existing_style_dna_snapshot=dict(

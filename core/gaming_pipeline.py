@@ -207,6 +207,7 @@ from core.feedback_intake_runner import run_feedback_intake_for_job
 from core.style_dna_feedback_updater_runner import (
     run_style_dna_feedback_updater_for_job,
 )
+from core.style_dna_review_gate_runner import run_style_dna_review_gate_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -7870,6 +7871,128 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                                 "block": "block9_learning_feedback",
                                 "style_dna_update_proposal_only": True,
                                 "style_dna_draft_only": True,
+                            },
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-61",
+                            event_type="STYLE_DNA_REVIEW_GATE_STARTED",
+                            action="run_style_dna_review_gate_for_job",
+                            status="started",
+                            reason="Review Style-DNA update draft through human approval gate only.",
+                            details={
+                                "phase": "2B-61",
+                                "block": "block9_learning_feedback",
+                                "style_dna_review_gate_only": True,
+                                "human_approval_gate_only": True,
+                                "no_style_" "dna_file_write_in_2b_61": True,
+                                "no_profile_change_in_2b_61": True,
+                                "no_cutting_rule_activation_in_2b_61": True,
+                                "no_timeline_modify_in_2b_61": True,
+                                "no_" "render_trigger_in_2b_61": True,
+                                "no_publish_in_2b_61": True,
+                            },
+                        )
+
+                        style_dna_review_gate_report = (
+                            run_style_dna_review_gate_for_job(job)
+                        )
+                        style_dna_review_gate_status = str(
+                            style_dna_review_gate_report.get("status") or ""
+                        )
+
+                        if style_dna_review_gate_status == "style_dna_review_approved":
+                            style_dna_review_gate_event_type = (
+                                "STYLE_DNA_REVIEW_APPROVED"
+                            )
+                            style_dna_review_gate_log_status = "approved"
+                        elif (
+                            style_dna_review_gate_status
+                            == "style_dna_review_rejected"
+                        ):
+                            style_dna_review_gate_event_type = (
+                                "STYLE_DNA_REVIEW_REJECTED"
+                            )
+                            style_dna_review_gate_log_status = "rejected"
+                        elif (
+                            style_dna_review_gate_status
+                            == "style_dna_review_needs_manual_changes"
+                        ):
+                            style_dna_review_gate_event_type = (
+                                "STYLE_DNA_REVIEW_NEEDS_MANUAL_CHANGES"
+                            )
+                            style_dna_review_gate_log_status = "needs_manual_changes"
+                        elif (
+                            style_dna_review_gate_status
+                            == "style_dna_review_pending_review"
+                        ):
+                            style_dna_review_gate_event_type = (
+                                "STYLE_DNA_REVIEW_PENDING_REVIEW"
+                            )
+                            style_dna_review_gate_log_status = "pending_review"
+                        elif style_dna_review_gate_status == "style_dna_review_blocked":
+                            style_dna_review_gate_event_type = (
+                                "STYLE_DNA_REVIEW_BLOCKED"
+                            )
+                            style_dna_review_gate_log_status = "blocked"
+                        else:
+                            style_dna_review_gate_event_type = (
+                                "STYLE_DNA_REVIEW_FAILED"
+                            )
+                            style_dna_review_gate_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-61",
+                            event_type=style_dna_review_gate_event_type,
+                            action="run_style_dna_review_gate_for_job",
+                            status=style_dna_review_gate_log_status,
+                            reason=(
+                                style_dna_review_gate_report.get("recommendation")
+                                or "review_style_dna_draft_approval_gate"
+                            ),
+                            details={
+                                "status": style_dna_review_gate_status,
+                                "source_update_status": str(
+                                    style_dna_review_gate_report.get(
+                                        "source_update_status",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                "source_proposal_count": int(
+                                    style_dna_review_gate_report.get(
+                                        "source_proposal_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "review_required": bool(
+                                    style_dna_review_gate_report.get(
+                                        "review_required",
+                                        True,
+                                    )
+                                ),
+                                "ready_for_later_apply": bool(
+                                    style_dna_review_gate_report.get(
+                                        "ready_for_later_apply",
+                                        False,
+                                    )
+                                ),
+                                "can_apply_style_" "dna": False,
+                                "can_write_style_" "dna": False,
+                                "can_update_profile": False,
+                                "can_change_cutting_rules": False,
+                                "can_modify_timeline": False,
+                                "can_" "trigger_render": False,
+                                "can_publish": False,
+                                "phase": "2B-61",
+                                "block": "block9_learning_feedback",
+                                "style_dna_review_gate_only": True,
+                                "human_approval_gate_only": True,
                             },
                         )
 
