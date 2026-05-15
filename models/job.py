@@ -882,11 +882,35 @@ class Job:
     style_dna_review_blocking_reasons: list[str] = field(default_factory=list)
     style_dna_review_recommendation: str | None = None
 
+    style_dna_apply_plan_report: dict[str, Any] = field(default_factory=dict)
+    style_dna_apply_plan: dict[str, Any] = field(default_factory=dict)
+    style_dna_apply_plan_status: str | None = None
+    style_dna_apply_operations: list[dict[str, Any]] = field(default_factory=list)
+    style_dna_apply_operation_count: int = 0
+    style_dna_apply_approved_operation_count: int = 0
+    style_dna_apply_skipped_operation_count: int = 0
+    style_dna_apply_before_snapshot: dict[str, Any] = field(default_factory=dict)
+    style_dna_apply_after_preview: dict[str, Any] = field(default_factory=dict)
+    style_dna_apply_ready_for_future_file_write: bool = False
+    style_dna_apply_can_write_style_dna: bool = False
+    style_dna_apply_can_apply_style_dna: bool = False
+    style_dna_apply_can_update_profile: bool = False
+    style_dna_apply_can_change_cutting_rules: bool = False
+    style_dna_apply_can_modify_timeline: bool = False
+    style_dna_apply_can_trigger_render: bool = False
+    style_dna_apply_can_publish: bool = False
+    style_dna_apply_warnings: list[str] = field(default_factory=list)
+    style_dna_apply_blocking_reasons: list[str] = field(default_factory=list)
+    style_dna_apply_recommendation: str | None = None
+
     existing_style_dna_snapshot: dict[str, Any] = field(default_factory=dict)
     style_dna_profile_name: str | None = None
     style_dna_update_requested_by: str | None = None
     style_dna_update_requested_at: str | None = None
     style_dna_update_allow_file_write: bool = False
+    style_dna_apply_requested_by: str | None = None
+    style_dna_apply_requested_at: str | None = None
+    style_dna_apply_allow_file_write: bool = False
 
     feedback_submission: dict[str, Any] = field(default_factory=dict)
     feedback_video_score: float | None = None
@@ -2516,6 +2540,45 @@ class Job:
                 "style_dna_review_recommendation"
             ),
 
+            style_dna_apply_plan_report=dict(
+                data.get("style_dna_apply_plan_report") or {}
+            ),
+            style_dna_apply_plan=dict(data.get("style_dna_apply_plan") or {}),
+            style_dna_apply_plan_status=data.get("style_dna_apply_plan_status"),
+            style_dna_apply_operations=list(
+                data.get("style_dna_apply_operations") or []
+            ),
+            style_dna_apply_operation_count=int(
+                data.get("style_dna_apply_operation_count", 0) or 0
+            ),
+            style_dna_apply_approved_operation_count=int(
+                data.get("style_dna_apply_approved_operation_count", 0) or 0
+            ),
+            style_dna_apply_skipped_operation_count=int(
+                data.get("style_dna_apply_skipped_operation_count", 0) or 0
+            ),
+            style_dna_apply_before_snapshot=dict(
+                data.get("style_dna_apply_before_snapshot") or {}
+            ),
+            style_dna_apply_after_preview=dict(
+                data.get("style_dna_apply_after_preview") or {}
+            ),
+            style_dna_apply_ready_for_future_file_write=bool(
+                data.get("style_dna_apply_ready_for_future_file_write", False)
+            ),
+            style_dna_apply_can_write_style_dna=False,
+            style_dna_apply_can_apply_style_dna=False,
+            style_dna_apply_can_update_profile=False,
+            style_dna_apply_can_change_cutting_rules=False,
+            style_dna_apply_can_modify_timeline=False,
+            style_dna_apply_can_trigger_render=False,
+            style_dna_apply_can_publish=False,
+            style_dna_apply_warnings=list(data.get("style_dna_apply_warnings") or []),
+            style_dna_apply_blocking_reasons=list(
+                data.get("style_dna_apply_blocking_reasons") or []
+            ),
+            style_dna_apply_recommendation=data.get("style_dna_apply_recommendation"),
+
             existing_style_dna_snapshot=dict(
                 data.get("existing_style_dna_snapshot") or {}
             ),
@@ -2528,6 +2591,11 @@ class Job:
             ),
             style_dna_update_allow_file_write=bool(
                 data.get("style_dna_update_allow_file_write", False)
+            ),
+            style_dna_apply_requested_by=data.get("style_dna_apply_requested_by"),
+            style_dna_apply_requested_at=data.get("style_dna_apply_requested_at"),
+            style_dna_apply_allow_file_write=bool(
+                data.get("style_dna_apply_allow_file_write", False)
             ),
 
             feedback_submission=dict(data.get("feedback_submission") or {}),

@@ -208,6 +208,7 @@ from core.style_dna_feedback_updater_runner import (
     run_style_dna_feedback_updater_for_job,
 )
 from core.style_dna_review_gate_runner import run_style_dna_review_gate_for_job
+from core.style_dna_apply_plan_runner import run_style_dna_apply_plan_for_job
 from core.audio_normalization_runner import run_audio_normalization_for_job
 from core.beat_detection_runner import run_beat_detection_for_job
 from core.scene_change_runner import (
@@ -8003,6 +8004,146 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                             reason=(
                                 render_dashboard_delivery_report.get("recommendation")
                                 or "review_render_dashboard_delivery_package"
+                            ),
+                        )
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-62",
+                            event_type="STYLE_DNA_APPLY_PLAN_STARTED",
+                            action="run_style_dna_apply_plan_for_job",
+                            status="started",
+                            reason="Build non-writing Style-DNA apply plan preview only.",
+                            details={
+                                "phase": "2B-62",
+                                "block": "block9_learning_feedback",
+                                "style_dna_apply_plan_only": True,
+                                "non_writing_apply_contract": True,
+                                "style_dna_preview_only": True,
+                                "no_style_" "dna_file_write_in_2b_62": True,
+                                "no_profile_change_in_2b_62": True,
+                                "no_cutting_rule_activation_in_2b_62": True,
+                                "no_timeline_modify_in_2b_62": True,
+                                "no_" "render_trigger_in_2b_62": True,
+                                "no_publish_in_2b_62": True,
+                            },
+                        )
+
+                        style_dna_apply_plan_report = (
+                            run_style_dna_apply_plan_for_job(job)
+                        )
+                        style_dna_apply_plan_status = str(
+                            style_dna_apply_plan_report.get("status") or ""
+                        )
+
+                        if (
+                            style_dna_apply_plan_status
+                            == "style_dna_apply_plan_ready"
+                        ):
+                            style_dna_apply_plan_event_type = (
+                                "STYLE_DNA_APPLY_PLAN_READY"
+                            )
+                            style_dna_apply_plan_log_status = "ready"
+                        elif (
+                            style_dna_apply_plan_status
+                            == "style_dna_apply_plan_ready_with_warnings"
+                        ):
+                            style_dna_apply_plan_event_type = (
+                                "STYLE_DNA_APPLY_PLAN_READY_WITH_WARNINGS"
+                            )
+                            style_dna_apply_plan_log_status = "ready_with_warnings"
+                        elif (
+                            style_dna_apply_plan_status
+                            == "style_dna_apply_plan_waiting_for_review"
+                        ):
+                            style_dna_apply_plan_event_type = (
+                                "STYLE_DNA_APPLY_PLAN_WAITING_FOR_REVIEW"
+                            )
+                            style_dna_apply_plan_log_status = "waiting_for_review"
+                        elif (
+                            style_dna_apply_plan_status
+                            == "style_dna_apply_plan_blocked"
+                        ):
+                            style_dna_apply_plan_event_type = (
+                                "STYLE_DNA_APPLY_PLAN_BLOCKED"
+                            )
+                            style_dna_apply_plan_log_status = "blocked"
+                        else:
+                            style_dna_apply_plan_event_type = (
+                                "STYLE_DNA_APPLY_PLAN_FAILED"
+                            )
+                            style_dna_apply_plan_log_status = "failed"
+
+                        _safe_log_decision(
+                            job=job,
+                            export_dir=export_dir,
+                            phase="2B-62",
+                            event_type=style_dna_apply_plan_event_type,
+                            action="run_style_dna_apply_plan_for_job",
+                            status=style_dna_apply_plan_log_status,
+                            reason=(
+                                style_dna_apply_plan_report.get("recommendation")
+                                or "review_style_dna_apply_plan"
+                            ),
+                            details={
+                                "status": style_dna_apply_plan_status,
+                                "source_review_status": str(
+                                    style_dna_apply_plan_report.get(
+                                        "source_review_status",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                "operation_count": int(
+                                    style_dna_apply_plan_report.get(
+                                        "operation_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "approved_operation_count": int(
+                                    style_dna_apply_plan_report.get(
+                                        "approved_operation_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "skipped_operation_count": int(
+                                    style_dna_apply_plan_report.get(
+                                        "skipped_operation_count",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "ready_for_future_file_write": bool(
+                                    style_dna_apply_plan_report.get(
+                                        "ready_for_future_file_write",
+                                        False,
+                                    )
+                                ),
+                                "can_write_style_" "dna": False,
+                                "can_apply_style_" "dna": False,
+                                "can_update_profile": False,
+                                "can_change_cutting_rules": False,
+                                "can_modify_timeline": False,
+                                "can_" "trigger_render": False,
+                                "can_publish": False,
+                                "phase": "2B-62",
+                                "block": "block9_learning_feedback",
+                                "style_dna_apply_plan_only": True,
+                                "non_writing_apply_contract": True,
+                                "style_dna_preview_only": True,
+                            },
+                        )
+
+                        persist_job_state_checkpoint(
+                            job=job,
+                            export_dir=export_dir,
+                            step_name="style_dna_apply_plan_done",
+                            reason=(
+                                style_dna_apply_plan_report.get("recommendation")
+                                or "review_style_dna_apply_plan"
                             ),
                         )
 
