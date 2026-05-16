@@ -244,6 +244,7 @@ from core.visual_energy_runner import (
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
+from core.render_gate import RenderGateDecision, evaluate_render_gate
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -9916,6 +9917,77 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     f"intensity={zoom.intensity:.2f}"
                 )
             print(f"[DEBUG] =====================================\n")
+
+    # ------------------------------------------------------------------
+    # 6.9) Pre-render gate (2.C.2-B)
+    # ------------------------------------------------------------------
+    render_gate_result = evaluate_render_gate(job)
+    render_gate_payload = {
+        "decision": render_gate_result.decision.value,
+        "reason": render_gate_result.reason,
+        "detail": dict(render_gate_result.detail),
+    }
+
+    if render_gate_result.decision == RenderGateDecision.BLOCKED:
+        job.status = JobStatus.RENDER_BLOCKED
+        job.error_message = f"render_gate_blocked:{render_gate_result.reason}"
+        job.touch()
+
+        persist_job_state_checkpoint(
+            job=job,
+            job_store=job_state_store,
+            export_dir=job_state_export_dir,
+            step_name="render_blocked",
+            reason=render_gate_result.reason,
+        )
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="render_gate",
+            event_type="RENDER_GATE_BLOCKED",
+            action="evaluate_render_gate",
+            status="blocked",
+            reason=render_gate_result.reason,
+            details=render_gate_payload,
+        )
+
+        print(
+            f"[gaming_pipeline] RENDER_GATE BLOCKED {job.job_id} "
+            f"reason={render_gate_result.reason}"
+        )
+        print(
+            f"[gaming_pipeline] DONE      {job.job_id}  "
+            f"status={JobStatus.RENDER_BLOCKED.value}"
+        )
+        return {
+            "job": job,
+            "final_job_status": JobStatus.RENDER_BLOCKED.value,
+            "final_video_path": None,
+            "render_gate": render_gate_payload,
+        }
+
+    if render_gate_result.reason == "auto_approve_override":
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="render_gate",
+            event_type="RENDER_GATE_OVERRIDE",
+            action="evaluate_render_gate",
+            status="pass",
+            reason=render_gate_result.reason,
+            details=render_gate_payload,
+        )
+        print(
+            f"[gaming_pipeline] RENDER_GATE OVERRIDE {job.job_id} "
+            f"reason={render_gate_result.reason} "
+            f"would_block={render_gate_result.detail.get('would_block_reason')} "
+            f"(ZENITH_RENDER_GATE_AUTO_APPROVE=1, rendering anyway)"
+        )
+    else:
+        print(
+            f"[gaming_pipeline] RENDER_GATE PASS {job.job_id} "
+            f"reason={render_gate_result.reason}"
+        )
 
     # ------------------------------------------------------------------
     # 7) Render - FinalRenderDriver wenn Timeline vorhanden,
