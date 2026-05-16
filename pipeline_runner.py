@@ -11,10 +11,14 @@ it to the correct pipeline module:
 
 Run directly:
   python pipeline_runner.py
+  python pipeline_runner.py <video>
+  python pipeline_runner.py --approve <job_id>
+  python pipeline_runner.py --list-blocked
 
 Or import run_pending_jobs() for programmatic use (e.g. from tests).
 """
 from __future__ import annotations
+import argparse
 import json
 import sys
 if hasattr(sys.stdout, "reconfigure"):
@@ -39,6 +43,7 @@ from core.job_recovery import (
 from core.error_logger import log_error
 from core.job_log_index import update_job_log_index
 from core.render_versioning import next_render_version, versioned_final_path
+from core.approval_store import write_job_approval
 from shared.enums import (
     ChannelType,
     JobStatus,
@@ -238,6 +243,7 @@ def _dispatch_pipeline(job, services: dict) -> dict:
 def run_pending_jobs(
     db_path: str = "data/jobs.json",
     input_video_path: str | None = None,
+    approved_job_id: str | None = None,
 ) -> list[dict]:
     """
     Scan the job store and process every CREATED / STORED job.
@@ -245,9 +251,43 @@ def run_pending_jobs(
     Returns a list of result dicts, one per processed job:
       {"job_id": ..., "status": "ok"|"skip"|"error", ...}
     """
+    if input_video_path and approved_job_id:
+        raise ValueError("input_video_path and approved_job_id are mutually exclusive")
+
     job_store = JobStore(db_path=db_path)
     cli_video_path: Path | None = None
-    if input_video_path:
+
+    if approved_job_id:
+        approved_job = job_store.get_job(approved_job_id)
+        channel = str(getattr(approved_job.channel_type, "value", approved_job.channel_type))
+        if not approved_job.raw_video_path:
+            raise FileNotFoundError(f"Approved job has no raw_video_path: {approved_job_id}")
+
+        raw_video_path = Path(approved_job.raw_video_path)
+        if not raw_video_path.exists() or not raw_video_path.is_file():
+            raise FileNotFoundError(f"Approved job raw video not found: {approved_job.raw_video_path}")
+
+        approval_path = write_job_approval(
+            job_id=approved_job.job_id,
+            channel=channel,
+            approved_by="cli",
+            exports_base=EXPORTS_BASE,
+        )
+        print(
+            f"[pipeline_runner] APPROVE  {approved_job.job_id}  "
+            f"path={approval_path}"
+        )
+        print(
+            f"[pipeline_runner] APPROVE RERUN  {approved_job.job_id}  "
+            f"video={approved_job.raw_video_path!r}"
+        )
+
+        approved_job.status = JobStatus.CREATED
+        approved_job.error_message = ""
+        approved_job.touch()
+        job_store.update_job(approved_job)
+
+    elif input_video_path:
         cli_video_path = Path(input_video_path)
         if not cli_video_path.exists() or not cli_video_path.is_file():
             raise FileNotFoundError(f"Input video not found: {input_video_path}")
@@ -287,7 +327,9 @@ def run_pending_jobs(
         _scan_inbox_and_create_jobs(job_store)
 
     all_jobs = job_store.list_jobs()
-    if cli_video_path is not None:
+    if approved_job_id is not None:
+        pending = [j for j in all_jobs if j.job_id == approved_job_id]
+    elif cli_video_path is not None:
         cli_normalized = str(cli_video_path.resolve())
         pending = [
             j for j in all_jobs
@@ -472,21 +514,18 @@ def run_pending_jobs(
 #  CLI entry point                                                     #
 # ------------------------------------------------------------------ #
 
-if __name__ == "__main__":
-    input_video_path = sys.argv[1] if len(sys.argv) > 1 else None
-    results = run_pending_jobs(input_video_path=input_video_path)
-
-    ok      = sum(1 for r in results if r["status"] == "ok")
+def _print_results(results: list[dict]) -> int:
+    ok = sum(1 for r in results if r["status"] == "ok")
     skipped = sum(1 for r in results if r["status"] == "skip")
-    failed  = sum(1 for r in results if r["status"] == "error")
+    failed = sum(1 for r in results if r["status"] == "error")
 
     if results:
         print(
-            f"\n[pipeline_runner] Done — ok={ok}  "
+            f"\n[pipeline_runner] Done ? ok={ok}  "
             f"skipped={skipped}  failed={failed}"
         )
         for r in results:
-            icon = {"ok": "✓", "skip": "–", "error": "✗"}.get(r["status"], "?")
+            icon = {"ok": "?", "skip": "?", "error": "?"}.get(r["status"], "?")
             print(
                 f"  {icon}  {r['job_id']}  "
                 f"({r.get('pipeline', r.get('reason', ''))})"
@@ -494,5 +533,89 @@ if __name__ == "__main__":
             if r["status"] == "error":
                 print(f"       {r['error']}")
 
-    sys.exit(0 if failed == 0 else 1)
+    return failed
+
+
+def _list_blocked_jobs(db_path: str = "data/jobs.json") -> list[dict]:
+    job_store = JobStore(db_path=db_path)
+    blocked = [
+        job for job in job_store.list_jobs()
+        if str(getattr(job.status, "value", job.status)) == JobStatus.RENDER_BLOCKED.value
+    ]
+
+    if not blocked:
+        print("[pipeline_runner] BLOCKED  none")
+        return []
+
+    results: list[dict] = []
+    for job in blocked:
+        channel = str(getattr(job.channel_type, "value", job.channel_type))
+        print(
+            f"[pipeline_runner] BLOCKED  {job.job_id}  "
+            f"channel={channel}  video={job.raw_video_path!r}"
+        )
+        results.append(
+            {
+                "job_id": job.job_id,
+                "channel": channel,
+                "status": "skip",
+                "reason": "render_blocked",
+            }
+        )
+    return results
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run Zenith pending jobs or approve one blocked job."
+    )
+    parser.add_argument(
+        "input_video_path",
+        nargs="?",
+        help="Optional raw video path for CLI job mode.",
+    )
+    parser.add_argument(
+        "--approve",
+        dest="approve_job_id",
+        metavar="JOB_ID",
+        help="Persist explicit approval for one job and rerun it.",
+    )
+    parser.add_argument(
+        "--list-blocked",
+        action="store_true",
+        help="List jobs currently in render_blocked status.",
+    )
+    args = parser.parse_args(argv)
+
+    selected_modes = sum(
+        bool(item)
+        for item in (
+            args.input_video_path,
+            args.approve_job_id,
+            args.list_blocked,
+        )
+    )
+    if selected_modes > 1:
+        parser.error("Use only one mode: <video>, --approve <job_id>, or --list-blocked")
+
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+
+    if args.list_blocked:
+        _list_blocked_jobs()
+        return 0
+
+    results = run_pending_jobs(
+        input_video_path=args.input_video_path,
+        approved_job_id=args.approve_job_id,
+    )
+    failed = _print_results(results)
+    return 0 if failed == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
 
