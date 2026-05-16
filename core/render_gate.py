@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, NamedTuple
 
+from core.approval_store import read_job_approval
+
 
 class RenderGateDecision(str, Enum):
     PASS = "pass"
@@ -175,10 +177,20 @@ def _stage_blocked(stage: _GateStage, detail: dict[str, Any]) -> bool:
 
 def evaluate_render_gate(job: Any) -> RenderGateResult:
     auto_approve = is_auto_approve_active()
+    explicit_approval = read_job_approval(job)
     detail: dict[str, Any] = {
         "auto_approve_active": auto_approve,
         "auto_approve_env": AUTO_APPROVE_ENV,
+        "explicit_job_approval": explicit_approval is not None,
     }
+
+    if explicit_approval is not None:
+        detail["explicit_approval"] = explicit_approval
+        return RenderGateResult(
+            RenderGateDecision.PASS,
+            "explicitly_approved",
+            detail,
+        )
     first_block_reason: str | None = None
     first_block_stage: str | None = None
     first_block_detail: dict[str, Any] | None = None
