@@ -49,6 +49,7 @@ class JobStatus(str, Enum):
     RENDERING = "rendering"
 
     RENDERED = "rendered"
+    RENDER_BLOCKED = "render_blocked"
     VALIDATION_FAILED = "validation_failed"
     APPROVAL_PENDING = "approval_pending"
     APPROVED = "approved"
@@ -103,6 +104,7 @@ RUNNER_OK_JOB_STATUSES = {
 
 RUNNER_FAILED_JOB_STATUSES = {
     JobStatus.VALIDATION_FAILED,
+    JobStatus.RENDER_BLOCKED,
     JobStatus.CRASHED,
     JobStatus.FAILED,
 }
