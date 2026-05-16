@@ -15,6 +15,15 @@ from shared.errors import ValidationError
 
 class EditSignalExtractor:
     """
+    Render-path signal extractor for the legacy longform cut chain.
+
+    These compact EditSignal values feed HighlightSelector, which builds the
+    highlight_candidates and weak_zones consumed by LongformTimelineBuilder.
+    The resulting EditTimeline.selected_segments are the render source of
+    truth. This extractor is separate from unified_edit_signal_registry.py;
+    the registry is an audit/review aggregation and is not read by the
+    current FinalRenderDriver path.
+
     AGGRESSIVE FIX - Schwellwerte + Step-Sizes optimiert
     
     Ziel: 85-92% Video-Retention
