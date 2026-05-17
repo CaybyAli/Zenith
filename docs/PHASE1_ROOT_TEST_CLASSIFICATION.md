@@ -390,3 +390,12 @@ Es wurde nichts verschoben, nichts archiviert und nichts gelöscht.
 | `test_workspace_repository_smoke.py` | VERWAIST | `core.workspace_repository`, `core.workspace_repository.WorkspaceRepository`, `models.workspace_membership.WorkspaceMembership`, `shared.role_enums`, `shared.role_enums.RoleType` |
 | `test_youtube_live_connector_smoke.py` | VERWAIST | `core.connectors.youtube_most_popular_connector`, `core.connectors.youtube_most_popular_connector.YouTubeMostPopularConnector`, `core.live_trend_intake_runner`, `core.live_trend_intake_runner.LiveTrendIntakeRunner`, `core.trend_intake_manager`, `core.trend_intake_manager.TrendIntakeManager`, `core.trend_store`, `core.trend_store.TrendStore` |
 | `test_zoom_pacing_engine_smoke.py` | LEBEND |  |
+
+## Phase 1.5b Finding: ffmpeg Render Integration
+
+- 	est_final_render_driver_smoke.py enthält 3 echte ffmpeg-/moviepy-Render-Integrationstests.
+- Befund: Diese Tests machen echtes Rendering über FinalRenderDriver().render().
+- Bekannter technischer Befund: hartkodierter ffmpeg-Pfad D:\Tools\ffmpeg\bin\ffmpeg.exe in der Render-Kette.
+- Auf dieser Maschine wurde sichtbar: Render gibt None zurück und erzeugt TypeError: cannot unpack non-iterable NoneType object.
+- Nicht in Phase 1 gefixt. Das ist ein Phase-2-Befund für Render-/ffmpeg-Konsolidierung.
+- Die 3 Tests bleiben im Repo, werden mit @pytest.mark.ffmpeg_integration markiert und im Standardlauf per ddopts = -m "not ffmpeg_integration" ausgeschlossen.

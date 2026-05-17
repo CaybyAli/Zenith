@@ -1,9 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import os
 import shutil
 import subprocess
+
+import pytest
 
 from moviepy import VideoFileClip
 
@@ -152,6 +154,7 @@ def _make_dynamic_edit_plan(job_id: str) -> DynamicEditPlan:
 #  Tests                                                               #
 # ------------------------------------------------------------------ #
 
+@pytest.mark.ffmpeg_integration
 def test_basic_render_consumes_timeline() -> None:
     """Driver must produce a file whose duration equals segment sum, not 60 s."""
     test_dir = os.path.join("tmp", "final_render_driver_smoke_basic")
@@ -179,7 +182,7 @@ def test_basic_render_consumes_timeline() -> None:
     with VideoFileClip(output_path) as clip:
         actual_duration = float(clip.duration or 0.0)
 
-    # Allow ±1 s tolerance for codec rounding
+    # Allow Â±1 s tolerance for codec rounding
     assert abs(actual_duration - expected_duration) <= 1.0, (
         f"Duration mismatch: expected ~{expected_duration:.1f}s, "
         f"got {actual_duration:.3f}s  (NOT the hardcoded 60 s)"
@@ -202,6 +205,7 @@ def test_basic_render_consumes_timeline() -> None:
     print(f"  expected={expected_duration:.1f}s  actual={actual_duration:.3f}s")
 
 
+@pytest.mark.ffmpeg_integration
 def test_render_with_reframe_and_zoom() -> None:
     """Driver must apply crop + zoom without errors and still honour segment durations."""
     test_dir = os.path.join("tmp", "final_render_driver_smoke_layers")
@@ -259,6 +263,7 @@ def test_render_with_reframe_and_zoom() -> None:
     )
 
 
+@pytest.mark.ffmpeg_integration
 def test_single_segment_renders_without_concat() -> None:
     """A single-segment timeline must render cleanly (no concat filter needed)."""
     test_dir = os.path.join("tmp", "final_render_driver_smoke_single")
