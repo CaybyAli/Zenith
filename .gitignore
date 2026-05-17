@@ -82,3 +82,18 @@ _temp_*.py
 
 # Runtime preprocessing output
 preprocessed/
+
+# Phase 1 asset media hygiene
+assets/**/*.wav
+assets/**/*.mp3
+assets/**/*.mp4
+assets/**/*.mov
+assets/**/*.mkv
+assets/**/*.png
+assets/**/*.jpg
+assets/**/*.jpeg
+assets/**/*.webp
+
+!assets/README.md
+!assets/**/.gitkeep
+!assets/sfx/censor/censor_sfx_manifest.json
