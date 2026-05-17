@@ -34,6 +34,8 @@ class Job:
     confidence_score: float
     validator_status: ValidatorStatus
 
+    publish_target_channel: ChannelType | None = None
+
     raw_video_path: str | None = None
     shorts: list[dict[str, Any]] = field(default_factory=list)
     topic: str | None = None
@@ -1258,6 +1260,10 @@ class Job:
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 
+    @property
+    def effective_publish_channel(self) -> ChannelType:
+        return self.publish_target_channel or self.channel_type
+
     def touch(self) -> None:
         self.updated_at = utc_now_iso()
 
@@ -1277,6 +1283,11 @@ class Job:
             autopublish_class=AutopublishClass(data.get("autopublish_class", "manual_only")),
             confidence_score=float(data.get("confidence_score", 0.0)),
             validator_status=ValidatorStatus(data.get("validator_status", "not_validated")),
+            publish_target_channel=(
+                ChannelType(data.get("publish_target_channel"))
+                if data.get("publish_target_channel")
+                else None
+            ),
             raw_video_path=data.get("raw_video_path"),
             topic=data.get("topic"),
             title=data.get("title"),            
