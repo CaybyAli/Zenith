@@ -1,4 +1,6 @@
-import pytest
+﻿import pytest
+
+from shared.enums import ACTIVE_CHANNEL_TYPES
 
 from models.quality_mode import QualityMode, get_quality_mode_config
 from models.channel_editing_profile import (
@@ -44,7 +46,7 @@ def test_quality_mode_string_parsing():
 
 
 def test_all_channel_profiles_exist():
-    for profile in ChannelProfile:
+    for profile in ACTIVE_CHANNEL_TYPES:
         assert profile in CHANNEL_EDITING_PROFILES
         p = CHANNEL_EDITING_PROFILES[profile]
         assert isinstance(p, ChannelEditingProfile)
@@ -76,7 +78,7 @@ def test_gaming_main_aggressive_cut():
 
 
 def test_to_dict_from_dict_roundtrip():
-    for profile in ChannelProfile:
+    for profile in ACTIVE_CHANNEL_TYPES:
         p = CHANNEL_EDITING_PROFILES[profile]
         d = p.to_dict()
         restored = ChannelEditingProfile.from_dict(d)
@@ -99,8 +101,9 @@ def test_registry_resolve_unknown_values_use_defaults():
 
 
 def test_registry_all_channel_quality_combinations():
-    for channel in ChannelProfile:
+    for channel in ACTIVE_CHANNEL_TYPES:
         for mode in QualityMode:
             profile, mode_cfg = resolve(channel.value, mode.value)
             assert profile is not None
             assert mode_cfg is not None
+

@@ -8,9 +8,20 @@ class JobType(str, Enum):
 
 class ChannelType(str, Enum):
     GAMING_MAIN = "gaming_main"
-    GAMING_UNCUT = "gaming_uncut"
-    FACELESS_TREND = "faceless_trend"
     VLOG_MAIN = "vlog_main"
+    GAMING_UNCUT = "gaming_uncut"
+    REACTION_UNCUT = "reaction_uncut"
+    VLOG_UNCUT = "vlog_uncut"
+    FACELESS_TREND = "faceless_trend"  # Phase 15 - Faceless, noch nicht aktiv
+
+
+ACTIVE_CHANNEL_TYPES = (
+    ChannelType.GAMING_MAIN,
+    ChannelType.VLOG_MAIN,
+    ChannelType.GAMING_UNCUT,
+    ChannelType.REACTION_UNCUT,
+    ChannelType.VLOG_UNCUT,
+)
 
 class PlatformType(str, Enum):
     YOUTUBE = "youtube"

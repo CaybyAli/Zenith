@@ -1,13 +1,10 @@
-from enum import Enum
+﻿from enum import Enum
 from dataclasses import dataclass, field
 
+from shared.enums import ChannelType
 
-class ChannelProfile(str, Enum):
-    GAMING_MAIN = "gaming_main"
-    VLOG_MAIN = "vlog_main"
-    GAMING_UNCUT = "gaming_uncut"
-    REACTION_UNCUT = "reaction_uncut"
-    VLOG_UNCUT = "vlog_uncut"
+
+ChannelProfile = ChannelType
 
 
 class ContentFamily(str, Enum):
@@ -201,3 +198,4 @@ CHANNEL_EDITING_PROFILES: dict[ChannelProfile, ChannelEditingProfile] = {
         requires_human_approval=False,
     ),
 }
+

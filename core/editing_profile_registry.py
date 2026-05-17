@@ -1,4 +1,6 @@
-import logging
+﻿import logging
+
+from shared.enums import ACTIVE_CHANNEL_TYPES
 
 from models.quality_mode import QualityMode, QualityModeConfig, get_quality_mode_config
 from models.channel_editing_profile import (
@@ -32,13 +34,17 @@ def resolve_quality_mode(mode_str: str) -> QualityMode:
 def resolve_channel_profile(channel_str: str) -> ChannelProfile:
     """
     Parst einen String zu ChannelProfile.
-    Unbekannte Werte fallen auf GAMING_MAIN zurück.
+    Nur aktive 5 Kanäle bekommen ein Editing-Profil.
+    Unbekannte oder inaktive Werte fallen auf GAMING_MAIN zurück.
     """
     try:
-        return ChannelProfile(str(channel_str or "").lower())
+        channel = ChannelProfile(str(channel_str or "").lower())
+        if channel in ACTIVE_CHANNEL_TYPES:
+            return channel
+        raise ValueError
     except ValueError:
         logger.warning(
-            f"[EditingProfileRegistry] Unbekannter ChannelProfile '{channel_str}' "
+            f"[EditingProfileRegistry] Unbekannter oder inaktiver ChannelProfile '{channel_str}' "
             f"— Fallback auf '{DEFAULT_CHANNEL_PROFILE.value}'"
         )
         return DEFAULT_CHANNEL_PROFILE
@@ -57,3 +63,4 @@ def resolve(
     profile = CHANNEL_EDITING_PROFILES[channel]
     mode_config = get_quality_mode_config(mode)
     return profile, mode_config
+
