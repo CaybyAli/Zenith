@@ -185,8 +185,8 @@ ede6124dd8c4fb2c82ecd406d777a2acbcdf73e1 feat(P1-4): add asset folder structure 
 | BUG_DIAGNOSIS.md | docs/archive/BUG_DIAGNOSIS.md | nein | ja | Root-Markdown/Analyse-Doku gehoert nicht in Root | verschieben nach docs/archive/ |
 | PROJECT_INVENTORY.md | docs/archive/PROJECT_INVENTORY.md | nein | ja | Root-Markdown/Analyse-Doku gehoert nicht in Root | verschieben nach docs/archive/ |
 | ZENITH_PHASE_2B_PRO_ANALYSIS.md | docs/archive/ZENITH_PHASE_2B_PRO_ANALYSIS.md | nein | ja | Root-Markdown/Analyse-Doku gehoert nicht in Root | verschieben nach docs/archive/ |
-| reset_jobs.py | scripts/reset_jobs.py | nein | ja | Hilfsskript gehoert nicht in Root | verschieben nach scripts/ |
-| reset_all_jobs.py | scripts/reset_all_jobs.py | nein | ja | Hilfsskript gehoert nicht in Root | verschieben nach scripts/ |
+| rreset_jobs.py | scripts/rreset_jobs.py | nein | ja | Hilfsskript gehoert nicht in Root | verschieben nach scripts/ |
+| rreset_all_jobs.py | scripts/rreset_all_jobs.py | nein | ja | Hilfsskript gehoert nicht in Root | verschieben nach scripts/ |
 
 ## B) Zum Loeschen
 
@@ -314,3 +314,28 @@ ede6124dd8c4fb2c82ecd406d777a2acbcdf73e1 feat(P1-4): add asset folder structure 
 Nichts loeschen.
 Nichts verschieben.
 Cleanup 1.5 erst nach ausdruecklichem JA CLEANUP 1.5.
+
+## Ergebnis Unterphase 1.5
+
+Ausgeführt und committed:
+
+- BUG_DIAGNOSIS.md -> docs/archive/BUG_DIAGNOSIS.md
+- PROJECT_INVENTORY.md -> docs/archive/PROJECT_INVENTORY.md
+- ZENITH_PHASE_2B_PRO_ANALYSIS.md -> docs/archive/ZENITH_PHASE_2B_PRO_ANALYSIS.md
+reset_jobs.py -> scripts/rreset_jobs.py
+reset_all_jobs.py -> scripts/rreset_all_jobs.py
+
+Nicht ausgeführt:
+
+- Root-	est_*.py Dateien wurden nicht dauerhaft nach 	ests/ verschoben.
+
+Grund:
+
+- Der Move der 165 Root-Tests nach 	ests/ hat die Pytest-Sammlung aktiviert und 135 Collection-Errors ausgelöst.
+- Nach Rollback der Root-Test-Moves war der Testlauf wieder grün: 3493 passed, 2 skipped, 2 warnings.
+- Root-Test-Move bleibt deshalb Blocker und braucht eine eigene spätere Migrations-Unterphase.
+
+Lokale untracked Dateien:
+
+- _patch_*, _verify_*, _audit_* wurden nicht angefasst.
+- Sie sind nicht Teil von HEAD und bleiben lokale Arbeitsartefakte zur manuellen Prüfung durch den Nutzer.
