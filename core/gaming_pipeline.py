@@ -928,6 +928,128 @@ def _filter_highlights_by_round_phase(
     return kept, stats
 
 
+
+def _phase2_get_value(source, name: str):
+    if source is None:
+        return None
+    if isinstance(source, dict):
+        return source.get(name)
+    return getattr(source, name, None)
+
+
+def _phase2_resolve_source_duration(job, analysis_result) -> float | None:
+    for source in (analysis_result, job):
+        for name in (
+            "duration_seconds",
+            "duration",
+            "video_duration_seconds",
+            "source_duration_seconds",
+            "raw_duration_seconds",
+        ):
+            value = _phase2_get_value(source, name)
+            try:
+                if value is not None and float(value) > 0:
+                    return float(value)
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _phase2_parse_selected_segment(selected_segment, source_duration: float | None) -> tuple[float, float] | None:
+    if isinstance(selected_segment, dict):
+        start_value = (
+            selected_segment.get("start_time")
+            or selected_segment.get("start_seconds")
+            or selected_segment.get("start")
+        )
+        end_value = (
+            selected_segment.get("end_time")
+            or selected_segment.get("end_seconds")
+            or selected_segment.get("end")
+        )
+    else:
+        raw = str(selected_segment).strip()
+        if " - " not in raw:
+            return None
+        start_value, end_value = raw.split(" - ", 1)
+
+    try:
+        start = float(str(start_value).strip().replace("s", ""))
+    except (TypeError, ValueError):
+        return None
+
+    end_text = str(end_value).strip().replace("s", "").lower()
+    if end_text == "end":
+        end = source_duration if source_duration and source_duration > start else start + 60.0
+    else:
+        try:
+            end = float(end_text)
+        except (TypeError, ValueError):
+            return None
+
+    if end <= start:
+        return None
+
+    return start, end
+
+
+def _build_phase2_fallback_edit_timeline_from_edit_decision(job, edit_decision, analysis_result=None):
+    """Build a minimal FinalRenderDriver-compatible timeline without using RenderProcessor."""
+    from models.edit_timeline import EditTimeline
+    from models.timeline_segment import TimelineSegment
+
+    selected_segments = list(_phase2_get_value(edit_decision, "selected_segments") or [])
+    if not selected_segments:
+        return None
+
+    source_duration = _phase2_resolve_source_duration(job, analysis_result)
+    segments = []
+
+    for index, selected_segment in enumerate(selected_segments):
+        parsed = _phase2_parse_selected_segment(selected_segment, source_duration)
+        if parsed is None:
+            continue
+
+        start_time, end_time = parsed
+        if len(selected_segments) == 1:
+            role = "hook"
+        elif index == 0:
+            role = "hook"
+        elif index == len(selected_segments) - 1:
+            role = "payoff"
+        else:
+            role = "build"
+
+        segments.append(
+            TimelineSegment(
+                segment_id=f"phase2_fallback_seg_{index:03d}",
+                job_id=job.job_id,
+                candidate_id=None,
+                start_time=start_time,
+                end_time=end_time,
+                segment_role=role,
+                selection_score=0.50,
+            )
+        )
+
+    if not segments:
+        return None
+
+    total_duration = sum(segment.duration for segment in segments)
+
+    return EditTimeline(
+        timeline_id=f"{job.job_id}_phase2_fallback_timeline",
+        job_id=job.job_id,
+        target_duration=total_duration,
+        selected_segments=segments,
+        hook_segment_id=segments[0].segment_id,
+        peak_segment_ids=[],
+        payoff_segment_id=segments[-1].segment_id,
+        timeline_score=0.50,
+        timeline_notes=["phase2_fallback_from_edit_decision"],
+    )
+
+
 def _build_gaming_services() -> dict:
     """Dependency-Container fÃ¼r die Gaming-Pipeline.
 
@@ -938,7 +1060,7 @@ def _build_gaming_services() -> dict:
     return {
         "analyzer":          GamingAnalyzer(),
         "cutter":            GamingCutter(),
-        "renderer":          RenderProcessor(),
+        "renderer":          RenderProcessor(),  # DEPRECATED - Phase 2 legacy service; not used for gaming_main render.
         "subtitle_processor": SubtitleProcessor(),
         "title_gen":         TitleGenerator(),
         "metadata_gen":      MetadataGenerator(),
@@ -980,7 +1102,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     analyzer          = services["analyzer"]
     cutter            = services["cutter"]
-    renderer          = services["renderer"]
+    _legacy_renderer  = services.get("renderer")  # DEPRECATED - Phase 2 legacy service; not used for gaming_main render.
     subtitle_processor = services["subtitle_processor"]
     title_gen         = services["title_gen"]
     metadata_gen      = services["metadata_gen"]
@@ -9990,28 +10112,63 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         )
 
     # ------------------------------------------------------------------
-    # 7) Render - FinalRenderDriver wenn Timeline vorhanden,
-    #             sonst RenderProcessor als Fallback
+    # 7) Render - Phase 2 single path: FinalRenderDriver only
     # ------------------------------------------------------------------
-    if edit_timeline is not None and job.raw_video_path:
-        _src = job.raw_video_path
-        _tl  = edit_timeline
-        _rf  = reframe_plan
-        _dep = dynamic_edit_plan
+    if edit_timeline is None:
+        edit_timeline = _build_phase2_fallback_edit_timeline_from_edit_decision(
+            job=job,
+            edit_decision=edit_decision,
+            analysis_result=analysis_result,
+        )
+        if edit_timeline is not None:
+            print(
+                f"[gaming_pipeline] RENDER FALLBACK_TIMELINE {job.job_id} "
+                f"segments={len(edit_timeline.selected_segments)} "
+                f"duration={edit_timeline.total_selected_duration:.3f}s"
+            )
 
-        class _Adapter:
-            def render(self, _job, _edit_decision, **_kw):
-                return FinalRenderDriver().render(
-                    job=_job,
-                    source_path=_src,
-                    edit_timeline=_tl,
-                    reframe_plan=_rf,
-                    dynamic_edit_plan=_dep,
-                )
+    if edit_timeline is None or not job.raw_video_path:
+        render_block_reason = "final_render_driver_requires_edit_timeline_and_raw_video_path"
+        job.status = JobStatus.RENDER_BLOCKED
+        job.error_message = render_block_reason
+        job.touch()
 
-        active_renderer = _Adapter()
-    else:
-        active_renderer = renderer
+        persist_job_state_checkpoint(
+            job=job,
+            job_store=job_state_store,
+            export_dir=job_state_export_dir,
+            step_name="render_blocked",
+            reason=render_block_reason,
+        )
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="render",
+            event_type="RENDER_BLOCKED",
+            action="final_render_driver_precondition",
+            status="blocked",
+            reason=render_block_reason,
+            details={
+                "renderer_type": "FinalRenderDriver",
+                "edit_timeline_present": edit_timeline is not None,
+                "raw_video_path_present": bool(job.raw_video_path),
+                "render_gate": render_gate_payload,
+            },
+        )
+
+        print(
+            f"[gaming_pipeline] RENDER BLOCKED {job.job_id} "
+            f"reason={render_block_reason}"
+        )
+        return {
+            "job": job,
+            "final_job_status": JobStatus.RENDER_BLOCKED.value,
+            "final_video_path": None,
+            "render_gate": render_gate_payload,
+            "render_block_reason": render_block_reason,
+        }
+
+    active_renderer = FinalRenderDriver()
 
     transition_job_state(
         job,
@@ -10037,7 +10194,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             "renderer_type": type(active_renderer).__name__,
         },
     )
-    final_video_path = active_renderer.render(job, edit_decision)
+    final_video_path = active_renderer.render(
+        job=job,
+        source_path=job.raw_video_path,
+        edit_timeline=edit_timeline,
+        reframe_plan=reframe_plan,
+        dynamic_edit_plan=dynamic_edit_plan,
+    )
     transition_job_state(
         job,
         JobStatus.RENDERED,

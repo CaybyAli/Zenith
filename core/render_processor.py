@@ -11,6 +11,7 @@ from core.ffmpeg_helper import get_ffmpeg_path
 from shared.errors import ValidationError
 
 
+# DEPRECATED - Phase 2: superseded by FinalRenderDriver for gaming_main longform rendering.
 class RenderProcessor:
     def _parse_segment(self, segment_text: str) -> tuple[float, float | None]:
         segment_text = segment_text.strip()
