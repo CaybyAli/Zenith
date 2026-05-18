@@ -254,7 +254,7 @@ def test_s2_pipeline_handles_video_with_whisper_probe_speech(tmp_path: Path) -> 
     )
 
 
-def test_s3_missing_thumbnail_fails_validation_after_auto_approve(tmp_path: Path) -> None:
+def test_s3_thumbnail_fallback_removes_missing_thumbnail_blocker_after_auto_approve(tmp_path: Path) -> None:
     workdir = _prepare_workspace(tmp_path)
     video_path = workdir / "tmp" / "s3_missing_thumbnail.mp4"
     _write_motion_tone_clip(video_path)
@@ -267,16 +267,31 @@ def test_s3_missing_thumbnail_fails_validation_after_auto_approve(tmp_path: Path
     assert "RENDER_GATE OVERRIDE" in combined_output
     assert "reason=auto_approve_override" in combined_output
     assert "[gaming_pipeline] VALIDATE" in combined_output
-    assert "status=failed" in combined_output
     assert "[gaming_pipeline] DONE" in combined_output
-    assert "status=validation_failed" in combined_output
-    assert "failed=1" in combined_output
-    assert result.returncode != 0
     _assert_no_python_crash(combined_output)
 
-    assert "Missing thumbnail" in combined_output or "Missing thumbnail" in serialized_job
-    assert _job_status(job_payload).lower() == "validation_failed"
+    assert "Missing thumbnail" not in combined_output
+    assert "Missing thumbnail" not in serialized_job
 
+    thumbnail_path = job_payload.get("thumbnail_path")
+    assert thumbnail_path, "Expected P2-5 thumbnail fallback to set job.thumbnail_path"
+
+    thumbnail_file = Path(thumbnail_path)
+    if not thumbnail_file.is_absolute():
+        thumbnail_file = workdir / thumbnail_file
+
+    assert thumbnail_file.exists(), f"Expected thumbnail file to exist: {thumbnail_file}"
+    assert thumbnail_file.stat().st_size > 0
+
+    assert "THUMBNAIL_FALLBACK_CREATED" in combined_output or "thumbnail_path" in serialized_job
+
+    # The job may still fail on later Phase-2B stabilization gates, but not because
+    # the thumbnail is missing anymore.
+    if result.returncode != 0:
+        assert (
+            "phase_2b_stabilization_not_ready" in combined_output
+            or "phase_2b_stabilization_not_ready" in serialized_job
+        )
 
 def test_s6_inbox_rerun_skips_existing_job(tmp_path: Path) -> None:
     workdir = _prepare_workspace(tmp_path)

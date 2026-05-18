@@ -1,3 +1,5 @@
+from __future__ import annotations
+from models.thumbnail_package import ThumbnailPackage
 """Gaming Pipeline - core/gaming_pipeline.py
 
 Isoliertes Pipeline-Modul fÃ¼r gaming_main und gaming_uncut.
@@ -11,7 +13,6 @@ Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
   - ContentVariantBuilder / ContentVariantRepository
 """
 
-from __future__ import annotations
 
 import json
 import logging
@@ -10245,12 +10246,88 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     # 10) Validator  (kein Thumbnail â†’ None)
     # ------------------------------------------------------------------
+    channel_type = getattr(job.channel_type, "value", job.channel_type)
+    export_dir = os.path.join("exports", str(channel_type), job.job_id)
+    os.makedirs(export_dir, exist_ok=True)
+
+    fallback_thumbnail_path = os.path.join(export_dir, "thumbnail.jpg")
+    thumbnail_package = None
+
+    try:
+        from moviepy import VideoFileClip
+
+        thumbnail_clip = VideoFileClip(str(final_video_path))
+        try:
+            clip_duration = float(getattr(thumbnail_clip, "duration", 0.0) or 0.0)
+            thumbnail_time = 1.0 if clip_duration > 1.1 else max(0.0, clip_duration / 2.0)
+            thumbnail_clip.save_frame(fallback_thumbnail_path, t=thumbnail_time)
+        finally:
+            close_clip = getattr(thumbnail_clip, "close", None)
+            if callable(close_clip):
+                close_clip()
+
+        if os.path.exists(fallback_thumbnail_path) and os.path.getsize(fallback_thumbnail_path) > 0:
+            job.thumbnail_path = fallback_thumbnail_path
+            thumbnail_package = ThumbnailPackage(
+                job_id=job.job_id,
+                selected_thumbnail=fallback_thumbnail_path,
+                thumbnail_variants=[fallback_thumbnail_path],
+                thumbnail_scores=[0.5],
+                selected_index=0,
+            )
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="thumbnail_fallback",
+                event_type="THUMBNAIL_FALLBACK_CREATED",
+                action="extract_thumbnail_from_final_video",
+                module="gaming_pipeline",
+                status="ok",
+                reason="thumbnail_extracted_from_final_video",
+                details={
+                    "thumbnail_path": fallback_thumbnail_path,
+                    "final_video_path": str(final_video_path),
+                    "thumbnail_time_seconds": round(thumbnail_time, 3),
+                },
+            )
+        else:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="thumbnail_fallback",
+                event_type="THUMBNAIL_FALLBACK_FAILED",
+                action="extract_thumbnail_from_final_video",
+                module="gaming_pipeline",
+                status="warn",
+                reason="moviepy_thumbnail_frame_missing",
+                details={
+                    "thumbnail_path": fallback_thumbnail_path,
+                    "final_video_path": str(final_video_path),
+                },
+            )
+
+    except Exception as thumbnail_exc:
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="thumbnail_fallback",
+            event_type="THUMBNAIL_FALLBACK_FAILED",
+            action="extract_thumbnail_from_final_video",
+            module="gaming_pipeline",
+            status="warn",
+            reason="thumbnail_fallback_exception",
+            details={
+                "thumbnail_path": fallback_thumbnail_path,
+                "error": str(thumbnail_exc),
+            },
+        )
+
     validator_result = validator.validate(
         job,
         final_video_path,
         title_package,
         metadata,
-        None,   # thumbnail_package - wird in Phase 2.5 gebaut
+        thumbnail_package,
     )
     print(f"[gaming_pipeline] VALIDATE  {job.job_id}  "
           f"status={getattr(validator_result, 'validator_status', '-')}")
@@ -10264,8 +10341,6 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         f"reason={_compact_log_value(_validator_reason)}"
     )
 
-    channel_type = getattr(job.channel_type, "value", job.channel_type)
-    export_dir = os.path.join("exports", str(channel_type), job.job_id)
     phase_2b_stabilization_result = Phase2BStabilizationChecker().check(
         job_id=job.job_id,
         job_dir="output",
