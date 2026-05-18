@@ -205,16 +205,22 @@ class FinalRenderDriver:
     Video is encoded with h264_nvenc (RTX 4090 NVENC) + AAC audio.
     """
 
-    _FFMPEG = get_ffmpeg_path()
-    _FFPROBE = get_ffprobe_path()
-
     # ------------------------------------------------------------------ #
     #  Helpers                                                             #
     # ------------------------------------------------------------------ #
 
+    def _ffmpeg(self) -> str:
+        """Resolve FFmpeg lazily, only when a real render command is built."""
+        return get_ffmpeg_path()
+
+    def _ffprobe(self) -> str:
+        """Resolve FFprobe lazily, only when media probing is required."""
+        return get_ffprobe_path()
+
+
     def _get_video_dimensions(self, source: Path) -> tuple[int, int]:
         cmd = [
-            self._FFPROBE,
+            self._ffprobe(),
             "-v", "error",
             "-select_streams", "v:0",
             "-show_entries", "stream=width,height",
@@ -402,7 +408,7 @@ class FinalRenderDriver:
             )
 
         cmd = [
-            self._FFMPEG, "-y",
+            self._ffmpeg(), "-y",
             "-ss", str(round(segment.start_time, 3)),
             "-t", str(duration),
             "-i", str(source),
@@ -437,7 +443,7 @@ class FinalRenderDriver:
                 f.write(f"file '{str(p.resolve())}'\n")
 
         cmd = [
-            self._FFMPEG, "-y",
+            self._ffmpeg(), "-y",
             "-f", "concat",
             "-safe", "0",
             "-i", str(list_file.resolve()),

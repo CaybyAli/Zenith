@@ -1,9 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import os
 import shutil
 import subprocess
+
+from core.ffmpeg_helper import get_ffmpeg_path
 
 import pytest
 
@@ -26,7 +28,7 @@ def _make_source_video(path: str, duration: int = 30) -> None:
     """Synthetic test video using FFmpeg lavfi sources (no GPU needed)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     cmd = [
-        r"D:\Tools\ffmpeg\bin\ffmpeg.exe",
+        get_ffmpeg_path(),
         "-y",
         "-f", "lavfi", "-i", f"testsrc=size=1920x1080:rate=30:duration={duration}",
         "-f", "lavfi", "-i", f"sine=frequency=440:sample_rate=44100:duration={duration}",
