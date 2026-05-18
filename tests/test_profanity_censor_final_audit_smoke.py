@@ -156,11 +156,12 @@ def test_product_files_do_not_contain_forbidden_automatic_actions() -> None:
         )
 
 
-def test_no_audio_overlay_rendering_is_implemented_here() -> None:
+def test_p2_4_audio_overlay_is_rendered_by_final_render_driver_not_profanity_foundation() -> None:
     manifest = _read("assets/sfx/censor/censor_sfx_manifest.json")
     profanity_code = "\n".join(_read(path) for path in PROFANITY_CODE_FILES)
 
-    assert "No audio overlay is rendered in 2B-24.5." in manifest
+    assert "P2-4: Real WAV assets are committed and used by FinalRenderDriver." in manifest
+    assert "Censor SFX is mixed into rendered audio with FFmpeg amix normalize=0." in manifest
     assert "ffmpeg" not in profanity_code.lower()
     assert "audio_mixing" not in profanity_code.lower()
     assert "amix" not in profanity_code.lower()

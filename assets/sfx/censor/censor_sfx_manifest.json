@@ -16,8 +16,8 @@
     }
   },
   "notes": [
-    "Audio files may be added later.",
-    "This manifest is for planned censor SFX routing only.",
-    "No audio overlay is rendered in 2B-24.5."
+    "P2-4: Real WAV assets are committed and used by FinalRenderDriver.",
+    "Censor SFX is mixed into rendered audio with FFmpeg amix normalize=0.",
+    "Unknown replacement_sfx values fall back to the manifest default."
   ]
 }

@@ -429,6 +429,329 @@ class FinalRenderDriver:
 
 
     # ------------------------------------------------------------------ #
+    #  Censor SFX overlay helpers                                          #
+    # ------------------------------------------------------------------ #
+
+    def _load_censor_sfx_manifest(self) -> dict:
+        manifest_path = Path("assets/sfx/censor/censor_sfx_manifest.json")
+        if not manifest_path.exists():
+            return {
+                "default": "quack",
+                "options": {},
+                "warnings": [f"missing_manifest:{manifest_path}"],
+            }
+
+        with open(manifest_path, encoding="utf-8") as f:
+            data = json.load(f)
+
+        if not isinstance(data, dict):
+            return {
+                "default": "quack",
+                "options": {},
+                "warnings": ["invalid_censor_sfx_manifest"],
+            }
+
+        return data
+
+    def _get_censor_sfx_path(
+        self,
+        replacement_sfx: str | None,
+        manifest: dict,
+    ) -> tuple[str, Path | None]:
+        options = manifest.get("options")
+        if not isinstance(options, dict):
+            options = {}
+
+        default_name = str(manifest.get("default") or "quack")
+        requested_name = str(replacement_sfx or "").strip()
+        sfx_name = requested_name if requested_name in options else default_name
+
+        option = options.get(sfx_name)
+        if not isinstance(option, dict):
+            option = options.get(default_name)
+            sfx_name = default_name
+
+        if not isinstance(option, dict):
+            return sfx_name, None
+
+        raw_path = option.get("path")
+        if not raw_path:
+            return sfx_name, None
+
+        return sfx_name, Path(str(raw_path))
+
+    def _extract_censor_matches(self, job: Job) -> list[dict]:
+        raw_matches = getattr(job, "profanity_censor_matches", None)
+
+        if not raw_matches:
+            report = getattr(job, "profanity_censor_report", None)
+            if isinstance(report, dict):
+                raw_matches = report.get("matches")
+
+        if not isinstance(raw_matches, list):
+            return []
+
+        matches: list[dict] = []
+        for item in raw_matches:
+            if isinstance(item, dict):
+                matches.append(dict(item))
+                continue
+
+            to_dict = getattr(item, "to_dict", None)
+            if callable(to_dict):
+                converted = to_dict()
+                if isinstance(converted, dict):
+                    matches.append(dict(converted))
+
+        return matches
+
+    def _safe_float_or_none(self, value) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _resolve_match_interval(self, match: dict) -> tuple[float, float] | None:
+        start = self._safe_float_or_none(match.get("start_seconds"))
+        end = self._safe_float_or_none(match.get("end_seconds"))
+        center = self._safe_float_or_none(match.get("center_seconds"))
+        duration = self._safe_float_or_none(match.get("duration_seconds"))
+
+        if start is not None and end is not None and end > start:
+            return start, end
+
+        if start is not None and duration is not None and duration > 0:
+            return start, start + duration
+
+        if center is not None and duration is not None and duration > 0:
+            half = duration / 2.0
+            return max(0.0, center - half), center + half
+
+        if center is not None:
+            return max(0.0, center - 0.25), center + 0.25
+
+        return None
+
+    def _segment_duration_seconds(self, segment: TimelineSegment) -> float:
+        duration = getattr(segment, "duration", None)
+        if callable(duration):
+            duration = duration()
+        if duration is not None:
+            try:
+                return max(0.0, float(duration))
+            except (TypeError, ValueError):
+                pass
+        return max(0.0, float(segment.end_time) - float(segment.start_time))
+
+    def _build_segment_offset_table(self, segments: list[TimelineSegment]) -> list[dict]:
+        table: list[dict] = []
+        final_offset = 0.0
+
+        for segment in segments:
+            duration = self._segment_duration_seconds(segment)
+            table.append(
+                {
+                    "segment": segment,
+                    "source_start": float(segment.start_time),
+                    "source_end": float(segment.end_time),
+                    "final_start": final_offset,
+                    "final_end": final_offset + duration,
+                    "duration": duration,
+                }
+            )
+            final_offset += duration
+
+        return table
+
+    def _max_censor_sfx_duration(self, sfx_name: str) -> float:
+        if sfx_name == "beep":
+            return 0.75
+        return 1.00
+
+    def _build_censor_sfx_events(
+        self,
+        job: Job,
+        segments: list[TimelineSegment],
+    ) -> list[dict]:
+        manifest = self._load_censor_sfx_manifest()
+        matches = self._extract_censor_matches(job)
+        if not matches:
+            return []
+
+        offset_table = self._build_segment_offset_table(segments)
+        events: list[dict] = []
+
+        for match_index, match in enumerate(matches):
+            if not bool(match.get("censor_required", False)):
+                continue
+
+            interval = self._resolve_match_interval(match)
+            if interval is None:
+                continue
+
+            match_start, match_end = interval
+            replacement_sfx = match.get("replacement_sfx")
+            sfx_name, sfx_path = self._get_censor_sfx_path(replacement_sfx, manifest)
+
+            if sfx_path is None or not sfx_path.exists():
+                continue
+
+            for row in offset_table:
+                segment = row["segment"]
+                kept_start = max(match_start, row["source_start"])
+                kept_end = min(match_end, row["source_end"])
+
+                if kept_end <= kept_start:
+                    continue
+
+                kept_duration = kept_end - kept_start
+                if kept_duration < 0.05:
+                    continue
+
+                final_start = row["final_start"] + (kept_start - row["source_start"])
+                final_duration = min(
+                    kept_duration,
+                    self._max_censor_sfx_duration(sfx_name),
+                )
+
+                events.append(
+                    {
+                        "event_id": f"censor_sfx_{match_index:03d}_{len(events):03d}",
+                        "match_id": str(match.get("match_id") or f"match_{match_index}"),
+                        "source_segment_id": str(segment.segment_id),
+                        "replacement_sfx": sfx_name,
+                        "asset_path": str(sfx_path),
+                        "source_start_seconds": round(kept_start, 3),
+                        "source_end_seconds": round(kept_end, 3),
+                        "final_start_seconds": round(final_start, 3),
+                        "duration_seconds": round(final_duration, 3),
+                        "timing_source": str(match.get("timing_source") or "unknown"),
+                    }
+                )
+
+        return events
+
+    def _has_audio_stream(self, video_path: Path) -> bool:
+        cmd = [
+            self._ffprobe(),
+            "-v", "error",
+            "-select_streams", "a:0",
+            "-show_entries", "stream=index",
+            "-of", "csv=p=0",
+            str(video_path),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        return result.returncode == 0 and bool(result.stdout.strip())
+
+    def _apply_censor_sfx_overlay(
+        self,
+        video_path: Path,
+        events: list[dict],
+        expected_duration_seconds: float,
+    ) -> dict:
+        if not events:
+            return {
+                "applied": False,
+                "applied_count": 0,
+                "candidate_count": 0,
+                "warnings": [],
+            }
+
+        valid_events = [
+            event
+            for event in events
+            if Path(str(event.get("asset_path") or "")).exists()
+            and float(event.get("duration_seconds") or 0.0) > 0.0
+        ]
+
+        if not valid_events:
+            return {
+                "applied": False,
+                "applied_count": 0,
+                "candidate_count": len(events),
+                "warnings": ["no_valid_censor_sfx_events"],
+            }
+
+        has_audio = self._has_audio_stream(video_path)
+        filter_parts: list[str] = []
+
+        if has_audio:
+            filter_parts.append(
+                "[0:a]aresample=48000,"
+                "aformat=sample_fmts=fltp:channel_layouts=stereo[maina]"
+            )
+            warnings: list[str] = []
+        else:
+            filter_parts.append(
+                f"anullsrc=r=48000:cl=stereo:d={expected_duration_seconds:.3f}[maina]"
+            )
+            warnings = ["source_had_no_audio_stream_used_anullsrc"]
+
+        cmd = [self._ffmpeg(), "-y", "-i", str(video_path)]
+        for event in valid_events:
+            cmd.extend(["-i", str(event["asset_path"])])
+
+        for index, event in enumerate(valid_events):
+            delay_ms = max(0, int(round(float(event["final_start_seconds"]) * 1000)))
+            duration = max(0.01, float(event["duration_seconds"]))
+            input_index = index + 1
+
+            filter_parts.append(
+                f"[{input_index}:a]"
+                f"atrim=0:{duration:.3f},"
+                "asetpts=PTS-STARTPTS,"
+                "aresample=48000,"
+                "aformat=sample_fmts=fltp:channel_layouts=stereo,"
+                f"adelay={delay_ms}|{delay_ms}"
+                f"[sfx{index}]"
+            )
+
+        mix_inputs = "[maina]" + "".join(
+            f"[sfx{index}]" for index in range(len(valid_events))
+        )
+        filter_parts.append(
+            f"{mix_inputs}"
+            f"amix=inputs={len(valid_events) + 1}:normalize=0:duration=first[aout]"
+        )
+
+        tmp_path = video_path.with_name(f"{video_path.stem}_censor_sfx_tmp{video_path.suffix}")
+
+        cmd.extend(
+            [
+                "-filter_complex",
+                ";".join(filter_parts),
+                "-map", "0:v:0",
+                "-map", "[aout]",
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-b:a", "192k",
+                "-movflags", "+faststart",
+                str(tmp_path),
+            ]
+        )
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            tmp_path.unlink(missing_ok=True)
+            raise ValidationError(
+                "Censor SFX overlay failed: "
+                f"{result.stderr[-1200:]}"
+            )
+
+        shutil.move(str(tmp_path), str(video_path))
+
+        return {
+            "applied": True,
+            "applied_count": len(valid_events),
+            "candidate_count": len(events),
+            "warnings": warnings,
+            "events": valid_events,
+        }
+
+
+    # ------------------------------------------------------------------ #
     #  FFmpeg operations                                                   #
     # ------------------------------------------------------------------ #
 
@@ -591,7 +914,17 @@ class FinalRenderDriver:
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-        total_duration = round(sum(s.duration for s in segments), 3)
+        total_duration = round(sum(self._segment_duration_seconds(s) for s in segments), 3)
+
+        censor_sfx_events = self._build_censor_sfx_events(
+            job=job,
+            segments=segments,
+        )
+        censor_sfx_overlay_report = self._apply_censor_sfx_overlay(
+            video_path=concat_path,
+            events=censor_sfx_events,
+            expected_duration_seconds=total_duration,
+        )
 
         context = {
             "job_id": job.job_id,
@@ -621,6 +954,24 @@ class FinalRenderDriver:
                 if dynamic_edit_plan is not None
                 else 0
             ),
+            "censor_sfx_applied": bool(censor_sfx_overlay_report.get("applied")),
+            "censor_sfx_events_count": int(censor_sfx_overlay_report.get("applied_count") or 0),
+            "censor_sfx_candidate_count": int(censor_sfx_overlay_report.get("candidate_count") or 0),
+            "censor_sfx_warnings": list(censor_sfx_overlay_report.get("warnings") or []),
+            "censor_sfx_events": [
+                {
+                    "event_id": event["event_id"],
+                    "match_id": event["match_id"],
+                    "source_segment_id": event["source_segment_id"],
+                    "replacement_sfx": event["replacement_sfx"],
+                    "source_start_seconds": event["source_start_seconds"],
+                    "source_end_seconds": event["source_end_seconds"],
+                    "final_start_seconds": event["final_start_seconds"],
+                    "duration_seconds": event["duration_seconds"],
+                    "timing_source": event["timing_source"],
+                }
+                for event in list(censor_sfx_overlay_report.get("events") or [])
+            ],
             "codec_video": "h264_nvenc",
             "codec_audio": "aac",
             "output_video_path": str(concat_path),

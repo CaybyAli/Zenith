@@ -39,10 +39,12 @@ def test_manifest_paths_stay_under_censor_sfx_folder() -> None:
         assert str(option["path"]).startswith("assets/sfx/censor/")
 
 
-def test_manifest_does_not_claim_overlay_is_rendered_now() -> None:
+def test_manifest_documents_p2_4_render_overlay_assets() -> None:
     notes = " ".join(_manifest().get("notes", []))
 
-    assert "No audio overlay is rendered in 2B-24.5." in notes
+    assert "P2-4: Real WAV assets are committed and used by FinalRenderDriver." in notes
+    assert "Censor SFX is mixed into rendered audio with FFmpeg amix normalize=0." in notes
+    assert "Unknown replacement_sfx values fall back to the manifest default." in notes
     assert "Audio overlay is rendered in 2B-24.5." not in notes
 
 
