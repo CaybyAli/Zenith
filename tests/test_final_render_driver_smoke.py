@@ -153,6 +153,84 @@ def _make_dynamic_edit_plan(job_id: str) -> DynamicEditPlan:
 
 
 # ------------------------------------------------------------------ #
+#  Unit tests                                                          #
+# ------------------------------------------------------------------ #
+
+def test_build_filter_complex_returns_16x9_fallback_without_reframe_plan() -> None:
+    """16:9 sources must return a valid FFmpeg filter, never None."""
+    segment = TimelineSegment(
+        segment_id="seg_16x9_fallback",
+        job_id="job_16x9_fallback",
+        candidate_id=None,
+        start_time=0.0,
+        end_time=5.0,
+        segment_role="hook",
+        selection_score=1.0,
+    )
+
+    fc, label = FinalRenderDriver()._build_filter_complex(
+        segment=segment,
+        reframe_plan=None,
+        dynamic_edit_plan=None,
+        audio_peaks=[],
+        src_w=1920,
+        src_h=1080,
+    )
+
+    assert label == "[out]"
+    assert "scale=1920:1080" in fc
+    assert "setsar=1[out]" in fc
+
+
+def test_build_filter_complex_returns_16x9_crop_from_reframe_plan() -> None:
+    """16:9 sources with a crop window must still return a valid filter."""
+    job_id = "job_16x9_crop"
+    segment = TimelineSegment(
+        segment_id="seg_16x9_crop",
+        job_id=job_id,
+        candidate_id=None,
+        start_time=0.0,
+        end_time=5.0,
+        segment_role="hook",
+        selection_score=1.0,
+    )
+    reframe_plan = ReframePlan(
+        plan_id="reframe_16x9_crop",
+        job_id=job_id,
+        timeline_id="timeline_16x9_crop",
+        source_aspect_ratio="16:9",
+        primary_target_aspect_ratio="16:9",
+        instructions=[
+            FramingInstruction(
+                instruction_id="fi_16x9_crop",
+                job_id=job_id,
+                timeline_id="timeline_16x9_crop",
+                segment_id="seg_16x9_crop",
+                focus_kind="gameplay",
+                layout_kind="full_gameplay",
+                source_aspect_ratio="16:9",
+                target_aspect_ratio="16:9",
+                crop_window={"x": 0.10, "y": 0.0, "width": 0.80, "height": 1.0},
+            )
+        ],
+        plan_score=1.0,
+    )
+
+    fc, label = FinalRenderDriver()._build_filter_complex(
+        segment=segment,
+        reframe_plan=reframe_plan,
+        dynamic_edit_plan=None,
+        audio_peaks=[],
+        src_w=1920,
+        src_h=1080,
+    )
+
+    assert label == "[out]"
+    assert "crop=1536:1080:192:0" in fc
+    assert "scale=1920:1080" in fc
+
+
+# ------------------------------------------------------------------ #
 #  Tests                                                               #
 # ------------------------------------------------------------------ #
 

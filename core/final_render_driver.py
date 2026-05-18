@@ -388,6 +388,46 @@ class FinalRenderDriver:
             return fc, "[out]"
             
 
+        # Standard 16:9 / non-32:9 source fallback.
+        # The method promises tuple[str, str], so never fall through to None.
+        crop_window = getattr(instr, "crop_window", None) if instr else None
+        if crop_window:
+            crop_x = int(float(crop_window.get("x", 0.0)) * src_w)
+            crop_y = int(float(crop_window.get("y", 0.0)) * src_h)
+            crop_w = int(float(crop_window.get("width", 1.0)) * src_w)
+            crop_h = int(float(crop_window.get("height", 1.0)) * src_h)
+
+            crop_x = max(0, min(crop_x, src_w - 2))
+            crop_y = max(0, min(crop_y, src_h - 2))
+            crop_w = max(2, min(crop_w, src_w - crop_x))
+            crop_h = max(2, min(crop_h, src_h - crop_y))
+
+            if crop_w % 2:
+                crop_w -= 1
+            if crop_h % 2:
+                crop_h -= 1
+
+            print(
+                f"[DEBUG] -> Rendering STANDARD 16:9 crop "
+                f"{crop_w}x{crop_h}+{crop_x}+{crop_y} -> 1920x1080"
+            )
+            fc = (
+                f"[0:v]crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
+                "scale=1920:1080:force_original_aspect_ratio=decrease,"
+                "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
+                "setsar=1[out]"
+            )
+            return fc, "[out]"
+
+        print(f"[DEBUG] -> Rendering STANDARD 16:9 source -> 1920x1080")
+        fc = (
+            "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,"
+            "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
+            "setsar=1[out]"
+        )
+        return fc, "[out]"
+
+
     # ------------------------------------------------------------------ #
     #  FFmpeg operations                                                   #
     # ------------------------------------------------------------------ #
