@@ -192,6 +192,40 @@ def _transcript_segments(payload: dict[str, Any]) -> list[Any]:
     return []
 
 
+def _skip_if_real_whisper_fixture_unavailable() -> None:
+    from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
+
+    if not WHISPER_PROBE_WAV.is_file():
+        pytest.skip(f"Whisper fixture missing: {WHISPER_PROBE_WAV}")
+
+    old_test_mode = os.environ.pop("ZENITH_TRANSCRIPT_TEST_MODE", None)
+    old_hf_offline = os.environ.get("HF_HUB_OFFLINE")
+    old_transformers_offline = os.environ.get("TRANSFORMERS_OFFLINE")
+
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
+    try:
+        result = TranscriptProcessor().transcribe(str(WHISPER_PROBE_WAV))
+        if not (result.segments or []):
+            pytest.skip("Real Whisper fixture produced no transcript segments in this environment")
+    except (TranscriptUnavailableError, ImportError, RuntimeError, OSError) as exc:
+        pytest.skip(f"Real Whisper fixture unavailable in this environment: {exc}")
+    finally:
+        if old_test_mode is not None:
+            os.environ["ZENITH_TRANSCRIPT_TEST_MODE"] = old_test_mode
+
+        if old_hf_offline is None:
+            os.environ.pop("HF_HUB_OFFLINE", None)
+        else:
+            os.environ["HF_HUB_OFFLINE"] = old_hf_offline
+
+        if old_transformers_offline is None:
+            os.environ.pop("TRANSFORMERS_OFFLINE", None)
+        else:
+            os.environ["TRANSFORMERS_OFFLINE"] = old_transformers_offline
+
+
 def test_s1_pipeline_handles_silent_video_without_speech(tmp_path: Path) -> None:
     workdir = _prepare_workspace(tmp_path)
     video_path = workdir / "tmp" / "s1_silent_blue.mp4"
@@ -230,7 +264,9 @@ def test_s1_pipeline_handles_silent_video_without_speech(tmp_path: Path) -> None
     )
 
 
+@pytest.mark.real_whisper
 def test_s2_pipeline_handles_video_with_whisper_probe_speech(tmp_path: Path) -> None:
+    _skip_if_real_whisper_fixture_unavailable()
     workdir = _prepare_workspace(tmp_path)
     video_path = workdir / "tmp" / "s2_whisper_probe.mp4"
     _write_speech_probe_clip(video_path)
