@@ -1,0 +1,32 @@
+{
+  "phase": "P2-7",
+  "title": "Real Whisper fixture probe evidence",
+  "created_at_utc": "2026-05-18T23:22:25.090966+00:00",
+  "test_mode": false,
+  "fixture_path": "tests/fixtures/whisper_probe.wav",
+  "fixture_size_bytes": 136842,
+  "direct_probe": {
+    "transcribe_ok": true,
+    "engine": "faster-whisper",
+    "language": "en",
+    "segment_count": 1,
+    "full_text_length": 63,
+    "first_segment": {
+      "start": 0.0,
+      "end": 4.0,
+      "has_text": true
+    }
+  },
+  "pytest": {
+    "command": "python -m pytest tests/test_transcript_whisper_fixture_probe.py tests/test_pipeline_e2e_scenarios.py::test_s2_pipeline_handles_video_with_whisper_probe_speech -vv",
+    "result": "2 passed in 12.86s",
+    "tests": [
+      "tests/test_transcript_whisper_fixture_probe.py::test_whisper_transcribes_bundled_sapi_fixture PASSED",
+      "tests/test_pipeline_e2e_scenarios.py::test_s2_pipeline_handles_video_with_whisper_probe_speech PASSED"
+    ]
+  },
+  "notes": [
+    "This evidence documents a real local faster-whisper run without ZENITH_TRANSCRIPT_TEST_MODE.",
+    "The existing committed tests still prove the executable path; this file records the verified runtime result for Phase 2 closure review."
+  ]
+}
