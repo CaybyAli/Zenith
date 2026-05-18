@@ -12,6 +12,7 @@ from models.reframe_plan import ReframePlan
 from models.timeline_segment import TimelineSegment
 from models.zoom_instruction import ZoomInstruction
 from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
+from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 from shared.errors import ValidationError
 
 from typing import Literal
@@ -202,7 +203,7 @@ class FinalRenderDriver:
 
     The output has the ACTUAL duration derived from the selected segments --
     not a hardcoded 60-second window.
-    Video is encoded with h264_nvenc (RTX 4090 NVENC) + AAC audio.
+    Video is encoded with resolved H.264 encoder: h264_nvenc when available, otherwise libx264 + AAC audio.
     """
 
     # ------------------------------------------------------------------ #
@@ -752,6 +753,98 @@ class FinalRenderDriver:
 
 
     # ------------------------------------------------------------------ #
+    #  Video encoder resolution                                             #
+    # ------------------------------------------------------------------ #
+
+    _ENCODER_RUNTIME_PROBE_CACHE: dict[str, bool] = {}
+
+    def _probe_video_encoder_runtime(self, encoder_name: str) -> bool:
+        """Verify that an encoder can actually start, not just that FFmpeg lists it."""
+        clean_encoder = str(encoder_name or "").strip()
+        if not clean_encoder:
+            return False
+
+        if clean_encoder in self._ENCODER_RUNTIME_PROBE_CACHE:
+            return self._ENCODER_RUNTIME_PROBE_CACHE[clean_encoder]
+
+        cmd = [
+            self._ffmpeg(),
+            "-y",
+            "-f", "lavfi",
+            "-i", "color=c=black:s=16x16:r=1:d=0.1",
+            "-frames:v", "1",
+            "-an",
+            "-c:v", clean_encoder,
+            "-f", "null",
+            "-",
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        ok = result.returncode == 0
+        self._ENCODER_RUNTIME_PROBE_CACHE[clean_encoder] = ok
+        return ok
+
+    def _resolve_video_encoder(self, job: Job | None) -> dict:
+        """Resolve FinalRenderDriver video encoder with NVENC -> libx264 fallback."""
+        probe_job = {
+            "job_id": getattr(job, "job_id", "unknown") if job is not None else "unknown",
+            "ffmpeg_path_hint": self._ffmpeg(),
+            "ffprobe_path_hint": self._ffprobe(),
+            "ffmpeg_resolver_allow_tool_probe": True,
+        }
+
+        try:
+            report = resolve_ffmpeg_capabilities(probe_job)
+        except Exception as exc:
+            return {
+                "codec": "libx264",
+                "mode": "cpu_fallback",
+                "ffmpeg_args": ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23"],
+                "resolver_status": "resolver_exception",
+                "fallback_reason": f"resolver_exception:{type(exc).__name__}",
+                "has_h264": False,
+                "has_nvenc": False,
+                "nvenc_runtime_ok": False,
+            }
+
+        has_nvenc = bool(getattr(report, "has_nvenc", False))
+        has_h264 = bool(getattr(report, "has_h264", False))
+        nvenc_runtime_ok = False
+
+        if has_nvenc:
+            nvenc_runtime_ok = self._probe_video_encoder_runtime("h264_nvenc")
+
+        if has_nvenc and nvenc_runtime_ok:
+            return {
+                "codec": "h264_nvenc",
+                "mode": "nvenc",
+                "ffmpeg_args": ["-c:v", "h264_nvenc", "-preset", "p4", "-cq", "23"],
+                "resolver_status": str(getattr(report, "status", "")),
+                "fallback_reason": None,
+                "has_h264": has_h264,
+                "has_nvenc": has_nvenc,
+                "nvenc_runtime_ok": nvenc_runtime_ok,
+            }
+
+        fallback_reason = "nvenc_not_available"
+        if has_nvenc and not nvenc_runtime_ok:
+            fallback_reason = "nvenc_runtime_probe_failed"
+        elif not has_h264:
+            fallback_reason = "h264_capability_not_confirmed_using_libx264_best_effort"
+
+        return {
+            "codec": "libx264",
+            "mode": "cpu_fallback",
+            "ffmpeg_args": ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23"],
+            "resolver_status": str(getattr(report, "status", "")),
+            "fallback_reason": fallback_reason,
+            "has_h264": has_h264,
+            "has_nvenc": has_nvenc,
+            "nvenc_runtime_ok": nvenc_runtime_ok,
+        }
+
+
+    # ------------------------------------------------------------------ #
     #  FFmpeg operations                                                   #
     # ------------------------------------------------------------------ #
 
@@ -762,6 +855,7 @@ class FinalRenderDriver:
         filter_complex: str,
         out_label: str,
         temp_path: Path,
+        video_encoder: dict | None = None,
     ) -> None:
         duration = round(segment.duration, 3)
         if duration <= 0:
@@ -769,6 +863,9 @@ class FinalRenderDriver:
                 f"Segment {segment.segment_id} ({segment.segment_role}) "
                 f"has non-positive duration: {duration}s"
             )
+
+        safe_video_encoder = video_encoder or self._resolve_video_encoder(None)
+        video_encoder_args = list(safe_video_encoder.get("ffmpeg_args") or [])
 
         cmd = [
             self._ffmpeg(), "-y",
@@ -779,9 +876,7 @@ class FinalRenderDriver:
             "-map", out_label,
             "-map", "0:a?",
             "-pix_fmt", "yuv420p",
-            "-c:v", "h264_nvenc",
-            "-preset", "p4",
-            "-cq", "23",
+            *video_encoder_args,
             "-c:a", "aac",
             "-b:a", "192k",
             "-reset_timestamps", "1",
@@ -862,6 +957,7 @@ class FinalRenderDriver:
 
         try:
             src_w, src_h = self._get_video_dimensions(source)
+            video_encoder = self._resolve_video_encoder(job)
 
             seg_paths: list[Path] = []
             total_segments = len(segments)
@@ -900,7 +996,7 @@ class FinalRenderDriver:
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
                 
-                self._extract_segment(source, seg, fc, label, tmp_path)
+                self._extract_segment(source, seg, fc, label, tmp_path, video_encoder)
                 seg_paths.append(tmp_path)
                 
                 print(f"   [OK] Segment fertig!\n")
@@ -972,7 +1068,13 @@ class FinalRenderDriver:
                 }
                 for event in list(censor_sfx_overlay_report.get("events") or [])
             ],
-            "codec_video": "h264_nvenc",
+            "codec_video": video_encoder["codec"],
+            "video_encoder_mode": video_encoder["mode"],
+            "video_encoder_fallback_reason": video_encoder.get("fallback_reason"),
+            "video_encoder_resolver_status": video_encoder.get("resolver_status"),
+            "video_encoder_has_h264": bool(video_encoder.get("has_h264")),
+            "video_encoder_has_nvenc": bool(video_encoder.get("has_nvenc")),
+            "video_encoder_nvenc_runtime_ok": bool(video_encoder.get("nvenc_runtime_ok")),
             "codec_audio": "aac",
             "output_video_path": str(concat_path),
         }
