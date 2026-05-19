@@ -36,6 +36,10 @@ from models.round_phase_result import RoundPhaseResult
 from shared.errors import ValidationError
 
 
+YOUTUBE_MIN_DURATION = 480.0
+LONGFORM_PRIMARY_SCORE_FLOOR = 0.45
+
+
 class LongformTimelineBuilder:
     def _make_timeline_id(self) -> str:
         return f"timeline_{uuid.uuid4().hex[:12]}"
@@ -274,26 +278,31 @@ class LongformTimelineBuilder:
         *,
         target_duration: float,
         max_segments: int,
+        reserve_candidates: list[dict] | None = None,
+        duration_floor: float | None = None,
     ) -> list[dict]:
         selected: list[dict] = []
         selected_duration = 0.0
+        effective_floor = max(0.0, float(duration_floor or 0.0))
 
-        sorted_candidates = sorted(
-            scored_candidates,
-            key=lambda item: (
+        def sort_key(item: dict) -> tuple[float, float, float]:
+            candidate = item["candidate"]
+            return (
                 -item["selection_score"],
-                item["candidate"].start_time,
-                item["candidate"].end_time,
-            ),
-        )
+                candidate.start_time,
+                candidate.end_time,
+            )
 
+        def candidate_duration(item: dict) -> float:
+            candidate = item["candidate"]
+            return max(0.0, candidate.end_time - candidate.start_time)
 
-        for item in sorted_candidates:
+        def try_add(item: dict) -> float:
             candidate = item["candidate"]
 
             heavy_weak_penalty = "heavy_weak_zone_penalty" in item["notes"]
             if heavy_weak_penalty:
-                continue
+                return 0.0
 
             overlaps_existing = any(
                 self._overlap_ratio(
@@ -306,19 +315,16 @@ class LongformTimelineBuilder:
             )
 
             if overlaps_existing:
-                continue
-# Trim overlapping segments
+                return 0.0
+
             trimmed_invalid = False
             for existing in selected:
                 existing_cand = existing["candidate"]
-                
-                # Check if current candidate overlaps with existing
+
                 if candidate.end_time > existing_cand.start_time and candidate.start_time < existing_cand.end_time:
-                    # Overlap detected - trim current candidate to start after existing ends
                     if candidate.start_time < existing_cand.end_time:
                         candidate.start_time = existing_cand.end_time
-                        
-                        # If trimmed segment is now invalid or too short, mark for skip
+
                         if candidate.end_time <= candidate.start_time:
                             trimmed_invalid = True
                             break
@@ -327,16 +333,54 @@ class LongformTimelineBuilder:
                             break
 
             if trimmed_invalid:
-                continue
+                return 0.0
+
+            added_duration = candidate_duration(item)
+            if added_duration < 3.0:
+                return 0.0
 
             selected.append(item)
-            selected_duration += candidate.end_time - candidate.start_time
+            return added_duration
 
-            if len(selected) >= max_segments:
+        sorted_candidates = sorted(scored_candidates, key=sort_key)
+
+        for item in sorted_candidates:
+            added_duration = try_add(item)
+            if added_duration <= 0.0:
+                continue
+
+            selected_duration += added_duration
+
+            floor_reached = effective_floor <= 0.0 or selected_duration >= effective_floor
+            normal_target_reached = selected_duration >= target_duration * 0.92
+            segment_cap_reached = len(selected) >= max_segments
+
+            if floor_reached and (normal_target_reached or segment_cap_reached):
                 break
 
-            if selected_duration >= target_duration * 0.92:
-                break
+        reserve_used = 0
+        if effective_floor > 0.0 and selected_duration < effective_floor:
+            for item in sorted(reserve_candidates or [], key=sort_key):
+                added_duration = try_add(item)
+                if added_duration <= 0.0:
+                    continue
+
+                selected_duration += added_duration
+                reserve_used += 1
+
+                if selected_duration >= effective_floor:
+                    break
+
+        print(
+            "[TIMELINE-DURATION-FLOOR] "
+            f"target={target_duration:.3f}s "
+            f"floor={effective_floor:.3f}s "
+            f"selected={selected_duration:.3f}s "
+            f"primary_candidates={len(scored_candidates)} "
+            f"reserve_candidates={len(reserve_candidates or [])} "
+            f"reserve_used={reserve_used} "
+            f"max_segments={max_segments}"
+        )
 
         return sorted(
             selected,
@@ -372,6 +416,11 @@ class LongformTimelineBuilder:
             "avg_moment_score": float(getattr(universal_moment_result, "avg_moment_score", 0.0) or 0.0),
             "max_moment_score": float(getattr(universal_moment_result, "max_moment_score", 0.0) or 0.0),
         }
+
+    def _requires_youtube_floor(self, job: Job) -> bool:
+        channel_type = str(getattr(job, "channel_type", "") or "").lower()
+        target_format = str(getattr(job, "target_format", "") or "").lower()
+        return "gaming_main" in channel_type and "short" not in target_format
 
     def build(
         self,
@@ -410,8 +459,9 @@ class LongformTimelineBuilder:
                 f"zoom_risk={universal_moment_stats['zoom_risk_windows']}"
             )
 
-        # 1️⃣ ERST SCOREN: Highlights bewerten
+        # 1?? ERST SCOREN: Highlights bewerten
         scored_candidates: list[dict] = []
+        reserve_scored_candidates: list[dict] = []
         _fusion_engine = (
             MultiIndicatorScoreFusion()
             if (cut_indicator_result is not None and cut_scoring_profile is not None)
@@ -440,16 +490,18 @@ class LongformTimelineBuilder:
                 notes = notes + fusion_result["notes"]
                 _fusion_stats.append(fusion_result)
 
-            if selection_score < 0.45:
+            item = {
+                "candidate": candidate,
+                "selection_score": selection_score,
+                "notes": list(notes),
+            }
+
+            if selection_score < LONGFORM_PRIMARY_SCORE_FLOOR:
+                item["notes"] = list(notes) + ["duration_floor_reserve"]
+                reserve_scored_candidates.append(item)
                 continue
 
-            scored_candidates.append(
-                {
-                    "candidate": candidate,
-                    "selection_score": selection_score,
-                    "notes": notes,
-                }
-            )
+            scored_candidates.append(item)
 
         if _fusion_stats:
             _f_boosted = sum(1 for r in _fusion_stats if r["positive_delta"] > 0)
@@ -476,32 +528,57 @@ class LongformTimelineBuilder:
         else:
             _fusion_note = None
 
-        if not scored_candidates:
+        if not scored_candidates and not reserve_scored_candidates:
             raise ValidationError("No usable longform candidates after scoring")
 
-        # 2️⃣ DANN TARGET DURATION: Intelligente Retention basierend auf Qualität! 🔥
-        target_duration = self._build_target_duration(
-            analysis_result.duration_seconds,
-            scored_candidates,  # Jetzt MIT Qualitäts-Analyse!
+        target_scoring_pool = scored_candidates or reserve_scored_candidates
+        print(
+            "[TIMELINE-SCORE-POOLS] "
+            f"primary={len(scored_candidates)} "
+            f"reserve={len(reserve_scored_candidates)} "
+            f"threshold={LONGFORM_PRIMARY_SCORE_FLOOR:.2f}"
         )
 
-        # 3️⃣ MAX SEGMENTS: Dynamisch basierend auf TARGET DURATION! 🎯
-        # Pro Segment ca. 10-14s → max_segments = target / 10s (mit Puffer)
-        # Minimum: 12 Segmente, Maximum: 100 Segmente
+        target_duration = self._build_target_duration(
+            analysis_result.duration_seconds,
+            target_scoring_pool,
+        )
+
         calculated_max = int(target_duration / 10.0)
         max_segments = max(12, min(100, calculated_max))
         
         print(f"[TIMELINE-SEGMENTS] Target: {target_duration:.0f}s -> Max Segments: {max_segments}")
 
         # 3️⃣ SELEKTION: Beste Highlights auswählen
+        duration_floor = YOUTUBE_MIN_DURATION if self._requires_youtube_floor(job) else None
+
         selected_items = self._dedupe_and_select(
             scored_candidates,
             target_duration=target_duration,
             max_segments=max_segments,
+            reserve_candidates=reserve_scored_candidates,
+            duration_floor=duration_floor,
         )
 
         if not selected_items:
             raise ValidationError("No longform segments selected")
+
+        selected_items_duration = sum(
+            max(0.0, item["candidate"].end_time - item["candidate"].start_time)
+            for item in selected_items
+        )
+        if duration_floor is not None and selected_items_duration < duration_floor:
+            print(
+                "[TIMELINE-DURATION-FLOOR-BLOCKED] "
+                f"selected={selected_items_duration:.3f}s "
+                f"floor={duration_floor:.3f}s "
+                f"primary={len(scored_candidates)} "
+                f"reserve={len(reserve_scored_candidates)} "
+                f"target={target_duration:.3f}s"
+            )
+            raise ValidationError(
+                f"Longform floor 480s unreachable: only {selected_items_duration:.0f}s of usable material"
+            )
 
         peak_index = self._resolve_peak_index(selected_items)
 
@@ -841,6 +918,23 @@ class LongformTimelineBuilder:
             universal_moment_result=universal_moment_result,
             soft_decision_report=soft_decision_report,
         )
+
+        final_selected_duration = sum(
+            max(0.0, segment.end_time - segment.start_time)
+            for segment in selected_segments
+        )
+        if duration_floor is not None and final_selected_duration < duration_floor:
+            print(
+                "[TIMELINE-DURATION-FLOOR-BLOCKED] "
+                f"selected_after_guards={final_selected_duration:.3f}s "
+                f"floor={duration_floor:.3f}s "
+                f"primary={len(scored_candidates)} "
+                f"reserve={len(reserve_scored_candidates)} "
+                f"target={target_duration:.3f}s"
+            )
+            raise ValidationError(
+                f"Longform floor 480s unreachable: only {final_selected_duration:.0f}s of usable material after guards"
+            )
 
         peak_segment_ids = [
             segment.segment_id
