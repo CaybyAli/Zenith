@@ -413,10 +413,22 @@ class LongformTimelineBuilder:
             "max_moment_score": float(getattr(universal_moment_result, "max_moment_score", 0.0) or 0.0),
         }
 
-    def _requires_youtube_floor(self, job: Job) -> bool:
+    def _requires_youtube_floor(
+        self,
+        job: Job,
+        analysis_result: AnalysisResult | None = None,
+    ) -> bool:
         channel_type = str(getattr(job, "channel_type", "") or "").lower()
         target_format = str(getattr(job, "target_format", "") or "").lower()
-        return "gaming_main" in channel_type and "short" not in target_format
+
+        if "gaming_main" not in channel_type or "short" in target_format:
+            return False
+
+        if analysis_result is None:
+            return True
+
+        duration_seconds = float(getattr(analysis_result, "duration_seconds", 0.0) or 0.0)
+        return duration_seconds >= YOUTUBE_MIN_DURATION
 
     def build(
         self,
@@ -546,7 +558,11 @@ class LongformTimelineBuilder:
         print(f"[TIMELINE-SEGMENTS] Target: {target_duration:.0f}s -> Max Segments: {max_segments}")
 
         # 3️⃣ SELEKTION: Beste Highlights auswählen
-        duration_floor = YOUTUBE_MIN_DURATION if self._requires_youtube_floor(job) else None
+        duration_floor = (
+            YOUTUBE_MIN_DURATION
+            if self._requires_youtube_floor(job, analysis_result)
+            else None
+        )
 
         selected_items = self._dedupe_and_select(
             scored_candidates,
