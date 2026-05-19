@@ -393,3 +393,80 @@ P2-FIX-3B wirkt korrekt. Zenith rendert kein still zu kurzes gaming_main-Longfor
 Phase-2-Status:
 Weiterhin NO-GO, weil noch kein echter gaming_main Render mit 480-1200 Sekunden und ffprobe-Beweis vorliegt.
 
+## 13. P2-FIX-3C-DIAG Longform Candidate Loss Diagnosis
+
+Diagnoseauftrag:
+Warum bleiben aus 1018s Rohvideo nur ca. 265-271s nutzbares Longform-Material uebrig?
+
+Job:
+job_0c140762248f
+
+Diagnose-Skript:
+tools/diag/diag_longform_candidate_loss.py
+
+Das Skript ist read-only. Es erzeugt die Legacy-Edit-Signale wie die echte Pipeline neu ueber EditSignalExtractor und simuliert die Longform-Auswahl extern. Es aendert keinen Produktionscode.
+
+Roher Kernbefund:
+
+analysis_duration_seconds=1018.0
+edit_signal_source=EditSignalExtractor.recomputed
+edit_signals=1698
+edit_signal_type_counts={'audio_activity': 666, 'motion_peak': 161, 'duration_context': 1, 'motion_activity': 501, 'audio_peak': 101, 'silence_zone': 251, 'low_motion_zone': 17}
+highlight_candidates_before_scoring=99
+weak_zones=70
+primary_candidates=99
+reserve_candidates=0
+target_duration=936.560
+max_segments=93
+
+Frage 1 - Kandidaten-Inventar:
+
+raw_duration_stats={'count': 99, 'sum': 1367.33, 'min': 8.0, 'median': 14.0, 'avg': 13.811, 'max': 14.0}
+raw_duration_buckets={'lt_3s': 0, '3_to_8s': 0, '8_to_15s': 99, '15_to_30s': 0, 'gt_30s': 0}
+raw_sum_with_overlaps=1367.330
+raw_unique_coverage_seconds=728.330
+
+Antwort:
+Die Highlight-Erkennung erzeugt genug Material. Es gibt 99 Kandidaten, keine Kandidaten unter 3s, Median 14s, und ca. 728.33s unique Coverage. Der Defekt liegt nicht darin, dass zu wenige oder zu kurze Highlight-Kandidaten entstehen.
+
+Frage 2 - Verlust in _dedupe_and_select.try_add:
+
+selected_count=25
+selected_duration=271.000
+reserve_used=0
+unused_primary_count=74
+unused_reserve_count=0
+max_segments_cap_hit=False
+
+reject reason=heavy_weak_zone_penalty count=67 pct=67.68% seconds=928.330
+reject reason=overlap_ge_0_70 count=3 pct=3.03% seconds=42.000
+reject reason=trim_invalid count=4 pct=4.04% seconds=56.000
+
+Antwort:
+Der Hauptverlust entsteht durch heavy_weak_zone_penalty. 67 von 99 Kandidaten werden dadurch verworfen. Overlap >= 0.70 ist mit 3 Kandidaten nicht die Hauptursache. Trim invalid betrifft 4 Kandidaten.
+
+Frage 3 - Wo verdampfen die Sekunden:
+
+sum_candidate_durations_before_dedup=1367.330
+sum_selected_durations_after_dedup=271.000
+lost_seconds_total=1096.330
+lost_pct_vs_raw_sum=80.18%
+unused_primary_seconds=1026.330
+unused_reserve_seconds=0.000
+lost_by_reason heavy_weak_zone_penalty seconds=928.330
+lost_by_reason overlap_ge_0_70 seconds=42.000
+lost_by_reason trim_invalid seconds=56.000
+lost_by_reason trimmed_seconds_kept_segment seconds=70.000
+
+Root-Cause-Entscheidung:
+Heavy weak-zone penalty ist der Hauptverlust.
+
+Root-Cause-Detail:
+67/99 Kandidaten (67.68%) werden wegen heavy_weak_zone_penalty verworfen. Dadurch gehen 928.330s Kandidatenmaterial verloren.
+
+Naechster Fix-Bereich:
+Weak-zone-Erkennung oder Anwendung der heavy_weak_zone_penalty im Longform-Scoring untersuchen. Nicht den Duration-Floor weiter haerten. Nicht zuerst Overlap-Dedup fixen, weil Overlap nur 3.03% der Kandidaten betrifft.
+
+Phase-2-Status:
+Weiterhin NO-GO, weil noch kein echter gaming_main Render mit 480-1200s und ffprobe-Beweis vorliegt.
+
