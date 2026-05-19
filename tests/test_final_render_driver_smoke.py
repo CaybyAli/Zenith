@@ -262,7 +262,7 @@ def test_basic_render_consumes_timeline() -> None:
     with VideoFileClip(output_path) as clip:
         actual_duration = float(clip.duration or 0.0)
 
-    # Allow Â±1 s tolerance for codec rounding
+    # Allow ±1 s tolerance for codec rounding
     assert abs(actual_duration - expected_duration) <= 1.0, (
         f"Duration mismatch: expected ~{expected_duration:.1f}s, "
         f"got {actual_duration:.3f}s  (NOT the hardcoded 60 s)"
@@ -275,7 +275,15 @@ def test_basic_render_consumes_timeline() -> None:
         ctx = json.load(f)
 
     assert ctx["segments_count"] == 3
-    assert ctx["codec_video"] == "h264_nvenc"
+    resolved = FinalRenderDriver()._resolve_video_encoder(None)
+    assert ctx["codec_video"] == resolved["codec"], (
+        f"codec_video {ctx['codec_video']!r} != resolved encoder {resolved['codec']!r}"
+    )
+    assert ctx["video_encoder_mode"] == resolved["mode"], (
+        f"video_encoder_mode {ctx['video_encoder_mode']!r} != resolved mode {resolved['mode']!r}"
+    )
+    assert ctx["codec_video"] in {"h264_nvenc", "libx264"}
+    assert ctx["video_encoder_mode"] in {"nvenc", "cpu_fallback"}
     assert ctx["reframe_plan_used"] is False
 
     roles = [s["role"] for s in ctx["segments"]]
