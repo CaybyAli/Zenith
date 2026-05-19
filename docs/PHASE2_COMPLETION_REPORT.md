@@ -362,3 +362,34 @@ LONGFORM TIMELINE BUILDER SMOKE TEST PASSED
 4 passed in 0.52s
 
 Status nach P2-FIX-3B: Der Code verhindert jetzt still zu kurze gaming_main-Longform-Timelines. Der echte E2E-Render muss nach diesem Commit erneut lokal gefahren und mit ffprobe belegt werden. Phase 2 bleibt bis zu diesem neuen ffprobe-Beweis NO-GO.
+
+## 12. P2-FIX-3B Real-E2E-Rerun nach Fix
+
+Nach Commit a27d192f87e3876f166bdec3c9a1c194726d2986 wurde ein neuer echter gaming_main E2E-Lauf gestartet.
+
+Quelle:
+inbox\gaming_main\League of Legends Full Video 1 P2FIX3B.mp4
+
+Job:
+job_0c140762248f
+
+Roher Pipeline-Befund:
+TIMELINE-SCORE-POOLS primary=70 reserve=29 threshold=0.45
+TIMELINE-QUALITY Highlights: 70, Avg Score: 0.68, Density: 0.69
+TIMELINE-QUALITY Category: good, Retention: 75%
+TIMELINE-QUALITY Duration: 1018s -> Target: 763s (75%)
+TIMELINE-SEGMENTS Target: 763s -> Max Segments: 76
+TIMELINE-DURATION-FLOOR target=763.373s floor=480.000s selected=265.000s primary_candidates=70 reserve_candidates=29 reserve_used=3 max_segments=76
+TIMELINE-DURATION-FLOOR-BLOCKED selected=265.000s floor=480.000s primary=70 reserve=29 target=763.373s
+
+Pipeline-Schluss:
+Done ok=0 skipped=0 failed=1
+job_0c140762248f (gaming_main)
+Longform floor 480s unreachable: only 265s of usable material
+
+Auswertung:
+P2-FIX-3B wirkt korrekt. Zenith rendert kein still zu kurzes gaming_main-Longform-Video mehr. Stattdessen blockiert der Pipeline-Lauf sauber, wenn der 480s-Floor nicht erreichbar ist.
+
+Phase-2-Status:
+Weiterhin NO-GO, weil noch kein echter gaming_main Render mit 480-1200 Sekunden und ffprobe-Beweis vorliegt.
+
