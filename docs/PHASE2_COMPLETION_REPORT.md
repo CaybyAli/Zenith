@@ -51,26 +51,51 @@ Pflicht-Befehl für den Phase-2-Abschluss:
 pytest -m ffmpeg_integration -p no:cacheprovider -o addopts=""
 ```
 
-### Rohes Ergebnis dieses Laufs
+### Lokaler Einzeltest-Lauf `test_final_render_driver_smoke.py`
 
-Offen: Dieser Lauf wurde in diesem Chat nicht auf der Nutzer-Maschine ausgeführt. Der Grund ist, dass der Bau-Chat hier nur über GitHub-Dateioperationen verfügt und keinen Zugriff auf `D:\Zenith\`, lokales ffmpeg, GPU/NVENC oder die lokale Python-Umgebung des Nutzers hat.
-
-Der folgende Befehl muss lokal auf der Nutzer-Maschine ausgeführt und der rohe Schlussbalken hier nachgetragen werden:
+Ausgeführt auf der Nutzer-Maschine unter `D:\Zenith`:
 
 ```powershell
-cd D:\Zenith
-pytest -m ffmpeg_integration -p no:cacheprovider -o addopts=""
+python -m pytest -m ffmpeg_integration tests/test_final_render_driver_smoke.py -p no:cacheprovider -o addopts=""
 ```
 
-Erwartetes Fertig-Kriterium nach lokalem Lauf:
+Roher Schlussbalken:
 
 ```text
-3 passed, 0 failed
+================================================ 3 passed, 2 deselected in 13.17s ================================================
+```
+
+### Lokaler vollständiger ffmpeg_integration-Lauf
+
+Ausgeführt auf der Nutzer-Maschine unter `D:\Zenith`:
+
+```powershell
+python -m pytest -m ffmpeg_integration -p no:cacheprovider -o addopts=""
+```
+
+Roher Schlussbalken:
+
+```text
+============================================== 5 passed, 3517 deselected in 15.63s ===============================================
+```
+
+### Lokaler Standard-Suite-Lauf
+
+Ausgeführt auf der Nutzer-Maschine unter `D:\Zenith`:
+
+```powershell
+python -m pytest
+```
+
+Roher Schlussbalken:
+
+```text
+==================================== 3515 passed, 2 skipped, 5 deselected in 95.52s (0:01:35) ====================================
 ```
 
 ## 7. E2E-Render-Beweis gaming_main
 
-Offen: Ein echter `gaming_main` End-to-End-Render über `pipeline_runner.py` wurde in diesem Chat nicht ausgeführt. Der Grund ist derselbe: kein Zugriff auf die Nutzer-Maschine, keine lokalen Rohvideos, kein lokaler ffmpeg-/ffprobe-Lauf und kein Zugriff auf `D:\Zenith\`.
+Offen: Ein echter `gaming_main` End-to-End-Render über `pipeline_runner.py` wurde in diesem Chat nicht ausgeführt. Es liegt bisher kein roher `ffprobe`-Output eines echten finalen `gaming_main`-Renders vor.
 
 Kein ffprobe-Output wurde erfunden.
 
@@ -110,6 +135,6 @@ P2-FIX-5 Commit: `a26089b84df2772322c30f188d3b5f4ee8549acc`.
 
 ## 10. Abschlussstatus dieses Reports
 
-Dieser Report enthält die geforderten acht Kernpunkte. Die Code-/Doku-Nachbesserungen P2-FIX-1, P2-FIX-4 und P2-FIX-5 wurden umgesetzt. P2-FIX-2 und P2-FIX-3 sind dokumentiert, aber die rohen lokalen Beweise bleiben offen, weil sie zwingend auf der Nutzer-Maschine mit `D:\Zenith\`, ffmpeg/ffprobe und echtem Rohvideo ausgeführt werden müssen.
+Dieser Report enthält die geforderten acht Kernpunkte. Die Code-/Doku-Nachbesserungen P2-FIX-1, P2-FIX-4 und P2-FIX-5 wurden umgesetzt. P2-FIX-2 ist durch lokale rohe pytest-Schlussbalken belegt. P2-FIX-3 bleibt offen, weil noch kein echter `gaming_main`-Pipeline-Render mit rohem `ffprobe`-Output vorliegt.
 
 Keine erfundenen Test- oder ffprobe-Ausgaben wurden eingetragen.
