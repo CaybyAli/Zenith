@@ -331,3 +331,34 @@ P2-FIX-5 Commit: `a26089b84df2772322c30f188d3b5f4ee8549acc`.
 Dieser Report enthält die geforderten acht Kernpunkte. Die Code-/Doku-Nachbesserungen P2-FIX-1, P2-FIX-4 und P2-FIX-5 wurden umgesetzt. P2-FIX-2 ist durch lokale rohe pytest-Schlussbalken belegt. P2-FIX-3 wurde real ausgeführt und erzeugte einen technisch gültigen MP4-Render mit 16:9-Video und Audiospur, verfehlte aber das geforderte Dauerfenster von 480–1200 Sekunden. Phase 2 bleibt deshalb NO-GO.
 
 Keine erfundenen Test- oder ffprobe-Ausgaben wurden eingetragen.
+
+## 11. P2-FIX-3B Duration-Floor-Nachbesserung
+
+Nach dem echten gaming_main E2E-Lauf wurde ein technisch gueltiger Render erzeugt, aber der finale Output war nur 319.083789 Sekunden lang und lag damit unter dem geforderten 480-1200s-Fenster.
+
+Root Cause: Der bisherige 480s-YouTube-Floor setzte nur target_duration, garantierte aber nicht, dass LongformTimelineBuilder tatsaechlich genug selected_segments auswaehlt. Zusaetzlich wurden Kandidaten unter der harten 0.45-Score-Schwelle zu frueh verworfen.
+
+Fix-Commit: a27d192f87e3876f166bdec3c9a1c194726d2986
+Commit-Message: fix(P2-FIX-3B): enforce gaming main duration floor
+
+Geaenderte Dateien:
+- core/longform_timeline_builder.py
+- tests/test_phase2_p2_fix3b_duration_floor_smoke.py
+
+Umsetzung:
+- YOUTUBE_MIN_DURATION = 480.0 und LONGFORM_PRIMARY_SCORE_FLOOR = 0.45 ergaenzt.
+- _dedupe_and_select() wurde duration-floor-aware gemacht.
+- Kandidaten unter 0.45 werden als duration_floor_reserve gefuehrt.
+- Fuer gaming_main Longform wird ein harter 480s-Floor geprueft.
+- Wenn der Floor vor oder nach den Guards nicht erreichbar ist, wird ein klarer ValidationError ausgeloest.
+- Neuer Smoke-Test prueft 480s-Floor, Reserve-Kandidaten, Fehlerfall und 1200s-Obergrenze.
+
+Lokale Testnachweise:
+python -m pytest tests/test_phase2_p2_fix3b_duration_floor_smoke.py -q
+4 passed in 0.40s
+
+PYTHONPATH Smoke + Target Duration Tests:
+LONGFORM TIMELINE BUILDER SMOKE TEST PASSED
+4 passed in 0.52s
+
+Status nach P2-FIX-3B: Der Code verhindert jetzt still zu kurze gaming_main-Longform-Timelines. Der echte E2E-Render muss nach diesem Commit erneut lokal gefahren und mit ffprobe belegt werden. Phase 2 bleibt bis zu diesem neuen ffprobe-Beweis NO-GO.
