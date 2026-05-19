@@ -95,27 +95,220 @@ Roher Schlussbalken:
 
 ## 7. E2E-Render-Beweis gaming_main
 
-Offen: Ein echter `gaming_main` End-to-End-Render über `pipeline_runner.py` wurde in diesem Chat nicht ausgeführt. Es liegt bisher kein roher `ffprobe`-Output eines echten finalen `gaming_main`-Renders vor.
-
-Kein ffprobe-Output wurde erfunden.
-
-Lokal nachzutragender Ablauf:
+Ein echter `gaming_main` End-to-End-Lauf wurde auf der Nutzer-Maschine ausgeführt:
 
 ```powershell
 cd D:\Zenith
-# echtes gaming_main-Rohvideo durch pipeline_runner.py fahren
-# danach fertigen Render mit ffprobe prüfen:
-ffprobe -hide_banner -show_format -show_streams "<PFAD_ZUM_FINAL_RENDER>.mp4"
+python pipeline_runner.py
 ```
 
-Der rohe `ffprobe`-Output muss zeigen:
+Quelle:
 
-- Container-/Formatdaten
-- Gesamtdauer zwischen 480 und 1200 Sekunden
-- Video-Stream mit 16:9-Seitenverhältnis
-- mindestens einen Audio-Stream
+```text
+inbox\gaming_main\League of Legends Full Video 1.mp4
+```
 
-Falls Profanity/Censor-SFX im Video vorhanden ist, muss zusätzlich ein roher Audioenergie-Nachweis über das gemappte Censor-Zeitfenster ergänzt werden, zum Beispiel mit `volumedetect` oder `astats`.
+Job:
+
+```text
+job_9ba111149e70
+```
+
+Der Pipeline-Lauf erzeugte und exportierte eine finale MP4:
+
+```text
+D:\Zenith\exports\gaming_main\job_9ba111149e70\job_9ba111149e70_v1_final.mp4
+```
+
+Pipeline-Schlussnachweis:
+
+```text
+[gaming_pipeline] RENDER    job_9ba111149e70  → output\job_9ba111149e70_final.mp4
+[gaming_pipeline] SUBTITLES job_9ba111149e70  done
+[gaming_pipeline] META      job_9ba111149e70  title='Unfassbarer Gaming Moment 😱🔥'
+[gaming_pipeline] VALIDATE  job_9ba111149e70  status=passed
+[gaming_pipeline] VALIDATE_DETAIL job_9ba111149e70 status=passed reason=all blocking checks passed
+[PHASE-2B-STABILIZATION] status=passed_with_known_warnings ready=true artifacts=8/8 timeline_segments=12 final_review_segments=12 warnings=2
+[gaming_pipeline] DONE      job_9ba111149e70  status=approval_pending
+[pipeline_runner] EXPORT_VERSION job_9ba111149e70 version=1 file=job_9ba111149e70_v1_final.mp4
+[pipeline_runner] COPIED   1 file(s) to export
+[pipeline_runner] CLEANUP  Deleted 1 temporary file(s) from output/
+[pipeline_runner] EXPORT    job_9ba111149e70  → exports\gaming_main\job_9ba111149e70
+[pipeline_runner] JOB_JSON  job_9ba111149e70  path=exports\gaming_main\job_9ba111149e70\job.json
+
+[pipeline_runner] Done ? ok=1  skipped=0  failed=0
+  ?  job_9ba111149e70  (gaming_main)
+```
+
+ffprobe-Befehl:
+
+```powershell
+D:\Tools\ffmpeg\bin\ffprobe.exe -hide_banner -show_format -show_streams "D:\Zenith\exports\gaming_main\job_9ba111149e70\job_9ba111149e70_v1_final.mp4"
+```
+
+Roher ffprobe-Output:
+
+```text
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'D:\Zenith\exports\gaming_main\job_9ba111149e70\job_9ba111149e70_v1_final.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.13.101
+  Duration: 00:05:19.08, start: 0.000000, bitrate: 5267 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 1920x1080 [SAR 1:1 DAR 16:9], 5063 kb/s, 59.98 fps, 60 tbr, 15360 tbn, start 0.021029 (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : Lavc62.29.101 libx264
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 192 kb/s (default)
+    Metadata:
+      handler_name    : #Mainconcept MP4 Sound Media Handler
+[STREAM]
+index=0
+codec_name=h264
+codec_long_name=H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10
+profile=High
+codec_type=video
+codec_tag_string=avc1
+codec_tag=0x31637661
+mime_codec_string=avc1.64002a
+width=1920
+height=1080
+coded_width=1920
+coded_height=1080
+has_b_frames=2
+sample_aspect_ratio=1:1
+display_aspect_ratio=16:9
+pix_fmt=yuv420p
+level=42
+color_range=unknown
+color_space=unknown
+color_transfer=unknown
+color_primaries=unknown
+chroma_location=left
+field_order=progressive
+is_avc=true
+nal_length_size=4
+id=0x1
+r_frame_rate=60/1
+avg_frame_rate=73489920/1225201
+time_base=1/15360
+start_pts=323
+start_time=0.021029
+duration_ts=4900804
+duration=319.062760
+bit_rate=5063297
+max_bit_rate=N/A
+bits_per_raw_sample=8
+nb_frames=19138
+nb_read_frames=N/A
+nb_read_packets=N/A
+extradata_size=46
+DISPOSITION:default=1
+DISPOSITION:dub=0
+DISPOSITION:original=0
+DISPOSITION:comment=0
+DISPOSITION:lyrics=0
+DISPOSITION:karaoke=0
+DISPOSITION:forced=0
+DISPOSITION:hearing_impaired=0
+DISPOSITION:visual_impaired=0
+DISPOSITION:clean_effects=0
+DISPOSITION:attached_pic=0
+DISPOSITION:timed_thumbnails=0
+DISPOSITION:non_diegetic=0
+DISPOSITION:captions=0
+DISPOSITION:descriptions=0
+DISPOSITION:metadata=0
+DISPOSITION:dependent=0
+DISPOSITION:still_image=0
+DISPOSITION:multilayer=0
+TAG:language=und
+TAG:handler_name=VideoHandler
+TAG:encoder=Lavc62.29.101 libx264
+[/STREAM]
+[STREAM]
+index=1
+codec_name=aac
+codec_long_name=AAC (Advanced Audio Coding)
+profile=LC
+codec_type=audio
+codec_tag_string=mp4a
+codec_tag=0x6134706d
+mime_codec_string=mp4a.40.2
+sample_fmt=fltp
+sample_rate=48000
+channels=2
+channel_layout=stereo
+bits_per_sample=0
+initial_padding=0
+id=0x2
+r_frame_rate=0/0
+avg_frame_rate=0/0
+time_base=1/48000
+start_pts=0
+start_time=0.000000
+duration_ts=15315108
+duration=319.064750
+bit_rate=192069
+max_bit_rate=N/A
+bits_per_raw_sample=N/A
+nb_frames=14967
+nb_read_frames=N/A
+nb_read_packets=N/A
+extradata_size=5
+DISPOSITION:default=1
+DISPOSITION:dub=0
+DISPOSITION:original=0
+DISPOSITION:comment=0
+DISPOSITION:lyrics=0
+DISPOSITION:karaoke=0
+DISPOSITION:forced=0
+DISPOSITION:hearing_impaired=0
+DISPOSITION:visual_impaired=0
+DISPOSITION:clean_effects=0
+DISPOSITION:attached_pic=0
+DISPOSITION:timed_thumbnails=0
+DISPOSITION:non_diegetic=0
+DISPOSITION:captions=0
+DISPOSITION:descriptions=0
+DISPOSITION:metadata=0
+DISPOSITION:dependent=0
+DISPOSITION:still_image=0
+DISPOSITION:multilayer=0
+TAG:language=eng
+TAG:handler_name=#Mainconcept MP4 Sound Media Handler
+[/STREAM]
+[FORMAT]
+filename=D:\Zenith\exports\gaming_main\job_9ba111149e70\job_9ba111149e70_v1_final.mp4
+nb_streams=2
+nb_programs=0
+nb_stream_groups=0
+format_name=mov,mp4,m4a,3gp,3g2,mj2
+format_long_name=QuickTime / MOV
+start_time=0.000000
+duration=319.083789
+size=210105162
+bit_rate=5267711
+probe_score=100
+TAG:major_brand=isom
+TAG:minor_version=512
+TAG:compatible_brands=isomiso2avc1mp41
+TAG:encoder=Lavf62.13.101
+[/FORMAT]
+```
+
+### E2E-Auswertung
+
+- **Echter Render erzeugt:** Ja.
+- **Container/Format:** MP4/MOV, `format_name=mov,mp4,m4a,3gp,3g2,mj2`.
+- **Video vorhanden:** Ja, Stream `index=0`, `codec_name=h264`.
+- **Auflösung/Seitenverhältnis:** Ja, `1920x1080`, `display_aspect_ratio=16:9`.
+- **Audio vorhanden:** Ja, Stream `index=1`, `codec_name=aac`, `48000 Hz`, `stereo`.
+- **Dauer:** Nein für Phase-2-Abschluss. `duration=319.083789` Sekunden bzw. `00:05:19.08`.
+- **Gefordertes Dauerfenster:** 480–1200 Sekunden.
+- **Ergebnis P2-FIX-3:** Nicht bestanden, weil der echte Render nur ca. 5:19 Minuten lang ist und damit unter der 8-Minuten-Monetarisierungsgrenze liegt.
+- **Censor-SFX-Nachweis:** Nicht erforderlich für diesen Lauf, weil der Pipeline-Log `PROFANITY_CENSOR_DONE` mit `reason=no_profanity_censor_candidates` meldete und der Nutzer bestätigte, dass im Video keine Beleidigungen vorkamen.
 
 ## 8. Offener Punkt: Realer Whisper-Lauf
 
@@ -135,6 +328,6 @@ P2-FIX-5 Commit: `a26089b84df2772322c30f188d3b5f4ee8549acc`.
 
 ## 10. Abschlussstatus dieses Reports
 
-Dieser Report enthält die geforderten acht Kernpunkte. Die Code-/Doku-Nachbesserungen P2-FIX-1, P2-FIX-4 und P2-FIX-5 wurden umgesetzt. P2-FIX-2 ist durch lokale rohe pytest-Schlussbalken belegt. P2-FIX-3 bleibt offen, weil noch kein echter `gaming_main`-Pipeline-Render mit rohem `ffprobe`-Output vorliegt.
+Dieser Report enthält die geforderten acht Kernpunkte. Die Code-/Doku-Nachbesserungen P2-FIX-1, P2-FIX-4 und P2-FIX-5 wurden umgesetzt. P2-FIX-2 ist durch lokale rohe pytest-Schlussbalken belegt. P2-FIX-3 wurde real ausgeführt und erzeugte einen technisch gültigen MP4-Render mit 16:9-Video und Audiospur, verfehlte aber das geforderte Dauerfenster von 480–1200 Sekunden. Phase 2 bleibt deshalb NO-GO.
 
 Keine erfundenen Test- oder ffprobe-Ausgaben wurden eingetragen.
