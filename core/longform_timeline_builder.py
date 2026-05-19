@@ -175,7 +175,7 @@ class LongformTimelineBuilder:
             )
 
         if weak_overlap >= 0.50:
-            score -= 0.
+            score -= 0.40
             notes.append("heavy_weak_zone_penalty")
         elif weak_overlap >= 0.20:
             score -= 0.20
@@ -299,10 +299,6 @@ class LongformTimelineBuilder:
 
         def try_add(item: dict) -> float:
             candidate = item["candidate"]
-
-            heavy_weak_penalty = "heavy_weak_zone_penalty" in item["notes"]
-            if heavy_weak_penalty:
-                return 0.0
 
             overlaps_existing = any(
                 self._overlap_ratio(
