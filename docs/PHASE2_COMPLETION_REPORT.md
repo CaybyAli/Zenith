@@ -470,3 +470,68 @@ Weak-zone-Erkennung oder Anwendung der heavy_weak_zone_penalty im Longform-Scori
 Phase-2-Status:
 Weiterhin NO-GO, weil noch kein echter gaming_main Render mit 480-1200s und ffprobe-Beweis vorliegt.
 
+## 14. P2-FIX-3D Weak-Zone-Killswitch Fix
+
+Auftrag:
+Den heavy_weak_zone_penalty-Killswitch in core/longform_timeline_builder.py beheben.
+
+Commits:
+b3c6bac fix(P2-FIX-3D): remove weak-zone killswitch
+6898e93 fix(P2-FIX-3D): gate duration floor by raw length
+
+Geaenderte Dateien:
+- core/longform_timeline_builder.py
+- tests/test_phase2_p2_fix3d_weak_zone_penalty_smoke.py
+
+Penalty-Wert:
+heavy_weak_zone_penalty wurde von score -= 0. auf score -= 0.40 korrigiert.
+
+Herleitung:
+partial_weak_zone_penalty liegt bei -0.20. Die heavy-Variante muss staerker sein, aber Kandidaten nicht vernichten. -0.40 drueckt viele heavy weak-zone Kandidaten unter LONGFORM_PRIMARY_SCORE_FLOOR = 0.45, wodurch sie in den Reservepool wandern statt geloescht zu werden.
+
+Killswitch-Fix:
+Der Early-Return in _dedupe_and_select.try_add fuer heavy_weak_zone_penalty wurde entfernt. Die Note bleibt Diagnose-Marker, darf aber nicht mehr bedingungslos verwerfen.
+
+Testnachweis:
+python -m pytest tests/test_phase2_p2_fix3d_weak_zone_penalty_smoke.py -q
+4 passed in 0.42s
+
+Regression:
+python -m pytest tests/test_phase2_p2_fix3d_weak_zone_penalty_smoke.py tests/test_phase2_p2_fix3b_duration_floor_smoke.py tests/test_target_duration_smoke.py -q
+8 passed in 0.66s
+
+Volle Standard-Suite:
+3523 passed, 2 skipped, 5 deselected in 96.67s
+
+Echter gaming_main E2E-Rerun:
+Job:
+job_6cb67b539814
+
+Quelle:
+inbox\gaming_main\League of Legends Full Video 1 P2FIX3D.mp4
+
+Roher Kernbefund:
+[TIMELINE-SCORE-POOLS] primary=32 reserve=67 threshold=0.45
+[TIMELINE-DURATION-FLOOR] target=610.698s floor=480.000s selected=480.330s primary_candidates=32 reserve_candidates=67 reserve_used=23 max_segments=61
+
+Auswertung:
+P2-FIX-3D wirkt. Vor den spaeteren Guards erreicht die Timeline jetzt 480.330s. Vor P2-FIX-3D waren es nur ca. 265s. Der heavy weak-zone Killswitch ist damit als behoben belegt.
+
+Neuer Blocker nach P2-FIX-3D:
+[TIMELINE-DURATION-FLOOR-BLOCKED] selected_after_guards=445.690s floor=480.000s primary=32 reserve=67 target=610.698s
+Longform floor 480s unreachable: only 446s of usable material after guards
+
+Wichtige Guard-Verluste:
+[TIMELINE-ROUND-WAIT-GUARD] duration_before=458.670s duration_after=324.010s
+[TIMELINE-HARD-SPEECH-LOCK] duration_before=346.500s duration_after=541.930s
+[TIMELINE-PRIVATE-MENU-SPEECH] duration_before=529.620s duration_after=455.050s
+[TIMELINE-SENTENCE-ATOMICITY] duration_before=455.050s duration_after=449.640s
+[TIMELINE-ROUND-LIFECYCLE] duration_before=449.640s duration_after=445.590s
+[TIMELINE-UNIVERSAL-SAFE-TRIM] duration_before=445.690s duration_after=445.690s
+
+Phase-2-Status:
+Weiterhin NO-GO. Es gibt noch keinen echten gaming_main Render mit 480-1200s und ffprobe-Beweis.
+
+Naechster Root-Cause-Bereich:
+Nicht mehr heavy_weak_zone_penalty. Der naechste Defekt liegt nach der Auswahl in den post-selection Guards, weil die Auswahl 480.330s erreicht, aber nach Guards nur 445.690s uebrig bleiben.
+
