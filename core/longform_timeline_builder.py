@@ -948,6 +948,16 @@ class LongformTimelineBuilder:
                 f"Longform floor 480s unreachable: only {final_selected_duration:.0f}s of usable material after guards"
             )
 
+        if duration_floor is not None:
+            print(
+                "[TIMELINE-DURATION-OK] "
+                f"selected_after_guards={final_selected_duration:.3f}s "
+                f"floor={duration_floor:.3f}s "
+                f"primary={len(scored_candidates)} "
+                f"reserve={len(reserve_scored_candidates)} "
+                f"target={target_duration:.3f}s"
+            )
+
         peak_segment_ids = [
             segment.segment_id
             for segment in selected_segments
