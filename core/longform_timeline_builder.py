@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+import logging
 
 from models.analysis_result import AnalysisResult
 from models.energy_curve_result import EnergyCurveResult
@@ -30,6 +31,10 @@ from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from core.multi_indicator_score_fusion import MultiIndicatorScoreFusion
+from core.timeline_signal_consumer import (
+    SIGNAL_HOOK_IDENTIFICATION,
+    TimelineSignalConsumer,
+)
 from models.sentence_timeline import SentenceTimelineResult
 from models.audio_role_result import AudioRoleResult
 from models.round_phase_result import RoundPhaseResult
@@ -38,6 +43,8 @@ from shared.errors import ValidationError
 
 YOUTUBE_MIN_DURATION = 480.0
 LONGFORM_PRIMARY_SCORE_FLOOR = 0.45
+
+logger = logging.getLogger(__name__)
 
 
 class LongformTimelineBuilder:
@@ -140,12 +147,33 @@ class LongformTimelineBuilder:
         energy_curve_result: EnergyCurveResult | None = None,
         gameplay_vision_result: GameplayVisionResult | None = None,
         facecam_reaction_result: FacecamReactionResult | None = None,
+        consumer: TimelineSignalConsumer | None = None,
     ) -> tuple[float, list[str]]:
         score = 0.0
         notes: list[str] = []
 
         score += candidate.highlight_score * 0.72
         score += candidate.confidence * 0.18
+
+        if consumer is not None:
+            hook_boost = consumer.best_score_for_segment(
+                candidate.start_time,
+                candidate.end_time,
+                SIGNAL_HOOK_IDENTIFICATION,
+            ) * 0.08
+            if hook_boost > 0.0:
+                score += hook_boost
+                notes.append("hook_signal_boost")
+                candidate_id_or_time = getattr(
+                    candidate,
+                    "candidate_id",
+                    f"{candidate.start_time:.3f}-{candidate.end_time:.3f}",
+                )
+                logger.debug(
+                    "[P3-3B-HOOK] candidate=%s hook_boost=%.4f",
+                    candidate_id_or_time,
+                    hook_boost,
+                )
 
         if candidate.candidate_kind == "action_peak":
             score += 0.08
@@ -456,6 +484,7 @@ class LongformTimelineBuilder:
             raise ValidationError("Timeline builder needs highlight candidates")
 
         weak_zones = weak_zones or []
+        timeline_signal_consumer = TimelineSignalConsumer.from_job(job)
         universal_moment_stats = self._universal_moment_stats(universal_moment_result)
         if universal_moment_stats is not None:
             print(
@@ -484,6 +513,7 @@ class LongformTimelineBuilder:
                 energy_curve_result=energy_curve_result,
                 gameplay_vision_result=gameplay_vision_result,
                 facecam_reaction_result=facecam_reaction_result,
+                consumer=timeline_signal_consumer,
             )
 
             if _fusion_engine is not None:
