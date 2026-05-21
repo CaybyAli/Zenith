@@ -9969,6 +9969,38 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         # P3-3E: Reaction Shot Placement ? ReframePlan
         from core.reaction_shot_reframe_applier import apply_reaction_shots_to_reframe_plan
         reframe_plan = apply_reaction_shots_to_reframe_plan(reframe_plan, job)
+
+        # P3-6: B-Roll layout variation hints
+        try:
+            from core.broll_layout_variator import BrollLayoutVariator
+
+            if isinstance(reframe_plan, dict):
+                _p3_6_reframe_instructions = reframe_plan.get("instructions")
+                if _p3_6_reframe_instructions:
+                    reframe_plan["instructions"] = (
+                        BrollLayoutVariator.apply_variation(
+                            _p3_6_reframe_instructions
+                        )
+                    )
+            else:
+                _p3_6_reframe_instructions = getattr(
+                    reframe_plan,
+                    "instructions",
+                    None,
+                )
+                if (
+                    isinstance(_p3_6_reframe_instructions, list)
+                    and _p3_6_reframe_instructions
+                    and isinstance(_p3_6_reframe_instructions[0], dict)
+                ):
+                    reframe_plan.instructions = (
+                        BrollLayoutVariator.apply_variation(
+                            _p3_6_reframe_instructions
+                        )
+                    )
+        except Exception:
+            pass
+
         facecam_guard_summary = FacecamIntroGuard().apply(
             timeline=edit_timeline,
             reframe_plan=reframe_plan,
@@ -10233,6 +10265,71 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         },
     )
     print(f"[gaming_pipeline] RENDER    {job.job_id}  â†’ {final_video_path}")
+
+    # ------------------------------------------------------------------
+    # P3-6: Audio normalization stage
+    # ------------------------------------------------------------------
+    audio_normalization_filter_string = ""
+    audio_normalization_result = None
+    try:
+        _p3_6_profile = locals().get("profile", json_profile)
+        if isinstance(_p3_6_profile, dict):
+            _p3_6_audio_leveling_enabled = bool(
+                _p3_6_profile.get("audio_leveling", True)
+            )
+        else:
+            _p3_6_audio_leveling_enabled = bool(
+                getattr(_p3_6_profile, "audio_leveling", True)
+            )
+
+        if _p3_6_audio_leveling_enabled:
+            from core.audio_normalizer import AudioNormalizer
+
+            output_format_contract = (
+                locals().get("output_format_contract")
+                or getattr(job, "output_format_contract", None)
+                or getattr(job, "output_format_contract_report", None)
+                or getattr(job, "output_format_handler_report", None)
+                or getattr(job, "output_format_report", None)
+                or {}
+            )
+            _normalizer = AudioNormalizer.from_contract(output_format_contract)
+
+            # Pass 1 l?uft nur wenn tats?chlich gerendert wird und Messdaten
+            # vorhanden sind. Die Pipeline f?hrt hier keinen neuen Prozess
+            # aus; der Filter bleibt deterministisch.
+            _measured_audio_levels = getattr(
+                job,
+                "audio_normalization_measured",
+                {},
+            )
+            if not isinstance(_measured_audio_levels, dict):
+                _measured_audio_levels = {}
+
+            audio_normalization_result = _normalizer.build_result(
+                _measured_audio_levels
+            )
+            audio_normalization_filter_string = (
+                audio_normalization_result.filter_string
+            )
+
+            try:
+                job.audio_normalization_result = (
+                    audio_normalization_result.to_dict()
+                )
+            except Exception:
+                pass
+
+            print(
+                f"[gaming_pipeline] AUDIO_LEVEL {job.job_id} "
+                f"skipped={audio_normalization_result.skipped} "
+                f"filter={1 if audio_normalization_filter_string else 0}"
+            )
+    except Exception as audio_level_exc:
+        print(
+            f"[gaming_pipeline] AUDIO_LEVEL {job.job_id} "
+            f"skipped=True reason={audio_level_exc}"
+        )
 
     # ------------------------------------------------------------------
     # 8) Untertitel
@@ -10576,6 +10673,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "subtitles":             subtitles,
         "subtitle_segments":     subtitle_segments,
         "subtitle_filter_string": subtitle_filter_string,
+        "audio_normalization_filter_string": audio_normalization_filter_string,
+        "audio_normalization_result": audio_normalization_result,
         # Metadaten
         "title_package":         title_package,
         "metadata":              metadata,
