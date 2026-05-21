@@ -58,8 +58,10 @@ class JobStatus(str, Enum):
     CUTTING = "cutting"
     CUT = "cut"
     RENDERING = "rendering"
+    SHORTS_GENERATING = "shorts_generating"
 
     RENDERED = "rendered"
+    SHORTS_RENDERED = "shorts_rendered"
     RENDER_BLOCKED = "render_blocked"
     VALIDATION_FAILED = "validation_failed"
     APPROVAL_PENDING = "approval_pending"

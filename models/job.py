@@ -4,6 +4,8 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from models.shorts_clip import ShortsClip
+
 from shared.enums import (
     AutopublishClass,
     ChannelType,
@@ -38,6 +40,7 @@ class Job:
 
     raw_video_path: str | None = None
     shorts: list[dict[str, Any]] = field(default_factory=list)
+    shorts_clips: list[ShortsClip] = field(default_factory=list)
     topic: str | None = None
     title: str | None = None
     pipeline_type: PipelineType | None = None
@@ -1290,6 +1293,11 @@ class Job:
                 else None
             ),
             raw_video_path=data.get("raw_video_path"),
+            shorts_clips=[
+                ShortsClip.from_dict(item)
+                for item in list(data.get("shorts_clips") or [])
+                if isinstance(item, dict)
+            ],
             topic=data.get("topic"),
             title=data.get("title"),            
             pipeline_type=PipelineType(data["pipeline_type"]) if data.get("pipeline_type") else None,
