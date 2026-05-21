@@ -300,6 +300,98 @@ class LongformTimelineBuilder:
             default=0.0,
         )
 
+    def _apply_arc_ordering(
+        self,
+        segments: list,
+        consumer: TimelineSignalConsumer | None,
+    ) -> list:
+        """
+        Ordnet ausgew?hlte Segmente nach Emotional-Arc-Empfehlung.
+
+        Bevorzugt:
+        hook/setup fr?h, build_up/first_highlight/calm/tension in der Mitte,
+        climax/reaction/wind_down/outro sp?ter.
+
+        Fallback:
+        Kein Consumer oder keine Arc-Signale -> Original-Reihenfolge.
+        """
+        if consumer is None:
+            return segments
+
+        from core.timeline_signal_consumer import SIGNAL_EMOTIONAL_ARC
+
+        arc_phase_order = {
+            "hook": 0,
+            "setup": 1,
+            "build_up": 2,
+            "buildup": 2,
+            "first_highlight": 2,
+            "calm": 3,
+            "tension": 3,
+            "climax": 4,
+            "peak": 4,
+            "reaction": 4,
+            "payoff": 5,
+            "resolution": 5,
+            "wind_down": 5,
+            "outro": 5,
+            "breathing_room": 5,
+        }
+        default_order = 3
+
+        def bounds(segment) -> tuple[float, float] | None:
+            source = segment
+            if isinstance(segment, dict) and "candidate" in segment:
+                source = segment.get("candidate")
+
+            if hasattr(source, "start_time") and hasattr(source, "end_time"):
+                return float(source.start_time), float(source.end_time)
+
+            if isinstance(source, dict):
+                start = source.get("start_time", source.get("start", 0.0))
+                end = source.get("end_time", source.get("end", 0.0))
+                return float(start), float(end)
+
+            return None
+
+        def arc_sort_key(index_and_segment) -> tuple[int, int]:
+            original_index, segment = index_and_segment
+            segment_bounds = bounds(segment)
+            if segment_bounds is None:
+                return default_order, original_index
+
+            start, end = segment_bounds
+            arc_signals = consumer.signals_for_segment(start, end, SIGNAL_EMOTIONAL_ARC)
+            if not arc_signals:
+                return default_order, original_index
+
+            best_phase = None
+            best_score = -1.0
+            for signal in arc_signals:
+                phase = str(
+                    signal.get("arc_phase") or signal.get("phase") or ""
+                ).strip().lower()
+                try:
+                    signal_score = float(
+                        signal.get("score", signal.get("signal_score", 0.5)) or 0.5
+                    )
+                except Exception:
+                    signal_score = 0.5
+
+                if phase and signal_score > best_score:
+                    best_score = signal_score
+                    best_phase = phase
+
+            return arc_phase_order.get(best_phase, default_order), original_index
+
+        try:
+            indexed_segments = list(enumerate(segments))
+            ordered = sorted(indexed_segments, key=arc_sort_key)
+            return [segment for _, segment in ordered]
+        except Exception:
+            return segments
+
+
     def _dedupe_and_select(
         self,
         scored_candidates: list[dict],
@@ -604,6 +696,15 @@ class LongformTimelineBuilder:
 
         if not selected_items:
             raise ValidationError("No longform segments selected")
+
+        selected_items = self._apply_arc_ordering(
+            selected_items,
+            timeline_signal_consumer,
+        )
+        logger.debug(
+            "[P3-3C-ARC] segments reordered by emotional arc: %d segments",
+            len(selected_items),
+        )
 
         selected_items_duration = sum(
             max(0.0, item["candidate"].end_time - item["candidate"].start_time)
