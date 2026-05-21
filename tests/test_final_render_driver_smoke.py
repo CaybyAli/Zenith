@@ -230,6 +230,77 @@ def test_build_filter_complex_returns_16x9_crop_from_reframe_plan() -> None:
     assert "scale=1920:1080" in fc
 
 
+def test_reaction_shot_reframe_instruction_changes_32x9_filter_complex() -> None:
+    """Reaction-shot reframe instructions must visibly change the FFmpeg filter."""
+    job_id = "job_reaction_filter"
+    segment_id = "seg_reaction_filter"
+
+    segment = TimelineSegment(
+        segment_id=segment_id,
+        job_id=job_id,
+        candidate_id=None,
+        start_time=0.0,
+        end_time=5.0,
+        segment_role="hook",
+        selection_score=1.0,
+    )
+
+    driver = FinalRenderDriver()
+
+    base_filter, base_label = driver._build_filter_complex(
+        segment=segment,
+        reframe_plan=None,
+        dynamic_edit_plan=None,
+        audio_peaks=[],
+        src_w=3840,
+        src_h=1080,
+    )
+
+    reaction_plan = ReframePlan(
+        plan_id="reframe_reaction_filter",
+        job_id=job_id,
+        timeline_id="timeline_reaction_filter",
+        source_aspect_ratio="32:9",
+        primary_target_aspect_ratio="16:9",
+        instructions=[
+            FramingInstruction(
+                instruction_id="fi_reaction_filter",
+                job_id=job_id,
+                timeline_id="timeline_reaction_filter",
+                segment_id=segment_id,
+                focus_kind="facecam_emphasis",
+                layout_kind="facecam_emphasis",
+                source_aspect_ratio="32:9",
+                target_aspect_ratio="16:9",
+                crop_window={},
+                notes=["reaction_shot_layout_switch"],
+                metadata={"source": "reaction_shot_placement"},
+            )
+        ],
+        plan_score=1.0,
+    )
+
+    reaction_filter, reaction_label = driver._build_filter_complex(
+        segment=segment,
+        reframe_plan=reaction_plan,
+        dynamic_edit_plan=None,
+        audio_peaks=[],
+        src_w=3840,
+        src_h=1080,
+    )
+
+    assert base_label == "[out]"
+    assert reaction_label == "[out]"
+    assert base_filter != reaction_filter
+
+    assert "split=2" in base_filter
+    assert "overlay=" in base_filter
+
+    assert "crop=1920:1080:0:0" in reaction_filter
+    assert "scale=1920:1080[out]" in reaction_filter
+    assert "overlay=" not in reaction_filter
+
+
 # ------------------------------------------------------------------ #
 #  Tests                                                               #
 # ------------------------------------------------------------------ #
