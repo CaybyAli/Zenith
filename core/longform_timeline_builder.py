@@ -175,6 +175,14 @@ class LongformTimelineBuilder:
                     hook_boost,
                 )
 
+        pacing_modifier, pacing_notes = self._apply_pacing_score_modifier(
+            candidate,
+            consumer,
+        )
+        if pacing_modifier != 0.0:
+            score += pacing_modifier
+            notes.extend(pacing_notes)
+
         if candidate.candidate_kind == "action_peak":
             score += 0.08
             notes.append("action_peak_bonus")
@@ -299,6 +307,65 @@ class LongformTimelineBuilder:
             ),
             default=0.0,
         )
+
+    def _apply_pacing_score_modifier(
+        self,
+        candidate,
+        consumer: TimelineSignalConsumer | None,
+    ) -> tuple[float, list[str]]:
+        """
+        Gibt einen additiven Score-Modifier und Notes zurueck basierend auf Dynamic Pacing.
+
+        Kein Consumer oder kein Signal -> (0.0, []).
+        8-Minuten-Floor wird nicht beeinflusst.
+        """
+        if consumer is None:
+            return 0.0, []
+
+        from core.timeline_signal_consumer import SIGNAL_DYNAMIC_PACING
+
+        try:
+            start = float(getattr(candidate, "start_time", 0.0))
+            end = float(getattr(candidate, "end_time", 0.0))
+        except Exception:
+            return 0.0, []
+
+        pacing_signals = consumer.signals_for_segment(start, end, SIGNAL_DYNAMIC_PACING)
+        if not pacing_signals:
+            return 0.0, []
+
+        modifier = 0.0
+        notes: list[str] = []
+
+        for signal in pacing_signals:
+            try:
+                pacing_match = float(
+                    signal.get("pacing_match_score")
+                    or signal.get("energy_score")
+                    or 0.0
+                )
+                monotony = float(signal.get("monotony_score") or 0.0)
+            except Exception:
+                continue
+
+            if pacing_match > 0.6:
+                bonus = pacing_match * 0.05
+                modifier += bonus
+                notes.append("pacing_match_bonus")
+
+            if monotony > 0.6:
+                penalty = monotony * 0.04
+                modifier -= penalty
+                notes.append("monotony_penalty")
+
+        modifier = max(-0.08, min(0.08, modifier))
+        logger.debug(
+            "[P3-3D-PACING] candidate=%s pacing_modifier=%.4f",
+            getattr(candidate, "candidate_id", f"{start:.2f}-{end:.2f}"),
+            modifier,
+        )
+        return modifier, notes
+
 
     def _apply_arc_ordering(
         self,
