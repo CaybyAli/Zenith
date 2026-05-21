@@ -9964,6 +9964,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             primary_target_aspect_ratio="16:9",
             secondary_target_aspect_ratio="9:16",
         )
+        # P3-3E: Reaction Shot Placement ? ReframePlan
+        from core.reaction_shot_reframe_applier import apply_reaction_shots_to_reframe_plan
+        reframe_plan = apply_reaction_shots_to_reframe_plan(reframe_plan, job)
         facecam_guard_summary = FacecamIntroGuard().apply(
             timeline=edit_timeline,
             reframe_plan=reframe_plan,
