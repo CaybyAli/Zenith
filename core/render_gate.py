@@ -134,6 +134,112 @@ def _as_list(value: Any) -> list[Any]:
     return [value]
 
 
+def _as_float(value: Any) -> float:
+    try:
+        return float(value or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _has_final_quality_data(job: Any) -> bool:
+    direct_fields = (
+        "final_quality_status",
+        "final_quality_can_render",
+        "final_quality_can_execute_timeline",
+        "final_quality_blocking_count",
+        "final_quality_blocking_reasons",
+        "final_quality_overall_score",
+    )
+    if any(_get(job, field, None) is not None for field in direct_fields):
+        return True
+
+    report = _get(job, "final_quality_report", None)
+    return isinstance(report, dict) and bool(report)
+
+
+def _final_quality_detail(job: Any) -> dict[str, Any]:
+    if not _has_final_quality_data(job):
+        return {"final_quality_present": False}
+
+    return {
+        "final_quality_present": True,
+        "final_quality_status": _value(
+            job,
+            ("final_quality_status", "final_quality_report", "status"),
+            "",
+        ),
+        "final_quality_can_render": _as_bool(
+            _value(
+                job,
+                ("final_quality_can_render", "final_quality_report", "can_render"),
+                None,
+            )
+        ),
+        "final_quality_can_execute_timeline": _as_bool(
+            _value(
+                job,
+                (
+                    "final_quality_can_execute_timeline",
+                    "final_quality_report",
+                    "can_execute_timeline",
+                ),
+                None,
+            )
+        ),
+        "final_quality_blocking_count": _as_int(
+            _value(
+                job,
+                ("final_quality_blocking_count", "final_quality_report", "blocking_count"),
+                0,
+            )
+        ),
+        "final_quality_blocking_reasons": _as_list(
+            _value(
+                job,
+                (
+                    "final_quality_blocking_reasons",
+                    "final_quality_report",
+                    "blocking_reasons",
+                ),
+                [],
+            )
+        ),
+        "final_quality_overall_score": _as_float(
+            _value(
+                job,
+                (
+                    "final_quality_overall_score",
+                    "final_quality_report",
+                    "overall_quality_score",
+                ),
+                0.0,
+            )
+        ),
+    }
+
+
+def _final_quality_blocked(detail: dict[str, Any]) -> bool:
+    if not detail.get("final_quality_present"):
+        return False
+
+    if _bad_status(detail.get("final_quality_status")):
+        return True
+
+    if _as_int(detail.get("final_quality_blocking_count")) > 0:
+        return True
+
+    if _as_list(detail.get("final_quality_blocking_reasons")):
+        return True
+
+    if detail.get("final_quality_can_render") is not True:
+        return True
+
+    if detail.get("final_quality_can_execute_timeline") is not True:
+        return True
+
+    return False
+
+
 def _bad_status(value: Any) -> bool:
     status = str(value or "").strip().lower()
     return bool(status) and any(
@@ -203,6 +309,15 @@ def evaluate_render_gate(job: Any) -> RenderGateResult:
             first_block_reason = stage.block_reason
             first_block_stage = stage.name
             first_block_detail = stage_detail
+
+    final_quality_detail = _final_quality_detail(job)
+    if final_quality_detail.get("final_quality_present"):
+        detail.update(final_quality_detail)
+
+        if first_block_reason is None and _final_quality_blocked(final_quality_detail):
+            first_block_reason = "final_quality_not_renderable"
+            first_block_stage = "final_quality"
+            first_block_detail = final_quality_detail
 
     if first_block_reason:
         detail["would_block_reason"] = first_block_reason
