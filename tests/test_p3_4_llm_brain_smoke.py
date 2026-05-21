@@ -268,3 +268,18 @@ def test_json_parse_error_returns_fallback_decision():
     assert decision.confidence == 0.0
     assert decision.shadow_mode is True
     assert "json_parse_error" in decision.warnings
+
+def test_model_capability_resolver_does_not_crash():
+    from core.model_capability_resolver import ModelCapabilityResolver
+
+    resolver = ModelCapabilityResolver.detect()
+
+    assert isinstance(resolver.selected_model, str)
+    assert len(resolver.selected_model) > 0
+    assert isinstance(resolver.reason, str)
+
+    d = resolver.to_dict()
+    assert "selected_model" in d
+    assert "vram_gb" in d
+    assert "ram_gb" in d
+
