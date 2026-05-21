@@ -24,6 +24,8 @@ from core.gaming_analyzer import GamingAnalyzer
 from core.gaming_cutter import GamingCutter
 from core.render_processor import RenderProcessor
 from core.subtitle_processor import SubtitleProcessor
+from core.subtitle_generator import SubtitleGenerator
+from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder
 from core.title_generator import TitleGenerator
 from core.metadata_generator import MetadataGenerator
 from core.validator import Validator
@@ -10235,8 +10237,16 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # ------------------------------------------------------------------
     # 8) Untertitel
     # ------------------------------------------------------------------
+    subtitle_segments = SubtitleGenerator.from_job(job).generate()
+    subtitle_filter_string = SubtitleFFmpegBuilder.build_filter_string(
+        subtitle_segments
+    )
     subtitles = subtitle_processor.generate(job, edit_decision)
-    print(f"[gaming_pipeline] SUBTITLES {job.job_id}  done")
+    print(
+        f"[gaming_pipeline] SUBTITLES {job.job_id}  "
+        f"segments={len(subtitle_segments)} "
+        f"filters={1 if subtitle_filter_string else 0}"
+    )
 
     # ------------------------------------------------------------------
     # 9) Titel + Metadaten
@@ -10564,6 +10574,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         # Render-Ergebnis
         "final_video_path":      final_video_path,
         "subtitles":             subtitles,
+        "subtitle_segments":     subtitle_segments,
+        "subtitle_filter_string": subtitle_filter_string,
         # Metadaten
         "title_package":         title_package,
         "metadata":              metadata,
