@@ -252,6 +252,10 @@ from core.shorts_generation_stage import ShortsGenerationStage
 from core.shorts_highlight_extractor import LLM_SHADOW, ShortsHighlightExtractor
 from core.shorts_reframe_planner import ShortsReframePlanner
 from core.shorts_render_driver import ShortsRenderDriver
+from core.existing_longform_shorts_stage import (
+    is_existing_longform_output_path,
+    run_shorts_from_existing_longform_output,
+)
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -9026,6 +9030,77 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
     logger.info(_editing_profile_log)
     print(_editing_profile_log)
+
+    # ------------------------------------------------------------------
+    # P4-7D: Existing longform output -> shorts without rebuilding longform
+    # ------------------------------------------------------------------
+    if is_existing_longform_output_path(getattr(job, "raw_video_path", None)) and (
+        _target_format_requests_shorts(job) or _should_generate_shorts(job)
+    ):
+        _shorts_power_profile = (
+            getattr(job, "power_profile", None)
+            or getattr(job, "quality_mode", None)
+            or "balanced"
+        )
+        _shorts_llm_mode = (
+            getattr(job, "llm_mode", None)
+            or os.environ.get("ZENITH_LLM_MODE")
+            or LLM_SHADOW
+        )
+        _existing_output_base_dir = os.path.join(
+            "exports",
+            str(getattr(getattr(job, "channel_type", None), "value", "gaming_main")),
+            str(job.job_id),
+        )
+        os.makedirs(_existing_output_base_dir, exist_ok=True)
+
+        print(
+            f"[gaming_pipeline] SHORTS_EXISTING_LONGFORM {job.job_id} "
+            f"source={job.raw_video_path} "
+            f"power_profile={_shorts_power_profile}"
+        )
+
+        _existing_shorts_result = run_shorts_from_existing_longform_output(
+            job=job,
+            source_video_path=str(job.raw_video_path),
+            output_base_dir=_existing_output_base_dir,
+            power_profile=str(_shorts_power_profile),
+            llm_mode=str(_shorts_llm_mode),
+            add_captions=True,
+        )
+
+        persist_job_state_checkpoint(
+            job=job,
+            job_store=job_state_store,
+            export_dir=job_state_export_dir,
+            step_name="shorts_rendered_existing_longform",
+            reason="existing_longform_output_shorts_completed",
+        )
+        _safe_log_decision(
+            job=job,
+            export_dir=job_state_export_dir,
+            phase="shorts_generation",
+            event_type="SHORTS_EXISTING_LONGFORM_DONE",
+            action="run_shorts_from_existing_longform_output",
+            status="ok",
+            reason="existing_longform_output_shorts_completed",
+            details={
+                "source_video_path": str(job.raw_video_path),
+                "shorts_count": len(getattr(job, "shorts_clips", []) or []),
+                "power_profile": str(_shorts_power_profile),
+                "llm_mode": str(_shorts_llm_mode),
+            },
+        )
+
+        print(
+            f"[gaming_pipeline] SHORTS_EXISTING_LONGFORM_DONE {job.job_id} "
+            f"shorts={len(getattr(job, 'shorts_clips', []) or [])}"
+        )
+        print(
+            f"[gaming_pipeline] DONE      {job.job_id}  "
+            f"status={getattr(getattr(job, 'status', ''), 'value', job.status)}"
+        )
+        return _existing_shorts_result
 
     transcript_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
