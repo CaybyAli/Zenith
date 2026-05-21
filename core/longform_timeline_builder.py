@@ -467,6 +467,7 @@ class LongformTimelineBuilder:
         max_segments: int,
         reserve_candidates: list[dict] | None = None,
         duration_floor: float | None = None,
+        job: Job | None = None,
     ) -> list[dict]:
         selected: list[dict] = []
         selected_duration = 0.0
@@ -524,6 +525,11 @@ class LongformTimelineBuilder:
 
             selected.append(item)
             return added_duration
+
+        if job is not None:
+            # P3-3F: But/Therefore Story Flow -> Reihenfolge-Modulation
+            from core.but_therefore_story_applier import apply_story_flow_ordering
+            scored_candidates = apply_story_flow_ordering(scored_candidates, job)
 
         sorted_candidates = sorted(scored_candidates, key=sort_key)
 
@@ -759,6 +765,7 @@ class LongformTimelineBuilder:
             max_segments=max_segments,
             reserve_candidates=reserve_scored_candidates,
             duration_floor=duration_floor,
+            job=job,
         )
 
         if not selected_items:
