@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
@@ -105,6 +105,39 @@ class SubtitleGenerator:
             return segments
         except Exception:
             return []
+
+    @staticmethod
+    def highlighted_word_selector(
+        words: list[str],
+        hook_scores: dict[str, float],
+    ) -> list[str]:
+        if not isinstance(words, list) or not isinstance(hook_scores, dict):
+            return []
+
+        highlighted: list[str] = []
+        seen: set[str] = set()
+
+        for word in words:
+            clean = " ".join(SubtitleGenerator._safe_str(word).split())
+            if not clean:
+                continue
+
+            try:
+                score = float(hook_scores.get(clean, hook_scores.get(clean.casefold(), 0.0)) or 0.0)
+            except Exception:
+                score = 0.0
+
+            if score <= 0.7:
+                continue
+
+            key = clean.casefold()
+            if key in seen:
+                continue
+
+            highlighted.append(clean)
+            seen.add(key)
+
+        return highlighted
 
     @staticmethod
     def _safe_dict_list(value: Any) -> list[dict[str, Any]]:

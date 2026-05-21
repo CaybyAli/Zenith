@@ -14,6 +14,8 @@ from core.audio_normalizer import (
 )
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 from core.power_profile import PowerProfile
+from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder
+from core.subtitle_generator import SubtitleGenerator
 from models.shorts_clip import ShortsClip
 
 SHORTS_OUTPUT_WIDTH = 1080
@@ -22,6 +24,7 @@ SHORTS_OUTPUT_FPS = 60
 SHORTS_AUDIO_BITRATE = "320k"
 SHORTS_MOVFLAGS = "+faststart"
 SHORTS_OUTPUT_EXTENSION = ".mp4"
+DEFAULT_SHORTS_CAPTION_WORDS = ("Strong", "highlight", "moment")
 
 CPU_H264_ENCODER = "libx264"
 NVENC_H264_ENCODER = "h264_nvenc"
@@ -114,6 +117,7 @@ class ShortsRenderDriver:
         source_video_path: str,
         output_dir: str,
         job_id: str,
+        add_captions: bool = True,
     ) -> str:
         output_path = self._output_path(
             output_dir=output_dir,
@@ -126,6 +130,7 @@ class ShortsRenderDriver:
                 clip=clip,
                 source_video_path=source_video_path,
                 output_path=output_path,
+                add_captions=add_captions,
             )
             self.ffmpeg_helper.run_ffmpeg(cmd)
         except Exception as exc:
@@ -143,13 +148,18 @@ class ShortsRenderDriver:
         clip: ShortsClip,
         source_video_path: str,
         output_path: str,
+        add_captions: bool = True,
     ) -> list[str]:
         reframe_plan = getattr(clip, "reframe_plan", None)
         if reframe_plan is None:
             raise ValueError("ShortsClip.reframe_plan is required before render")
 
         codec_choice = self._resolve_video_codec()
-        video_filter = self._video_filter(str(reframe_plan.ffmpeg_crop_filter or ""))
+        caption_filter = self._caption_filter(clip, add_captions=add_captions)
+        video_filter = self._video_filter(
+            str(reframe_plan.ffmpeg_crop_filter or ""),
+            caption_filter=caption_filter,
+        )
         audio_filter = self._audio_filter()
         crf = self._crf_for_power_profile()
 
@@ -258,7 +268,7 @@ class ShortsRenderDriver:
         target_tp = float(getattr(self.audio_normalizer, "target_tp", DEFAULT_TARGET_TP))
         return f"loudnorm=I={target_i}:TP={target_tp}:LRA={DEFAULT_LRA}"
 
-    def _video_filter(self, reframe_filter: str) -> str:
+    def _video_filter(self, reframe_filter: str, caption_filter: str = "") -> str:
         clean_filter = str(reframe_filter or "").strip()
         if not clean_filter:
             raise ValueError("Shorts reframe ffmpeg_crop_filter must not be empty")
@@ -273,7 +283,7 @@ class ShortsRenderDriver:
                     "vstack",
                     f"vstack,scale={SHORTS_OUTPUT_WIDTH}:{SHORTS_OUTPUT_HEIGHT}[out]",
                 )
-            return normalized
+            return self._append_caption_to_complex_filter(normalized, caption_filter)
 
         simple_filter = clean_filter
         if "crop=1080:1920" in simple_filter and "scale=1920:1920" not in simple_filter:
@@ -286,7 +296,49 @@ class ShortsRenderDriver:
         if not output_exact and "scale=1080:1920" not in simple_filter:
             simple_filter = f"{simple_filter},scale={SHORTS_OUTPUT_WIDTH}:{SHORTS_OUTPUT_HEIGHT}"
 
-        return simple_filter
+        return self._append_caption_to_simple_filter(simple_filter, caption_filter)
+
+    def _caption_filter(self, clip: ShortsClip, add_captions: bool = True) -> str:
+        if not add_captions:
+            return ""
+
+        try:
+            hook_score = float(getattr(clip, "hook_score", 0.0) or 0.0)
+        except Exception:
+            hook_score = 0.0
+
+        rationale = str(getattr(clip, "llm_rationale", "") or "").strip()
+        if not rationale and hook_score <= 0.5:
+            return ""
+
+        words = self._caption_words(rationale)
+        hook_scores = {word: hook_score for word in words}
+        hook_scores.update({word.casefold(): hook_score for word in words})
+        highlighted_words = SubtitleGenerator.highlighted_word_selector(words, hook_scores)
+
+        return SubtitleFFmpegBuilder.build_filter(
+            words=words,
+            style="mobile_first",
+            highlighted_words=highlighted_words,
+        )
+
+    def _caption_words(self, rationale: str) -> list[str]:
+        words = [word for word in str(rationale or "").split() if word.strip()]
+        if words:
+            return words[:9]
+        return list(DEFAULT_SHORTS_CAPTION_WORDS)
+
+    def _append_caption_to_simple_filter(self, video_filter: str, caption_filter: str) -> str:
+        if not caption_filter:
+            return video_filter
+        return f"{video_filter},{caption_filter}"
+
+    def _append_caption_to_complex_filter(self, video_filter: str, caption_filter: str) -> str:
+        if not caption_filter:
+            return video_filter
+        if "[out]" not in video_filter:
+            return f"{video_filter},{caption_filter}"
+        return video_filter.replace("[out]", "[caption_in]", 1) + f";[caption_in]{caption_filter}[out]"
 
     def _is_complex_filter(self, filter_string: str) -> bool:
         return "[" in filter_string and "]" in filter_string
