@@ -13,6 +13,7 @@ from models.timeline_segment import TimelineSegment
 from models.zoom_instruction import ZoomInstruction
 from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
+from core.power_profile import PowerProfile
 from shared.errors import ValidationError
 
 from typing import Literal
@@ -786,6 +787,14 @@ class FinalRenderDriver:
 
     def _resolve_video_encoder(self, job: Job | None) -> dict:
         """Resolve FinalRenderDriver video encoder with NVENC -> libx264 fallback."""
+        _render_cfg = PowerProfile.resolve_render_config(
+            getattr(job, "power_profile", PowerProfile.DEFAULT)
+        )
+        _thread_args = (
+            ["-threads", str(int(_render_cfg["threads"]))]
+            if int(_render_cfg["threads"]) > 0
+            else []
+        )
         probe_job = {
             "job_id": getattr(job, "job_id", "unknown") if job is not None else "unknown",
             "ffmpeg_path_hint": self._ffmpeg(),
@@ -799,7 +808,7 @@ class FinalRenderDriver:
             return {
                 "codec": "libx264",
                 "mode": "cpu_fallback",
-                "ffmpeg_args": ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23"],
+                "ffmpeg_args": [*_thread_args, "-c:v", "libx264", "-preset", "veryfast", "-crf", "23"],
                 "resolver_status": "resolver_exception",
                 "fallback_reason": f"resolver_exception:{type(exc).__name__}",
                 "has_h264": False,
@@ -818,7 +827,7 @@ class FinalRenderDriver:
             return {
                 "codec": "h264_nvenc",
                 "mode": "nvenc",
-                "ffmpeg_args": ["-c:v", "h264_nvenc", "-preset", "p4", "-cq", "23"],
+                "ffmpeg_args": [*_thread_args, "-c:v", "h264_nvenc", "-preset", _render_cfg["nvenc_preset"], "-cq", "23"],
                 "resolver_status": str(getattr(report, "status", "")),
                 "fallback_reason": None,
                 "has_h264": has_h264,

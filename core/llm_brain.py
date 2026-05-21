@@ -23,6 +23,8 @@ try:
 except Exception:
     LLM_SHADOW_MODE = True
 
+from core.power_profile import PowerProfile
+
 
 logger = logging.getLogger(__name__)
 
@@ -96,11 +98,17 @@ class LLMBrain:
         Im LLM_SHADOW_MODE: Ergebnis loggen, aber Pipeline nicht verändern.
         """
         cuda_warnings = self._cuda_warnings()
+        _job = job_context.get("job") if isinstance(job_context, dict) else None
+        _power_profile = getattr(_job, "power_profile", PowerProfile.DEFAULT)
+        if isinstance(job_context, dict) and job_context.get("power_profile"):
+            _power_profile = job_context.get("power_profile")
+        _model_tier = PowerProfile.resolve_model_tier(_power_profile)
 
         payload = {
             "decision_type": "hook",
             "context_length": self.context_length,
             "job_context": job_context,
+            "power_profile_model_tier": _model_tier,
             "candidates": candidates,
             "required_json_schema": {
                 "recommended_index": "int",
@@ -147,6 +155,7 @@ class LLMBrain:
         self,
         segments: list[dict],
         arc_hints: dict | None = None,
+        job=None,
     ) -> LLMBrainDecision:
         """
         Schlägt optimale Segment-Reihenfolge vor (setup→conflict→payoff).
@@ -155,11 +164,15 @@ class LLMBrain:
         Im LLM_SHADOW_MODE: Ergebnis loggen, aber Pipeline nicht verändern.
         """
         cuda_warnings = self._cuda_warnings()
+        _model_tier = PowerProfile.resolve_model_tier(
+            getattr(job, "power_profile", PowerProfile.DEFAULT)
+        )
 
         payload = {
             "decision_type": "segment_order",
             "context_length": self.context_length,
             "arc_hints": arc_hints or {},
+            "power_profile_model_tier": _model_tier,
             "segments": segments,
             "required_json_schema": {
                 "recommended_order": "list[int]",

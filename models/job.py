@@ -43,6 +43,7 @@ class Job:
     pipeline_type: PipelineType | None = None
     profile_id: str | None = None
     quality_mode: str | None = None
+    power_profile: str = "balanced"
     profile_version: str | None = None
     profile_snapshot_path: str | None = None
     profile_source: str | None = None
@@ -1294,6 +1295,7 @@ class Job:
             pipeline_type=PipelineType(data["pipeline_type"]) if data.get("pipeline_type") else None,
             profile_id=data.get("profile_id"),
             quality_mode=data.get("quality_mode"),
+            power_profile=str(data.get("power_profile") or "balanced"),
             profile_version=data.get("profile_version"),
             profile_snapshot_path=data.get("profile_snapshot_path"),
             profile_source=data.get("profile_source"),

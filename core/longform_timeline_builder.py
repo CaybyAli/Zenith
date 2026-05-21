@@ -31,6 +31,7 @@ from core.silence_timeline_trimmer import SilenceTimelineTrimmer
 from core.story_timeline_organizer import StoryTimelineOrganizer
 from core.transcript_boundary_guard import TranscriptBoundaryGuard
 from core.multi_indicator_score_fusion import MultiIndicatorScoreFusion
+from core.power_profile import PowerProfile
 from core.timeline_signal_consumer import (
     SIGNAL_HOOK_IDENTIFICATION,
     TimelineSignalConsumer,
@@ -649,6 +650,14 @@ class LongformTimelineBuilder:
             raise ValidationError("Timeline builder needs highlight candidates")
 
         weak_zones = weak_zones or []
+        _worker_count = PowerProfile.resolve_worker_count(
+            getattr(job, "power_profile", PowerProfile.DEFAULT)
+        )
+        print(
+            f"[TIMELINE-POWER] profile="
+            f"{getattr(job, 'power_profile', PowerProfile.DEFAULT)} "
+            f"workers={_worker_count}"
+        )
         timeline_signal_consumer = TimelineSignalConsumer.from_job(job)
         universal_moment_stats = self._universal_moment_stats(universal_moment_result)
         if universal_moment_stats is not None:

@@ -42,6 +42,7 @@ from core.job_recovery import (
 )
 from core.error_logger import log_error
 from core.job_log_index import update_job_log_index
+from core.power_profile import PowerProfile
 from core.render_versioning import next_render_version, versioned_final_path
 from core.approval_store import write_job_approval
 from shared.enums import (
@@ -244,6 +245,7 @@ def run_pending_jobs(
     db_path: str = "data/jobs.json",
     input_video_path: str | None = None,
     approved_job_id: str | None = None,
+    power_profile: str | None = None,
 ) -> list[dict]:
     """
     Scan the job store and process every CREATED / STORED job.
@@ -282,6 +284,9 @@ def run_pending_jobs(
             f"video={approved_job.raw_video_path!r}"
         )
 
+        approved_job.power_profile = PowerProfile.normalize(
+            power_profile or getattr(approved_job, "power_profile", PowerProfile.DEFAULT)
+        )
         approved_job.status = JobStatus.CREATED
         approved_job.error_message = ""
         approved_job.touch()
@@ -322,6 +327,10 @@ def run_pending_jobs(
                 target_platforms=["youtube"],
                 mode=Mode.NORMAL,
             )
+            job.power_profile = PowerProfile.normalize(
+                power_profile or PowerProfile.DEFAULT
+            )
+            job_store.update_job(job)
             print(f"[pipeline_runner] CLI JOB    {job.job_id}  created")
     else:
         _scan_inbox_and_create_jobs(job_store)
@@ -352,6 +361,8 @@ def run_pending_jobs(
     gaming_services: dict | None = None
 
     for job in pending:
+        if power_profile is not None:
+            job.power_profile = PowerProfile.normalize(power_profile)
         channel = job.channel_type.value
 
         if not job.raw_video_path:
@@ -585,6 +596,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="List jobs currently in render_blocked status.",
     )
+    parser.add_argument(
+        "--power-profile",
+        dest="power_profile",
+        choices=PowerProfile.ALL,
+        default=PowerProfile.DEFAULT,
+        help="Pipeline power profile: off|eco|balanced|performance|full_power (default: balanced)",
+    )
     args = parser.parse_args(argv)
 
     selected_modes = sum(
@@ -611,6 +629,7 @@ def main(argv: list[str] | None = None) -> int:
     results = run_pending_jobs(
         input_video_path=args.input_video_path,
         approved_job_id=args.approve_job_id,
+        power_profile=args.power_profile,
     )
     failed = _print_results(results)
     return 0 if failed == 0 else 1
