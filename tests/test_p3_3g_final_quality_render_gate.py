@@ -1,4 +1,4 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 
 from core.render_gate import RenderGateDecision, evaluate_render_gate
 
@@ -66,6 +66,29 @@ def test_final_quality_blocks_when_can_render_false(monkeypatch):
     assert result.decision == RenderGateDecision.BLOCKED
     assert result.reason == "final_quality_not_renderable"
     assert result.detail["would_block_stage"] == "final_quality"
+
+
+
+def test_final_quality_blocks_when_status_is_critical(monkeypatch):
+    monkeypatch.setenv("ZENITH_RENDER_GATE_AUTO_APPROVE", "0")
+    monkeypatch.setattr("core.render_gate.read_job_approval", lambda job: None)
+
+    final_quality_critical_status = "critical"
+
+    job = _base_render_ready_job(
+        final_quality_status=final_quality_critical_status,
+        final_quality_can_render=True,
+        final_quality_can_execute_timeline=True,
+        final_quality_blocking_count=0,
+        final_quality_blocking_reasons=[],
+    )
+
+    result = evaluate_render_gate(job)
+
+    assert result.decision == RenderGateDecision.BLOCKED
+    assert result.reason == "final_quality_not_renderable"
+    assert result.detail["would_block_stage"] == "final_quality"
+    assert result.detail["would_block_detail"]["final_quality_status"] == final_quality_critical_status
 
 
 def test_final_quality_blocks_when_can_execute_timeline_false(monkeypatch):

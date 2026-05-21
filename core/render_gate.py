@@ -222,6 +222,10 @@ def _final_quality_blocked(detail: dict[str, Any]) -> bool:
     if not detail.get("final_quality_present"):
         return False
 
+    final_quality_status = str(detail.get("final_quality_status") or "").strip().lower()
+    if final_quality_status == "critical":
+        return True
+
     if _bad_status(detail.get("final_quality_status")):
         return True
 
