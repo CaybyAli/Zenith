@@ -248,6 +248,10 @@ from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.decision_logger import log_decision
 from core.render_gate import RenderGateDecision, evaluate_render_gate
+from core.shorts_generation_stage import ShortsGenerationStage
+from core.shorts_highlight_extractor import LLM_SHADOW, ShortsHighlightExtractor
+from core.shorts_reframe_planner import ShortsReframePlanner
+from core.shorts_render_driver import ShortsRenderDriver
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -293,6 +297,54 @@ def _safe_log_decision(
             f"job={getattr(job, 'job_id', '-')} error={exc}"
         )
         return None
+
+
+def _target_format_requests_shorts(job) -> bool:
+    raw_value = getattr(job, "target_format", None)
+    target_value = getattr(raw_value, "value", raw_value)
+    return str(target_value or "").strip().lower() in {"short", "shorts", "both"}
+
+
+def _explicit_shorts_requested(job) -> bool:
+    for field_name in (
+        "generate_shorts",
+        "shorts_enabled",
+        "shorts_requested",
+        "create_shorts",
+        "enable_shorts",
+    ):
+        if getattr(job, field_name, None) is True:
+            return True
+
+    requested_outputs = getattr(job, "requested_outputs", None)
+    if isinstance(requested_outputs, (list, tuple, set)):
+        normalized = {str(item).strip().lower() for item in requested_outputs}
+        if {"short", "shorts", "youtube_shorts"} & normalized:
+            return True
+
+    config = getattr(job, "config", None)
+    if isinstance(config, dict):
+        for key in ("generate_shorts", "shorts_enabled", "shorts_requested"):
+            if config.get(key) is True:
+                return True
+
+    return False
+
+
+def _should_generate_shorts(job) -> bool:
+    if _explicit_shorts_requested(job):
+        return True
+
+    power_profile = str(
+        getattr(job, "power_profile", None)
+        or getattr(job, "quality_mode", None)
+        or "balanced"
+    ).strip().lower()
+
+    if power_profile == "eco":
+        return False
+
+    return True
 
 def _audio_normalization_event_type_for_status(status: str | None) -> str:
     status_text = str(status or "").strip().lower()
@@ -10265,6 +10317,87 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         },
     )
     print(f"[gaming_pipeline] RENDER    {job.job_id}  â†’ {final_video_path}")
+
+    # ------------------------------------------------------------------
+    # P4-6: Multi-shorts generation after longform render
+    # ------------------------------------------------------------------
+    if _target_format_requests_shorts(job) or _should_generate_shorts(job):
+        try:
+            _shorts_power_profile = (
+                getattr(job, "power_profile", None)
+                or getattr(job, "quality_mode", None)
+                or "balanced"
+            )
+            _shorts_llm_mode = (
+                getattr(job, "llm_mode", None)
+                or os.environ.get("ZENITH_LLM_MODE")
+                or LLM_SHADOW
+            )
+
+            shorts_stage = ShortsGenerationStage(
+                highlight_extractor=ShortsHighlightExtractor(),
+                reframe_planner=ShortsReframePlanner(),
+                render_driver=ShortsRenderDriver(
+                    power_profile=str(_shorts_power_profile),
+                ),
+            )
+            job = shorts_stage.run(
+                job=job,
+                timeline=edit_timeline,
+                source_video_path=str(final_video_path),
+                output_base_dir=str(export_dir),
+                power_profile=str(_shorts_power_profile),
+                llm_mode=str(_shorts_llm_mode),
+                add_captions=True,
+            )
+
+            persist_job_state_checkpoint(
+                job=job,
+                job_store=job_state_store,
+                export_dir=job_state_export_dir,
+                step_name="shorts_rendered",
+                reason="shorts_generation_completed",
+            )
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="shorts_generation",
+                event_type="SHORTS_GENERATION_DONE",
+                action="run_shorts_generation_stage",
+                status="ok",
+                reason="shorts_generation_completed",
+                details={
+                    "shorts_count": len(getattr(job, "shorts_clips", []) or []),
+                    "rendered_count": sum(
+                        1
+                        for clip in (getattr(job, "shorts_clips", []) or [])
+                        if getattr(clip, "status", "") == "rendered"
+                    ),
+                    "power_profile": str(_shorts_power_profile),
+                    "llm_mode": str(_shorts_llm_mode),
+                },
+            )
+        except Exception as shorts_exc:
+            _safe_log_decision(
+                job=job,
+                export_dir=job_state_export_dir,
+                phase="shorts_generation",
+                event_type="SHORTS_GENERATION_FAILED",
+                action="run_shorts_generation_stage",
+                status="failed",
+                reason=str(shorts_exc),
+                details={
+                    "power_profile": str(
+                        getattr(job, "power_profile", None)
+                        or getattr(job, "quality_mode", None)
+                        or "balanced"
+                    ),
+                },
+            )
+            print(
+                f"[gaming_pipeline] SHORTS FAILED {job.job_id} "
+                f"error={shorts_exc}"
+            )
 
     # ------------------------------------------------------------------
     # P3-6: Audio normalization stage
