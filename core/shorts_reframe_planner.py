@@ -47,16 +47,25 @@ def build_stack_filter_60_40(source: SourceFormat) -> str:
             f"aspect_ratio={source.aspect_ratio:.2f}"
         )
 
-    gp_x, gp_y, gp_w, gp_h = source.gameplay_region
-    fc_x, fc_y, fc_w, fc_h = source.facecam_region
+    # Final P4-HOTFIX-A geometry for 3840x1080 Rocket League SBS:
+    # source left  = facecam
+    # source right = gameplay
+    # output top   = facecam 1/3 = 640 px
+    # output bottom= gameplay 2/3 = 1280 px
+    facecam_x = 0
+    gameplay_x = 1850
+    source_w = 1920
+    source_h = 1080
+    facecam_final_crop_x = 10
+
     return (
-        f"[0:v]split=2[gameplay_src][facecam_src];"
-        f"[gameplay_src]crop={gp_w}:{gp_h}:{gp_x}:{gp_y},"
-        f"scale=1080:1152:force_original_aspect_ratio=increase,"
-        f"crop=1080:1152[gameplay_block];"
-        f"[facecam_src]crop={fc_w}:{fc_h}:{fc_x}:{fc_y},"
-        f"scale=1080:768:force_original_aspect_ratio=increase,"
-        f"crop=1080:768[facecam_block];"
+        f"[0:v]split=2[facecam_src][gameplay_src];"
+        f"[facecam_src]crop={source_w}:{source_h}:{facecam_x}:0,"
+        f"scale=1080:640:force_original_aspect_ratio=increase,"
+        f"crop=1080:640:{facecam_final_crop_x}:0[facecam_block];"
+        f"[gameplay_src]crop={source_w}:{source_h}:{gameplay_x}:0,"
+        f"scale=1080:1280:force_original_aspect_ratio=increase,"
+        f"crop=1080:1280[gameplay_block];"
         f"[facecam_block][gameplay_block]vstack=inputs=2[out]"
     )
 
@@ -293,7 +302,7 @@ class ShortsReframePlanner:
         return (
             LAYOUT_HYBRID_SPLIT,
             (
-                "hybrid: gameplay dominant oben, facecam unten; no single signal group "
+                "hybrid: facecam oben, gameplay unten; no single signal group "
                 "clearly dominates."
             ),
         )

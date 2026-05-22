@@ -19,13 +19,15 @@ def _custom_source_format() -> SourceFormat:
     )
 
 
-def test_stack_filter_uses_source_format_regions_not_magic_offsets() -> None:
+def test_stack_filter_uses_final_p4_hotfix_a_geometry() -> None:
     filter_text = build_stack_filter_60_40(_custom_source_format())
 
-    assert "crop=2100:1000:123:0" in filter_text
-    assert "crop=1900:1000:2600:0" in filter_text
-    assert "scale=1080:1152" in filter_text
-    assert "scale=1080:768" in filter_text
+    assert "[facecam_src]crop=1920:1080:0:0" in filter_text
+    assert "scale=1080:640" in filter_text
+    assert "crop=1080:640:10:0[facecam_block]" in filter_text
+    assert "[gameplay_src]crop=1920:1080:1850:0" in filter_text
+    assert "scale=1080:1280" in filter_text
+    assert "crop=1080:1280[gameplay_block]" in filter_text
     assert "[facecam_block][gameplay_block]vstack=inputs=2[out]" in filter_text
     assert "420" not in filter_text
 
