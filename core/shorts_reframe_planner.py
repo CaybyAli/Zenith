@@ -3,10 +3,12 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from core.llm_brain import LLMBrain, LLMBrainDecision
 from core.shorts_highlight_extractor import LLM_DISABLED, LLM_SHADOW
+from core.shorts_source_format_detector import ShortsSourceFormatDetector, SourceFormat
 from core.timeline_signal_consumer import (
     SIGNAL_DYNAMIC_PACING,
     SIGNAL_EMOTIONAL_ARC,
@@ -31,16 +33,65 @@ DOMINANCE_THRESHOLD = 0.6
 SAFE_ZONE_TOP_PX = 120
 SAFE_ZONE_BOTTOM_PX = 120
 
-GAMEPLAY_CENTERED_FILTER = "crop=1080:1920:420:0"
-GAMEPLAY_CENTERED_ZOOMPAN_FILTER = (
-    "crop=1080:1920:420:0,"
-    "zoompan=z='1':x='iw/2-(iw/zoom/2)':y=0:d=1:s=1080x1920"
-)
-STACK_60_40_FILTER = (
-    "[0:v]crop=1080:1152:420:0[top];"
-    "[0:v]crop=1080:768:420:312[bottom];"
-    "[top][bottom]vstack"
-)
+
+def build_stack_filter_60_40(source: SourceFormat) -> str:
+    """
+    32:9 Composite -> 9:16 Stacked.
+    Facecam oben (40%, 1080x768), Gameplay unten (60%, 1080x1152).
+    Wichtig: nicht mit dem alten direct-input-crop Pattern starten, weil
+    ShortsRenderDriver dieses intern normalisiert.
+    """
+    if not source.is_32_9_composite:
+        raise ValueError(
+            f"build_stack_filter_60_40 expects 32:9 composite, got "
+            f"aspect_ratio={source.aspect_ratio:.2f}"
+        )
+
+    gp_x, gp_y, gp_w, gp_h = source.gameplay_region
+    fc_x, fc_y, fc_w, fc_h = source.facecam_region
+    return (
+        f"[0:v]split=2[gameplay_src][facecam_src];"
+        f"[gameplay_src]crop={gp_w}:{gp_h}:{gp_x}:{gp_y},"
+        f"scale=1080:1152:force_original_aspect_ratio=increase,"
+        f"crop=1080:1152[gameplay_block];"
+        f"[facecam_src]crop={fc_w}:{fc_h}:{fc_x}:{fc_y},"
+        f"scale=1080:768:force_original_aspect_ratio=increase,"
+        f"crop=1080:768[facecam_block];"
+        f"[facecam_block][gameplay_block]vstack=inputs=2[out]"
+    )
+
+
+def build_gameplay_centered_filter(source: SourceFormat) -> str:
+    if not source.is_32_9_composite:
+        raise ValueError(
+            f"build_gameplay_centered_filter expects 32:9 composite, got "
+            f"aspect_ratio={source.aspect_ratio:.2f}"
+        )
+
+    gp_x, gp_y, gp_w, gp_h = source.gameplay_region
+    return (
+        f"[0:v]setpts=PTS-STARTPTS[gameplay_src];"
+        f"[gameplay_src]crop={gp_w}:{gp_h}:{gp_x}:{gp_y},"
+        f"scale=1920:1920:force_original_aspect_ratio=increase,"
+        f"crop=1080:1920[out]"
+    )
+
+
+def build_facecam_centered_filter(source: SourceFormat) -> str:
+    if not source.is_32_9_composite:
+        raise ValueError(
+            f"build_facecam_centered_filter expects 32:9 composite, got "
+            f"aspect_ratio={source.aspect_ratio:.2f}"
+        )
+
+    fc_x, fc_y, fc_w, fc_h = source.facecam_region
+    return (
+        f"[0:v]setpts=PTS-STARTPTS[facecam_src];"
+        f"[facecam_src]crop={fc_w}:{fc_h}:{fc_x}:{fc_y},"
+        f"scale=1920:1920:force_original_aspect_ratio=increase,"
+        f"crop=1080:1920[out]"
+    )
+
 
 HYBRID_RATIONALE_TAG = "hybrid"
 
@@ -76,15 +127,22 @@ class ShortsReframePlanner:
         self,
         signal_consumer: TimelineSignalConsumer | None = None,
         llm_brain: LLMBrain | None = None,
+        source_video_path: str | Path | None = None,
+        source_format_detector: Any | None = None,
+        source_format: SourceFormat | None = None,
     ) -> None:
         self.signal_consumer = signal_consumer or TimelineSignalConsumer()
         self.llm_brain = llm_brain or LLMBrain()
+        self.source_video_path = source_video_path
+        self.source_format_detector = source_format_detector or ShortsSourceFormatDetector
+        self.source_format = source_format
 
     def plan_reframe(
         self,
         clip: ShortsClip,
         timeline: EditTimeline,
         llm_mode: str = LLM_SHADOW,
+        source_video_path: str | Path | None = None,
     ) -> ShortsReframePlan:
         summary = self._signal_summary_for_clip(clip)
         layout_type, rationale = self._choose_layout(summary)
@@ -102,7 +160,11 @@ class ShortsReframePlanner:
 
         return ShortsReframePlan(
             layout_type=layout_type,
-            ffmpeg_crop_filter=self._filter_for_layout(layout_type, summary),
+            ffmpeg_crop_filter=self._filter_for_layout(
+                layout_type,
+                summary,
+                source_video_path=source_video_path,
+            ),
             target_aspect_ratio="9:16",
             safe_zone_top_px=SAFE_ZONE_TOP_PX,
             safe_zone_bottom_px=SAFE_ZONE_BOTTOM_PX,
@@ -236,20 +298,37 @@ class ShortsReframePlanner:
             ),
         )
 
+    def _resolve_source_format(
+        self,
+        source_video_path: str | Path | None = None,
+    ) -> SourceFormat:
+        if self.source_format is not None:
+            return self.source_format
+
+        video_path = source_video_path or self.source_video_path
+        if video_path is None:
+            raise ValueError(
+                "source_video_path is required to build Shorts reframe filters. "
+                "Pass source_video_path to plan_reframe() or ShortsReframePlanner()."
+            )
+
+        return self.source_format_detector.detect(video_path)
+
     def _filter_for_layout(
         self,
         layout_type: str,
         summary: _LayoutSignalSummary,
+        source_video_path: str | Path | None = None,
     ) -> str:
+        source = self._resolve_source_format(source_video_path)
+
         if layout_type == LAYOUT_GAMEPLAY_CENTERED:
-            if summary.action_movement_detected:
-                return GAMEPLAY_CENTERED_ZOOMPAN_FILTER
-            return GAMEPLAY_CENTERED_FILTER
+            return build_gameplay_centered_filter(source)
 
         if layout_type == LAYOUT_FACECAM_CENTERED:
-            return STACK_60_40_FILTER
+            return build_facecam_centered_filter(source)
 
-        return STACK_60_40_FILTER
+        return build_stack_filter_60_40(source)
 
     def _llm_shadow_note(self, summary: _LayoutSignalSummary) -> str:
         signals_json = json.dumps(summary.to_dict(), ensure_ascii=False)

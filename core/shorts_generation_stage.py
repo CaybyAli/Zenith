@@ -47,6 +47,11 @@ class ShortsGenerationStage:
         output_dir = Path(output_base_dir) / str(job.job_id) / "shorts"
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        try:
+            setattr(self.reframe_planner, "source_video_path", source_video_path)
+        except Exception:
+            pass
+
         for clip_index, clip in enumerate(highlights):
             clip.clip_index = clip_index
 

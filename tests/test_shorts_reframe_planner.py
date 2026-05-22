@@ -11,6 +11,7 @@ from core.shorts_reframe_planner import (
     SAFE_ZONE_TOP_PX,
     ShortsReframePlanner,
 )
+from core.shorts_source_format_detector import SourceFormat
 from core.timeline_signal_consumer import (
     SIGNAL_DYNAMIC_PACING,
     SIGNAL_EMOTIONAL_ARC,
@@ -39,6 +40,20 @@ class DummyLayoutLLMBrain:
             warnings=[],
             raw_response={"dummy": True},
         )
+
+
+def _source_format() -> SourceFormat:
+    width = 3840
+    height = 1080
+    half_width = width // 2
+    return SourceFormat(
+        width=width,
+        height=height,
+        aspect_ratio=width / height,
+        is_32_9_composite=True,
+        gameplay_region=(0, 0, half_width, height),
+        facecam_region=(half_width, 0, half_width, height),
+    )
 
 
 def _clip() -> ShortsClip:
@@ -87,6 +102,7 @@ def _planner(
     reaction: float | None = None,
     arc: float | None = None,
     llm_brain=None,
+    source_format: SourceFormat | None = None,
 ) -> ShortsReframePlanner:
     signals = []
     if hook is not None:
@@ -101,6 +117,7 @@ def _planner(
     return ShortsReframePlanner(
         signal_consumer=TimelineSignalConsumer(signals=signals),
         llm_brain=llm_brain,
+        source_format=source_format or _source_format(),
     )
 
 
@@ -122,25 +139,37 @@ def _plan_from_scores(
     ).plan_reframe(_clip(), _timeline(), llm_mode=llm_mode)
 
 
-def test_gameplay_centered_filter_contains_vertical_crop() -> None:
+def test_gameplay_centered_filter_uses_gameplay_region_and_vertical_output() -> None:
     plan = _plan_from_scores(hook=0.8, pacing=0.7, reaction=0.1, arc=0.1)
 
     assert plan.layout_type == LAYOUT_GAMEPLAY_CENTERED
-    assert "crop=1080:1920" in plan.ffmpeg_crop_filter
+    assert "crop=1920:1080:0:0" in plan.ffmpeg_crop_filter
+    assert "scale=1920:1920" in plan.ffmpeg_crop_filter
+    assert "crop=1080:1920[out]" in plan.ffmpeg_crop_filter
+    assert "420" not in plan.ffmpeg_crop_filter
 
 
-def test_facecam_centered_filter_contains_vstack() -> None:
+def test_facecam_centered_filter_uses_facecam_region_and_vertical_output() -> None:
     plan = _plan_from_scores(hook=0.2, pacing=0.2, reaction=0.8, arc=0.7)
 
     assert plan.layout_type == LAYOUT_FACECAM_CENTERED
-    assert "vstack" in plan.ffmpeg_crop_filter
+    assert "crop=1920:1080:1920:0" in plan.ffmpeg_crop_filter
+    assert "scale=1920:1920" in plan.ffmpeg_crop_filter
+    assert "crop=1080:1920[out]" in plan.ffmpeg_crop_filter
+    assert "vstack" not in plan.ffmpeg_crop_filter
+    assert "420" not in plan.ffmpeg_crop_filter
 
 
-def test_hybrid_split_filter_contains_vstack() -> None:
+def test_hybrid_split_filter_stacks_facecam_top_and_gameplay_bottom() -> None:
     plan = _plan_from_scores(hook=0.5, pacing=0.5, reaction=0.5, arc=0.5)
 
     assert plan.layout_type == LAYOUT_HYBRID_SPLIT
-    assert "vstack" in plan.ffmpeg_crop_filter
+    assert "crop=1920:1080:0:0" in plan.ffmpeg_crop_filter
+    assert "crop=1920:1080:1920:0" in plan.ffmpeg_crop_filter
+    assert "crop=1080:1152[gameplay_block]" in plan.ffmpeg_crop_filter
+    assert "crop=1080:768[facecam_block]" in plan.ffmpeg_crop_filter
+    assert "[facecam_block][gameplay_block]vstack=inputs=2[out]" in plan.ffmpeg_crop_filter
+    assert "420" not in plan.ffmpeg_crop_filter
 
 
 def test_hybrid_split_rationale_contains_hybrid() -> None:
