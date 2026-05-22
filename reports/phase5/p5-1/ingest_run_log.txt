@@ -1,0 +1,6 @@
+[P5-1] discovered_video_folders=10
+[P5-1] RESULT=FAILED error=RuntimeError: Expected 40 corpus videos, found 10
+Traceback (most recent call last):
+  File "<stdin>", line 29, in <module>
+RuntimeError: Expected 40 corpus videos, found 10
+
