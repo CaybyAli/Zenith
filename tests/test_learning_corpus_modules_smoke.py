@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import shutil
@@ -199,3 +199,12 @@ def test_learning_corpus_ensure_mixed_audio_smoke(tmp_path):
 
     assert prepared.exists()
     assert prepared.name == "raw_mixed_audio.mp4"
+
+def test_learning_corpus_ingestor_discovers_top_solo_alias(tmp_path):
+    top_solo_dir = tmp_path / "top_solo" / "video_001"
+    top_solo_dir.mkdir(parents=True)
+
+    ingestor = LearningCorpusIngestor(corpus_root=tmp_path)
+
+    assert list(ingestor.iter_video_folders()) == [top_solo_dir]
+

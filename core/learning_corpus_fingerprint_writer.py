@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import copy
 import json
@@ -209,6 +209,7 @@ def normalize_video_type(value: str) -> str:
         "gaming": "gaming_main",
         "gaming_main": "gaming_main",
         "top_main": "gaming_main",
+        "top_solo": "gaming_main",
         "pair": "gaming_main",
         "pairs": "gaming_main",
         "vlog": "vlog_main",

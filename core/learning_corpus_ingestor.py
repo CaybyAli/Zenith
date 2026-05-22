@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import shutil
@@ -115,6 +115,7 @@ class LearningCorpusIngestor:
         sections = (
             self.corpus_root / "pairs",
             self.corpus_root / "top_main",
+            self.corpus_root / "top_solo",
             self.corpus_root / "vlogs",
         )
         for section in sections:
