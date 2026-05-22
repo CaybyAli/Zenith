@@ -105,10 +105,11 @@ class ShortsHighlightExtractor:
         normalized_mode = str(llm_mode or LLM_SHADOW).strip().upper()
 
         if normalized_mode == LLM_SHADOW:
-            llm_rationale_by_index = self._run_llm_shadow(
+            self._run_llm_shadow_logged_only(
                 candidates=llm_candidates,
                 target_count=target_count,
             )
+            llm_rationale_by_index = {}  # leer; kein Pipeline-Effekt
         elif normalized_mode == LLM_PRIMARY:
             ranked_candidates, llm_rationale_by_index = self._run_llm_primary(
                 candidates=llm_candidates,
@@ -314,19 +315,17 @@ class ShortsHighlightExtractor:
     def _overlaps(self, left: _ShortsCandidate, right: _ShortsCandidate) -> bool:
         return left.start_time < right.end_time and left.end_time > right.start_time
 
-    def _run_llm_shadow(
+    def _run_llm_shadow_logged_only(
         self,
         candidates: list[_ShortsCandidate],
         target_count: int,
-    ) -> dict[int, str]:
+    ) -> None:
         decision = self._call_llm(candidates=candidates, target_count=target_count)
-        logger.info("[shorts_highlight_extractor] LLM_SHADOW response=%s", decision)
-
-        rationale = str(getattr(decision, "reasoning", "") or "")
-        if not rationale:
-            return {}
-
-        return {candidate.source_index: rationale for candidate in candidates}
+        logger.info(
+            "[shorts_highlight_extractor] LLM_SHADOW logged_only response=%s",
+            decision,
+        )
+        # Kein Return-Wert. Brain hat gesehen und geloggt, schreibt nicht in Pipeline.
 
     def _run_llm_primary(
         self,
