@@ -1,0 +1,74 @@
+[
+  {
+    "name": "job_d9db1329874b_v1_final.mp4",
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b_v1_final.mp4",
+    "exists": true,
+    "size_bytes": 1242896559,
+    "duration_seconds": 901.418,
+    "width": 1920,
+    "height": 1080,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_channels": 1
+  },
+  {
+    "name": "job_d9db1329874b_short_0.mp4",
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_0.mp4",
+    "exists": true,
+    "size_bytes": 58148529,
+    "duration_seconds": 15.063,
+    "width": 1080,
+    "height": 1920,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_channels": 1
+  },
+  {
+    "name": "job_d9db1329874b_short_1.mp4",
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_1.mp4",
+    "exists": true,
+    "size_bytes": 297617162,
+    "duration_seconds": 60.052,
+    "width": 1080,
+    "height": 1920,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_channels": 1
+  },
+  {
+    "name": "job_d9db1329874b_short_2.mp4",
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_2.mp4",
+    "exists": true,
+    "size_bytes": 75495577,
+    "duration_seconds": 15.101,
+    "width": 1080,
+    "height": 1920,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_channels": 1
+  },
+  {
+    "name": "job_d9db1329874b_short_3.mp4",
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_3.mp4",
+    "exists": true,
+    "size_bytes": 245100746,
+    "duration_seconds": 49.941,
+    "width": 1080,
+    "height": 1920,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_channels": 1
+  },
+  {
+    "name": "job_d9db1329874b_short_4.mp4",
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_4.mp4",
+    "exists": true,
+    "size_bytes": 17539475,
+    "duration_seconds": 5.4,
+    "width": 1080,
+    "height": 1920,
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_channels": 1
+  }
+]

@@ -1,0 +1,118 @@
+PROJECT ZENITH - P5-0 ABSCHLUSSBERICHT
+
+Status:
+P5-0 TECHNISCH BESTANDEN MIT AUDIO-HINWEIS
+
+Phase:
+Phase 5: 2.40%
+P5-0: 95.00%
+
+1. LLM LIVE PROOF
+Status: PASS
+
+Beweisdateien:
+- D:\Zenith\reports\phase5\p5-0\llm_live_proof.txt
+- D:\Zenith\reports\phase5\p5-0\llm_live_raw_response.json
+
+Ergebnis:
+- model_used=qwen3.6-27b-Q5_K_M.gguf
+- total_tokens=442
+- recommended_index=1
+- warnings=[]
+- fail_reasons=[]
+
+2. FULL E2E PIPELINE PROOF
+
+Input:
+D:\Zenith\learning_corpus\pairs\pair_001\raw.mp4
+
+Job:
+job_d9db1329874b
+
+Pipeline Ergebnis:
+- Analyse abgeschlossen
+- Timeline gebaut
+- Render abgeschlossen
+- Shorts Generation abgeschlossen
+- Thumbnail erstellt
+- Validate passed
+- Export abgeschlossen
+- pipeline_runner Done ok=1 skipped=0 failed=0
+
+Beweisdateien:
+- D:\Zenith\reports\phase5\p5-0\full_e2e\full_e2e_summary.txt
+- D:\Zenith\reports\phase5\p5-0\full_e2e\full_e2e_summary.json
+- D:\Zenith\reports\phase5\p5-0\full_e2e\ffprobe_artifact_check.txt
+- D:\Zenith\reports\phase5\p5-0\full_e2e\ffprobe_artifact_check.json
+
+3. OUTPUT ARTEFAKTE
+
+Longform:
+D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b_v1_final.mp4
+
+Longform ffprobe:
+- duration=901.418s
+- resolution=1920x1080
+- video=h264
+- audio=aac
+- channels=1
+- size=1242896559 bytes
+
+Shorts:
+- job_d9db1329874b_short_0.mp4 duration=15.063s resolution=1080x1920
+- job_d9db1329874b_short_1.mp4 duration=60.052s resolution=1080x1920
+- job_d9db1329874b_short_2.mp4 duration=15.101s resolution=1080x1920
+- job_d9db1329874b_short_3.mp4 duration=49.941s resolution=1080x1920
+- job_d9db1329874b_short_4.mp4 duration=5.400s resolution=1080x1920
+
+Thumbnail:
+D:\Zenith\exports\gaming_main\job_d9db1329874b\thumbnail.jpg
+
+4. TESTS
+
+Compile Check:
+- core/llm_brain.py
+- core/llm_shadow_mode.py
+- pipeline_runner.py
+
+Targeted Tests:
+- tests/test_p3_4_llm_brain_smoke.py
+- tests/test_p4_0d_llm_brain_fallback_evidence.py
+- tests/test_existing_longform_shorts_stage.py
+- tests/test_pipeline_runner_end_to_end_smoke.py
+
+Ergebnis:
+15 passed in 45.40s
+
+5. WICHTIGER AUDIO-HINWEIS
+
+pair_001/raw.mp4:
+- Original-Rohdatei
+- enth?lt 4 Mono-AAC-Audio-Streams
+- aktueller P5-0 Output ist technisch g?ltig
+- aber Audio-Mix ist nicht ideal, weil Output/Shorts nur channels=1 zeigen
+
+Korrekturdatei:
+D:\Zenith\learning_corpus\pairs\pair_001\raw_mixed_audio.mp4
+
+raw_mixed_audio.mp4:
+- Video aus raw.mp4 kopiert
+- alle 4 Mono-Spuren zu 1 Stereo-AAC-Spur gemischt
+- ffprobe: 1 Video-Stream, 1 Audio-Stream, channels=2
+- soll f?r P5-1 Learning genutzt werden
+
+Entscheidung:
+P5-0 Full-E2E Proof bleibt g?ltig.
+P5-1 darf nicht blind mit raw.mp4-Audio lernen.
+P5-1 muss raw_mixed_audio.mp4 nutzen oder automatisches Multi-Audio-Mixing bekommen.
+
+6. OFFENE P5-1 AUFGABE
+
+Vor Learning-Ingest:
+- Multi-Audio-Erkennung einbauen
+- automatische Mixdown-Datei erzeugen oder raw_mixed_audio bevorzugen
+- verhindern, dass Zenith aus nur einer Tonspur falsche Stilregeln lernt
+
+FINAL:
+P5-0 ist technisch bestanden.
+Kein blindes GO f?r P5-1 ohne Audio-Mix-Regel.

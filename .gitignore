@@ -97,3 +97,12 @@ assets/**/*.webp
 !assets/README.md
 !assets/**/.gitkeep
 !assets/sfx/censor/censor_sfx_manifest.json
+# P5 local/runtime artifacts
+data/
+downloads/
+learning_corpus/
+models/*.gguf
+exports/
+preprocessed/
+output/
+pytest-cache-files-*/

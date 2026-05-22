@@ -1,0 +1,7 @@
+P5-0 FFPROBE ARTIFACT CHECK
+job_d9db1329874b_v1_final.mp4 | duration=901.418s | size=1242896559 | resolution=1920x1080 | video=h264 | audio=aac | channels=1
+job_d9db1329874b_short_0.mp4 | duration=15.063s | size=58148529 | resolution=1080x1920 | video=h264 | audio=aac | channels=1
+job_d9db1329874b_short_1.mp4 | duration=60.052s | size=297617162 | resolution=1080x1920 | video=h264 | audio=aac | channels=1
+job_d9db1329874b_short_2.mp4 | duration=15.101s | size=75495577 | resolution=1080x1920 | video=h264 | audio=aac | channels=1
+job_d9db1329874b_short_3.mp4 | duration=49.941s | size=245100746 | resolution=1080x1920 | video=h264 | audio=aac | channels=1
+job_d9db1329874b_short_4.mp4 | duration=5.4s | size=17539475 | resolution=1080x1920 | video=h264 | audio=aac | channels=1

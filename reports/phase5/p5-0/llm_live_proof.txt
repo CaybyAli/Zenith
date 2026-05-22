@@ -1,0 +1,25 @@
+P5-0 LLM LIVE PROOF
+status=PASS
+started_at_utc=2026-05-22T14:27:09.375134+00:00
+finished_at_utc=2026-05-22T14:27:11.759120+00:00
+elapsed_ms=2383.96
+model_requested=qwen3.6-27b-Q5_K_M
+model_used=qwen3.6-27b-Q5_K_M.gguf
+decision_type=hook
+recommended_index=1
+confidence=0.95
+shadow_mode=True
+warnings=[]
+prompt_tokens=368
+completion_tokens=74
+total_tokens=442
+fail_reasons=[]
+
+LLM_CONTENT:
+{"recommended_index": 1, "reasoning": "Candidate 1 has the highest highlight score (0.94) and confidence (0.91). The transcript conveys high stakes and immediate tension ('that was close', 'thought we lost'), which is ideal for retaining viewer attention in a hook.", "confidence": 0.95}
+
+DECISION_REASONING:
+Candidate 1 has the highest highlight score (0.94) and confidence (0.91). The transcript conveys high stakes and immediate tension ('that was close', 'thought we lost'), which is ideal for retaining viewer attention in a hook.
+
+RAW_RESPONSE_FILE:
+D:\Zenith\reports\phase5\p5-0\llm_live_raw_response.json

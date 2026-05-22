@@ -1,0 +1,146 @@
+{
+  "phase": "P5-0",
+  "status": "FULL_E2E_ARTIFACTS_FOUND",
+  "job_id": "job_d9db1329874b",
+  "job_status": "approval_pending",
+  "raw_video_path": "D:\\Zenith\\learning_corpus\\pairs\\pair_001\\raw.mp4",
+  "video_path": "exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b_v1_final.mp4",
+  "longform": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio"
+      }
+    ],
+    "format": {
+      "duration": "901.418417"
+    },
+    "exists": true,
+    "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b_v1_final.mp4",
+    "size_bytes": 1242896559
+  },
+  "shorts_count": 5,
+  "shorts": [
+    {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1080,
+          "height": 1920
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio"
+        }
+      ],
+      "format": {
+        "duration": "15.063000"
+      },
+      "exists": true,
+      "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_0.mp4",
+      "size_bytes": 58148529
+    },
+    {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1080,
+          "height": 1920
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio"
+        }
+      ],
+      "format": {
+        "duration": "60.052000"
+      },
+      "exists": true,
+      "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_1.mp4",
+      "size_bytes": 297617162
+    },
+    {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1080,
+          "height": 1920
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio"
+        }
+      ],
+      "format": {
+        "duration": "15.101000"
+      },
+      "exists": true,
+      "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_2.mp4",
+      "size_bytes": 75495577
+    },
+    {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1080,
+          "height": 1920
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio"
+        }
+      ],
+      "format": {
+        "duration": "49.941000"
+      },
+      "exists": true,
+      "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_3.mp4",
+      "size_bytes": 245100746
+    },
+    {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1080,
+          "height": 1920
+        },
+        {
+          "codec_name": "aac",
+          "codec_type": "audio"
+        }
+      ],
+      "format": {
+        "duration": "5.400000"
+      },
+      "exists": true,
+      "path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\job_d9db1329874b\\shorts\\job_d9db1329874b_short_4.mp4",
+      "size_bytes": 17539475
+    }
+  ],
+  "thumbnail_exists": true,
+  "thumbnail_path": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\thumbnail.jpg",
+  "decision_log": "D:\\Zenith\\exports\\gaming_main\\job_d9db1329874b\\logs\\decisions.log"
+}

@@ -1,0 +1,22 @@
+P5-0 FULL E2E SUMMARY
+status=FULL_E2E_ARTIFACTS_FOUND
+job_id=job_d9db1329874b
+job_status=approval_pending
+raw_video_path=D:\Zenith\learning_corpus\pairs\pair_001\raw.mp4
+video_path=exports\gaming_main\job_d9db1329874b\job_d9db1329874b_v1_final.mp4
+longform_exists=True
+longform_path=D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b_v1_final.mp4
+longform_size_bytes=1242896559
+shorts_count=5
+thumbnail_exists=True
+thumbnail_path=D:\Zenith\exports\gaming_main\job_d9db1329874b\thumbnail.jpg
+
+SHORTS:
+- short_0: exists=True size_bytes=58148529 path=D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b\shorts\job_d9db1329874b_short_0.mp4
+- short_1: exists=True size_bytes=297617162 path=D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b\shorts\job_d9db1329874b_short_1.mp4
+- short_2: exists=True size_bytes=75495577 path=D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b\shorts\job_d9db1329874b_short_2.mp4
+- short_3: exists=True size_bytes=245100746 path=D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b\shorts\job_d9db1329874b_short_3.mp4
+- short_4: exists=True size_bytes=17539475 path=D:\Zenith\exports\gaming_main\job_d9db1329874b\job_d9db1329874b\shorts\job_d9db1329874b_short_4.mp4
+
+REPORT_JSON:
+D:\Zenith\reports\phase5\p5-0\full_e2e\full_e2e_summary.json

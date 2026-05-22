@@ -1,0 +1,21 @@
+P5-0 AUDIO STREAM NOTE
+
+Important finding:
+- pair_001/raw.mp4 is the original source used for the completed P5-0 Full-E2E run.
+- pair_001/raw.mp4 contains 4 mono AAC audio streams.
+- Windows/Pipeline playback may effectively expose/use only one stream in some paths.
+- The generated P5-0 shorts are therefore technically valid, but audio quality/mix is not ideal because they can contain only part of the intended full audio mix.
+
+Created correction file:
+D:\Zenith\learning_corpus\pairs\pair_001\raw_mixed_audio.mp4
+
+raw_mixed_audio.mp4:
+- Video copied from original raw.mp4.
+- All 4 mono audio streams mixed into one stereo AAC stream.
+- ffprobe result: 1 video stream, 1 audio stream, audio channels=2.
+- This file should be used for P5-1 Learning ingestion or future raw/final pair learning tests.
+
+Decision:
+- P5-0 Full-E2E proof remains valid as a technical pipeline proof.
+- P5-1 must not blindly learn from pair_001/raw.mp4 audio.
+- P5-1 should prefer raw_mixed_audio.mp4 or implement automatic multi-audio mix preprocessing.
