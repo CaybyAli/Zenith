@@ -1,18 +1,27 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
+import json
 import shutil
 import subprocess
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Callable, Iterable
 
 from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
+from core.learning_corpus_audio_profile import extract_audio_profile
+from core.learning_corpus_fingerprint_writer import (
+    validate_style_fingerprint,
+    write_style_fingerprint,
+)
+from core.learning_corpus_hook_identifier import identify_hook
+from core.learning_corpus_pacing_metrics import extract_pacing_metrics
+from core.learning_corpus_reaction_timing import extract_reaction_timing
+from core.learning_corpus_scene_change import extract_scene_changes, probe_media_duration_seconds
+from core.learning_corpus_transcript import extract_transcript
 
 
 @dataclass(frozen=True)
 class AudioPreparationResult:
-    """Result of the mandatory corpus audio input preparation step."""
-
     source_path: Path
     prepared_path: Path
     audio_stream_count: int
@@ -21,18 +30,56 @@ class AudioPreparationResult:
     power_profile: str | None = None
 
 
+@dataclass(frozen=True)
+class IngestedVideoResult:
+    video_folder: Path
+    source_video_path: Path
+    prepared_audio_path: Path
+    fingerprint_path: Path
+    audio_stream_count: int
+    mixed_audio: bool
+    power_profile: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        for key in ("video_folder", "source_video_path", "prepared_audio_path", "fingerprint_path"):
+            payload[key] = str(payload[key])
+        return payload
+
+
+@dataclass(frozen=True)
+class IngestRunResult:
+    corpus_root: Path
+    videos_processed: int
+    fingerprints_written: list[Path]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "corpus_root": str(self.corpus_root),
+            "videos_processed": self.videos_processed,
+            "fingerprints_written": [str(path) for path in self.fingerprints_written],
+        }
+
+
+TranscriptExtractor = Callable[..., dict[str, Any]]
+SceneChangeExtractor = Callable[..., dict[str, Any]]
+AudioProfileExtractor = Callable[..., dict[str, Any]]
+HookExtractor = Callable[..., dict[str, Any]]
+ReactionTimingExtractor = Callable[..., dict[str, Any]]
+
+
 class LearningCorpusIngestor:
     """
-    Scaffold for Phase 5 learning corpus ingestion.
+    Orchestrator for Phase 5 learning corpus ingestion.
 
-    P5-1A only owns the first mandatory media-safety step:
-    every video input is probed before ingestion and multi-audio inputs are
-    mixed into a deterministic sidecar file next to the original media.
+    First action per video:
+    - probe audio stream count
+    - create raw_mixed_audio.mp4 for pairs
+    - create final_mixed_audio.mp4 for top_main/vlogs only when needed
 
-    The power_profile hook is accepted and stored now so later GPU/CPU-bound
-    submodules can receive the same setting without changing the public
-    ingestor interface. This P5-1A audio preparation step itself is FFmpeg-
-    bound and does not alter FFmpeg flags based on power_profile.
+    power_profile is passed into transcript extraction. Other P5-1 modules are
+    local deterministic FFmpeg/text processors and currently do not need
+    profile-specific flags.
     """
 
     def __init__(
@@ -42,11 +89,21 @@ class LearningCorpusIngestor:
         power_profile: str | None = None,
         ffmpeg_path: str | None = None,
         ffprobe_path: str | None = None,
+        transcript_extractor: TranscriptExtractor = extract_transcript,
+        scene_change_extractor: SceneChangeExtractor = extract_scene_changes,
+        audio_profile_extractor: AudioProfileExtractor = extract_audio_profile,
+        hook_extractor: HookExtractor = identify_hook,
+        reaction_timing_extractor: ReactionTimingExtractor = extract_reaction_timing,
     ) -> None:
         self.corpus_root = Path(corpus_root)
         self.power_profile = power_profile
         self._ffmpeg_path = ffmpeg_path
         self._ffprobe_path = ffprobe_path
+        self.transcript_extractor = transcript_extractor
+        self.scene_change_extractor = scene_change_extractor
+        self.audio_profile_extractor = audio_profile_extractor
+        self.hook_extractor = hook_extractor
+        self.reaction_timing_extractor = reaction_timing_extractor
 
     def ffmpeg_path(self) -> str:
         return self._ffmpeg_path or get_ffmpeg_path()
@@ -55,8 +112,6 @@ class LearningCorpusIngestor:
         return self._ffprobe_path or get_ffprobe_path()
 
     def iter_video_folders(self) -> Iterable[Path]:
-        """Yield known Phase-5 corpus video folders in deterministic order."""
-
         sections = (
             self.corpus_root / "pairs",
             self.corpus_root / "top_main",
@@ -68,9 +123,84 @@ class LearningCorpusIngestor:
             for folder in sorted(path for path in section.iterdir() if path.is_dir()):
                 yield folder
 
-    def prepare_pair_audio(self, pair_path: str | Path) -> AudioPreparationResult:
-        """Prepare pair_NNN/raw.mp4 and always return raw_mixed_audio.mp4."""
+    def ingest_all(self) -> IngestRunResult:
+        fingerprints: list[Path] = []
+        for folder in self.iter_video_folders():
+            result = self.ingest_video_folder(folder)
+            fingerprints.append(result.fingerprint_path)
 
+        return IngestRunResult(
+            corpus_root=self.corpus_root,
+            videos_processed=len(fingerprints),
+            fingerprints_written=fingerprints,
+        )
+
+    def ingest_video_folder(self, video_folder: str | Path) -> IngestedVideoResult:
+        folder = Path(video_folder)
+        meta = read_meta_json(folder / "meta.json")
+        audio_preparation = self.prepare_video_folder(folder)
+
+        transcript = self.transcript_extractor(
+            audio_preparation.prepared_path,
+            power_profile=self.power_profile,
+        )
+
+        scene_source = choose_scene_source(folder, audio_preparation.source_path)
+        scene_changes = self.scene_change_extractor(
+            scene_source,
+            ffmpeg_path=self.ffmpeg_path(),
+            ffprobe_path=self.ffprobe_path(),
+        )
+
+        audio = self.audio_profile_extractor(
+            audio_preparation.prepared_path,
+            ffmpeg_path=self.ffmpeg_path(),
+            ffprobe_path=self.ffprobe_path(),
+        )
+
+        duration_seconds = probe_media_duration_seconds(
+            scene_source,
+            ffprobe_path=self.ffprobe_path(),
+        )
+        pacing = extract_pacing_metrics(
+            scene_changes.get("boundaries_seconds", []),
+            duration_seconds=duration_seconds,
+        )
+
+        hook = self.hook_extractor(transcript)
+
+        reaction_timing = self.reaction_timing_extractor(
+            video_type=meta.get("type"),
+            meta=meta,
+            transcript=transcript,
+            scene_changes=scene_changes,
+        )
+
+        fingerprint_path = write_style_fingerprint(
+            folder,
+            meta=meta,
+            transcript=transcript,
+            scene_changes=scene_changes,
+            audio=audio,
+            pacing=pacing,
+            hook=hook,
+            reaction_timing=reaction_timing,
+        )
+
+        fingerprint = json.loads(fingerprint_path.read_text(encoding="utf-8"))
+        validate_style_fingerprint(fingerprint)
+
+        return IngestedVideoResult(
+            video_folder=folder,
+            source_video_path=audio_preparation.source_path,
+            prepared_audio_path=audio_preparation.prepared_path,
+            fingerprint_path=fingerprint_path,
+            audio_stream_count=audio_preparation.audio_stream_count,
+            mixed_audio=audio_preparation.mixed,
+            power_profile=self.power_profile,
+        )
+
+    def prepare_pair_audio(self, pair_path: str | Path) -> AudioPreparationResult:
         source_path = Path(pair_path) / "raw.mp4"
         expected_output = source_path.with_name("raw_mixed_audio.mp4")
         existed_before = expected_output.exists()
@@ -90,13 +220,6 @@ class LearningCorpusIngestor:
         )
 
     def prepare_final_audio(self, video_path: str | Path) -> AudioPreparationResult:
-        """
-        Prepare top_main/vlogs final.mp4 inputs.
-
-        final.mp4 is used directly when it has a single audio stream. If it has
-        multiple audio streams, a final_mixed_audio.mp4 sidecar is created.
-        """
-
         source_path = Path(video_path)
         expected_output = source_path.with_name("final_mixed_audio.mp4")
         existed_before = expected_output.exists()
@@ -118,15 +241,6 @@ class LearningCorpusIngestor:
         )
 
     def prepare_video_folder(self, video_folder: str | Path) -> AudioPreparationResult:
-        """
-        Run the first mandatory ingest check for one corpus folder.
-
-        pairs/pair_NNN use raw.mp4 and produce raw_mixed_audio.mp4.
-        top_main/video_NNN and vlogs/vlog_NNN use final.mp4 unless that file
-        contains multiple audio streams, in which case final_mixed_audio.mp4 is
-        produced and returned.
-        """
-
         folder = Path(video_folder)
         if folder.parent.name == "pairs":
             return self.prepare_pair_audio(folder)
@@ -159,14 +273,31 @@ class LearningCorpusIngestor:
         raise FileNotFoundError(f"No supported corpus video found in {folder}")
 
 
+def read_meta_json(meta_path: str | Path) -> dict[str, Any]:
+    path = Path(meta_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Missing meta.json: {path}")
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"meta.json must contain an object: {path}")
+
+    required = ("video_id", "type", "quality_tier")
+    missing = [key for key in required if not str(payload.get(key, "")).strip()]
+    if missing:
+        raise ValueError(f"meta.json missing required fields {missing}: {path}")
+
+    return payload
+
+
+def choose_scene_source(video_folder: Path, fallback: Path) -> Path:
+    final_path = video_folder / "final.mp4"
+    if final_path.exists():
+        return final_path
+    return fallback
+
+
 def probe_audio_stream_count(video_path: str | Path, *, ffprobe_path: str | None = None) -> int:
-    """
-    Return the number of audio streams in a media file using ffprobe.
-
-    Equivalent command:
-    ffprobe -v quiet -select_streams a -show_entries stream=index -of csv=p=0 input.mp4
-    """
-
     path = Path(video_path)
     if not path.exists():
         raise FileNotFoundError(f"Input video does not exist: {path}")
@@ -201,15 +332,6 @@ def ensure_mixed_audio(
     ffmpeg_path: str | None = None,
     ffprobe_path: str | None = None,
 ) -> Path:
-    """
-    Ensure pair_NNN/raw_mixed_audio.mp4 exists and return its path.
-
-    If raw.mp4 has one audio stream, raw.mp4 is copied to raw_mixed_audio.mp4.
-    If raw.mp4 has multiple audio streams, all audio streams are merged with
-    FFmpeg amerge into raw_mixed_audio.mp4.
-    If raw_mixed_audio.mp4 already exists, it is returned unchanged.
-    """
-
     pair_dir = Path(pair_path)
     return ensure_video_audio_ready(
         pair_dir / "raw.mp4",
@@ -228,14 +350,6 @@ def ensure_video_audio_ready(
     ffmpeg_path: str | None = None,
     ffprobe_path: str | None = None,
 ) -> Path:
-    """
-    Prepare a video input for downstream transcript/audio analysis.
-
-    - Existing sidecar output is never regenerated.
-    - One audio stream returns the original input unless copy_single_stream=True.
-    - More than one audio stream creates a mixed sidecar next to the input.
-    """
-
     input_path = Path(input_video_path)
     if not input_path.exists():
         raise FileNotFoundError(f"Input video does not exist: {input_path}")
@@ -269,8 +383,6 @@ def mix_audio_streams(
     audio_stream_count: int,
     ffmpeg_path: str | None = None,
 ) -> Path:
-    """Merge all audio streams from input_video_path into output_video_path."""
-
     if audio_stream_count < 2:
         raise ValueError("mix_audio_streams requires at least two audio streams")
 
@@ -332,3 +444,14 @@ def _copy_video(input_path: Path, output_path: Path) -> None:
     finally:
         if temp_output.exists():
             temp_output.unlink()
+
+
+def ingest_learning_corpus(
+    corpus_root: str | Path = Path("learning_corpus"),
+    *,
+    power_profile: str | None = None,
+) -> IngestRunResult:
+    return LearningCorpusIngestor(
+        corpus_root=corpus_root,
+        power_profile=power_profile,
+    ).ingest_all()
