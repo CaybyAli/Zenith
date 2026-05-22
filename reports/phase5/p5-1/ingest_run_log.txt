@@ -1,6 +1,84 @@
-[P5-1] discovered_video_folders=10
-[P5-1] RESULT=FAILED error=RuntimeError: Expected 40 corpus videos, found 10
-Traceback (most recent call last):
-  File "<stdin>", line 29, in <module>
-RuntimeError: Expected 40 corpus videos, found 10
-
+[P5-1] discovered_video_folders=40
+[P5-1] ingest_start 01/40 folder=learning_corpus\pairs\pair_001
+[P5-1] ingest_ok 01/40 video_id=pair_001 type=gaming_main fingerprint=learning_corpus\pairs\pair_001\style_fingerprint.json audio_streams=4 prepared_audio=learning_corpus\pairs\pair_001\raw_mixed_audio.mp4
+[P5-1] ingest_start 02/40 folder=learning_corpus\pairs\pair_002
+[P5-1] ingest_ok 02/40 video_id=pair_002 type=gaming_main fingerprint=learning_corpus\pairs\pair_002\style_fingerprint.json audio_streams=4 prepared_audio=learning_corpus\pairs\pair_002\raw_mixed_audio.mp4
+[P5-1] ingest_start 03/40 folder=learning_corpus\pairs\pair_003
+[P5-1] ingest_ok 03/40 video_id=pair_003 type=gaming_main fingerprint=learning_corpus\pairs\pair_003\style_fingerprint.json audio_streams=4 prepared_audio=learning_corpus\pairs\pair_003\raw_mixed_audio.mp4
+[P5-1] ingest_start 04/40 folder=learning_corpus\pairs\pair_004
+[P5-1] ingest_ok 04/40 video_id=pair_004 type=gaming_main fingerprint=learning_corpus\pairs\pair_004\style_fingerprint.json audio_streams=4 prepared_audio=learning_corpus\pairs\pair_004\raw_mixed_audio.mp4
+[P5-1] ingest_start 05/40 folder=learning_corpus\pairs\pair_005
+[P5-1] ingest_ok 05/40 video_id=pair_005 type=gaming_main fingerprint=learning_corpus\pairs\pair_005\style_fingerprint.json audio_streams=4 prepared_audio=learning_corpus\pairs\pair_005\raw_mixed_audio.mp4
+[P5-1] ingest_start 06/40 folder=learning_corpus\pairs\pair_006
+[P5-1] ingest_ok 06/40 video_id=pair_006 type=gaming_main fingerprint=learning_corpus\pairs\pair_006\style_fingerprint.json audio_streams=3 prepared_audio=learning_corpus\pairs\pair_006\raw_mixed_audio.mp4
+[P5-1] ingest_start 07/40 folder=learning_corpus\pairs\pair_007
+[P5-1] ingest_ok 07/40 video_id=pair_007 type=gaming_main fingerprint=learning_corpus\pairs\pair_007\style_fingerprint.json audio_streams=3 prepared_audio=learning_corpus\pairs\pair_007\raw_mixed_audio.mp4
+[P5-1] ingest_start 08/40 folder=learning_corpus\top_solo\video_001
+[P5-1] ingest_ok 08/40 video_id=video_001 type=gaming_main fingerprint=learning_corpus\top_solo\video_001\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_001\final.mp4
+[P5-1] ingest_start 09/40 folder=learning_corpus\top_solo\video_002
+[P5-1] ingest_ok 09/40 video_id=video_002 type=gaming_main fingerprint=learning_corpus\top_solo\video_002\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_002\final.mp4
+[P5-1] ingest_start 10/40 folder=learning_corpus\top_solo\video_003
+[P5-1] ingest_ok 10/40 video_id=video_003 type=gaming_main fingerprint=learning_corpus\top_solo\video_003\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_003\final.mp4
+[P5-1] ingest_start 11/40 folder=learning_corpus\top_solo\video_004
+[P5-1] ingest_ok 11/40 video_id=video_004 type=gaming_main fingerprint=learning_corpus\top_solo\video_004\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_004\final.mp4
+[P5-1] ingest_start 12/40 folder=learning_corpus\top_solo\video_005
+[P5-1] ingest_ok 12/40 video_id=video_005 type=gaming_main fingerprint=learning_corpus\top_solo\video_005\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_005\final.mp4
+[P5-1] ingest_start 13/40 folder=learning_corpus\top_solo\video_006
+[P5-1] ingest_ok 13/40 video_id=video_006 type=gaming_main fingerprint=learning_corpus\top_solo\video_006\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_006\final.mp4
+[P5-1] ingest_start 14/40 folder=learning_corpus\top_solo\video_007
+[P5-1] ingest_ok 14/40 video_id=video_007 type=gaming_main fingerprint=learning_corpus\top_solo\video_007\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_007\final.mp4
+[P5-1] ingest_start 15/40 folder=learning_corpus\top_solo\video_008
+[P5-1] ingest_ok 15/40 video_id=video_008 type=gaming_main fingerprint=learning_corpus\top_solo\video_008\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_008\final.mp4
+[P5-1] ingest_start 16/40 folder=learning_corpus\top_solo\video_009
+[P5-1] ingest_ok 16/40 video_id=video_009 type=gaming_main fingerprint=learning_corpus\top_solo\video_009\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_009\final.mp4
+[P5-1] ingest_start 17/40 folder=learning_corpus\top_solo\video_010
+[P5-1] ingest_ok 17/40 video_id=video_010 type=gaming_main fingerprint=learning_corpus\top_solo\video_010\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_010\final.mp4
+[P5-1] ingest_start 18/40 folder=learning_corpus\top_solo\video_011
+[P5-1] ingest_ok 18/40 video_id=video_011 type=gaming_main fingerprint=learning_corpus\top_solo\video_011\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_011\final.mp4
+[P5-1] ingest_start 19/40 folder=learning_corpus\top_solo\video_012
+[P5-1] ingest_ok 19/40 video_id=video_012 type=gaming_main fingerprint=learning_corpus\top_solo\video_012\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_012\final.mp4
+[P5-1] ingest_start 20/40 folder=learning_corpus\top_solo\video_013
+[P5-1] ingest_ok 20/40 video_id=video_013 type=gaming_main fingerprint=learning_corpus\top_solo\video_013\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_013\final.mp4
+[P5-1] ingest_start 21/40 folder=learning_corpus\top_solo\video_014
+[P5-1] ingest_ok 21/40 video_id=video_014 type=gaming_main fingerprint=learning_corpus\top_solo\video_014\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_014\final.mp4
+[P5-1] ingest_start 22/40 folder=learning_corpus\top_solo\video_015
+[P5-1] ingest_ok 22/40 video_id=video_015 type=gaming_main fingerprint=learning_corpus\top_solo\video_015\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_015\final.mp4
+[P5-1] ingest_start 23/40 folder=learning_corpus\top_solo\video_016
+[P5-1] ingest_ok 23/40 video_id=video_016 type=gaming_main fingerprint=learning_corpus\top_solo\video_016\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_016\final.mp4
+[P5-1] ingest_start 24/40 folder=learning_corpus\top_solo\video_017
+[P5-1] ingest_ok 24/40 video_id=video_017 type=gaming_main fingerprint=learning_corpus\top_solo\video_017\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_017\final.mp4
+[P5-1] ingest_start 25/40 folder=learning_corpus\top_solo\video_018
+[P5-1] ingest_ok 25/40 video_id=video_018 type=gaming_main fingerprint=learning_corpus\top_solo\video_018\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_018\final.mp4
+[P5-1] ingest_start 26/40 folder=learning_corpus\top_solo\video_019
+[P5-1] ingest_ok 26/40 video_id=video_019 type=gaming_main fingerprint=learning_corpus\top_solo\video_019\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_019\final.mp4
+[P5-1] ingest_start 27/40 folder=learning_corpus\top_solo\video_020
+[P5-1] ingest_ok 27/40 video_id=video_020 type=gaming_main fingerprint=learning_corpus\top_solo\video_020\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_020\final.mp4
+[P5-1] ingest_start 28/40 folder=learning_corpus\top_solo\video_021
+[P5-1] ingest_ok 28/40 video_id=video_021 type=gaming_main fingerprint=learning_corpus\top_solo\video_021\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_021\final.mp4
+[P5-1] ingest_start 29/40 folder=learning_corpus\top_solo\video_022
+[P5-1] ingest_ok 29/40 video_id=video_022 type=gaming_main fingerprint=learning_corpus\top_solo\video_022\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_022\final.mp4
+[P5-1] ingest_start 30/40 folder=learning_corpus\top_solo\video_023
+[P5-1] ingest_ok 30/40 video_id=video_023 type=gaming_main fingerprint=learning_corpus\top_solo\video_023\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_023\final.mp4
+[P5-1] ingest_start 31/40 folder=learning_corpus\top_solo\video_024
+[P5-1] ingest_ok 31/40 video_id=video_024 type=gaming_main fingerprint=learning_corpus\top_solo\video_024\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_024\final.mp4
+[P5-1] ingest_start 32/40 folder=learning_corpus\top_solo\video_025
+[P5-1] ingest_ok 32/40 video_id=video_025 type=gaming_main fingerprint=learning_corpus\top_solo\video_025\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_025\final.mp4
+[P5-1] ingest_start 33/40 folder=learning_corpus\top_solo\video_026
+[P5-1] ingest_ok 33/40 video_id=video_026 type=gaming_main fingerprint=learning_corpus\top_solo\video_026\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_026\final.mp4
+[P5-1] ingest_start 34/40 folder=learning_corpus\top_solo\video_027
+[P5-1] ingest_ok 34/40 video_id=video_027 type=gaming_main fingerprint=learning_corpus\top_solo\video_027\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_027\final.mp4
+[P5-1] ingest_start 35/40 folder=learning_corpus\top_solo\video_028
+[P5-1] ingest_ok 35/40 video_id=video_028 type=gaming_main fingerprint=learning_corpus\top_solo\video_028\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_028\final.mp4
+[P5-1] ingest_start 36/40 folder=learning_corpus\top_solo\video_029
+[P5-1] ingest_ok 36/40 video_id=video_029 type=gaming_main fingerprint=learning_corpus\top_solo\video_029\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_029\final.mp4
+[P5-1] ingest_start 37/40 folder=learning_corpus\top_solo\video_030
+[P5-1] ingest_ok 37/40 video_id=video_030 type=gaming_main fingerprint=learning_corpus\top_solo\video_030\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\top_solo\video_030\final.mp4
+[P5-1] ingest_start 38/40 folder=learning_corpus\vlogs\vlog_001
+[P5-1] ingest_ok 38/40 video_id=vlog_001 type=vlog_main fingerprint=learning_corpus\vlogs\vlog_001\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\vlogs\vlog_001\final.mp4
+[P5-1] ingest_start 39/40 folder=learning_corpus\vlogs\vlog_002
+[P5-1] ingest_ok 39/40 video_id=vlog_002 type=vlog_main fingerprint=learning_corpus\vlogs\vlog_002\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\vlogs\vlog_002\final.mp4
+[P5-1] ingest_start 40/40 folder=learning_corpus\vlogs\vlog_003
+[P5-1] ingest_ok 40/40 video_id=vlog_003 type=vlog_main fingerprint=learning_corpus\vlogs\vlog_003\style_fingerprint.json audio_streams=1 prepared_audio=learning_corpus\vlogs\vlog_003\final.mp4
+[P5-1] fingerprints_written_this_run=40
+[P5-1] fingerprints_total=40
+[P5-1] RESULT=OK
