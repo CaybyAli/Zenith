@@ -10419,7 +10419,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             job = shorts_stage.run(
                 job=job,
                 timeline=edit_timeline,
-                source_video_path=str(final_video_path),
+                source_video_path=str(job.raw_video_path),
                 output_base_dir=str(export_dir),
                 power_profile=str(_shorts_power_profile),
                 llm_mode=str(_shorts_llm_mode),
