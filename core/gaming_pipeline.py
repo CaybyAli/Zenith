@@ -10424,6 +10424,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 power_profile=str(_shorts_power_profile),
                 llm_mode=str(_shorts_llm_mode),
                 add_captions=True,
+                transcript=transcript_result,
             )
 
             persist_job_state_checkpoint(

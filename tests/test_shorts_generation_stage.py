@@ -105,6 +105,7 @@ class MockRenderDriver:
         output_dir,
         job_id,
         add_captions=True,
+        transcript=None,
     ):
         if clip.clip_index in self.fail_indices:
             raise RuntimeError(f"mock render failed for {clip.clip_index}")

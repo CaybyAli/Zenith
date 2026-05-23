@@ -8,6 +8,7 @@ from core.shorts_reframe_planner import ShortsReframePlanner
 from core.shorts_render_driver import ShortsRenderDriver
 from models.edit_timeline import EditTimeline
 from models.job import Job
+from models.transcript_result import TranscriptResult
 from shared.enums import JobStatus
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class ShortsGenerationStage:
         power_profile: str = DEFAULT_POWER_PROFILE,
         llm_mode: str = LLM_SHADOW,
         add_captions: bool = True,
+        transcript: TranscriptResult | None = None,
     ) -> Job:
         self._set_job_status(job, JobStatus.SHORTS_GENERATING, "shorts_generation_started")
 
@@ -67,6 +69,7 @@ class ShortsGenerationStage:
                     output_dir=str(output_dir),
                     job_id=str(job.job_id),
                     add_captions=add_captions,
+                    transcript=transcript,
                 )
             except Exception as exc:
                 clip.status = "failed"
