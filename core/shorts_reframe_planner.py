@@ -59,7 +59,7 @@ def build_stack_filter_60_40(source: SourceFormat) -> str:
     facecam_final_crop_x = 10
 
     return (
-        f"[0:v]split=2[facecam_src][gameplay_src];"
+        f"[0:v]scale=3840:1080,setsar=1,split=2[facecam_src][gameplay_src];"
         f"[facecam_src]crop={source_w}:{source_h}:{facecam_x}:0,"
         f"scale=1080:640:force_original_aspect_ratio=increase,"
         f"crop=1080:640:{facecam_final_crop_x}:0[facecam_block];"
