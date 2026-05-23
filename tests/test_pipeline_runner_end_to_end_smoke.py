@@ -34,7 +34,7 @@ def _write_smoke_clip(path: Path) -> None:
         "-f",
         "lavfi",
         "-i",
-        "testsrc=size=160x90:rate=10",
+        "testsrc=size=1280x360:rate=10",
         "-f",
         "lavfi",
         "-i",
