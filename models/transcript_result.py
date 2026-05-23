@@ -1,5 +1,21 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
+
+
+@dataclass
+class TranscriptWord:
+    start_seconds: float
+    end_seconds: float
+    text: str
+    probability: Optional[float] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "start_seconds": self.start_seconds,
+            "end_seconds": self.end_seconds,
+            "text": self.text,
+            "probability": self.probability,
+        }
 
 
 @dataclass
@@ -8,6 +24,7 @@ class TranscriptSegment:
     end_seconds: float
     text: str
     confidence: Optional[float] = None
+    words: list[TranscriptWord] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -15,6 +32,7 @@ class TranscriptSegment:
             "end_seconds": self.end_seconds,
             "text": self.text,
             "confidence": self.confidence,
+            "words": [word.to_dict() for word in self.words],
         }
 
 

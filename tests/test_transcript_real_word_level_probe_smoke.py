@@ -115,12 +115,12 @@ def test_real_whisper_probe_is_optional_and_skip_safe() -> None:
         assert report.has_word_level_timestamps is False or report.word_timestamp_count == 0
 
 
-def test_processor_currently_does_not_request_faster_whisper_word_timestamps() -> None:
+def test_processor_requests_faster_whisper_word_timestamps_for_real_captions() -> None:
     source = _read("core/transcript_processor.py")
 
     assert "faster_whisper" in source
-    assert "word_timestamps=True" not in source
-    assert "word_timestamps = True" not in source
+    assert "word_timestamps=True" in source
+    assert "TranscriptWord" in source
 
 
 def test_real_probe_file_has_no_bom_and_ends_with_newline() -> None:

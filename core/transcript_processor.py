@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-from models.transcript_result import TranscriptResult, TranscriptSegment
+from models.transcript_result import TranscriptResult, TranscriptSegment, TranscriptWord
 
 
 class TranscriptUnavailableError(RuntimeError):
@@ -54,7 +54,7 @@ class TranscriptProcessor:
             device=os.getenv("ZENITH_FASTER_WHISPER_DEVICE", "cpu"),
             compute_type=os.getenv("ZENITH_FASTER_WHISPER_COMPUTE_TYPE", "int8"),
         )
-        raw_segments, info = model.transcribe(source_path, vad_filter=True)
+        raw_segments, info = model.transcribe(source_path, vad_filter=True, word_timestamps=True)
 
         segments = self._sanitize_segments(
             {
@@ -62,6 +62,7 @@ class TranscriptProcessor:
                 "end": segment.end,
                 "text": segment.text,
                 "confidence": None,
+                "words": getattr(segment, "words", None),
             }
             for segment in raw_segments
         )
@@ -129,11 +130,13 @@ class TranscriptProcessor:
                 end = item.get("end")
                 text = item.get("text")
                 confidence = item.get("confidence")
+                raw_words = item.get("words") or []
             else:
                 start = getattr(item, "start", None)
                 end = getattr(item, "end", None)
                 text = getattr(item, "text", None)
                 confidence = getattr(item, "confidence", None)
+                raw_words = getattr(item, "words", None) or []
 
             try:
                 start_seconds = max(0.0, float(start))
@@ -149,17 +152,65 @@ class TranscriptProcessor:
             if end_seconds <= start_seconds:
                 continue
 
+            words = self._sanitize_words(raw_words)
+
             sanitized.append(
                 TranscriptSegment(
                     start_seconds=start_seconds,
                     end_seconds=end_seconds,
                     text=clean_text,
                     confidence=confidence if isinstance(confidence, float) else None,
+                    words=words,
                 )
             )
 
         sanitized.sort(key=lambda segment: segment.start_seconds)
         return sanitized
+
+    def _sanitize_words(self, raw_words: Iterable[Any]) -> list[TranscriptWord]:
+        words: list[TranscriptWord] = []
+
+        for item in raw_words or []:
+            if isinstance(item, dict):
+                start = item.get("start")
+                end = item.get("end")
+                text = item.get("word", item.get("text"))
+                probability = item.get("probability")
+            else:
+                start = getattr(item, "start", None)
+                end = getattr(item, "end", None)
+                text = getattr(item, "word", None) or getattr(item, "text", None)
+                probability = getattr(item, "probability", None)
+
+            try:
+                start_seconds = max(0.0, float(start))
+                end_seconds = max(0.0, float(end))
+            except (TypeError, ValueError):
+                continue
+
+            clean_text = str(text or "").strip()
+            if not clean_text:
+                continue
+
+            if end_seconds <= start_seconds:
+                continue
+
+            try:
+                safe_probability = float(probability) if probability is not None else None
+            except (TypeError, ValueError):
+                safe_probability = None
+
+            words.append(
+                TranscriptWord(
+                    start_seconds=start_seconds,
+                    end_seconds=end_seconds,
+                    text=clean_text,
+                    probability=safe_probability,
+                )
+            )
+
+        words.sort(key=lambda word: word.start_seconds)
+        return words
 
     def _build_full_text(self, segments: list[TranscriptSegment]) -> str:
         return " ".join(segment.text.strip() for segment in segments if segment.text.strip()).strip()
