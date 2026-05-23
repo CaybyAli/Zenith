@@ -13,8 +13,14 @@ MOBILE_FIRST_FONT_SIZE = 80
 MOBILE_FIRST_HIGHLIGHT_SIZE = 88
 MOBILE_FIRST_Y = "h*0.75"
 MOBILE_FIRST_X = "(w-text_w)/2"
-MOBILE_FIRST_BOX_COLOR = "black@0.5"
+MOBILE_FIRST_BOX_COLOR = "black@0.0"
 MOBILE_FIRST_WORDS_PER_LINE = 3
+MOBILE_FIRST_BORDER_WIDTH = 4
+MOBILE_FIRST_BORDER_COLOR = "black"
+MOBILE_FIRST_SHADOW_COLOR = "black@0.75"
+MOBILE_FIRST_SHADOW_X = 2
+MOBILE_FIRST_SHADOW_Y = 2
+MOBILE_FIRST_LINE_SPACING = 12
 FALLBACK_FONT_FAMILY = "Arial"
 SUBTITLE_FONT_ENV_VAR = "ZENITH_SUBTITLE_FONT_FILE"
 
@@ -174,16 +180,16 @@ class SubtitleFFmpegBuilder:
                 text=text,
                 font_color="white",
                 font_size=MOBILE_FIRST_FONT_SIZE,
-                box=True,
+                box=False,
                 box_color=MOBILE_FIRST_BOX_COLOR,
             )
         ]
 
-        for word in highlighted_words:
+        for word in highlighted_words[:1]:
             filters.append(
                 SubtitleFFmpegBuilder._mobile_drawtext(
                     text=word,
-                    font_color="yellow",
+                    font_color="lime",
                     font_size=MOBILE_FIRST_HIGHLIGHT_SIZE,
                     box=False,
                     box_color=MOBILE_FIRST_BOX_COLOR,
@@ -214,6 +220,13 @@ class SubtitleFFmpegBuilder:
             f"fontcolor={SubtitleFFmpegBuilder._safe_str(font_color, 'white')}",
             f"fontsize={SubtitleFFmpegBuilder._safe_int(font_size, MOBILE_FIRST_FONT_SIZE)}",
             f"box={1 if bool(box) else 0}",
+            f"borderw={MOBILE_FIRST_BORDER_WIDTH}",
+            f"bordercolor={MOBILE_FIRST_BORDER_COLOR}",
+            f"shadowcolor={MOBILE_FIRST_SHADOW_COLOR}",
+            f"shadowx={MOBILE_FIRST_SHADOW_X}",
+            f"shadowy={MOBILE_FIRST_SHADOW_Y}",
+            f"line_spacing={MOBILE_FIRST_LINE_SPACING}",
+            "fix_bounds=1",
         ]
 
         if bool(box):

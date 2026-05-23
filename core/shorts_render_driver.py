@@ -16,7 +16,9 @@ from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 from core.power_profile import PowerProfile
 from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder
 from core.subtitle_generator import SubtitleGenerator
+from core.shorts_transcript_caption_builder import build_caption_words_from_transcript
 from models.shorts_clip import ShortsClip
+from models.transcript_result import TranscriptResult
 
 SHORTS_OUTPUT_WIDTH = 1080
 SHORTS_OUTPUT_HEIGHT = 1920
@@ -118,6 +120,7 @@ class ShortsRenderDriver:
         output_dir: str,
         job_id: str,
         add_captions: bool = True,
+        transcript: TranscriptResult | None = None,
     ) -> str:
         output_path = self._output_path(
             output_dir=output_dir,
@@ -131,6 +134,7 @@ class ShortsRenderDriver:
                 source_video_path=source_video_path,
                 output_path=output_path,
                 add_captions=add_captions,
+                transcript=transcript,
             )
             self.ffmpeg_helper.run_ffmpeg(cmd)
         except Exception as exc:
@@ -149,13 +153,18 @@ class ShortsRenderDriver:
         source_video_path: str,
         output_path: str,
         add_captions: bool = True,
+        transcript: TranscriptResult | None = None,
     ) -> list[str]:
         reframe_plan = getattr(clip, "reframe_plan", None)
         if reframe_plan is None:
             raise ValueError("ShortsClip.reframe_plan is required before render")
 
         codec_choice = self._resolve_video_codec()
-        caption_filter = self._caption_filter(clip, add_captions=add_captions)
+        caption_filter = self._caption_filter(
+            clip=clip,
+            add_captions=add_captions,
+            transcript=transcript,
+        )
         video_filter = self._video_filter(
             str(reframe_plan.ffmpeg_crop_filter or ""),
             caption_filter=caption_filter,
@@ -298,7 +307,12 @@ class ShortsRenderDriver:
 
         return self._append_caption_to_simple_filter(simple_filter, caption_filter)
 
-    def _caption_filter(self, clip: ShortsClip, add_captions: bool = True) -> str:
+    def _caption_filter(
+        self,
+        clip: ShortsClip,
+        add_captions: bool = True,
+        transcript: TranscriptResult | None = None,
+    ) -> str:
         if not add_captions:
             return ""
 
@@ -307,26 +321,34 @@ class ShortsRenderDriver:
         except Exception:
             hook_score = 0.0
 
-        rationale = str(getattr(clip, "llm_rationale", "") or "").strip()
-        if not rationale and hook_score <= 0.5:
-            return ""
+        words: list[str] = []
+        hook_score_by_word: dict[str, float] = {}
 
-        words = self._caption_words(rationale)
-        hook_scores = {word: hook_score for word in words}
-        hook_scores.update({word.casefold(): hook_score for word in words})
-        highlighted_words = SubtitleGenerator.highlighted_word_selector(words, hook_scores)
+        if transcript is not None:
+            words, hook_score_by_word = build_caption_words_from_transcript(
+                transcript=transcript,
+                clip_start_seconds=float(clip.source_start_time),
+                clip_end_seconds=float(clip.source_end_time),
+                max_words=4,
+            )
+
+        if not words:
+            words = list(DEFAULT_SHORTS_CAPTION_WORDS)
+            hook_score_by_word = {}
+
+        hook_scores: dict[str, float] = {}
+        for word in words:
+            score = hook_score_by_word.get(word.casefold(), hook_score)
+            hook_scores[word] = score
+            hook_scores[word.casefold()] = score
+
+        highlighted_words = SubtitleGenerator.highlighted_word_selector(words, hook_scores)[:1]
 
         return SubtitleFFmpegBuilder.build_filter(
             words=words,
             style="mobile_first",
             highlighted_words=highlighted_words,
         )
-
-    def _caption_words(self, rationale: str) -> list[str]:
-        words = [word for word in str(rationale or "").split() if word.strip()]
-        if words:
-            return words[:9]
-        return list(DEFAULT_SHORTS_CAPTION_WORDS)
 
     def _append_caption_to_simple_filter(self, video_filter: str, caption_filter: str) -> str:
         if not caption_filter:

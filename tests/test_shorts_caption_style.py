@@ -87,16 +87,20 @@ def test_mobile_first_contains_mobile_y_position() -> None:
     assert "y=h*0.75" in filter_string
 
 
-def test_mobile_first_contains_box_enabled() -> None:
+def test_mobile_first_disables_big_background_box() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "box=1" in filter_string
+    assert "box=0" in filter_string
 
 
-def test_mobile_first_contains_black_boxcolor() -> None:
+def test_mobile_first_contains_outline_and_shadow() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "boxcolor=black" in filter_string
+    assert "borderw=4" in filter_string
+    assert "bordercolor=black" in filter_string
+    assert "shadowcolor=black@0.75" in filter_string
+    assert "shadowx=2" in filter_string
+    assert "shadowy=2" in filter_string
 
 
 def test_longform_standard_existing_filter_string_is_unchanged() -> None:
@@ -118,7 +122,7 @@ def test_longform_standard_existing_filter_string_is_unchanged() -> None:
     assert filter_string == expected
 
 
-def test_highlighted_word_adds_second_yellow_drawtext_pass() -> None:
+def test_highlighted_word_adds_second_lime_drawtext_pass() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(
         ["EPIC"],
         style="mobile_first",
@@ -126,7 +130,7 @@ def test_highlighted_word_adds_second_yellow_drawtext_pass() -> None:
     )
 
     assert filter_string.count("drawtext=") == 2
-    assert "fontcolor=yellow" in filter_string
+    assert "fontcolor=lime" in filter_string
 
 
 def test_empty_highlighted_words_adds_only_one_drawtext_pass() -> None:
@@ -137,6 +141,16 @@ def test_empty_highlighted_words_adds_only_one_drawtext_pass() -> None:
     )
 
     assert filter_string.count("drawtext=") == 1
+
+
+def test_multiple_highlighted_words_add_only_one_extra_drawtext_pass() -> None:
+    filter_string = SubtitleFFmpegBuilder.build_filter(
+        ["one", "two", "three"],
+        style="mobile_first",
+        highlighted_words=["one", "two", "three"],
+    )
+
+    assert filter_string.count("drawtext=") == 2
 
 
 def test_six_words_wrap_after_third_word() -> None:
@@ -212,7 +226,7 @@ def test_shorts_render_driver_can_disable_captions(tmp_path: Path) -> None:
     assert "drawtext" not in _command_text(helper)
 
 
-def test_shorts_render_driver_skips_captions_without_trigger(tmp_path: Path) -> None:
+def test_shorts_render_driver_uses_default_captions_without_transcript(tmp_path: Path) -> None:
     driver, helper = _driver()
 
     driver.render_short(
@@ -221,6 +235,10 @@ def test_shorts_render_driver_skips_captions_without_trigger(tmp_path: Path) -> 
         output_dir=str(tmp_path),
         job_id=JOB_ID,
         add_captions=True,
+        transcript=None,
     )
 
-    assert "drawtext" not in _command_text(helper)
+    command_text = _command_text(helper)
+    assert "drawtext" in command_text
+    for default_word in ("Strong", "highlight", "moment"):
+        assert default_word in command_text
