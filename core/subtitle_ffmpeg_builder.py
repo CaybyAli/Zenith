@@ -216,7 +216,7 @@ class SubtitleFFmpegBuilder:
         box,
         box_color,
     ) -> str:
-        uppercase_text = SubtitleFFmpegBuilder._safe_str(text).upper()
+        uppercase_text = SubtitleFFmpegBuilder._uppercase_preserving_mobile_newlines(text)
         parts = [
             f"drawtext=text='{SubtitleFFmpegBuilder._escape_mobile_text(uppercase_text)}'",
             SubtitleFFmpegBuilder._font_part(),
@@ -244,6 +244,11 @@ class SubtitleFFmpegBuilder:
             ]
         )
         return ":".join(parts)
+
+    @staticmethod
+    def _uppercase_preserving_mobile_newlines(value: Any) -> str:
+        text = SubtitleFFmpegBuilder._safe_str(value)
+        return "\\n".join(part.upper() for part in text.split("\\n"))
 
     @staticmethod
     def _font_part() -> str:
