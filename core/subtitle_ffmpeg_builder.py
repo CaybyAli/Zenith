@@ -122,36 +122,61 @@ class SubtitleFFmpegBuilder:
         if not words:
             return []
 
-        full_text = " ".join(word["text"] for word in words)
-        start = min(float(word["start"]) for word in words)
-        end = max(float(word["end"]) for word in words)
-        filters = [
-            SubtitleFFmpegBuilder._mobile_drawtext_timed(
-                text=full_text,
-                font_color="white",
-                font_size=MOBILE_FIRST_FONT_SIZE,
-                x=MOBILE_FIRST_X,
-                alpha_start=start,
-                alpha_end=end,
-            )
-        ]
-
+        full_text = " ".join(str(word["text"]) for word in words)
         char_width = MOBILE_FIRST_FONT_SIZE * MOBILE_FIRST_CHAR_WIDTH_FACTOR
+        full_width = len(full_text) * char_width
+        base_x = f"(w/2)-{full_width / 2.0:.3f}"
+
+        filters: list[str] = []
+
         for index, word in enumerate(words):
-            prefix_text = " ".join(item["text"] for item in words[:index])
-            if prefix_text:
-                prefix_text += " "
-            x_offset = len(prefix_text) * char_width
+            enable_start = float(word["start"])
+            enable_end = float(word["end"])
+
+            left_text = " ".join(str(item["text"]) for item in words[:index])
+            active_text = str(word["text"])
+            right_text = " ".join(str(item["text"]) for item in words[index + 1:])
+
+            left_prefix = ""
+
+            if left_text:
+                filters.append(
+                    SubtitleFFmpegBuilder._mobile_drawtext_timed(
+                        text=left_text,
+                        font_color="white",
+                        font_size=MOBILE_FIRST_FONT_SIZE,
+                        x=base_x,
+                        enable_start=enable_start,
+                        enable_end=enable_end,
+                    )
+                )
+                left_prefix = f"{left_text} "
+
+            active_x_offset = len(left_prefix) * char_width
             filters.append(
                 SubtitleFFmpegBuilder._mobile_drawtext_timed(
-                    text=word["text"],
+                    text=active_text,
                     font_color=MOBILE_FIRST_HIGHLIGHT_COLOR,
                     font_size=MOBILE_FIRST_HIGHLIGHT_SIZE,
-                    x=f"{MOBILE_FIRST_X} + {x_offset:.3f}",
-                    enable_start=float(word["start"]),
-                    enable_end=float(word["end"]),
+                    x=f"{base_x}+{active_x_offset:.3f}",
+                    enable_start=enable_start,
+                    enable_end=enable_end,
                 )
             )
+
+            if right_text:
+                right_prefix = f"{left_prefix}{active_text} "
+                right_x_offset = len(right_prefix) * char_width
+                filters.append(
+                    SubtitleFFmpegBuilder._mobile_drawtext_timed(
+                        text=right_text,
+                        font_color="white",
+                        font_size=MOBILE_FIRST_FONT_SIZE,
+                        x=f"{base_x}+{right_x_offset:.3f}",
+                        enable_start=enable_start,
+                        enable_end=enable_end,
+                    )
+                )
 
         return filters
 
