@@ -157,3 +157,40 @@ def test_font_fallback_returns_string() -> None:
 
     assert isinstance(font, str)
     assert len(font) > 0
+
+
+def test_escape_filter_value_windows_path_uses_forward_slashes() -> None:
+    """Backslashes in Windows paths must become forward-slashes."""
+    result = SubtitleFFmpegBuilder._escape_filter_value(
+        r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
+    )
+    assert "\\" not in result.replace("\\:", ""), (
+        f"Unexpected backslash in escaped path: {result!r}"
+    )
+
+
+def test_escape_filter_value_windows_drive_colon_is_escaped() -> None:
+    """The drive-letter colon must be escaped as '\\:' for FFmpeg."""
+    result = SubtitleFFmpegBuilder._escape_filter_value(
+        r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
+    )
+    assert result.startswith("D\\:/"), (
+        f"Drive colon not escaped correctly: {result!r}"
+    )
+
+
+def test_escape_filter_value_no_bare_colon_after_drive() -> None:
+    """No unescaped colon must appear anywhere in the output."""
+    result = SubtitleFFmpegBuilder._escape_filter_value(
+        r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
+    )
+    without_escaped = result.replace("\\:", "")
+    assert ":" not in without_escaped, (
+        f"Bare colon found in escaped path: {result!r}"
+    )
+
+
+def test_escape_drawtext_text() -> None:
+    assert SubtitleFFmpegBuilder._escape_drawtext_text("Hello:World") == "Hello\\:World"
+    assert SubtitleFFmpegBuilder._escape_drawtext_text("It's") == "It\\'s"
+    assert SubtitleFFmpegBuilder._escape_drawtext_text("[tag]") == "\\[tag\\]"

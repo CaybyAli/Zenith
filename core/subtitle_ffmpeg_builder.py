@@ -124,25 +124,34 @@ class SubtitleFFmpegBuilder:
                 text = SubtitleFFmpegBuilder._safe_str(getattr(segment, "text", ""))
                 start = SubtitleFFmpegBuilder._safe_float(getattr(segment, "start", 0.0))
                 end = SubtitleFFmpegBuilder._safe_float(getattr(segment, "end", 0.0))
-                mid = start + ((end - start) / 2.0)
+                duration = end - start
+                if duration <= 0.0:
+                    mid = end
+                else:
+                    mid = start + (duration / 2.0)
+                if duration > 0.002:
+                    mid = max(start + 0.001, min(mid, end - 0.001))
 
-                filters.append(
-                    SubtitleFFmpegBuilder._drawtext(
-                        text=text,
-                        font_color=style.font_color,
-                        font_size=style.font_size,
-                        box=style.box,
-                        box_color=style.box_color,
-                        x=style.x,
-                        y=style.y,
-                        start=start,
-                        end=mid,
+                if mid > start:
+                    filters.append(
+                        SubtitleFFmpegBuilder._drawtext(
+                            text=text,
+                            font_color=style.font_color,
+                            font_size=style.font_size,
+                            box=style.box,
+                            box_color=style.box_color,
+                            x=style.x,
+                            y=style.y,
+                            start=start,
+                            end=mid,
+                        )
                     )
-                )
 
                 for word in SubtitleFFmpegBuilder._safe_words(
                     getattr(segment, "highlight_words", [])
                 ):
+                    if end <= mid:
+                        continue
                     filters.append(
                         SubtitleFFmpegBuilder._drawtext(
                             text=word,
@@ -442,24 +451,40 @@ class SubtitleFFmpegBuilder:
     def _font_part() -> str:
         try:
             if FONT_FILE and Path(FONT_FILE).exists():
-                return f"fontfile={SubtitleFFmpegBuilder._escape_filter_value(FONT_FILE)}"
+                return f"fontfile='{SubtitleFFmpegBuilder._escape_filter_value(FONT_FILE)}'"
         except Exception:
             pass
         return f"font={SubtitleFFmpegBuilder._safe_str(FONT_FILE, FALLBACK_FONT_FAMILY)}"
 
     @staticmethod
     def _escape_filter_value(value) -> str:
+        """Escape a filesystem path for use as an FFmpeg drawtext option value.
+
+        FFmpeg's drawtext filter uses ':' as an option separator and '\\' as an
+        escape character. On Windows the drive letter produces a literal ':'
+        (e.g. ``D:``), which FFmpeg would misparse as an option boundary.
+
+        Strategy:
+          1. Normalise all path separators to forward-slashes so backslashes
+             are not misread as FFmpeg escape sequences.
+          2. Escape the drive-letter colon (``D:`` -> ``D\\:``) so FFmpeg treats
+             it as a literal colon inside the option value.
+          3. Escape any remaining bare single-quotes that could break the
+             surrounding ``drawtext=text='...'`` quoting.
+        """
         text = SubtitleFFmpegBuilder._safe_str(value)
-        text = text.replace("\\", "\\\\")
-        text = text.replace(":", "\\:")
+        text = text.replace("\\", "/")
+        if len(text) >= 2 and text[1] == ":":
+            text = text[0] + "\\:" + text[2:]
         text = text.replace("'", "\\'")
         return text
 
     @staticmethod
     def _escape_mobile_text(value) -> str:
-        text = SubtitleFFmpegBuilder._safe_str(value)
-        text = text.replace("'", "\\'")
-        text = text.replace(":", "\\:")
+        newline_token = "__ZENITH_MOBILE_NEWLINE__"
+        text = SubtitleFFmpegBuilder._safe_str(value).replace("\\n", newline_token)
+        text = SubtitleFFmpegBuilder._escape_drawtext_text(text)
+        text = text.replace(newline_token, "\\n")
         text = text.replace(",", "\\,")
         text = text.replace("%", "\\%")
         return text
@@ -511,12 +536,21 @@ class SubtitleFFmpegBuilder:
             return default
 
     @staticmethod
+    def _escape_drawtext_text(raw: str) -> str:
+        """Escape special chars that break FFmpeg drawtext filter syntax."""
+        escaped = SubtitleFFmpegBuilder._safe_str(raw)
+        escaped = escaped.replace("\\", "\\\\")
+        escaped = escaped.replace("'", "\\'")
+        escaped = escaped.replace(":", "\\:")
+        escaped = escaped.replace("[", "\\[")
+        escaped = escaped.replace("]", "\\]")
+        return escaped
+
+    @staticmethod
     def _escape_text(value: Any) -> str:
         text = SubtitleFFmpegBuilder._safe_str(value)
         text = " ".join(text.splitlines())
-        text = text.replace("\\", "\\\\")
-        text = text.replace("'", "\\'")
-        text = text.replace(":", "\\:")
+        text = SubtitleFFmpegBuilder._escape_drawtext_text(text)
         text = text.replace(",", "\\,")
         text = text.replace("%", "\\%")
         return text
