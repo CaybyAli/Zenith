@@ -9,14 +9,15 @@ from core.subtitle_generator import SubtitleSegment, SubtitleStyle
 
 LONGFORM_STANDARD_STYLE = "longform_standard"
 MOBILE_FIRST_STYLE = "mobile_first"
-MOBILE_FIRST_FONT_SIZE = 80
-MOBILE_FIRST_HIGHLIGHT_SIZE = 88
-MOBILE_FIRST_Y = "h*0.75"
+MOBILE_FIRST_FONT_SIZE = 72
+MOBILE_FIRST_HIGHLIGHT_SIZE = 72
+MOBILE_FIRST_Y = "h*0.7"
 MOBILE_FIRST_X = "(w-text_w)/2"
 MOBILE_FIRST_BOX_COLOR = "black@0.0"
 MOBILE_FIRST_WORDS_PER_LINE = 3
-MOBILE_FIRST_BORDER_WIDTH = 4
+MOBILE_FIRST_BORDER_WIDTH = 8
 MOBILE_FIRST_BORDER_COLOR = "black"
+MOBILE_FIRST_HIGHLIGHT_COLOR = "#00FF00"
 MOBILE_FIRST_SHADOW_COLOR = "black@0.75"
 MOBILE_FIRST_SHADOW_X = 2
 MOBILE_FIRST_SHADOW_Y = 2
@@ -68,8 +69,8 @@ class SubtitleFFmpegBuilder:
         1. Base drawtext: kompletter text, font_color, font_size, box
         2. Pro Highlight-Wort: zweiten drawtext-Layer mit highlight_color, highlight_size
 
-        enable='between(t,{start:.3f},{end:.3f})' immer gesetzt.
-        Einzelne Filter durch Komma getrennt (FFmpeg filtergraph-Format).
+        Base-Layer und Highlight-Layer teilen sich x/y, aber nicht mehr dieselbe Zeit:
+        Base = erste Segmenthälfte, Highlight = zweite Segmenthälfte.
 
         DETERMINISTISCH: gleicher Input → immer identischer String.
         Keine uuid, keine timestamps, keine Zufallswerte.
@@ -94,6 +95,7 @@ class SubtitleFFmpegBuilder:
                 end = SubtitleFFmpegBuilder._safe_float(
                     getattr(segment, "end", 0.0)
                 )
+                mid = start + ((end - start) / 2.0)
 
                 filters.append(
                     SubtitleFFmpegBuilder._drawtext(
@@ -105,7 +107,7 @@ class SubtitleFFmpegBuilder:
                         x=style.x,
                         y=style.y,
                         start=start,
-                        end=end,
+                        end=mid,
                     )
                 )
 
@@ -121,7 +123,7 @@ class SubtitleFFmpegBuilder:
                             box_color=style.box_color,
                             x=style.x,
                             y=style.y,
-                            start=start,
+                            start=mid,
                             end=end,
                         )
                     )
@@ -189,7 +191,7 @@ class SubtitleFFmpegBuilder:
             filters.append(
                 SubtitleFFmpegBuilder._mobile_drawtext(
                     text=word,
-                    font_color="lime",
+                    font_color=MOBILE_FIRST_HIGHLIGHT_COLOR,
                     font_size=MOBILE_FIRST_HIGHLIGHT_SIZE,
                     box=False,
                     box_color=MOBILE_FIRST_BOX_COLOR,
@@ -214,8 +216,9 @@ class SubtitleFFmpegBuilder:
         box,
         box_color,
     ) -> str:
+        uppercase_text = SubtitleFFmpegBuilder._safe_str(text).upper()
         parts = [
-            f"drawtext=text='{SubtitleFFmpegBuilder._escape_mobile_text(text)}'",
+            f"drawtext=text='{SubtitleFFmpegBuilder._escape_mobile_text(uppercase_text)}'",
             SubtitleFFmpegBuilder._font_part(),
             f"fontcolor={SubtitleFFmpegBuilder._safe_str(font_color, 'white')}",
             f"fontsize={SubtitleFFmpegBuilder._safe_int(font_size, MOBILE_FIRST_FONT_SIZE)}",
