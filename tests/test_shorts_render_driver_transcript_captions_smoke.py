@@ -223,11 +223,26 @@ def test_grouping_respects_max_words_and_chars() -> None:
 
     segments = _group_words_into_segments(words)
 
-    assert len(segments) == 2
-    assert len(segments[0].words) <= 3
-    assert sum(len(word.text) for word in segments[0].words) <= 18
+    assert len(segments) == 3
+    for segment in segments:
+        assert len(segment.words) <= 3
+        assert len(" ".join(word.text for word in segment.words)) <= 14
     assert segments[0].words[0].text.upper() == "DU"
     assert segments[1].words[0].text.upper() == "DATEN"
+
+
+def test_grouping_does_not_render_stolen_phrase_as_one_long_block() -> None:
+    words = [
+        TranscriptWord(text="GEKLAUT?", start_seconds=0.0, end_seconds=0.3),
+        TranscriptWord(text="JA.", start_seconds=0.3, end_seconds=0.6),
+        TranscriptWord(text="ICH", start_seconds=0.6, end_seconds=0.9),
+    ]
+
+    segments = _group_words_into_segments(words)
+    segment_texts = [" ".join(word.text for word in segment.words) for segment in segments]
+
+    assert "GEKLAUT? JA. ICH" not in segment_texts
+    assert all(len(text) <= 14 for text in segment_texts)
 
 
 def test_shorts_driver_fallback_when_no_timestamps(caplog) -> None:

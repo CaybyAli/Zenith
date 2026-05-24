@@ -75,16 +75,16 @@ def _command_text(helper: FakeFFmpegHelper) -> str:
     return " ".join(helper.commands[0])
 
 
-def test_mobile_first_contains_fontsize_72() -> None:
+def test_mobile_first_contains_fontsize_86() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "fontsize=72" in filter_string
+    assert "fontsize=86" in filter_string
 
 
 def test_mobile_first_contains_mobile_y_position() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "y=h*0.7" in filter_string
+    assert "y=h*0.58" in filter_string
 
 
 def test_mobile_first_disables_big_background_box() -> None:
@@ -96,11 +96,11 @@ def test_mobile_first_disables_big_background_box() -> None:
 def test_mobile_first_contains_outline_and_shadow() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "borderw=8" in filter_string
+    assert "borderw=10" in filter_string
     assert "bordercolor=black" in filter_string
-    assert "shadowcolor=black@0.75" in filter_string
-    assert "shadowx=2" in filter_string
-    assert "shadowy=2" in filter_string
+    assert "shadowcolor=black@0.0" in filter_string
+    assert "shadowx=0" in filter_string
+    assert "shadowy=0" in filter_string
 
 
 def test_longform_standard_existing_filter_string_uses_temporal_split() -> None:
@@ -130,7 +130,7 @@ def test_highlighted_word_adds_second_green_drawtext_pass() -> None:
     )
 
     assert filter_string.count("drawtext=") == 2
-    assert "fontcolor=#00FF00" in filter_string
+    assert "fontcolor=#00FF38" in filter_string
 
 
 def test_empty_highlighted_words_adds_only_one_drawtext_pass() -> None:
@@ -177,8 +177,8 @@ def test_comic_style_filter_contains_correct_params() -> None:
         highlighted_words=["Hallo"],
     )
 
-    assert "borderw=8" in filter_string
-    assert "fontsize=72" in filter_string
+    assert "borderw=10" in filter_string
+    assert "fontsize=86" in filter_string
     assert "HALLO WELT" in filter_string
     assert "Hallo Welt" not in filter_string
 

@@ -9,22 +9,23 @@ from core.subtitle_generator import SubtitleSegment, SubtitleStyle
 
 LONGFORM_STANDARD_STYLE = "longform_standard"
 MOBILE_FIRST_STYLE = "mobile_first"
-MOBILE_FIRST_FONT_SIZE = 72
-MOBILE_FIRST_HIGHLIGHT_SIZE = 72
-MOBILE_FIRST_Y = "h*0.72"
+MOBILE_FIRST_FONT_SIZE = 86
+MOBILE_FIRST_HIGHLIGHT_SIZE = 86
+MOBILE_FIRST_Y = "h*0.58"
 MOBILE_FIRST_X = "(w-text_w)/2"
 MOBILE_FIRST_BOX_COLOR = "black@0.0"
 MOBILE_FIRST_WORDS_PER_LINE = 3
-MOBILE_FIRST_BORDER_WIDTH = 8
+MOBILE_FIRST_BORDER_WIDTH = 10
 MOBILE_FIRST_BORDER_COLOR = "black"
-MOBILE_FIRST_HIGHLIGHT_COLOR = "#00FF00"
-MOBILE_FIRST_SHADOW_COLOR = "black@0.75"
-MOBILE_FIRST_SHADOW_X = 2
-MOBILE_FIRST_SHADOW_Y = 2
+MOBILE_FIRST_HIGHLIGHT_COLOR = "#00FF38"
+MOBILE_FIRST_SHADOW_COLOR = "black@0.0"
+MOBILE_FIRST_SHADOW_X = 0
+MOBILE_FIRST_SHADOW_Y = 0
 MOBILE_FIRST_LINE_SPACING = 12
-MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.62
+MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.55
 MOBILE_FIRST_WORD_GAP_PX = 20
-FALLBACK_FONT_FAMILY = "Arial"
+MOBILE_FIRST_MIN_STATE_SECONDS = 0.18
+FALLBACK_FONT_FAMILY = "Impact"
 DEFAULT_SUBTITLE_FONT_FILE = r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
 SUBTITLE_FONT_ENV_VAR = "ZENITH_SUBTITLE_FONT_FILE"
 BANGERS_FONT_URL = (
@@ -34,11 +35,11 @@ BANGERS_FONT_URL = (
 
 def _resolve_font() -> str:
     env_font = os.environ.get(SUBTITLE_FONT_ENV_VAR)
-    if env_font and Path(env_font).exists():
+    if env_font and _is_usable_font(env_font):
         return env_font
 
     local_font = Path(DEFAULT_SUBTITLE_FONT_FILE)
-    if local_font.exists():
+    if _is_usable_font(local_font):
         return str(local_font)
 
     try:
@@ -46,7 +47,7 @@ def _resolve_font() -> str:
         import urllib.request
 
         urllib.request.urlretrieve(BANGERS_FONT_URL, local_font)
-        if local_font.exists() and local_font.stat().st_size > 10_000:
+        if _is_usable_font(local_font):
             return str(local_font)
     except Exception:
         pass
@@ -54,11 +55,19 @@ def _resolve_font() -> str:
     import warnings
 
     warnings.warn(
-        "Bangers font not found and download failed. "
-        r"Using Arial. Run: Download D:\Zenith\assets\fonts\Bangers-Regular.ttf manually.",
+        "Bangers missing, using fallback font Impact. "
+        r"For final style, install D:\Zenith\assets\fonts\Bangers-Regular.ttf.",
         RuntimeWarning,
     )
     return FALLBACK_FONT_FAMILY
+
+
+def _is_usable_font(path: str | Path) -> bool:
+    try:
+        candidate = Path(path)
+        return candidate.exists() and candidate.stat().st_size > 10_000
+    except Exception:
+        return False
 
 
 FONT_FILE = _resolve_font()
@@ -184,9 +193,23 @@ class SubtitleFFmpegBuilder:
             )
         ]
 
+        group_end = float(words[-1]["end"])
         for index, word in enumerate(words):
             enable_start = float(word["start"])
-            enable_end = float(word["end"])
+            has_next_word = index + 1 < len(words)
+            if has_next_word:
+                enable_end = float(words[index + 1]["start"])
+            else:
+                enable_end = max(
+                    group_end,
+                    enable_start + MOBILE_FIRST_MIN_STATE_SECONDS,
+                )
+
+            if enable_end <= enable_start:
+                enable_end = max(
+                    float(word["end"]),
+                    enable_start + MOBILE_FIRST_MIN_STATE_SECONDS,
+                )
 
             for display_index, display_word in enumerate(words):
                 font_color = (

@@ -32,7 +32,7 @@ SHORTS_OUTPUT_EXTENSION = ".mp4"
 DEFAULT_SHORTS_CAPTION_WORDS = ("Strong", "highlight", "moment")
 RAW_MIXED_AUDIO_FILENAME = "raw_mixed_audio.mp4"
 MAX_WORDS_PER_CAPTION_SEGMENT = 3
-MAX_CHARS_PER_CAPTION_SEGMENT = 18
+MAX_CHARS_PER_CAPTION_SEGMENT = 14
 
 CPU_H264_ENCODER = "libx264"
 NVENC_H264_ENCODER = "h264_nvenc"
@@ -160,21 +160,19 @@ def _group_words_into_segments(
 ) -> list[SubtitleSegment]:
     segments: list[SubtitleSegment] = []
     current_group: list[TranscriptWord] = []
-    current_chars = 0
 
     for word in relative_words:
-        word_len = len(str(word.text or "")) + 1
+        candidate_group = [*current_group, word]
+        candidate_chars = len(" ".join(str(item.text or "") for item in candidate_group))
 
         if current_group and (
             len(current_group) >= MAX_WORDS_PER_CAPTION_SEGMENT
-            or current_chars + word_len > MAX_CHARS_PER_CAPTION_SEGMENT
+            or candidate_chars > MAX_CHARS_PER_CAPTION_SEGMENT
         ):
             segments.append(_make_segment(current_group))
             current_group = []
-            current_chars = 0
 
         current_group.append(word)
-        current_chars += word_len
 
     if current_group:
         segments.append(_make_segment(current_group))
