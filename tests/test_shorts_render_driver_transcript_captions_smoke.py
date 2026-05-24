@@ -147,14 +147,14 @@ def test_caption_filter_uses_transcript_words_in_clip_range() -> None:
         transcript=_transcript_with_range_words(),
     )
 
-    assert "alpha" in filter_text
-    assert "bravo" in filter_text
-    assert "charlie" in filter_text
-    assert "delta" in filter_text
+    assert "ALPHA" in filter_text
+    assert "BRAVO" in filter_text
+    assert "CHARLIE" in filter_text
+    assert "DELTA" in filter_text
     assert "SHOULD NOT BE USED" not in filter_text
 
     for default_word in DEFAULT_SHORTS_CAPTION_WORDS:
-        assert default_word not in filter_text
+        assert default_word.upper() not in filter_text
 
 
 def test_caption_filter_falls_back_to_default_words_without_transcript() -> None:
@@ -165,7 +165,7 @@ def test_caption_filter_falls_back_to_default_words_without_transcript() -> None
     )
 
     for default_word in DEFAULT_SHORTS_CAPTION_WORDS:
-        assert default_word in filter_text
+        assert default_word.upper() in filter_text
 
 
 def test_caption_filter_falls_back_when_transcript_has_no_overlap() -> None:
@@ -176,4 +176,4 @@ def test_caption_filter_falls_back_when_transcript_has_no_overlap() -> None:
     )
 
     for default_word in DEFAULT_SHORTS_CAPTION_WORDS:
-        assert default_word in filter_text
+        assert default_word.upper() in filter_text
