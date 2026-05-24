@@ -31,7 +31,8 @@ SHORTS_MOVFLAGS = "+faststart"
 SHORTS_OUTPUT_EXTENSION = ".mp4"
 DEFAULT_SHORTS_CAPTION_WORDS = ("Strong", "highlight", "moment")
 RAW_MIXED_AUDIO_FILENAME = "raw_mixed_audio.mp4"
-MAX_WORDS_PER_CAPTION_SEGMENT = 4
+MAX_WORDS_PER_CAPTION_SEGMENT = 3
+MAX_CHARS_PER_CAPTION_SEGMENT = 18
 
 CPU_H264_ENCODER = "libx264"
 NVENC_H264_ENCODER = "h264_nvenc"
@@ -151,23 +152,46 @@ def build_caption_segments(
             )
         )
 
-    segments: list[SubtitleSegment] = []
-    for index in range(0, len(relative_words), MAX_WORDS_PER_CAPTION_SEGMENT):
-        group = relative_words[index:index + MAX_WORDS_PER_CAPTION_SEGMENT]
-        if not group:
-            continue
+    return _group_words_into_segments(relative_words)
 
-        segment = SubtitleSegment(
-            text=" ".join(word.text for word in group),
-            start=group[0].start_seconds,
-            end=group[-1].end_seconds,
-            highlight_words=[],
-            style=SubtitleStyle(),
-        )
-        segment.words = group
-        segments.append(segment)
+
+def _group_words_into_segments(
+    relative_words: list[TranscriptWord],
+) -> list[SubtitleSegment]:
+    segments: list[SubtitleSegment] = []
+    current_group: list[TranscriptWord] = []
+    current_chars = 0
+
+    for word in relative_words:
+        word_len = len(str(word.text or "")) + 1
+
+        if current_group and (
+            len(current_group) >= MAX_WORDS_PER_CAPTION_SEGMENT
+            or current_chars + word_len > MAX_CHARS_PER_CAPTION_SEGMENT
+        ):
+            segments.append(_make_segment(current_group))
+            current_group = []
+            current_chars = 0
+
+        current_group.append(word)
+        current_chars += word_len
+
+    if current_group:
+        segments.append(_make_segment(current_group))
 
     return segments
+
+
+def _make_segment(group: list[TranscriptWord]) -> SubtitleSegment:
+    segment = SubtitleSegment(
+        text=" ".join(word.text for word in group),
+        start=group[0].start_seconds,
+        end=group[-1].end_seconds,
+        highlight_words=[],
+        style=SubtitleStyle(),
+    )
+    segment.words = group
+    return segment
 
 
 def _transcript_words(transcript: TranscriptResult) -> list[Any]:

@@ -7,6 +7,7 @@ from core.shorts_render_driver import (
     ShortsRenderDriver,
     VideoCodecChoice,
     build_caption_segments,
+    _group_words_into_segments,
 )
 from models.shorts_clip import ShortsClip
 from models.shorts_reframe_plan import ShortsReframePlan
@@ -209,6 +210,24 @@ def test_shorts_driver_passes_real_word_timestamps() -> None:
         for segment in segments
         for word in segment.words
     )
+
+
+def test_grouping_respects_max_words_and_chars() -> None:
+    words = [
+        TranscriptWord(text="DU", start_seconds=0.0, end_seconds=0.3),
+        TranscriptWord(text="MUSST", start_seconds=0.3, end_seconds=0.7),
+        TranscriptWord(text="AUCH", start_seconds=0.7, end_seconds=1.0),
+        TranscriptWord(text="DATEN", start_seconds=1.0, end_seconds=1.4),
+        TranscriptWord(text="ANALYSIEREN", start_seconds=1.4, end_seconds=2.1),
+    ]
+
+    segments = _group_words_into_segments(words)
+
+    assert len(segments) == 2
+    assert len(segments[0].words) <= 3
+    assert sum(len(word.text) for word in segments[0].words) <= 18
+    assert segments[0].words[0].text.upper() == "DU"
+    assert segments[1].words[0].text.upper() == "DATEN"
 
 
 def test_shorts_driver_fallback_when_no_timestamps(caplog) -> None:

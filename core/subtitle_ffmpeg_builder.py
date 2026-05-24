@@ -22,10 +22,46 @@ MOBILE_FIRST_SHADOW_COLOR = "black@0.75"
 MOBILE_FIRST_SHADOW_X = 2
 MOBILE_FIRST_SHADOW_Y = 2
 MOBILE_FIRST_LINE_SPACING = 12
-MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.55
+MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.62
+MOBILE_FIRST_WORD_GAP_PX = 20
 FALLBACK_FONT_FAMILY = "Arial"
 DEFAULT_SUBTITLE_FONT_FILE = r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
 SUBTITLE_FONT_ENV_VAR = "ZENITH_SUBTITLE_FONT_FILE"
+BANGERS_FONT_URL = (
+    "https://fonts.gstatic.com/s/bangers/v24/FeVQS0BTqb0h60ACL5la2bxii28wYQ.ttf"
+)
+
+
+def _resolve_font() -> str:
+    env_font = os.environ.get(SUBTITLE_FONT_ENV_VAR)
+    if env_font and Path(env_font).exists():
+        return env_font
+
+    local_font = Path(DEFAULT_SUBTITLE_FONT_FILE)
+    if local_font.exists():
+        return str(local_font)
+
+    try:
+        local_font.parent.mkdir(parents=True, exist_ok=True)
+        import urllib.request
+
+        urllib.request.urlretrieve(BANGERS_FONT_URL, local_font)
+        if local_font.exists() and local_font.stat().st_size > 10_000:
+            return str(local_font)
+    except Exception:
+        pass
+
+    import warnings
+
+    warnings.warn(
+        "Bangers font not found and download failed. "
+        r"Using Arial. Run: Download D:\Zenith\assets\fonts\Bangers-Regular.ttf manually.",
+        RuntimeWarning,
+    )
+    return FALLBACK_FONT_FAMILY
+
+
+FONT_FILE = _resolve_font()
 
 
 class SubtitleFFmpegBuilder:
@@ -124,55 +160,52 @@ class SubtitleFFmpegBuilder:
 
         full_text = " ".join(str(word["text"]) for word in words)
         char_width = MOBILE_FIRST_FONT_SIZE * MOBILE_FIRST_CHAR_WIDTH_FACTOR
-        full_width = len(full_text) * char_width
+        word_offsets: list[float] = []
+        next_offset = 0.0
+        word_advance_gap = MOBILE_FIRST_WORD_GAP_PX + (MOBILE_FIRST_BORDER_WIDTH * 2)
+        for word in words:
+            word_offsets.append(next_offset)
+            next_offset += (
+                len(str(word["text"])) * char_width
+                + word_advance_gap
+            )
+
+        full_width = max(0.0, next_offset - word_advance_gap)
         base_x = f"(w/2)-{full_width / 2.0:.3f}"
 
-        filters: list[str] = []
+        filters: list[str] = [
+            SubtitleFFmpegBuilder._mobile_drawtext_timed(
+                text=full_text,
+                font_color="white",
+                font_size=MOBILE_FIRST_FONT_SIZE,
+                x=MOBILE_FIRST_X,
+                alpha_start=-1.0,
+                alpha_end=-1.0,
+            )
+        ]
 
         for index, word in enumerate(words):
             enable_start = float(word["start"])
             enable_end = float(word["end"])
 
-            left_text = " ".join(str(item["text"]) for item in words[:index])
-            active_text = str(word["text"])
-            right_text = " ".join(str(item["text"]) for item in words[index + 1:])
+            for display_index, display_word in enumerate(words):
+                font_color = (
+                    MOBILE_FIRST_HIGHLIGHT_COLOR
+                    if display_index == index
+                    else "white"
+                )
+                font_size = (
+                    MOBILE_FIRST_HIGHLIGHT_SIZE
+                    if display_index == index
+                    else MOBILE_FIRST_FONT_SIZE
+                )
 
-            left_prefix = ""
-
-            if left_text:
                 filters.append(
                     SubtitleFFmpegBuilder._mobile_drawtext_timed(
-                        text=left_text,
-                        font_color="white",
-                        font_size=MOBILE_FIRST_FONT_SIZE,
-                        x=base_x,
-                        enable_start=enable_start,
-                        enable_end=enable_end,
-                    )
-                )
-                left_prefix = f"{left_text} "
-
-            active_x_offset = len(left_prefix) * char_width
-            filters.append(
-                SubtitleFFmpegBuilder._mobile_drawtext_timed(
-                    text=active_text,
-                    font_color=MOBILE_FIRST_HIGHLIGHT_COLOR,
-                    font_size=MOBILE_FIRST_HIGHLIGHT_SIZE,
-                    x=f"{base_x}+{active_x_offset:.3f}",
-                    enable_start=enable_start,
-                    enable_end=enable_end,
-                )
-            )
-
-            if right_text:
-                right_prefix = f"{left_prefix}{active_text} "
-                right_x_offset = len(right_prefix) * char_width
-                filters.append(
-                    SubtitleFFmpegBuilder._mobile_drawtext_timed(
-                        text=right_text,
-                        font_color="white",
-                        font_size=MOBILE_FIRST_FONT_SIZE,
-                        x=f"{base_x}+{right_x_offset:.3f}",
+                        text=str(display_word["text"]),
+                        font_color=font_color,
+                        font_size=font_size,
+                        x=f"{base_x}+{word_offsets[display_index]:.1f}",
                         enable_start=enable_start,
                         enable_end=enable_end,
                     )
@@ -384,15 +417,12 @@ class SubtitleFFmpegBuilder:
 
     @staticmethod
     def _font_part() -> str:
-        font_path = os.environ.get(SUBTITLE_FONT_ENV_VAR, "")
-        if not font_path and Path(DEFAULT_SUBTITLE_FONT_FILE).exists():
-            font_path = DEFAULT_SUBTITLE_FONT_FILE
         try:
-            if font_path and Path(font_path).exists():
-                return f"fontfile={SubtitleFFmpegBuilder._escape_filter_value(font_path)}"
+            if FONT_FILE and Path(FONT_FILE).exists():
+                return f"fontfile={SubtitleFFmpegBuilder._escape_filter_value(FONT_FILE)}"
         except Exception:
             pass
-        return f"font={FALLBACK_FONT_FAMILY}"
+        return f"font={SubtitleFFmpegBuilder._safe_str(FONT_FILE, FALLBACK_FONT_FAMILY)}"
 
     @staticmethod
     def _escape_filter_value(value) -> str:
