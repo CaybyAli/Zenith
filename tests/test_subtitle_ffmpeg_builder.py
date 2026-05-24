@@ -9,6 +9,9 @@ from core.subtitle_ffmpeg_builder import (
     MOBILE_FIRST_CAPTION_CENTER_X,
     MOBILE_FIRST_CHAR_WIDTH_FACTOR,
     MOBILE_FIRST_FONT_SIZE,
+    MOBILE_FIRST_LINE1_Y,
+    MOBILE_FIRST_LINE2_Y,
+    MOBILE_FIRST_SAFE_MARGIN_PX,
     MOBILE_FIRST_WORD_GAP_PX,
     SubtitleFFmpegBuilder,
     _resolve_font,
@@ -197,10 +200,19 @@ def test_mobile_long_group_splits_into_two_centered_lines() -> None:
     )
 
     assert [item["line_index"] for item in layout] == [0, 0, 1, 1]
-    assert all(
-        str(item["x"]).startswith(f"({MOBILE_FIRST_CAPTION_CENTER_X})-")
-        for item in layout
-    )
+    first_line_block_widths = {item["block_width"] for item in layout[:2]}
+    second_line_block_widths = {item["block_width"] for item in layout[2:]}
+
+    assert len(first_line_block_widths) == 1
+    assert len(second_line_block_widths) == 1
+    assert first_line_block_widths != second_line_block_widths
+    assert [item["y"] for item in layout] == [
+        MOBILE_FIRST_LINE1_Y,
+        MOBILE_FIRST_LINE1_Y,
+        MOBILE_FIRST_LINE2_Y,
+        MOBILE_FIRST_LINE2_Y,
+    ]
+    assert all("max(64,min((w/2)-(" in str(item["x"]) for item in layout)
 
 
 def test_mobile_overwide_three_word_group_splits_into_two_lines() -> None:
@@ -211,7 +223,12 @@ def test_mobile_overwide_three_word_group_splits_into_two_lines() -> None:
     assert [item["line_index"] for item in layout] == [0, 1, 1]
 
 
-def test_mobile_block_center_uses_gameplay_safe_center() -> None:
+def test_mobile_default_center_uses_screen_center_not_side_by_side_center() -> None:
+    assert MOBILE_FIRST_CAPTION_CENTER_X == "w*0.50"
+    assert MOBILE_FIRST_CAPTION_CENTER_X != "w*0.64"
+
+
+def test_mobile_block_uses_safe_center_x_expression() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter_string(
         [
             _timed_segment(
@@ -223,7 +240,9 @@ def test_mobile_block_center_uses_gameplay_safe_center() -> None:
         ]
     )
 
-    assert f"({MOBILE_FIRST_CAPTION_CENTER_X})-" in filter_string
+    assert "w*0.64" not in filter_string
+    assert f"max({MOBILE_FIRST_SAFE_MARGIN_PX},min(" in filter_string
+    assert f"w-text_w-{MOBILE_FIRST_SAFE_MARGIN_PX}" in filter_string
 
 
 def test_mobile_word_layout_has_no_huge_gap_between_words() -> None:
@@ -236,7 +255,27 @@ def test_mobile_word_layout_has_no_huge_gap_between_words() -> None:
             - float(previous["width"])
         )
         assert gap == pytest.approx(MOBILE_FIRST_WORD_GAP_PX)
-        assert gap <= 10
+        assert 10 <= gap <= 14
+
+
+def test_mobile_karaoke_timed_word_layers_disable_fix_bounds() -> None:
+    segment = _timed_segment(
+        [
+            TranscriptWord(text="ES", start_seconds=0.0, end_seconds=0.5),
+            TranscriptWord(text="NICHT", start_seconds=0.5, end_seconds=1.0),
+        ]
+    )
+
+    filter_string = SubtitleFFmpegBuilder.build_filter_string([segment])
+    timed_word_clauses = [
+        clause
+        for clause in _drawtext_clauses(filter_string)
+        if "enable='between(t" in clause
+    ]
+
+    assert timed_word_clauses
+    assert all("fix_bounds=0" in clause for clause in timed_word_clauses)
+    assert all("fix_bounds=1" not in clause for clause in timed_word_clauses)
 
 
 def test_active_word_color_changes_without_position_jumps() -> None:

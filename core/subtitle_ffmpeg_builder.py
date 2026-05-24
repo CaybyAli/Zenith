@@ -12,8 +12,14 @@ MOBILE_FIRST_STYLE = "mobile_first"
 MOBILE_FIRST_FONT_SIZE = 86
 MOBILE_FIRST_HIGHLIGHT_SIZE = 86
 MOBILE_FIRST_Y = "h*0.62"
-MOBILE_FIRST_CAPTION_CENTER_X = "w*0.64"
-MOBILE_FIRST_X = f"({MOBILE_FIRST_CAPTION_CENTER_X})-(text_w/2)"
+MOBILE_FIRST_LINE1_Y = "h*0.58"
+MOBILE_FIRST_LINE2_Y = "h*0.66"
+MOBILE_FIRST_SAFE_MARGIN_PX = 64
+MOBILE_FIRST_CAPTION_CENTER_X = "w*0.50"
+MOBILE_FIRST_X = (
+    f"'max({MOBILE_FIRST_SAFE_MARGIN_PX},"
+    f"min((w/2)-(text_w/2),w-text_w-{MOBILE_FIRST_SAFE_MARGIN_PX}))'"
+)
 MOBILE_FIRST_BOX_COLOR = "black@0.0"
 MOBILE_FIRST_WORDS_PER_LINE = 3
 MOBILE_FIRST_MAX_LINES = 2
@@ -26,9 +32,8 @@ MOBILE_FIRST_SHADOW_COLOR = "black@0.0"
 MOBILE_FIRST_SHADOW_X = 0
 MOBILE_FIRST_SHADOW_Y = 0
 MOBILE_FIRST_LINE_SPACING = 12
-MOBILE_FIRST_LINE_STEP_PX = MOBILE_FIRST_FONT_SIZE + MOBILE_FIRST_LINE_SPACING
-MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.52
-MOBILE_FIRST_WORD_GAP_PX = 8
+MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.60
+MOBILE_FIRST_WORD_GAP_PX = 12
 MOBILE_FIRST_MIN_STATE_SECONDS = 0.18
 FALLBACK_FONT_FAMILY = "Impact"
 DEFAULT_SUBTITLE_FONT_FILE = r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
@@ -212,7 +217,7 @@ class SubtitleFFmpegBuilder:
 
             if enable_end <= enable_start:
                 enable_end = max(
-                    float(word["end"]),
+                    float(active_word["end"]),
                     enable_start + MOBILE_FIRST_MIN_STATE_SECONDS,
                 )
 
@@ -248,12 +253,10 @@ class SubtitleFFmpegBuilder:
     ) -> list[dict[str, float | str | int]]:
         lines = SubtitleFFmpegBuilder._mobile_word_lines(words)
         layout: list[dict[str, float | str | int]] = []
+        line_count = len(lines)
 
         for line_index, line in enumerate(lines):
             line_width = SubtitleFFmpegBuilder._mobile_line_width(line)
-            line_left = (
-                f"({MOBILE_FIRST_CAPTION_CENTER_X})-{line_width / 2.0:.3f}"
-            )
             offset = 0.0
 
             for word in line:
@@ -264,10 +267,17 @@ class SubtitleFFmpegBuilder:
                         "start": float(word["start"]),
                         "end": float(word["end"]),
                         "line_index": line_index,
-                        "x": f"{line_left}+{offset:.1f}",
-                        "y": SubtitleFFmpegBuilder._mobile_line_y(line_index),
+                        "x": SubtitleFFmpegBuilder._mobile_safe_word_x_expr(
+                            block_width=line_width,
+                            offset=offset,
+                        ),
+                        "y": SubtitleFFmpegBuilder._mobile_line_y(
+                            line_index,
+                            line_count,
+                        ),
                         "width": SubtitleFFmpegBuilder._mobile_word_width(text),
                         "offset": offset,
+                        "block_width": line_width,
                     }
                 )
                 offset += (
@@ -370,10 +380,20 @@ class SubtitleFFmpegBuilder:
         return MOBILE_FIRST_REFERENCE_WIDTH_PX * MOBILE_FIRST_MAX_BLOCK_WIDTH_RATIO
 
     @staticmethod
-    def _mobile_line_y(line_index: int) -> str:
-        if line_index <= 0:
+    def _mobile_line_y(line_index: int, line_count: int = 1) -> str:
+        if line_count <= 1:
             return MOBILE_FIRST_Y
-        return f"{MOBILE_FIRST_Y}+{MOBILE_FIRST_LINE_STEP_PX * line_index}"
+        if line_index <= 0:
+            return MOBILE_FIRST_LINE1_Y
+        return MOBILE_FIRST_LINE2_Y
+
+    @staticmethod
+    def _mobile_safe_word_x_expr(*, block_width: float, offset: float) -> str:
+        return (
+            f"'max({MOBILE_FIRST_SAFE_MARGIN_PX},"
+            f"min((w/2)-({block_width:.3f}/2)+{offset:.1f},"
+            f"w-text_w-{MOBILE_FIRST_SAFE_MARGIN_PX}))'"
+        )
 
     @staticmethod
     def _mobile_drawtext_timed(
@@ -401,7 +421,7 @@ class SubtitleFFmpegBuilder:
             f"shadowx={MOBILE_FIRST_SHADOW_X}",
             f"shadowy={MOBILE_FIRST_SHADOW_Y}",
             f"line_spacing={MOBILE_FIRST_LINE_SPACING}",
-            "fix_bounds=1",
+            "fix_bounds=0",
             f"x={SubtitleFFmpegBuilder._safe_str(x, MOBILE_FIRST_X)}",
             f"y={SubtitleFFmpegBuilder._safe_str(y, MOBILE_FIRST_Y)}",
         ]
@@ -562,7 +582,7 @@ class SubtitleFFmpegBuilder:
             f"shadowx={MOBILE_FIRST_SHADOW_X}",
             f"shadowy={MOBILE_FIRST_SHADOW_Y}",
             f"line_spacing={MOBILE_FIRST_LINE_SPACING}",
-            "fix_bounds=1",
+            "fix_bounds=0",
         ]
 
         if bool(box):
