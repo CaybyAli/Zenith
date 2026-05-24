@@ -84,7 +84,7 @@ def test_mobile_first_contains_fontsize_86() -> None:
 def test_mobile_first_contains_mobile_y_position() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "y=h*0.58" in filter_string
+    assert "y=h*0.62" in filter_string
 
 
 def test_mobile_first_disables_big_background_box() -> None:

@@ -2,7 +2,17 @@ from __future__ import annotations
 
 import re
 
-from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder, _resolve_font
+import pytest
+
+from core.subtitle_ffmpeg_builder import (
+    MOBILE_FIRST_BORDER_WIDTH,
+    MOBILE_FIRST_CAPTION_CENTER_X,
+    MOBILE_FIRST_CHAR_WIDTH_FACTOR,
+    MOBILE_FIRST_FONT_SIZE,
+    MOBILE_FIRST_WORD_GAP_PX,
+    SubtitleFFmpegBuilder,
+    _resolve_font,
+)
 from core.subtitle_generator import SubtitleSegment, SubtitleStyle
 from models.transcript_result import TranscriptWord
 
@@ -30,6 +40,23 @@ def _enable_range(clause: str) -> tuple[float, float]:
     match = re.search(r"enable='between\(t,([0-9.]+),([0-9.]+)\)'", clause)
     assert match is not None
     return float(match.group(1)), float(match.group(2))
+
+
+def _drawtext_option(clause: str, name: str) -> str:
+    match = re.search(rf"(?:^|:){name}=([^:]+)", clause)
+    assert match is not None
+    return match.group(1)
+
+
+def _layout_words(values: list[str]) -> list[dict[str, float | str]]:
+    return [
+        {
+            "text": value,
+            "start": float(index) * 0.2,
+            "end": (float(index) * 0.2) + 0.2,
+        }
+        for index, value in enumerate(values)
+    ]
 
 
 def test_highlight_does_not_overlap_with_base_in_time() -> None:
@@ -148,8 +175,95 @@ def test_mobile_karaoke_uses_comic_y_position_and_border() -> None:
 
     filter_string = SubtitleFFmpegBuilder.build_filter_string([segment])
 
-    assert "y=h*0.58" in filter_string
+    assert "y=h*0.62" in filter_string
     assert "borderw=10" in filter_string
+
+
+def test_mobile_word_gap_uses_configured_gap_without_border_padding() -> None:
+    layout = SubtitleFFmpegBuilder._mobile_word_layout(_layout_words(["AA", "BB"]))
+    expected_offset = (
+        len("AA") * MOBILE_FIRST_FONT_SIZE * MOBILE_FIRST_CHAR_WIDTH_FACTOR
+        + MOBILE_FIRST_WORD_GAP_PX
+    )
+    border_padded_offset = expected_offset + (MOBILE_FIRST_BORDER_WIDTH * 2)
+
+    assert layout[1]["offset"] == pytest.approx(expected_offset)
+    assert layout[1]["offset"] != pytest.approx(border_padded_offset)
+
+
+def test_mobile_long_group_splits_into_two_centered_lines() -> None:
+    layout = SubtitleFFmpegBuilder._mobile_word_layout(
+        _layout_words(["DU", "MUSST", "AUCH", "DATEN"])
+    )
+
+    assert [item["line_index"] for item in layout] == [0, 0, 1, 1]
+    assert all(
+        str(item["x"]).startswith(f"({MOBILE_FIRST_CAPTION_CENTER_X})-")
+        for item in layout
+    )
+
+
+def test_mobile_overwide_three_word_group_splits_into_two_lines() -> None:
+    layout = SubtitleFFmpegBuilder._mobile_word_layout(
+        _layout_words(["ANALYSIEREN", "KOMPLETT", "JA."])
+    )
+
+    assert [item["line_index"] for item in layout] == [0, 1, 1]
+
+
+def test_mobile_block_center_uses_gameplay_safe_center() -> None:
+    filter_string = SubtitleFFmpegBuilder.build_filter_string(
+        [
+            _timed_segment(
+                [
+                    TranscriptWord(text="ES", start_seconds=0.0, end_seconds=0.5),
+                    TranscriptWord(text="NICHT", start_seconds=0.5, end_seconds=1.0),
+                ]
+            )
+        ]
+    )
+
+    assert f"({MOBILE_FIRST_CAPTION_CENTER_X})-" in filter_string
+
+
+def test_mobile_word_layout_has_no_huge_gap_between_words() -> None:
+    layout = SubtitleFFmpegBuilder._mobile_word_layout(_layout_words(["A", "B", "C"]))
+
+    for previous, current in zip(layout, layout[1:]):
+        gap = (
+            float(current["offset"])
+            - float(previous["offset"])
+            - float(previous["width"])
+        )
+        assert gap == pytest.approx(MOBILE_FIRST_WORD_GAP_PX)
+        assert gap <= 10
+
+
+def test_active_word_color_changes_without_position_jumps() -> None:
+    segment = _timed_segment(
+        [
+            TranscriptWord(text="ES", start_seconds=0.0, end_seconds=0.5),
+            TranscriptWord(text="NICHT", start_seconds=0.5, end_seconds=1.0),
+        ]
+    )
+
+    filter_string = SubtitleFFmpegBuilder.build_filter_string([segment])
+    es_positions_by_color: dict[str, set[tuple[str, str]]] = {
+        "white": set(),
+        "highlight": set(),
+    }
+    for clause in _drawtext_clauses(filter_string):
+        if not re.search(r"drawtext=text='ES':", clause):
+            continue
+        position = (_drawtext_option(clause, "x"), _drawtext_option(clause, "y"))
+        if "fontcolor=#00FF38" in clause:
+            es_positions_by_color["highlight"].add(position)
+        elif "fontcolor=white" in clause:
+            es_positions_by_color["white"].add(position)
+
+    assert es_positions_by_color["highlight"]
+    assert es_positions_by_color["white"]
+    assert es_positions_by_color["highlight"] == es_positions_by_color["white"]
 
 
 def test_font_fallback_returns_string() -> None:

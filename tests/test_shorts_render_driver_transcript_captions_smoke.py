@@ -236,12 +236,15 @@ def test_grouping_does_not_render_stolen_phrase_as_one_long_block() -> None:
         TranscriptWord(text="GEKLAUT?", start_seconds=0.0, end_seconds=0.3),
         TranscriptWord(text="JA.", start_seconds=0.3, end_seconds=0.6),
         TranscriptWord(text="ICH", start_seconds=0.6, end_seconds=0.9),
+        TranscriptWord(text="HAB", start_seconds=0.9, end_seconds=1.2),
+        TranscriptWord(text="FÜR", start_seconds=1.2, end_seconds=1.5),
     ]
 
     segments = _group_words_into_segments(words)
     segment_texts = [" ".join(word.text for word in segment.words) for segment in segments]
 
     assert "GEKLAUT? JA. ICH" not in segment_texts
+    assert segment_texts[:2] == ["GEKLAUT? JA.", "ICH HAB FÜR"]
     assert all(len(text) <= 14 for text in segment_texts)
 
 

@@ -11,10 +11,14 @@ LONGFORM_STANDARD_STYLE = "longform_standard"
 MOBILE_FIRST_STYLE = "mobile_first"
 MOBILE_FIRST_FONT_SIZE = 86
 MOBILE_FIRST_HIGHLIGHT_SIZE = 86
-MOBILE_FIRST_Y = "h*0.58"
-MOBILE_FIRST_X = "(w-text_w)/2"
+MOBILE_FIRST_Y = "h*0.62"
+MOBILE_FIRST_CAPTION_CENTER_X = "w*0.64"
+MOBILE_FIRST_X = f"({MOBILE_FIRST_CAPTION_CENTER_X})-(text_w/2)"
 MOBILE_FIRST_BOX_COLOR = "black@0.0"
 MOBILE_FIRST_WORDS_PER_LINE = 3
+MOBILE_FIRST_MAX_LINES = 2
+MOBILE_FIRST_REFERENCE_WIDTH_PX = 1080
+MOBILE_FIRST_MAX_BLOCK_WIDTH_RATIO = 0.60
 MOBILE_FIRST_BORDER_WIDTH = 10
 MOBILE_FIRST_BORDER_COLOR = "black"
 MOBILE_FIRST_HIGHLIGHT_COLOR = "#00FF38"
@@ -22,8 +26,9 @@ MOBILE_FIRST_SHADOW_COLOR = "black@0.0"
 MOBILE_FIRST_SHADOW_X = 0
 MOBILE_FIRST_SHADOW_Y = 0
 MOBILE_FIRST_LINE_SPACING = 12
-MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.55
-MOBILE_FIRST_WORD_GAP_PX = 20
+MOBILE_FIRST_LINE_STEP_PX = MOBILE_FIRST_FONT_SIZE + MOBILE_FIRST_LINE_SPACING
+MOBILE_FIRST_CHAR_WIDTH_FACTOR = 0.52
+MOBILE_FIRST_WORD_GAP_PX = 8
 MOBILE_FIRST_MIN_STATE_SECONDS = 0.18
 FALLBACK_FONT_FAMILY = "Impact"
 DEFAULT_SUBTITLE_FONT_FILE = r"D:\Zenith\assets\fonts\Bangers-Regular.ttf"
@@ -176,20 +181,11 @@ class SubtitleFFmpegBuilder:
         if not words:
             return []
 
-        full_text = " ".join(str(word["text"]) for word in words)
-        char_width = MOBILE_FIRST_FONT_SIZE * MOBILE_FIRST_CHAR_WIDTH_FACTOR
-        word_offsets: list[float] = []
-        next_offset = 0.0
-        word_advance_gap = MOBILE_FIRST_WORD_GAP_PX + (MOBILE_FIRST_BORDER_WIDTH * 2)
-        for word in words:
-            word_offsets.append(next_offset)
-            next_offset += (
-                len(str(word["text"])) * char_width
-                + word_advance_gap
-            )
+        layout = SubtitleFFmpegBuilder._mobile_word_layout(words)
+        if not layout:
+            return []
 
-        full_width = max(0.0, next_offset - word_advance_gap)
-        base_x = f"(w/2)-{full_width / 2.0:.3f}"
+        full_text = SubtitleFFmpegBuilder._mobile_layout_text(layout)
 
         filters: list[str] = [
             SubtitleFFmpegBuilder._mobile_drawtext_timed(
@@ -203,8 +199,8 @@ class SubtitleFFmpegBuilder:
         ]
 
         group_end = float(words[-1]["end"])
-        for index, word in enumerate(words):
-            enable_start = float(word["start"])
+        for index, active_word in enumerate(layout):
+            enable_start = float(active_word["start"])
             has_next_word = index + 1 < len(words)
             if has_next_word:
                 enable_end = float(words[index + 1]["start"])
@@ -220,7 +216,7 @@ class SubtitleFFmpegBuilder:
                     enable_start + MOBILE_FIRST_MIN_STATE_SECONDS,
                 )
 
-            for display_index, display_word in enumerate(words):
+            for display_index, display_word in enumerate(layout):
                 font_color = (
                     MOBILE_FIRST_HIGHLIGHT_COLOR
                     if display_index == index
@@ -237,7 +233,8 @@ class SubtitleFFmpegBuilder:
                         text=str(display_word["text"]),
                         font_color=font_color,
                         font_size=font_size,
-                        x=f"{base_x}+{word_offsets[display_index]:.1f}",
+                        x=str(display_word["x"]),
+                        y=str(display_word["y"]),
                         enable_start=enable_start,
                         enable_end=enable_end,
                     )
@@ -246,12 +243,146 @@ class SubtitleFFmpegBuilder:
         return filters
 
     @staticmethod
+    def _mobile_word_layout(
+        words: list[dict[str, float | str]],
+    ) -> list[dict[str, float | str | int]]:
+        lines = SubtitleFFmpegBuilder._mobile_word_lines(words)
+        layout: list[dict[str, float | str | int]] = []
+
+        for line_index, line in enumerate(lines):
+            line_width = SubtitleFFmpegBuilder._mobile_line_width(line)
+            line_left = (
+                f"({MOBILE_FIRST_CAPTION_CENTER_X})-{line_width / 2.0:.3f}"
+            )
+            offset = 0.0
+
+            for word in line:
+                text = str(word["text"])
+                layout.append(
+                    {
+                        "text": text,
+                        "start": float(word["start"]),
+                        "end": float(word["end"]),
+                        "line_index": line_index,
+                        "x": f"{line_left}+{offset:.1f}",
+                        "y": SubtitleFFmpegBuilder._mobile_line_y(line_index),
+                        "width": SubtitleFFmpegBuilder._mobile_word_width(text),
+                        "offset": offset,
+                    }
+                )
+                offset += (
+                    SubtitleFFmpegBuilder._mobile_word_width(text)
+                    + MOBILE_FIRST_WORD_GAP_PX
+                )
+
+        return layout
+
+    @staticmethod
+    def _mobile_word_lines(
+        words: list[dict[str, float | str]],
+    ) -> list[list[dict[str, float | str]]]:
+        if not words:
+            return []
+
+        clean_words = list(words)
+        if (
+            len(clean_words) <= MOBILE_FIRST_WORDS_PER_LINE
+            and SubtitleFFmpegBuilder._mobile_line_width(clean_words)
+            <= SubtitleFFmpegBuilder._mobile_max_block_width_px()
+        ):
+            return [clean_words]
+
+        if len(clean_words) <= MOBILE_FIRST_WORDS_PER_LINE:
+            return SubtitleFFmpegBuilder._best_two_line_mobile_split(clean_words)
+
+        if len(clean_words) <= MOBILE_FIRST_MAX_LINES * MOBILE_FIRST_WORDS_PER_LINE:
+            return SubtitleFFmpegBuilder._best_two_line_mobile_split(clean_words)
+
+        return [
+            clean_words[:MOBILE_FIRST_WORDS_PER_LINE],
+            clean_words[MOBILE_FIRST_WORDS_PER_LINE:],
+        ]
+
+    @staticmethod
+    def _best_two_line_mobile_split(
+        words: list[dict[str, float | str]],
+    ) -> list[list[dict[str, float | str]]]:
+        if len(words) <= 1:
+            return [words]
+
+        max_width = SubtitleFFmpegBuilder._mobile_max_block_width_px()
+        best_split = 1
+        best_score: tuple[float, float, int] | None = None
+
+        for split_index in range(1, len(words)):
+            first = words[:split_index]
+            second = words[split_index:]
+            if (
+                len(first) > MOBILE_FIRST_WORDS_PER_LINE
+                or len(second) > MOBILE_FIRST_WORDS_PER_LINE
+            ):
+                continue
+
+            first_width = SubtitleFFmpegBuilder._mobile_line_width(first)
+            second_width = SubtitleFFmpegBuilder._mobile_line_width(second)
+            overflow = max(0.0, first_width - max_width) + max(
+                0.0,
+                second_width - max_width,
+            )
+            widest_line = max(first_width, second_width)
+            balance_penalty = abs(len(first) - len(second))
+            score = (overflow, widest_line, balance_penalty)
+
+            if best_score is None or score < best_score:
+                best_score = score
+                best_split = split_index
+
+        return [words[:best_split], words[best_split:]]
+
+    @staticmethod
+    def _mobile_layout_text(layout: list[dict[str, float | str | int]]) -> str:
+        lines: list[list[str]] = []
+        for item in layout:
+            line_index = int(item["line_index"])
+            while len(lines) <= line_index:
+                lines.append([])
+            lines[line_index].append(str(item["text"]))
+        return "\\n".join(" ".join(line) for line in lines if line)
+
+    @staticmethod
+    def _mobile_line_width(words: list[dict[str, float | str]]) -> float:
+        if not words:
+            return 0.0
+
+        word_width = sum(
+            SubtitleFFmpegBuilder._mobile_word_width(str(word["text"]))
+            for word in words
+        )
+        gaps = max(0, len(words) - 1) * MOBILE_FIRST_WORD_GAP_PX
+        return word_width + gaps
+
+    @staticmethod
+    def _mobile_word_width(text: str) -> float:
+        return len(str(text)) * MOBILE_FIRST_FONT_SIZE * MOBILE_FIRST_CHAR_WIDTH_FACTOR
+
+    @staticmethod
+    def _mobile_max_block_width_px() -> float:
+        return MOBILE_FIRST_REFERENCE_WIDTH_PX * MOBILE_FIRST_MAX_BLOCK_WIDTH_RATIO
+
+    @staticmethod
+    def _mobile_line_y(line_index: int) -> str:
+        if line_index <= 0:
+            return MOBILE_FIRST_Y
+        return f"{MOBILE_FIRST_Y}+{MOBILE_FIRST_LINE_STEP_PX * line_index}"
+
+    @staticmethod
     def _mobile_drawtext_timed(
         *,
         text: Any,
         font_color: Any,
         font_size: Any,
         x: Any,
+        y: Any = MOBILE_FIRST_Y,
         enable_start: float | None = None,
         enable_end: float | None = None,
         alpha_start: float | None = None,
@@ -272,7 +403,7 @@ class SubtitleFFmpegBuilder:
             f"line_spacing={MOBILE_FIRST_LINE_SPACING}",
             "fix_bounds=1",
             f"x={SubtitleFFmpegBuilder._safe_str(x, MOBILE_FIRST_X)}",
-            f"y={MOBILE_FIRST_Y}",
+            f"y={SubtitleFFmpegBuilder._safe_str(y, MOBILE_FIRST_Y)}",
         ]
 
         if alpha_start is not None and alpha_end is not None:

@@ -166,7 +166,8 @@ def _group_words_into_segments(
         candidate_chars = len(" ".join(str(item.text or "") for item in candidate_group))
 
         if current_group and (
-            len(current_group) >= MAX_WORDS_PER_CAPTION_SEGMENT
+            _should_break_after_sentence_punctuation(current_group, word)
+            or len(current_group) >= MAX_WORDS_PER_CAPTION_SEGMENT
             or candidate_chars > MAX_CHARS_PER_CAPTION_SEGMENT
         ):
             segments.append(_make_segment(current_group))
@@ -178,6 +179,24 @@ def _group_words_into_segments(
         segments.append(_make_segment(current_group))
 
     return segments
+
+
+def _should_break_after_sentence_punctuation(
+    current_group: list[TranscriptWord],
+    next_word: TranscriptWord,
+) -> bool:
+    previous_text = str(current_group[-1].text or "").strip()
+    next_text = str(next_word.text or "").strip()
+    if not previous_text or not next_text:
+        return False
+    if previous_text[-1] not in ".!?":
+        return False
+
+    return not (
+        previous_text[-1] == "?"
+        and len(current_group) == 1
+        and next_text.upper().rstrip(".!?") in {"JA", "NEIN", "YES", "NO"}
+    )
 
 
 def _make_segment(group: list[TranscriptWord]) -> SubtitleSegment:
