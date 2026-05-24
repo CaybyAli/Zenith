@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from core import ffmpeg_helper as default_ffmpeg_helper
+from core.caption_ass_builder import (
+    CaptionASSBuilder,
+    CaptionGroup,
+    DEFAULT_FONTS_DIR,
+    escape_ffmpeg_filter_path,
+)
 from core.audio_normalizer import (
     DEFAULT_LRA,
     DEFAULT_TARGET_I,
@@ -31,6 +38,9 @@ SHORTS_MOVFLAGS = "+faststart"
 SHORTS_OUTPUT_EXTENSION = ".mp4"
 DEFAULT_SHORTS_CAPTION_WORDS = ("Strong", "highlight", "moment")
 RAW_MIXED_AUDIO_FILENAME = "raw_mixed_audio.mp4"
+CAPTION_RENDERER_ENV_VAR = "ZENITH_CAPTION_RENDERER"
+CAPTION_RENDERER_LIBASS = "libass"
+CAPTION_RENDERER_DRAWTEXT = "drawtext"
 MAX_WORDS_PER_CAPTION_SEGMENT = 3
 MAX_CHARS_PER_CAPTION_SEGMENT = 14
 
@@ -211,6 +221,25 @@ def _make_segment(group: list[TranscriptWord]) -> SubtitleSegment:
     return segment
 
 
+def _caption_renderer() -> str:
+    value = os.getenv(CAPTION_RENDERER_ENV_VAR, CAPTION_RENDERER_LIBASS)
+    value = str(value or "").strip().casefold()
+    if value in {CAPTION_RENDERER_LIBASS, CAPTION_RENDERER_DRAWTEXT}:
+        return value
+    return CAPTION_RENDERER_LIBASS
+
+
+def _caption_groups_from_segments(
+    segments: list[SubtitleSegment],
+) -> list[CaptionGroup]:
+    groups: list[CaptionGroup] = []
+    for segment in segments:
+        words = list(getattr(segment, "words", []) or [])
+        if words:
+            groups.append(CaptionGroup(words=words))
+    return groups
+
+
 def _transcript_words(transcript: TranscriptResult) -> list[Any]:
     all_words = getattr(transcript, "all_words", None)
     if callable(all_words):
@@ -357,8 +386,9 @@ class ShortsRenderDriver:
             raise ValueError("ShortsClip.reframe_plan is required before render")
 
         codec_choice = self._resolve_video_codec()
-        caption_filter = self._caption_filter(
+        caption_filter = self._caption_filter_for_render(
             clip=clip,
+            output_path=output_path,
             add_captions=add_captions,
             transcript=transcript,
         )
@@ -533,6 +563,42 @@ class ShortsRenderDriver:
             simple_filter = f"{simple_filter},scale={SHORTS_OUTPUT_WIDTH}:{SHORTS_OUTPUT_HEIGHT}"
 
         return self._append_caption_to_simple_filter(simple_filter, caption_filter)
+
+    def _caption_filter_for_render(
+        self,
+        clip: ShortsClip,
+        output_path: str,
+        add_captions: bool = True,
+        transcript: TranscriptResult | None = None,
+    ) -> str:
+        if not add_captions:
+            return ""
+
+        if _caption_renderer() == CAPTION_RENDERER_LIBASS and transcript is not None:
+            segments = build_caption_segments(clip=clip, transcript=transcript)
+            caption_groups = _caption_groups_from_segments(segments)
+            if caption_groups:
+                ass_path = Path(output_path).with_suffix(".ass")
+                CaptionASSBuilder().generate_ass_file(
+                    caption_groups=caption_groups,
+                    output_path=str(ass_path),
+                )
+                return self._ass_caption_filter(ass_path)
+
+            LOGGER.warning(
+                "No word-level timestamps available for libass, falling back to drawtext captions"
+            )
+
+        return self._caption_filter(
+            clip=clip,
+            add_captions=add_captions,
+            transcript=transcript,
+        )
+
+    def _ass_caption_filter(self, ass_path: Path) -> str:
+        escaped_ass_path = escape_ffmpeg_filter_path(ass_path)
+        escaped_fonts_dir = escape_ffmpeg_filter_path(DEFAULT_FONTS_DIR)
+        return f"subtitles={escaped_ass_path}:fontsdir={escaped_fonts_dir}"
 
     def _caption_filter(
         self,

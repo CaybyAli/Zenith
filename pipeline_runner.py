@@ -603,6 +603,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=PowerProfile.DEFAULT,
         help="Pipeline power profile: off|eco|balanced|performance|full_power (default: balanced)",
     )
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        default=None,
+        help="Output directory for probe-clip mode.",
+    )
+    parser.add_argument(
+        "--start-sec",
+        dest="start_sec",
+        type=float,
+        default=None,
+        help="Start offset in seconds for probe-clip render.",
+    )
+    parser.add_argument(
+        "--duration",
+        dest="duration",
+        type=float,
+        default=None,
+        help="Duration in seconds for probe-clip render.",
+    )
     args = parser.parse_args(argv)
 
     selected_modes = sum(
@@ -616,11 +636,35 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if selected_modes > 1:
         parser.error("Use only one mode: <video>, --approve <job_id>, or --list-blocked")
 
+    probe_args_present = any(
+        value is not None
+        for value in (args.output_dir, args.start_sec, args.duration)
+    )
+    if probe_args_present and (args.approve_job_id or args.list_blocked):
+        parser.error("Probe-clip arguments cannot be combined with --approve or --list-blocked")
+    if probe_args_present and not args.input_video_path:
+        parser.error("Probe-clip arguments require <video>")
+    if (args.start_sec is not None or args.duration is not None) and args.output_dir is None:
+        parser.error("--start-sec and --duration require --output-dir")
+    if args.duration is not None and args.duration <= 0:
+        parser.error("--duration must be greater than 0")
+
     return args
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
+
+    # ---- Probe-Clip Mode -------------------------------------------
+    if args.input_video_path and args.output_dir is not None:
+        from core.probe_clip_runner import run_probe_clip
+
+        return run_probe_clip(
+            video_path=args.input_video_path,
+            output_dir=args.output_dir,
+            start_sec=args.start_sec or 0.0,
+            duration=args.duration or 10.0,
+        )
 
     if args.list_blocked:
         _list_blocked_jobs()
