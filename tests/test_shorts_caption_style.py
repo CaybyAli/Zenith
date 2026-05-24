@@ -75,16 +75,16 @@ def _command_text(helper: FakeFFmpegHelper) -> str:
     return " ".join(helper.commands[0])
 
 
-def test_mobile_first_contains_fontsize_80() -> None:
+def test_mobile_first_contains_fontsize_72() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "fontsize=80" in filter_string
+    assert "fontsize=72" in filter_string
 
 
 def test_mobile_first_contains_mobile_y_position() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "y=h*0.75" in filter_string
+    assert "y=h*0.7" in filter_string
 
 
 def test_mobile_first_disables_big_background_box() -> None:
@@ -96,14 +96,14 @@ def test_mobile_first_disables_big_background_box() -> None:
 def test_mobile_first_contains_outline_and_shadow() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(["HELLO"], style="mobile_first")
 
-    assert "borderw=4" in filter_string
+    assert "borderw=8" in filter_string
     assert "bordercolor=black" in filter_string
     assert "shadowcolor=black@0.75" in filter_string
     assert "shadowx=2" in filter_string
     assert "shadowy=2" in filter_string
 
 
-def test_longform_standard_existing_filter_string_is_unchanged() -> None:
+def test_longform_standard_existing_filter_string_uses_temporal_split() -> None:
     segment = SubtitleSegment(
         text="HELLO WORLD",
         start=0.0,
@@ -117,12 +117,12 @@ def test_longform_standard_existing_filter_string_is_unchanged() -> None:
     expected = (
         "drawtext=text='HELLO WORLD':fontcolor=white:fontsize=48:box=1:"
         "boxcolor=black@0.4:x=(w-text_w)/2:y=h-100:"
-        "enable='between(t,0.000,1.000)'"
+        "enable='between(t,0.000,0.500)'"
     )
     assert filter_string == expected
 
 
-def test_highlighted_word_adds_second_lime_drawtext_pass() -> None:
+def test_highlighted_word_adds_second_green_drawtext_pass() -> None:
     filter_string = SubtitleFFmpegBuilder.build_filter(
         ["EPIC"],
         style="mobile_first",
@@ -130,7 +130,7 @@ def test_highlighted_word_adds_second_lime_drawtext_pass() -> None:
     )
 
     assert filter_string.count("drawtext=") == 2
-    assert "fontcolor=lime" in filter_string
+    assert "fontcolor=#00FF00" in filter_string
 
 
 def test_empty_highlighted_words_adds_only_one_drawtext_pass() -> None:
@@ -159,7 +159,7 @@ def test_six_words_wrap_after_third_word() -> None:
         style="mobile_first",
     )
 
-    assert "one two three\\nfour five six" in filter_string
+    assert "ONE TWO THREE\\nFOUR FIVE SIX" in filter_string
 
 
 def test_three_words_do_not_wrap() -> None:
@@ -169,6 +169,18 @@ def test_three_words_do_not_wrap() -> None:
     )
 
     assert "\\n" not in filter_string
+
+
+def test_comic_style_filter_contains_correct_params() -> None:
+    filter_string = SubtitleFFmpegBuilder._build_mobile_first_filter(
+        words=["Hallo", "Welt"],
+        highlighted_words=["Hallo"],
+    )
+
+    assert "borderw=8" in filter_string
+    assert "fontsize=72" in filter_string
+    assert "HALLO WELT" in filter_string
+    assert "Hallo Welt" not in filter_string
 
 
 def test_highlighted_word_selector_includes_score_above_threshold() -> None:
@@ -240,5 +252,5 @@ def test_shorts_render_driver_uses_default_captions_without_transcript(tmp_path:
 
     command_text = _command_text(helper)
     assert "drawtext" in command_text
-    for default_word in ("Strong", "highlight", "moment"):
+    for default_word in ("STRONG", "HIGHLIGHT", "MOMENT"):
         assert default_word in command_text
