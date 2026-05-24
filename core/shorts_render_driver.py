@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +21,8 @@ from core.shorts_transcript_caption_builder import build_caption_words_from_tran
 from models.shorts_clip import ShortsClip
 from models.transcript_result import TranscriptResult
 
+LOGGER = logging.getLogger(__name__)
+
 SHORTS_OUTPUT_WIDTH = 1080
 SHORTS_OUTPUT_HEIGHT = 1920
 SHORTS_OUTPUT_FPS = 60
@@ -27,6 +30,7 @@ SHORTS_AUDIO_BITRATE = "320k"
 SHORTS_MOVFLAGS = "+faststart"
 SHORTS_OUTPUT_EXTENSION = ".mp4"
 DEFAULT_SHORTS_CAPTION_WORDS = ("Strong", "highlight", "moment")
+RAW_MIXED_AUDIO_FILENAME = "raw_mixed_audio.mp4"
 
 CPU_H264_ENCODER = "libx264"
 NVENC_H264_ENCODER = "h264_nvenc"
@@ -171,6 +175,7 @@ class ShortsRenderDriver:
         )
         audio_filter = self._audio_filter()
         crf = self._crf_for_power_profile()
+        audio_input_index = 0
 
         cmd: list[str] = [
             self._ffmpeg_path(),
@@ -183,10 +188,39 @@ class ShortsRenderDriver:
             str(source_video_path),
         ]
 
+        raw_mixed_audio_path = Path(source_video_path).parent / RAW_MIXED_AUDIO_FILENAME
+        if raw_mixed_audio_path.exists():
+            audio_input_index = 1
+            cmd.extend(
+                [
+                    "-ss",
+                    self._format_seconds(clip.source_start_time),
+                    "-to",
+                    self._format_seconds(clip.source_end_time),
+                    "-i",
+                    str(raw_mixed_audio_path),
+                ]
+            )
+        else:
+            LOGGER.warning(
+                "raw_mixed_audio.mp4 not found, falling back to raw.mp4 audio"
+            )
+
         if self._is_complex_filter(video_filter):
-            cmd.extend(["-filter_complex", video_filter, "-map", "[out]", "-map", "0:a?"])
+            cmd.extend(
+                [
+                    "-filter_complex",
+                    video_filter,
+                    "-map",
+                    "[out]",
+                    "-map",
+                    f"{audio_input_index}:a?",
+                ]
+            )
         else:
             cmd.extend(["-vf", video_filter])
+            if audio_input_index == 1:
+                cmd.extend(["-map", "0:v", "-map", "1:a"])
 
         cmd.extend(
             [
