@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import os
@@ -163,7 +163,7 @@ def _write_speech_probe_clip(path: Path) -> None:
         "-f",
         "lavfi",
         "-i",
-        "color=c=blue:size=160x90:rate=10",
+        "color=c=blue:size=1280x360:rate=10",
         "-i",
         str(WHISPER_PROBE_WAV),
         "-shortest",
