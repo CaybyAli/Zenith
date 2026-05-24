@@ -14,6 +14,11 @@ from core.caption_ass_builder import (
     DEFAULT_FONTS_DIR,
     escape_ffmpeg_filter_path,
 )
+from core.emoji_overlay_builder import (
+    EmojiOverlayRenderer,
+    EmojiOverlaySelector,
+    emoji_overlay_enabled,
+)
 from core.audio_normalizer import (
     DEFAULT_LRA,
     DEFAULT_TARGET_I,
@@ -240,6 +245,49 @@ def _caption_groups_from_segments(
     return groups
 
 
+
+
+def _caption_groups_for_clip(
+    clip: ShortsClip,
+    transcript: TranscriptResult,
+) -> list[CaptionGroup]:
+    clip_start = _safe_optional_float(getattr(clip, "source_start_time", None))
+    clip_end = _safe_optional_float(getattr(clip, "source_end_time", None))
+    if clip_start is None or clip_end is None:
+        return []
+
+    relative_words: list[TranscriptWord] = []
+
+    for word in _transcript_words(transcript):
+        start = _word_seconds(word, ("start_seconds", "start", "start_time"))
+        end = _word_seconds(word, ("end_seconds", "end", "end_time"))
+        text_value = getattr(word, "text", "")
+        text = " ".join(str(text_value or "").split())
+
+        if start is None or end is None or not text:
+            continue
+
+        if start < clip_start or end > clip_end:
+            continue
+
+        relative_start = max(0.0, round(start - clip_start, 3))
+        relative_end = max(0.0, round(end - clip_start, 3))
+
+        if relative_end <= relative_start:
+            continue
+
+        relative_words.append(
+            TranscriptWord(
+                text=text,
+                start_seconds=relative_start,
+                end_seconds=relative_end,
+                probability=getattr(word, "probability", None),
+            )
+        )
+
+    return [CaptionGroup(words=relative_words)] if relative_words else []
+
+
 def _transcript_words(transcript: TranscriptResult) -> list[Any]:
     all_words = getattr(transcript, "all_words", None)
     if callable(all_words):
@@ -363,6 +411,12 @@ class ShortsRenderDriver:
                 transcript=transcript,
             )
             self.ffmpeg_helper.run_ffmpeg(cmd)
+            self._overlay_emojis_for_render(
+                clip=clip,
+                output_path=output_path,
+                add_captions=add_captions,
+                transcript=transcript,
+            )
         except Exception as exc:
             clip.status = "failed"
             raise RuntimeError(
@@ -372,6 +426,63 @@ class ShortsRenderDriver:
         clip.output_path = output_path
         clip.status = "rendered"
         return output_path
+
+    def _overlay_emojis_for_render(
+        self,
+        clip: ShortsClip,
+        output_path: str,
+        add_captions: bool,
+        transcript: TranscriptResult | None,
+    ) -> None:
+        if not add_captions:
+            return
+
+        if transcript is None:
+            return
+
+        if _caption_renderer() != CAPTION_RENDERER_LIBASS:
+            return
+
+        if not emoji_overlay_enabled():
+            return
+
+        caption_groups = _caption_groups_for_clip(clip=clip, transcript=transcript)
+        if not caption_groups:
+            return
+
+        groups = CaptionASSBuilder().build_groups(caption_groups)
+        if not groups:
+            return
+
+        duration = max(0.0, float(clip.source_end_time) - float(clip.source_start_time))
+        emoji_events = EmojiOverlaySelector().select(
+            groups=groups,
+            duration_seconds=duration,
+        )
+
+        if not emoji_events:
+            return
+
+        output = Path(output_path)
+        temp_output = output.with_name(output.stem + "_emoji_tmp" + output.suffix)
+        event_log = output.with_suffix(".emoji_events.txt")
+
+        event_log.write_text(
+            "\n".join(
+                f"{event.start_seconds:.2f}-{event.end_seconds:.2f} | {event.emoji} | {event.source_text}"
+                for event in emoji_events
+            ),
+            encoding="utf-8",
+        )
+
+        EmojiOverlayRenderer(ffmpeg_path=self._ffmpeg_path()).overlay(
+            input_video_path=output,
+            output_video_path=temp_output,
+            events=emoji_events,
+        )
+
+        os.replace(temp_output, output)
+
 
     def build_render_command(
         self,
@@ -575,8 +686,7 @@ class ShortsRenderDriver:
             return ""
 
         if _caption_renderer() == CAPTION_RENDERER_LIBASS and transcript is not None:
-            segments = build_caption_segments(clip=clip, transcript=transcript)
-            caption_groups = _caption_groups_from_segments(segments)
+            caption_groups = _caption_groups_for_clip(clip=clip, transcript=transcript)
             if caption_groups:
                 ass_path = Path(output_path).with_suffix(".ass")
                 CaptionASSBuilder().generate_ass_file(
