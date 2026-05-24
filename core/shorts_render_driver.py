@@ -16,10 +16,10 @@ from core.audio_normalizer import (
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 from core.power_profile import PowerProfile
 from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder
-from core.subtitle_generator import SubtitleGenerator
+from core.subtitle_generator import SubtitleGenerator, SubtitleSegment, SubtitleStyle
 from core.shorts_transcript_caption_builder import build_caption_words_from_transcript
 from models.shorts_clip import ShortsClip
-from models.transcript_result import TranscriptResult
+from models.transcript_result import TranscriptResult, TranscriptWord
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ SHORTS_MOVFLAGS = "+faststart"
 SHORTS_OUTPUT_EXTENSION = ".mp4"
 DEFAULT_SHORTS_CAPTION_WORDS = ("Strong", "highlight", "moment")
 RAW_MIXED_AUDIO_FILENAME = "raw_mixed_audio.mp4"
+MAX_WORDS_PER_CAPTION_SEGMENT = 4
 
 CPU_H264_ENCODER = "libx264"
 NVENC_H264_ENCODER = "h264_nvenc"
@@ -97,6 +98,157 @@ class _DefaultCodecResolver:
             uses_nvenc=False,
             probe_codec_names=(H264_PROBE_CODEC,),
         )
+
+
+def build_caption_segments(
+    clip: ShortsClip,
+    transcript: TranscriptResult | None,
+) -> list[SubtitleSegment]:
+    if transcript is None:
+        return []
+
+    clip_start = _safe_optional_float(getattr(clip, "source_start_time", None))
+    clip_end = _safe_optional_float(getattr(clip, "source_end_time", None))
+    if clip_start is None or clip_end is None:
+        return []
+
+    clip_words: list[Any] = []
+    for word in _transcript_words(transcript):
+        start = _word_seconds(word, ("start_seconds", "start", "start_time"))
+        end = _word_seconds(word, ("end_seconds", "end", "end_time"))
+        if start is None or end is None:
+            continue
+        if start >= clip_start and end <= clip_end:
+            clip_words.append(word)
+
+    has_word_times = (
+        len(clip_words) > 0
+        and hasattr(clip_words[0], "start_seconds")
+        and getattr(clip_words[0], "start_seconds", None) is not None
+    )
+    if not has_word_times:
+        return []
+
+    relative_words: list[TranscriptWord] = []
+    for word in clip_words:
+        start = _word_seconds(word, ("start_seconds", "start", "start_time"))
+        end = _word_seconds(word, ("end_seconds", "end", "end_time"))
+        text = " ".join(str(getattr(word, "text", "") or "").split())
+        if start is None or end is None or not text:
+            continue
+
+        relative_start = max(0.0, round(start - clip_start, 3))
+        relative_end = max(0.0, round(end - clip_start, 3))
+        if relative_end <= relative_start:
+            continue
+
+        relative_words.append(
+            TranscriptWord(
+                text=text,
+                start_seconds=relative_start,
+                end_seconds=relative_end,
+                probability=getattr(word, "probability", None),
+            )
+        )
+
+    segments: list[SubtitleSegment] = []
+    for index in range(0, len(relative_words), MAX_WORDS_PER_CAPTION_SEGMENT):
+        group = relative_words[index:index + MAX_WORDS_PER_CAPTION_SEGMENT]
+        if not group:
+            continue
+
+        segment = SubtitleSegment(
+            text=" ".join(word.text for word in group),
+            start=group[0].start_seconds,
+            end=group[-1].end_seconds,
+            highlight_words=[],
+            style=SubtitleStyle(),
+        )
+        segment.words = group
+        segments.append(segment)
+
+    return segments
+
+
+def _transcript_words(transcript: TranscriptResult) -> list[Any]:
+    all_words = getattr(transcript, "all_words", None)
+    if callable(all_words):
+        try:
+            return list(all_words() or [])
+        except Exception:
+            pass
+
+    words: list[Any] = []
+    for segment in getattr(transcript, "segments", []) or []:
+        words.extend(list(getattr(segment, "words", []) or []))
+    return words
+
+
+def _word_seconds(word: Any, keys: tuple[str, ...]) -> float | None:
+    for key in keys:
+        value = getattr(word, key, None)
+        seconds = _safe_optional_float(value)
+        if seconds is not None:
+            return seconds
+    return None
+
+
+def _safe_optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _fallback_caption_words_from_transcript(
+    transcript: TranscriptResult,
+    clip_start_seconds: float,
+    clip_end_seconds: float,
+    max_words: int,
+) -> tuple[list[str], dict[str, float]]:
+    try:
+        return build_caption_words_from_transcript(
+            transcript=transcript,
+            clip_start_seconds=clip_start_seconds,
+            clip_end_seconds=clip_end_seconds,
+            max_words=max_words,
+        )
+    except (AttributeError, TypeError, ValueError):
+        pass
+
+    words: list[str] = []
+    hook_score_by_word: dict[str, float] = {}
+
+    for segment in getattr(transcript, "segments", []) or []:
+        if not _segment_overlaps_clip(segment, clip_start_seconds, clip_end_seconds):
+            continue
+
+        for raw_word in str(getattr(segment, "text", "") or "").split():
+            clean = " ".join(raw_word.split())
+            if not clean:
+                continue
+
+            words.append(clean)
+            hook_score_by_word[clean.casefold()] = 0.5
+            if len(words) >= max_words:
+                return words, hook_score_by_word
+
+    return words, hook_score_by_word
+
+
+def _segment_overlaps_clip(
+    segment: Any,
+    clip_start_seconds: float,
+    clip_end_seconds: float,
+) -> bool:
+    start = _word_seconds(segment, ("start_seconds", "start", "start_time"))
+    end = _word_seconds(segment, ("end_seconds", "end", "end_time"))
+    if start is None or end is None:
+        return False
+
+    return end > clip_start_seconds and start < clip_end_seconds
 
 
 class ShortsRenderDriver:
@@ -355,15 +507,24 @@ class ShortsRenderDriver:
         except Exception:
             hook_score = 0.0
 
+        if transcript is not None:
+            segments = build_caption_segments(clip=clip, transcript=transcript)
+            if segments:
+                return SubtitleFFmpegBuilder.build_filter_string(segments)
+
+            LOGGER.warning(
+                "No word-level timestamps available, falling back to segment-level captions"
+            )
+
         words: list[str] = []
         hook_score_by_word: dict[str, float] = {}
 
         if transcript is not None:
-            words, hook_score_by_word = build_caption_words_from_transcript(
+            words, hook_score_by_word = _fallback_caption_words_from_transcript(
                 transcript=transcript,
                 clip_start_seconds=float(clip.source_start_time),
                 clip_end_seconds=float(clip.source_end_time),
-                max_words=4,
+                max_words=MAX_WORDS_PER_CAPTION_SEGMENT,
             )
 
         if not words:

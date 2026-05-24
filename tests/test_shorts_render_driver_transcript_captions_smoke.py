@@ -6,6 +6,7 @@ from core.shorts_render_driver import (
     DEFAULT_SHORTS_CAPTION_WORDS,
     ShortsRenderDriver,
     VideoCodecChoice,
+    build_caption_segments,
 )
 from models.shorts_clip import ShortsClip
 from models.shorts_reframe_plan import ShortsReframePlan
@@ -37,6 +38,15 @@ class FakeCodecResolver:
             uses_nvenc=False,
             probe_codec_names=(TEST_PROBE_CODEC,),
         )
+
+
+class MockTranscriptResult:
+    def __init__(self, words: list[TranscriptWord]) -> None:
+        self._words = list(words)
+        self.segments = []
+
+    def all_words(self) -> list[TranscriptWord]:
+        return list(self._words)
 
 
 def _driver() -> ShortsRenderDriver:
@@ -166,6 +176,82 @@ def test_caption_filter_falls_back_to_default_words_without_transcript() -> None
 
     for default_word in DEFAULT_SHORTS_CAPTION_WORDS:
         assert default_word.upper() in filter_text
+
+
+def test_shorts_driver_passes_real_word_timestamps() -> None:
+    words = [
+        TranscriptWord(text="bruder", start_seconds=12.40, end_seconds=12.62),
+        TranscriptWord(text="das", start_seconds=12.63, end_seconds=12.82),
+        TranscriptWord(text="war", start_seconds=12.83, end_seconds=13.05),
+        TranscriptWord(text="komplett", start_seconds=13.06, end_seconds=13.50),
+        TranscriptWord(text="krank", start_seconds=13.51, end_seconds=13.90),
+    ]
+    clip = ShortsClip(
+        source_job_id=JOB_ID,
+        source_start_time=12.40,
+        source_end_time=13.90,
+        planned_duration=1.5,
+        reframe_plan=ShortsReframePlan(
+            layout_type="gameplay_centered",
+            ffmpeg_crop_filter="crop=1080:1920:420:0",
+        ),
+    )
+    transcript = MockTranscriptResult(words=words)
+
+    segments = build_caption_segments(clip, transcript)
+
+    assert len(segments) >= 2
+    assert segments[0].words[0].text.upper() == "BRUDER"
+    assert segments[0].words[0].start_seconds == 0.0
+    assert segments[0].words[1].start_seconds == round(12.63 - 12.40, 3)
+    assert all(
+        word.start_seconds >= 0.0
+        for segment in segments
+        for word in segment.words
+    )
+
+
+def test_shorts_driver_fallback_when_no_timestamps(caplog) -> None:
+    transcript = TranscriptResult(
+        source_path="unit.mp4",
+        language="de",
+        segments=[
+            TranscriptSegment(
+                start_seconds=0.0,
+                end_seconds=1.0,
+                text="test",
+                words=[
+                    TranscriptWord(
+                        text="test",
+                        start_seconds=None,
+                        end_seconds=None,
+                    )
+                ],
+            )
+        ],
+        full_text="test",
+        engine="unit",
+    )
+    clip = ShortsClip(
+        source_job_id=JOB_ID,
+        source_start_time=0.0,
+        source_end_time=1.0,
+        planned_duration=1.0,
+        reframe_plan=ShortsReframePlan(
+            layout_type="gameplay_centered",
+            ffmpeg_crop_filter="crop=1080:1920:420:0",
+        ),
+    )
+
+    filter_text = _driver()._caption_filter(
+        clip=clip,
+        add_captions=True,
+        transcript=transcript,
+    )
+
+    assert "No word-level timestamps available" in caplog.text
+    assert "TEST" in filter_text
+    assert "enable='between(t" not in filter_text
 
 
 def test_caption_filter_falls_back_when_transcript_has_no_overlap() -> None:
