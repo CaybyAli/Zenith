@@ -183,7 +183,16 @@ class EmojiOverlayRenderer:
             shutil.copy2(input_path, output_path)
             return False
 
-        cmd = [self.ffmpeg_path, "-y", "-i", str(input_path)]
+        cmd = [
+            self.ffmpeg_path,
+            "-y",
+            "-hwaccel",
+            "cuda",
+            "-hwaccel_output_format",
+            "cuda",
+            "-i",
+            str(input_path),
+        ]
 
         for event in available_events:
             cmd.extend(["-loop", "1", "-i", str(self._asset_path(event.emoji))])
@@ -226,8 +235,8 @@ class EmojiOverlayRenderer:
         return True
 
     def _filter_complex(self, events: list[EmojiOverlayEvent]) -> str:
-        parts: list[str] = []
-        last_video = "0:v"
+        parts: list[str] = ["[0:v]hwdownload,format=yuv420p[base0]"]
+        last_video = "base0"
 
         for index, event in enumerate(events, start=1):
             tag = f"e{index}"

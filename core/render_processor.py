@@ -189,6 +189,10 @@ class RenderProcessor:
             "-y",
             "-ss",
             str(render_start),
+            "-hwaccel",
+            "cuda",
+            "-hwaccel_output_format",
+            "cuda",
             "-i",
             str(source),
         ]
@@ -202,6 +206,9 @@ class RenderProcessor:
                 )
 
             ffmpeg_cmd.extend(["-t", str(render_duration)])
+
+        if video_encoder != "h264_nvenc":
+            ffmpeg_cmd.extend(["-vf", "hwdownload,format=yuv420p"])
 
         ffmpeg_cmd.extend(
             [

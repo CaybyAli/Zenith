@@ -87,12 +87,17 @@ def run_probe_clip(
         "-y",
         "-ss",
         str(start_sec),
+        "-hwaccel",
+        "cuda",
+        "-hwaccel_output_format",
+        "cuda",
         "-i",
         str(src),
         "-t",
         str(duration),
         "-vf",
         (
+            "hwdownload,format=yuv420p,"
             "scale=1080:1920:force_original_aspect_ratio=decrease,"
             "pad=1080:1920:(ow-iw)/2:(oh-ih)/2,"
             "setsar=1,"

@@ -507,6 +507,7 @@ class ShortsRenderDriver:
             str(reframe_plan.ffmpeg_crop_filter or ""),
             caption_filter=caption_filter,
         )
+        video_filter = self._with_hwdownload_filter(video_filter)
         audio_filter = self._audio_filter()
         crf = self._crf_for_power_profile()
         audio_input_index = 0
@@ -518,6 +519,10 @@ class ShortsRenderDriver:
             self._format_seconds(clip.source_start_time),
             "-to",
             self._format_seconds(clip.source_end_time),
+            "-hwaccel",
+            "cuda",
+            "-hwaccel_output_format",
+            "cuda",
             "-i",
             str(source_video_path),
         ]
@@ -773,6 +778,23 @@ class ShortsRenderDriver:
         if "[out]" not in video_filter:
             return f"{video_filter},{caption_filter}"
         return video_filter.replace("[out]", "[caption_in]", 1) + f";[caption_in]{caption_filter}[out]"
+
+    def _with_hwdownload_filter(self, video_filter: str) -> str:
+        clean_filter = str(video_filter or "").strip()
+        if not clean_filter:
+            return clean_filter
+
+        if "hwdownload" in clean_filter:
+            return clean_filter
+
+        if self._is_complex_filter(clean_filter):
+            return clean_filter.replace(
+                "[0:v]",
+                "[0:v]hwdownload,format=yuv420p,",
+                1,
+            )
+
+        return f"hwdownload,format=yuv420p,{clean_filter}"
 
     def _is_complex_filter(self, filter_string: str) -> bool:
         return "[" in filter_string and "]" in filter_string
