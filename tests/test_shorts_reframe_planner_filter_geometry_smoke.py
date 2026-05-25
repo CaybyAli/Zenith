@@ -29,7 +29,7 @@ def test_stack_filter_uses_final_p4_hotfix_a_geometry() -> None:
     assert "scale=1080:1280" in filter_text
     assert "crop=1080:1280[gameplay_block]" in filter_text
     assert "[facecam_block][gameplay_block]vstack=inputs=2[out]" in filter_text
-    assert "420" not in filter_text
+    assert "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p" in filter_text
 
 
 def test_gameplay_centered_filter_uses_source_format_gameplay_region() -> None:
@@ -61,4 +61,8 @@ def test_all_planner_filters_avoid_render_driver_legacy_crop_normalizer() -> Non
 
     for filter_text in filters:
         assert "[0:v]crop=" not in filter_text
-        assert "420" not in filter_text
+
+    stack_filter = build_stack_filter_60_40(source)
+    assert "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p" in stack_filter
+    assert "420" not in build_gameplay_centered_filter(source)
+    assert "420" not in build_facecam_centered_filter(source)

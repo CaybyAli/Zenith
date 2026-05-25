@@ -649,6 +649,18 @@ class ShortsRenderDriver:
             if part in {"-vf", "-filter_complex"} and index + 1 < len(cleaned):
                 cleaned[index + 1] = (
                     cleaned[index + 1]
+                    .replace(
+                        "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p,",
+                        "scale=3840:1080,",
+                    )
+                    .replace(
+                        "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=nv12,",
+                        "scale=3840:1080,",
+                    )
+                    .replace(
+                        "hwupload_cuda,scale_cuda=3840:1080,",
+                        "scale=3840:1080,",
+                    )
                     .replace("hwdownload,format=nv12,", "")
                     .replace("hwdownload,format=yuv420p,", "")
                     .replace("[0:v]hwdownload,format=nv12,", "[0:v]")

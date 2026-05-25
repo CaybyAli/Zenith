@@ -95,6 +95,49 @@ def _driver(
     return driver, fake_helper, fake_resolver
 
 
+def test_hwaccel_fallback_converts_gpu_stack_filter_to_cpu_filter() -> None:
+    driver, _, _ = _driver()
+    gpu_filter = (
+        "[0:v]hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p,"
+        "setsar=1,split=2[facecam_src][gameplay_src];"
+        "[facecam_src]crop=1920:1080:0:0,"
+        "scale=1080:640:force_original_aspect_ratio=increase,"
+        "crop=1080:640:10:0[facecam_block];"
+        "[gameplay_src]crop=1920:1080:1850:0,"
+        "scale=1080:1280:force_original_aspect_ratio=increase,"
+        "crop=1080:1280[gameplay_block];"
+        "[facecam_block][gameplay_block]vstack=inputs=2[out]"
+    )
+    cmd = [
+        "ffmpeg",
+        "-hwaccel",
+        "cuda",
+        "-hwaccel_output_format",
+        "cuda",
+        "-i",
+        "input.mp4",
+        "-filter_complex",
+        gpu_filter,
+        "-map",
+        "[out]",
+        "out.mp4",
+    ]
+
+    fallback = driver._strip_hwaccel_from_cmd(cmd)
+    fallback = driver._strip_hwdownload_from_cmd(fallback)
+
+    assert "-hwaccel" not in fallback
+    assert "-hwaccel_output_format" not in fallback
+
+    filter_index = fallback.index("-filter_complex") + 1
+    fallback_filter = fallback[filter_index]
+
+    assert "hwupload_cuda" not in fallback_filter
+    assert "scale_cuda" not in fallback_filter
+    assert "hwdownload" not in fallback_filter
+    assert fallback_filter.startswith("[0:v]scale=3840:1080,setsar=1")
+
+
 @pytest.mark.ffmpeg_integration
 class TestShortsRenderDriverCommand:
     def test_output_path_uses_job_id_and_clip_index(self, tmp_path: Path) -> None:
