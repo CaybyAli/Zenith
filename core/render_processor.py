@@ -7,8 +7,33 @@ from pathlib import Path
 from models.edit_decision import EditDecision
 from models.job import Job
 from models.music_application_plan import MusicApplicationPlan
-from core.ffmpeg_helper import get_ffmpeg_path
+from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
+from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 from shared.errors import ValidationError
+
+_ENCODER_CACHE: dict[tuple[str, str], str] = {}
+
+
+def _resolve_encoder(ffmpeg_path: str, ffprobe_path: str) -> str:
+    cache_key = (str(ffmpeg_path), str(ffprobe_path))
+    if cache_key in _ENCODER_CACHE:
+        return _ENCODER_CACHE[cache_key]
+
+    try:
+        report = resolve_ffmpeg_capabilities(
+            {
+                "job_id": "render_processor",
+                "ffmpeg_path_hint": str(ffmpeg_path),
+                "ffprobe_path_hint": str(ffprobe_path),
+                "ffmpeg_resolver_allow_tool_probe": True,
+            }
+        )
+        encoder = "h264_nvenc" if bool(getattr(report, "has_nvenc", False)) else "libx264"
+    except Exception:
+        encoder = "libx264"
+
+    _ENCODER_CACHE[cache_key] = encoder
+    return encoder
 
 
 # DEPRECATED - Phase 2: superseded by FinalRenderDriver for gaming_main longform rendering.
@@ -151,8 +176,16 @@ class RenderProcessor:
         output_path = output_dir / f"{job.job_id}_final.mp4"
         context_path = output_dir / f"{job.job_id}_final_render_context.json"
 
+        ffmpeg_path = get_ffmpeg_path()
+        ffprobe_path = get_ffprobe_path()
+        video_encoder = _resolve_encoder(ffmpeg_path, ffprobe_path)
+        if video_encoder == "h264_nvenc":
+            video_encoder_args = ["-c:v", video_encoder, "-pix_fmt", "yuv420p"]
+        else:
+            video_encoder_args = ["-c:v", video_encoder]
+
         ffmpeg_cmd = [
-            get_ffmpeg_path(),
+            ffmpeg_path,
             "-y",
             "-ss",
             str(render_start),
@@ -172,8 +205,7 @@ class RenderProcessor:
 
         ffmpeg_cmd.extend(
             [
-                "-c:v",
-                "libx264",
+                *video_encoder_args,
                 "-c:a",
                 "aac",
                 str(output_path),
