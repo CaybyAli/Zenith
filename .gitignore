@@ -106,3 +106,5 @@ exports/
 preprocessed/
 output/
 pytest-cache-files-*/
+data/jobs.json.bak
+data/jobs/*.json
