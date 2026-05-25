@@ -1,8 +1,34 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import subprocess
 import sys
 from pathlib import Path
+
+from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
+
+_ENCODER_CACHE: dict[tuple[str, str], str] = {}
+
+
+def _resolve_encoder(ffmpeg_path: str = "ffmpeg", ffprobe_path: str = "ffprobe") -> str:
+    cache_key = (str(ffmpeg_path), str(ffprobe_path))
+    if cache_key in _ENCODER_CACHE:
+        return _ENCODER_CACHE[cache_key]
+
+    try:
+        report = resolve_ffmpeg_capabilities(
+            {
+                "job_id": "probe_clip_runner",
+                "ffmpeg_path_hint": str(ffmpeg_path),
+                "ffprobe_path_hint": str(ffprobe_path),
+                "ffmpeg_resolver_allow_tool_probe": True,
+            }
+        )
+        encoder = "h264_nvenc" if bool(getattr(report, "has_nvenc", False)) else "libx264"
+    except Exception:
+        encoder = "libx264"
+
+    _ENCODER_CACHE[cache_key] = encoder
+    return encoder
 
 
 def run_probe_clip(
@@ -48,9 +74,16 @@ def run_probe_clip(
     escaped_ass_path = escape_ffmpeg_filter_path(ass_path)
     escaped_fonts_dir = escape_ffmpeg_filter_path(DEFAULT_FONTS_DIR)
 
+    ffmpeg_path = "ffmpeg"
+    video_encoder = _resolve_encoder(ffmpeg_path)
+    if video_encoder == "h264_nvenc":
+        video_encoder_args = ["-c:v", video_encoder, "-pix_fmt", "yuv420p", "-cq", "23", "-preset", "fast"]
+    else:
+        video_encoder_args = ["-c:v", video_encoder, "-crf", "23", "-preset", "fast"]
+
     out_mp4 = out_dir / "probe_clip.mp4"
     cmd = [
-        "ffmpeg",
+        ffmpeg_path,
         "-y",
         "-ss",
         str(start_sec),
@@ -65,12 +98,7 @@ def run_probe_clip(
             "setsar=1,"
             f"subtitles={escaped_ass_path}:fontsdir={escaped_fonts_dir}"
         ),
-        "-c:v",
-        "libx264",
-        "-crf",
-        "23",
-        "-preset",
-        "fast",
+        *video_encoder_args,
         "-c:a",
         "aac",
         "-b:a",
