@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from core.caption_ass_builder import ASS_TEXT_DELAY_SECONDS
+from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 
 
 LOGGER = logging.getLogger(__name__)
@@ -34,6 +35,30 @@ EMOJI_ASSET_FILENAMES = {
     "skull": "skull_512.png",
     "trophy": "trophy_512.png",
 }
+
+_ENCODER_CACHE: dict[tuple[str, str], str] = {}
+
+
+def _resolve_encoder(ffmpeg_path: str = "ffmpeg", ffprobe_path: str = "ffprobe") -> str:
+    cache_key = (str(ffmpeg_path), str(ffprobe_path))
+    if cache_key in _ENCODER_CACHE:
+        return _ENCODER_CACHE[cache_key]
+
+    try:
+        report = resolve_ffmpeg_capabilities(
+            {
+                "job_id": "emoji_overlay_builder",
+                "ffmpeg_path_hint": str(ffmpeg_path),
+                "ffprobe_path_hint": str(ffprobe_path),
+                "ffmpeg_resolver_allow_tool_probe": True,
+            }
+        )
+        encoder = "h264_nvenc" if bool(getattr(report, "has_nvenc", False)) else "libx264"
+    except Exception:
+        encoder = "libx264"
+
+    _ENCODER_CACHE[cache_key] = encoder
+    return encoder
 
 
 @dataclass(frozen=True)
@@ -164,6 +189,11 @@ class EmojiOverlayRenderer:
             cmd.extend(["-loop", "1", "-i", str(self._asset_path(event.emoji))])
 
         filter_complex = self._filter_complex(available_events)
+        video_encoder = _resolve_encoder(self.ffmpeg_path)
+        if video_encoder == "h264_nvenc":
+            video_encoder_args = ["-c:v", video_encoder, "-pix_fmt", "yuv420p", "-cq", "23", "-preset", "fast"]
+        else:
+            video_encoder_args = ["-c:v", video_encoder, "-crf", "23", "-preset", "fast"]
 
         cmd.extend(
             [
@@ -173,12 +203,7 @@ class EmojiOverlayRenderer:
                 f"[v{len(available_events)}]",
                 "-map",
                 "0:a?",
-                "-c:v",
-                "libx264",
-                "-crf",
-                "23",
-                "-preset",
-                "fast",
+                *video_encoder_args,
                 "-c:a",
                 "copy",
                 "-shortest",
