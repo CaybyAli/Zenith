@@ -160,11 +160,36 @@ _INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
     "faceless":     ChannelType.FACELESS_TREND,
 }
 
+_EXPORT_SLIM_EXCLUDE: frozenset[str] = frozenset({
+    "rms_energy_context_timeline",
+    "rms_energy_context_adapter",
+    "rms_energy_timeline_result",
+    "rms_energy_report",
+    "energy_peak_report",
+    "stutter_detection_points",
+    "stutter_detection_report",
+    "unified_edit_signals",
+    "unified_edit_signal_report",
+    "reaction_shot_candidates",
+    "continuity_check_issues",
+    "transition_decision_decisions",
+    "face_reaction_points",
+    "screen_content_points",
+    "visual_energy_points",
+    "motion_analysis_points",
+    "beat_detection_beats",
+})
+
+
 def _write_export_job_json(job, export_dir: Path) -> Path:
     job_json_path = export_dir / "job.json"
+    slim_dict = {
+        k: v for k, v in job.to_dict().items()
+        if k not in _EXPORT_SLIM_EXCLUDE
+    }
 
     with job_json_path.open("w", encoding="utf-8") as handle:
-        json.dump(job.to_dict(), handle, indent=4, ensure_ascii=False)
+        json.dump(slim_dict, handle, indent=4, ensure_ascii=False)
 
     print(f"[pipeline_runner] JOB_JSON  {job.job_id}  path={job_json_path}")
     return job_json_path

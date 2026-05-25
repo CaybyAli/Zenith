@@ -12,6 +12,27 @@ from storage.base_storage_provider import BaseStorageProvider
 from storage.local_storage_provider import LocalStorageProvider
 
 
+_SLIM_EXCLUDE: frozenset[str] = frozenset({
+    "rms_energy_context_timeline",
+    "rms_energy_context_adapter",
+    "rms_energy_timeline_result",
+    "rms_energy_report",
+    "energy_peak_report",
+    "stutter_detection_points",
+    "stutter_detection_report",
+    "unified_edit_signals",
+    "unified_edit_signal_report",
+    "reaction_shot_candidates",
+    "continuity_check_issues",
+    "transition_decision_decisions",
+    "face_reaction_points",
+    "screen_content_points",
+    "visual_energy_points",
+    "motion_analysis_points",
+    "beat_detection_beats",
+})
+
+
 class JobStore:
     """
     JSON file-based persistence for Zenith jobs.
@@ -105,7 +126,8 @@ class JobStore:
         return str(job_id)
 
     def _job_hash(self, job_dict: dict[str, Any]) -> str:
-        content = json.dumps(job_dict, sort_keys=True, default=str)
+        compact = self._compact_job_dict_for_persistence(job_dict)
+        content = json.dumps(compact, sort_keys=True, default=str)
         return hashlib.md5(content.encode()).hexdigest()
 
     def _job_exists(self, job_id: str) -> bool:
@@ -160,9 +182,21 @@ class JobStore:
 
         return result
 
+    def _compact_job_dict_for_persistence(
+        self, job_dict: dict[str, Any]
+    ) -> dict[str, Any]:
+        """
+        Entfernt Analyse-Rohdaten aus dem Persistenz-Dict.
+        Nur top-level Felder. Originales job_dict bleibt unver?ndert.
+        Ziel: < 10 MB pro Job-Datei auf Disk.
+        Pipeline-interne RAM-Objekte bleiben vollst?ndig.
+        """
+        return {k: v for k, v in job_dict.items() if k not in _SLIM_EXCLUDE}
+
     def _write_job(self, job_id: str, job_dict: dict[str, Any]) -> None:
         try:
-            self.storage.write_json(str(self._job_path(job_id)), job_dict, indent=2)
+            compact = self._compact_job_dict_for_persistence(job_dict)
+            self.storage.write_json(str(self._job_path(job_id)), compact, indent=2)
         except Exception as exc:
             raise StorageError(f"Could not write job file {job_id}: {exc}") from exc
 
