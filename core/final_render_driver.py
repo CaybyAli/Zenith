@@ -288,7 +288,7 @@ class FinalRenderDriver:
             if layout_kind == "facecam_emphasis":
                 print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
                 fc = (
-                    f"[0:v]hwdownload,format=yuv420p,crop={src_w//2}:1080:0:0,"
+                    f"[0:v]hwdownload,format=nv12,crop={src_w//2}:1080:0:0,"
                     "scale=1920:1080[out]"
                 )
                 return fc, "[out]"
@@ -309,7 +309,7 @@ class FinalRenderDriver:
                 # Keine Zooms -> immer kleine Groesse
                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
                 fc = (
-                    "[0:v]hwdownload,format=yuv420p,split=2[gp_src][fc_src];"
+                    "[0:v]hwdownload,format=nv12,split=2[gp_src][fc_src];"
                     f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
                     f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_SMALL_W}:{PIP_SMALL_H}[fc];"
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
@@ -350,7 +350,7 @@ class FinalRenderDriver:
                 print(f"[DEBUG] -> Found {len(zoom_instructions)} zoom(s), but all low intensity")
                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
                 fc = (
-                    "[0:v]hwdownload,format=yuv420p,split=2[gp_src][fc_src];"
+                    "[0:v]hwdownload,format=nv12,split=2[gp_src][fc_src];"
                     f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
                     f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_SMALL_W}:{PIP_SMALL_H}[fc];"
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
@@ -366,7 +366,7 @@ class FinalRenderDriver:
             
             # Vier PiP-Groessen, INSTANT switching mit enable-Conditions
             fc = (
-                "[0:v]hwdownload,format=yuv420p,split=5[gp_src][fc_tiny_src][fc_small_src][fc_medium_src][fc_large_src];"
+                "[0:v]hwdownload,format=nv12,split=5[gp_src][fc_tiny_src][fc_small_src][fc_medium_src][fc_large_src];"
                 f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
                 
                 # TINY PiP (default - leise Momente)
@@ -414,7 +414,7 @@ class FinalRenderDriver:
                 f"{crop_w}x{crop_h}+{crop_x}+{crop_y} -> 1920x1080"
             )
             fc = (
-                f"[0:v]hwdownload,format=yuv420p,crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
+                f"[0:v]hwdownload,format=nv12,crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
                 "scale=1920:1080:force_original_aspect_ratio=decrease,"
                 "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
                 "setsar=1[out]"
@@ -423,7 +423,7 @@ class FinalRenderDriver:
 
         print(f"[DEBUG] -> Rendering STANDARD 16:9 source -> 1920x1080")
         fc = (
-            "[0:v]hwdownload,format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
+            "[0:v]hwdownload,format=nv12,scale=1920:1080:force_original_aspect_ratio=decrease,"
             "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
             "setsar=1[out]"
         )
@@ -856,8 +856,13 @@ class FinalRenderDriver:
 
     def _strip_hwdownload_from_filter(self, filter_complex: str) -> str:
         clean = str(filter_complex or "")
-        clean = clean.replace("hwdownload,format=yuv420p,", "")
-        clean = clean.replace(",hwdownload,format=yuv420p", "")
+        for marker in (
+            "hwdownload,format=nv12,",
+            ",hwdownload,format=nv12",
+            "hwdownload,format=yuv420p,",
+            ",hwdownload,format=yuv420p",
+        ):
+            clean = clean.replace(marker, "")
         return clean
 
     def _strip_hwaccel_from_cmd(self, cmd: list[str]) -> list[str]:

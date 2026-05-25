@@ -410,7 +410,7 @@ class ShortsRenderDriver:
                 add_captions=add_captions,
                 transcript=transcript,
             )
-            self.ffmpeg_helper.run_ffmpeg(cmd)
+            self._run_ffmpeg_with_hwaccel_fallback(cmd)
             self._overlay_emojis_for_render(
                 clip=clip,
                 output_path=output_path,
@@ -596,6 +596,66 @@ class ShortsRenderDriver:
             return builder(cmd)
 
         return cmd
+
+
+    def _run_ffmpeg_with_hwaccel_fallback(self, cmd: list[str]) -> None:
+        try:
+            self.ffmpeg_helper.run_ffmpeg(cmd)
+            return
+        except Exception as exc:
+            if not self._should_retry_without_hwaccel(str(exc)):
+                raise
+
+            fallback_cmd = self._strip_hwaccel_from_cmd(cmd)
+            fallback_cmd = self._strip_hwdownload_from_cmd(fallback_cmd)
+            LOGGER.warning("Shorts render hwdec failed, retrying without cuda hwaccel")
+            self.ffmpeg_helper.run_ffmpeg(fallback_cmd)
+
+    def _should_retry_without_hwaccel(self, stderr: str) -> bool:
+        lower = str(stderr or "").lower()
+        retry_markers = [
+            "function not implemented",
+            "hwdownload",
+            "cuda",
+            "hardware",
+            "device",
+            "invalid argument",
+            "no filtered frames",
+            "nothing was written",
+            "conversion failed",
+        ]
+        return any(marker in lower for marker in retry_markers)
+
+    def _strip_hwaccel_from_cmd(self, cmd: list[str]) -> list[str]:
+        stripped: list[str] = []
+        skip_next = 0
+
+        for part in cmd:
+            if skip_next > 0:
+                skip_next -= 1
+                continue
+
+            if part in {"-hwaccel", "-hwaccel_output_format"}:
+                skip_next = 1
+                continue
+
+            stripped.append(part)
+
+        return stripped
+
+    def _strip_hwdownload_from_cmd(self, cmd: list[str]) -> list[str]:
+        cleaned = list(cmd)
+        for index, part in enumerate(cleaned):
+            if part in {"-vf", "-filter_complex"} and index + 1 < len(cleaned):
+                cleaned[index + 1] = (
+                    cleaned[index + 1]
+                    .replace("hwdownload,format=nv12,", "")
+                    .replace("hwdownload,format=yuv420p,", "")
+                    .replace("[0:v]hwdownload,format=nv12,", "[0:v]")
+                    .replace("[0:v]hwdownload,format=yuv420p,", "[0:v]")
+                )
+        return cleaned
+
 
     def _output_path(self, output_dir: str, job_id: str, clip_index: int) -> str:
         out_dir = Path(output_dir)
@@ -790,11 +850,11 @@ class ShortsRenderDriver:
         if self._is_complex_filter(clean_filter):
             return clean_filter.replace(
                 "[0:v]",
-                "[0:v]hwdownload,format=yuv420p,",
+                "[0:v]hwdownload,format=nv12,",
                 1,
             )
 
-        return f"hwdownload,format=yuv420p,{clean_filter}"
+        return f"hwdownload,format=nv12,{clean_filter}"
 
     def _is_complex_filter(self, filter_string: str) -> bool:
         return "[" in filter_string and "]" in filter_string

@@ -235,7 +235,7 @@ class EmojiOverlayRenderer:
         return True
 
     def _filter_complex(self, events: list[EmojiOverlayEvent]) -> str:
-        parts: list[str] = ["[0:v]hwdownload,format=yuv420p[base0]"]
+        parts: list[str] = ["[0:v]hwdownload,format=nv12[base0]"]
         last_video = "base0"
 
         for index, event in enumerate(events, start=1):

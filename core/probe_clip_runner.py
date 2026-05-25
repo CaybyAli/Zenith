@@ -97,7 +97,7 @@ def run_probe_clip(
         str(duration),
         "-vf",
         (
-            "hwdownload,format=yuv420p,"
+            "hwdownload,format=nv12,"
             "scale=1080:1920:force_original_aspect_ratio=decrease,"
             "pad=1080:1920:(ow-iw)/2:(oh-ih)/2,"
             "setsar=1,"
@@ -113,6 +113,29 @@ def run_probe_clip(
 
     print(f"[probe_clip] CMD  {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=False)
+
+    if result.returncode != 0:
+        fallback_cmd: list[str] = []
+        skip_next = 0
+        for part in cmd:
+            if skip_next > 0:
+                skip_next -= 1
+                continue
+            if part in {"-hwaccel", "-hwaccel_output_format"}:
+                skip_next = 1
+                continue
+            fallback_cmd.append(part)
+
+        for index, part in enumerate(fallback_cmd):
+            if part == "-vf" and index + 1 < len(fallback_cmd):
+                fallback_cmd[index + 1] = (
+                    fallback_cmd[index + 1]
+                    .replace("hwdownload,format=nv12,", "")
+                    .replace("hwdownload,format=yuv420p,", "")
+                )
+
+        print("[probe_clip] HWDEC_FALLBACK  retry_without_cuda_hwaccel")
+        result = subprocess.run(fallback_cmd, capture_output=False)
 
     if result.returncode != 0:
         print(
