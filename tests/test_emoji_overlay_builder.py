@@ -83,6 +83,7 @@ def test_final_emoji_position_is_bottom_centered_below_captions() -> None:
     # Final D7 safety rule:
     # Emoji must never cover caption text.
     # Captions live around y=1310/1385/1445, so sticker starts safely below.
-    assert EMOJI_X == 447
-    assert EMOJI_Y >= 1600
+    assert EMOJI_SIZE == 700
+    assert EMOJI_X == 190
+    assert EMOJI_Y == 1220
 

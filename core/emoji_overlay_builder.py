@@ -15,10 +15,10 @@ LOGGER = logging.getLogger(__name__)
 
 SHORTS_EMOJI_OVERLAY_ENV_VAR = "ZENITH_SHORTS_EMOJI_OVERLAY"
 
-DEFAULT_EMOJI_ASSET_DIR = Path(r"D:\Zenith\assets\emoji\noto_512")
-EMOJI_SIZE = 185
-EMOJI_X = 447
-EMOJI_Y = 1605
+DEFAULT_EMOJI_ASSET_DIR = Path(__file__).resolve().parents[1] / "assets" / "emoji" / "noto_512"
+EMOJI_SIZE = 700
+EMOJI_X = 190
+EMOJI_Y = 1220
 EMOJI_OUTLINE_BLUR = 3
 EMOJI_OUTLINE_ALPHA = 0.78
 MAX_EMOJIS_PER_SHORT = 3
