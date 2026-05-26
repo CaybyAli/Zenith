@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
@@ -49,34 +50,89 @@ class TranscriptProcessor:
     def _transcribe_with_faster_whisper(self, source_path: str) -> TranscriptResult:
         from faster_whisper import WhisperModel
 
-        model = WhisperModel(
-            self.model_name,
-            device=os.getenv("ZENITH_FASTER_WHISPER_DEVICE", "cpu"),
-            compute_type=os.getenv("ZENITH_FASTER_WHISPER_COMPUTE_TYPE", "int8"),
-        )
-        raw_segments, info = model.transcribe(source_path, vad_filter=True, word_timestamps=True)
+        errors: list[str] = []
 
-        segments = self._sanitize_segments(
-            {
-                "start": segment.start,
-                "end": segment.end,
-                "text": segment.text,
-                "confidence": None,
-                "words": getattr(segment, "words", None),
-            }
-            for segment in raw_segments
+        for device, compute_type in self._faster_whisper_runtime_candidates():
+            try:
+                model = WhisperModel(
+                    self.model_name,
+                    device=device,
+                    compute_type=compute_type,
+                )
+                raw_segments, info = model.transcribe(
+                    source_path,
+                    vad_filter=True,
+                    word_timestamps=True,
+                )
+
+                segments = self._sanitize_segments(
+                    {
+                        "start": segment.start,
+                        "end": segment.end,
+                        "text": segment.text,
+                        "confidence": None,
+                        "words": getattr(segment, "words", None),
+                    }
+                    for segment in raw_segments
+                )
+
+                if not segments:
+                    raise TranscriptUnavailableError(
+                        "faster-whisper returned no valid segments"
+                    )
+
+                return TranscriptResult(
+                    source_path=source_path,
+                    language=getattr(info, "language", None),
+                    segments=segments,
+                    full_text=self._build_full_text(segments),
+                    engine="faster-whisper",
+                )
+            except Exception as exc:
+                errors.append(f"{device}/{compute_type}: {exc}")
+
+        raise TranscriptUnavailableError(
+            "faster-whisper failed for all runtimes: " + "; ".join(errors)
         )
 
-        if not segments:
-            raise TranscriptUnavailableError("faster-whisper returned no valid segments")
+    def _faster_whisper_runtime_candidates(self) -> list[tuple[str, str]]:
+        configured_device = os.getenv("ZENITH_FASTER_WHISPER_DEVICE")
+        configured_compute_type = os.getenv("ZENITH_FASTER_WHISPER_COMPUTE_TYPE")
+        if configured_device or configured_compute_type:
+            device = configured_device or "cpu"
+            compute_type = configured_compute_type or (
+                "float16" if device.lower() == "cuda" else "int8"
+            )
+            return [(device, compute_type)]
 
-        return TranscriptResult(
-            source_path=source_path,
-            language=getattr(info, "language", None),
-            segments=segments,
-            full_text=self._build_full_text(segments),
-            engine="faster-whisper",
-        )
+        candidates: list[tuple[str, str]] = []
+        if self._should_prefer_cuda_runtime():
+            candidates.append(("cuda", "float16"))
+
+        candidates.append(("cpu", "int8"))
+        return candidates
+
+    def _should_prefer_cuda_runtime(self) -> bool:
+        if os.getenv("ZENITH_FASTER_WHISPER_AUTO_CUDA", "1").strip().lower() in {
+            "0",
+            "false",
+            "no",
+            "off",
+        }:
+            return False
+
+        try:
+            probe = subprocess.run(
+                ["nvidia-smi", "-L"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+
+        return probe.returncode == 0 and bool(probe.stdout.strip())
 
     def _transcribe_with_openai_whisper(self, source_path: str) -> TranscriptResult:
         import whisper

@@ -38,6 +38,7 @@ _PERSIST_STRIP_PATTERNS: tuple[str, ...] = (
     "_peaks",
 )
 _PERSIST_STRIP_SIZE_THRESHOLD_BYTES = 100_000
+_PERSIST_STRIP_CONTAINER_TYPES = (dict, list, tuple, set)
 
 
 def _serialized_size_bytes(value: Any) -> int:
@@ -55,9 +56,13 @@ def should_strip_persisted_field(
 ) -> bool:
     if key in explicit_exclude:
         return True
+    value_size = _serialized_size_bytes(value)
     if not key.endswith(_PERSIST_STRIP_PATTERNS):
-        return False
-    return _serialized_size_bytes(value) > _PERSIST_STRIP_SIZE_THRESHOLD_BYTES
+        return (
+            isinstance(value, _PERSIST_STRIP_CONTAINER_TYPES)
+            and value_size > _PERSIST_STRIP_SIZE_THRESHOLD_BYTES
+        )
+    return value_size > _PERSIST_STRIP_SIZE_THRESHOLD_BYTES
 
 
 def compact_job_dict_for_persistence(

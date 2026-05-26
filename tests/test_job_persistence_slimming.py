@@ -32,7 +32,7 @@ def test_persistence_slimming_strips_large_pattern_fields_only() -> None:
     assert "large_audio_peaks" not in compact
 
 
-def test_persistence_slimming_keeps_non_matching_large_fields() -> None:
+def test_persistence_slimming_strips_non_matching_large_containers() -> None:
     payload = {
         "job_id": "job_slim_002",
         "large_non_stage_blob": _large_payload(),
@@ -40,7 +40,18 @@ def test_persistence_slimming_keeps_non_matching_large_fields() -> None:
 
     compact = compact_job_dict_for_persistence(payload)
 
-    assert compact["large_non_stage_blob"] == payload["large_non_stage_blob"]
+    assert "large_non_stage_blob" not in compact
+
+
+def test_persistence_slimming_keeps_non_matching_large_scalars() -> None:
+    payload = {
+        "job_id": "job_slim_002b",
+        "large_transcript_text": "x" * (_PERSIST_STRIP_SIZE_THRESHOLD_BYTES + 1),
+    }
+
+    compact = compact_job_dict_for_persistence(payload)
+
+    assert compact["large_transcript_text"] == payload["large_transcript_text"]
 
 
 def test_persistence_slimming_keeps_unserializable_pattern_fields() -> None:
