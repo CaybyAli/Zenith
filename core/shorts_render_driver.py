@@ -581,7 +581,15 @@ class ShortsRenderDriver:
         )
 
         if codec_choice.uses_nvenc:
-            cmd.extend(["-cq", str(crf)])
+            render_cfg = PowerProfile.resolve_render_config(self.power_profile)
+            cmd.extend(
+                [
+                    "-preset",
+                    str(render_cfg["nvenc_preset"]),
+                    "-cq",
+                    str(crf),
+                ]
+            )
         else:
             cmd.extend(["-crf", str(crf), "-preset", "fast"])
 

@@ -44,8 +44,9 @@ class FakeFFmpegHelper:
 
 
 class FakeCodecResolver:
-    def __init__(self, encoder: str = RESOLVER_VIDEO_ENCODER) -> None:
+    def __init__(self, encoder: str = RESOLVER_VIDEO_ENCODER, uses_nvenc: bool = False) -> None:
         self.encoder = encoder
+        self.uses_nvenc = uses_nvenc
         self.called = False
         self.prefer_nvenc_values: list[bool] = []
 
@@ -54,7 +55,7 @@ class FakeCodecResolver:
         self.prefer_nvenc_values.append(bool(prefer_nvenc))
         return VideoCodecChoice(
             encoder=self.encoder,
-            uses_nvenc=False,
+            uses_nvenc=self.uses_nvenc,
             probe_codec_names=(RESOLVER_PROBE_CODEC,),
         )
 
@@ -221,6 +222,21 @@ class TestShortsRenderDriverCommand:
 
         command = helper.commands[0]
         assert "-crf" in command
+        assert "15" in command
+
+    def test_performance_nvenc_uses_p7_preset(self, tmp_path: Path) -> None:
+        resolver = FakeCodecResolver(encoder="h264_nvenc", uses_nvenc=True)
+        driver, helper, _ = _driver(
+            resolver=resolver,
+            power_profile=PowerProfile.PERFORMANCE,
+        )
+
+        driver.render_short(_clip(), SOURCE_VIDEO_NAME, str(tmp_path), JOB_ID)
+
+        command = helper.commands[0]
+        assert "-preset" in command
+        assert command[command.index("-preset") + 1] == "p7"
+        assert "-cq" in command
         assert "15" in command
 
     def test_codec_is_resolved_via_codec_resolver(self, tmp_path: Path) -> None:

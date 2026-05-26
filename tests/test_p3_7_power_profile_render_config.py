@@ -11,6 +11,11 @@ def test_full_power_has_best_nvenc_preset():
     assert cfg["nvenc_preset"] == "p7"
 
 
+def test_performance_uses_high_quality_nvenc_preset():
+    cfg = PowerProfile.resolve_render_config(PowerProfile.PERFORMANCE)
+    assert cfg["nvenc_preset"] == "p7"
+
+
 def test_balanced_has_auto_threads():
     cfg = PowerProfile.resolve_render_config(PowerProfile.BALANCED)
     assert cfg["threads"] == 0

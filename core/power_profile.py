@@ -126,7 +126,7 @@ class PowerProfile:
         off        → threads=1,  nvenc_preset="p1"
         eco        → threads=2,  nvenc_preset="p2"
         balanced   → threads=0,  nvenc_preset="p4"
-        performance → threads=0, nvenc_preset="p6"
+        performance → threads=0, nvenc_preset="p7"
         full_power → threads=0,  nvenc_preset="p7"
         Unbekannt  → balanced Fallback
         """
@@ -139,7 +139,7 @@ class PowerProfile:
         if profile == PowerProfile.BALANCED:
             return {"threads": 0, "nvenc_preset": "p4"}
         if profile == PowerProfile.PERFORMANCE:
-            return {"threads": 0, "nvenc_preset": "p6"}
+            return {"threads": 0, "nvenc_preset": "p7"}
         if profile == PowerProfile.FULL_POWER:
             return {"threads": 0, "nvenc_preset": "p7"}
 
