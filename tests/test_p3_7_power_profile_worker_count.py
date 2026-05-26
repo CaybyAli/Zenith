@@ -25,6 +25,12 @@ def test_unknown_falls_back_to_balanced():
     assert PowerProfile.resolve_worker_count("xyz") == 2
 
 
+def test_analysis_workers_are_capped_for_resource_safety():
+    assert PowerProfile.resolve_analysis_worker_count(PowerProfile.FULL_POWER) == 4
+    assert PowerProfile.resolve_analysis_worker_count(PowerProfile.PERFORMANCE) == 4
+    assert PowerProfile.resolve_analysis_worker_count(PowerProfile.BALANCED) == 2
+
+
 def test_normalize_unknown_returns_balanced():
     assert PowerProfile.normalize("xyz") == PowerProfile.BALANCED
 

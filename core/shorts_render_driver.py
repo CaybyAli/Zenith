@@ -27,7 +27,9 @@ from core.audio_normalizer import (
     AudioNormalizer,
 )
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
+from core.ffmpeg_helper import apply_ffmpeg_thread_cap
 from core.power_profile import PowerProfile
+from core.resource_monitor import guarded_ffmpeg_execution
 from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder
 from core.subtitle_generator import SubtitleGenerator, SubtitleSegment, SubtitleStyle
 from core.shorts_transcript_caption_builder import build_caption_words_from_transcript
@@ -84,13 +86,15 @@ class _DefaultFFmpegHelper:
         return list(parts)
 
     def run_ffmpeg(self, cmd: list[str]) -> None:
-        completed = subprocess.run(
-            list(cmd),
-            shell=False,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        safe_cmd = apply_ffmpeg_thread_cap(list(cmd))
+        with guarded_ffmpeg_execution(safe_cmd):
+            completed = subprocess.run(
+                safe_cmd,
+                shell=False,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
         if completed.returncode != 0:
             stderr = (completed.stderr or "").strip()
             stdout = (completed.stdout or "").strip()
@@ -596,6 +600,8 @@ class ShortsRenderDriver:
                 str(output_path),
             ]
         )
+
+        cmd = apply_ffmpeg_thread_cap(cmd)
 
         builder = getattr(self.ffmpeg_helper, "build_ffmpeg_cmd", None)
         if callable(builder):

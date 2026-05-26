@@ -12,9 +12,14 @@ from models.job import Job
 from models.reframe_plan import ReframePlan
 from models.timeline_segment import TimelineSegment
 from models.zoom_instruction import ZoomInstruction
-from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
+from core.ffmpeg_helper import (
+    apply_ffmpeg_thread_cap,
+    get_ffmpeg_path,
+    get_ffprobe_path,
+)
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
 from core.power_profile import PowerProfile
+from core.resource_monitor import guarded_ffmpeg_execution
 from shared.errors import ValidationError
 
 from typing import Literal
@@ -805,7 +810,9 @@ class FinalRenderDriver:
             "-",
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        cmd = apply_ffmpeg_thread_cap(cmd)
+        with guarded_ffmpeg_execution(cmd):
+            result = subprocess.run(cmd, capture_output=True, text=True)
         ok = result.returncode == 0
         self._ENCODER_RUNTIME_PROBE_CACHE[clean_encoder] = ok
         return ok
@@ -974,7 +981,9 @@ class FinalRenderDriver:
             "-reset_timestamps", "1",
             str(temp_path),
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        cmd = apply_ffmpeg_thread_cap(cmd)
+        with guarded_ffmpeg_execution(cmd):
+            result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0 and self._should_retry_without_hwaccel(result.stderr):
             fallback_cmd = self._strip_hwaccel_from_cmd(cmd)
@@ -987,7 +996,9 @@ class FinalRenderDriver:
             except (ValueError, IndexError):
                 pass
 
-            result = subprocess.run(fallback_cmd, capture_output=True, text=True)
+            fallback_cmd = apply_ffmpeg_thread_cap(fallback_cmd)
+            with guarded_ffmpeg_execution(fallback_cmd):
+                result = subprocess.run(fallback_cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
             raise ValidationError(
@@ -1014,7 +1025,9 @@ class FinalRenderDriver:
             "-c", "copy",
             str(output_path),
         ]
-        result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        cmd = apply_ffmpeg_thread_cap(cmd)
+        with guarded_ffmpeg_execution(cmd):
+            result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
         list_file.unlink(missing_ok=True)
         if result.returncode != 0:
             raise ValidationError(f"Segment concat failed: {result.stderr[-800:]}")

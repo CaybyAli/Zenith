@@ -4,7 +4,8 @@ import re
 import subprocess
 from pathlib import Path
 
-from core.ffmpeg_helper import get_ffmpeg_path
+from core.ffmpeg_helper import apply_ffmpeg_thread_cap, get_ffmpeg_path
+from core.resource_monitor import guarded_ffmpeg_execution
 
 
 class AudioPeakDetector:
@@ -47,13 +48,15 @@ class AudioPeakDetector:
             "-"
         ]
         
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace"
-        )
+        cmd = apply_ffmpeg_thread_cap(cmd)
+        with guarded_ffmpeg_execution(cmd):
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace"
+            )
         
         # Parse silence_start und silence_end
         silence_periods = []
@@ -248,13 +251,15 @@ class AudioPeakDetector:
             "-"
         ]
         
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace"
-        )
+        cmd = apply_ffmpeg_thread_cap(cmd)
+        with guarded_ffmpeg_execution(cmd):
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace"
+            )
         
         mean_volume = None
         max_volume = None
@@ -326,13 +331,15 @@ class AudioPeakDetector:
             "-"
         ]
         
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace"
-        )
+        cmd = apply_ffmpeg_thread_cap(cmd)
+        with guarded_ffmpeg_execution(cmd):
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace"
+            )
         
         for line in result.stderr.split("\n"):
             if "mean_volume:" in line:

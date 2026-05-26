@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from core.ffmpeg_helper import get_ffmpeg_path
+from core.ffmpeg_helper import apply_ffmpeg_thread_cap, get_ffmpeg_path
+from core.resource_monitor import guarded_ffmpeg_execution
 from models.audio_extraction_plan import AudioExtractionPlan, AudioExtractionTarget
 from models.preprocessing_manifest import PreprocessingManifest
 
@@ -184,18 +185,19 @@ def _execute_target(
         return result
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    command = _build_command(ffmpeg_path, target, source_path)
+    command = apply_ffmpeg_thread_cap(_build_command(ffmpeg_path, target, source_path))
     result.command = list(command)
 
     try:
-        completed = subprocess.run(
-            command,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=_FFMPEG_TIMEOUT_SECONDS,
-            check=False,
-        )
+        with guarded_ffmpeg_execution(command):
+            completed = subprocess.run(
+                command,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=_FFMPEG_TIMEOUT_SECONDS,
+                check=False,
+            )
     except subprocess.TimeoutExpired as exc:
         result.status = "failed"
         result.errors.append("ffmpeg_timeout")

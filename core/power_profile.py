@@ -49,6 +49,10 @@ class PowerProfile:
         return 2
 
     @staticmethod
+    def resolve_analysis_worker_count(power_profile: str) -> int:
+        return min(4, PowerProfile.resolve_worker_count(power_profile))
+
+    @staticmethod
     def resolve_model_tier(power_profile: str) -> str:
         """
         off        → "shadow_only"

@@ -7,8 +7,13 @@ from pathlib import Path
 from models.edit_decision import EditDecision
 from models.job import Job
 from models.music_application_plan import MusicApplicationPlan
-from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
+from core.ffmpeg_helper import (
+    apply_ffmpeg_thread_cap,
+    get_ffmpeg_path,
+    get_ffprobe_path,
+)
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
+from core.resource_monitor import guarded_ffmpeg_execution
 from shared.errors import ValidationError
 
 _ENCODER_CACHE: dict[tuple[str, str], str] = {}
@@ -219,7 +224,9 @@ class RenderProcessor:
             ]
         )
 
-        result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+        ffmpeg_cmd = apply_ffmpeg_thread_cap(ffmpeg_cmd)
+        with guarded_ffmpeg_execution(ffmpeg_cmd):
+            result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
             raise ValidationError(f"Render failed: {result.stderr}")

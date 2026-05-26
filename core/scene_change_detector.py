@@ -5,7 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, Iterable
 
-from core.ffmpeg_helper import get_ffmpeg_path
+from core.ffmpeg_helper import apply_ffmpeg_thread_cap, get_ffmpeg_path
+from core.resource_monitor import guarded_ffmpeg_execution
 from models.scene_change import (
     CHANGE_TYPE_FLASH,
     CHANGE_TYPE_HARD,
@@ -423,12 +424,14 @@ def _run_ffmpeg_scene_detection(
         "-",
     ]
 
-    completed = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=timeout_seconds,
-    )
+    cmd = apply_ffmpeg_thread_cap(cmd)
+    with guarded_ffmpeg_execution(cmd):
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
     return completed.returncode, completed.stdout or "", completed.stderr or ""
 
 

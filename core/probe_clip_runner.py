@@ -4,7 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+from core.ffmpeg_helper import apply_ffmpeg_thread_cap
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
+from core.resource_monitor import guarded_ffmpeg_execution
 
 _ENCODER_CACHE: dict[tuple[str, str], str] = {}
 
@@ -111,8 +113,10 @@ def run_probe_clip(
         str(out_mp4),
     ]
 
+    cmd = apply_ffmpeg_thread_cap(cmd)
     print(f"[probe_clip] CMD  {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=False)
+    with guarded_ffmpeg_execution(cmd):
+        result = subprocess.run(cmd, capture_output=False)
 
     if result.returncode != 0:
         fallback_cmd: list[str] = []
@@ -135,7 +139,9 @@ def run_probe_clip(
                 )
 
         print("[probe_clip] HWDEC_FALLBACK  retry_without_cuda_hwaccel")
-        result = subprocess.run(fallback_cmd, capture_output=False)
+        fallback_cmd = apply_ffmpeg_thread_cap(fallback_cmd)
+        with guarded_ffmpeg_execution(fallback_cmd):
+            result = subprocess.run(fallback_cmd, capture_output=False)
 
     if result.returncode != 0:
         print(

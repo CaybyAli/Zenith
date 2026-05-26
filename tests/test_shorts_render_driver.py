@@ -167,6 +167,16 @@ class TestShortsRenderDriverCommand:
         assert "-ss" in command
         assert "-to" in command
 
+    def test_command_contains_ffmpeg_thread_cap(self, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setenv("ZENITH_FFMPEG_THREADS", "12")
+        driver, helper, _ = _driver()
+
+        driver.render_short(_clip(), SOURCE_VIDEO_NAME, str(tmp_path), JOB_ID)
+
+        command = helper.commands[0]
+        assert "-threads" in command
+        assert command[command.index("-threads") + 1] == "12"
+
     def test_command_contains_reframe_filter(self, tmp_path: Path) -> None:
         driver, helper, _ = _driver()
         clip = _clip()

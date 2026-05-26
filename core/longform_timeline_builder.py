@@ -650,7 +650,7 @@ class LongformTimelineBuilder:
             raise ValidationError("Timeline builder needs highlight candidates")
 
         weak_zones = weak_zones or []
-        _worker_count = PowerProfile.resolve_worker_count(
+        _worker_count = PowerProfile.resolve_analysis_worker_count(
             getattr(job, "power_profile", PowerProfile.DEFAULT)
         )
         print(
