@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 
 from core.intake_manager import IntakeManager
-from core.job_store import JobStore
+from core.job_store import JobStore, compact_job_dict_for_persistence
 from core.job_state_transitions import transition_job_state
 from core.job_state_persistence import persist_job_state_checkpoint
 from core.job_recovery import (
@@ -160,33 +160,9 @@ _INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
     "faceless":     ChannelType.FACELESS_TREND,
 }
 
-_EXPORT_SLIM_EXCLUDE: frozenset[str] = frozenset({
-    "rms_energy_context_timeline",
-    "rms_energy_context_adapter",
-    "rms_energy_timeline_result",
-    "rms_energy_report",
-    "energy_peak_report",
-    "stutter_detection_points",
-    "stutter_detection_report",
-    "unified_edit_signals",
-    "unified_edit_signal_report",
-    "reaction_shot_candidates",
-    "continuity_check_issues",
-    "transition_decision_decisions",
-    "face_reaction_points",
-    "screen_content_points",
-    "visual_energy_points",
-    "motion_analysis_points",
-    "beat_detection_beats",
-})
-
-
 def _write_export_job_json(job, export_dir: Path) -> Path:
     job_json_path = export_dir / "job.json"
-    slim_dict = {
-        k: v for k, v in job.to_dict().items()
-        if k not in _EXPORT_SLIM_EXCLUDE
-    }
+    slim_dict = compact_job_dict_for_persistence(job.to_dict())
 
     with job_json_path.open("w", encoding="utf-8") as handle:
         json.dump(slim_dict, handle, indent=4, ensure_ascii=False)
@@ -706,4 +682,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

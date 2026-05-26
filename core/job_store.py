@@ -23,14 +23,57 @@ _SLIM_EXCLUDE: frozenset[str] = frozenset({
     "unified_edit_signals",
     "unified_edit_signal_report",
     "reaction_shot_candidates",
-    "continuity_check_issues",
-    "transition_decision_decisions",
     "face_reaction_points",
     "screen_content_points",
     "visual_energy_points",
     "motion_analysis_points",
+    "continuity_check_issues",
+    "transition_decision_decisions",
     "beat_detection_beats",
 })
+_PERSIST_STRIP_PATTERNS: tuple[str, ...] = (
+    "_result",
+    "_report",
+    "_segments",
+    "_peaks",
+)
+_PERSIST_STRIP_SIZE_THRESHOLD_BYTES = 100_000
+
+
+def _serialized_size_bytes(value: Any) -> int:
+    try:
+        return len(json.dumps(value, default=str, ensure_ascii=False).encode("utf-8"))
+    except (TypeError, ValueError, RecursionError):
+        return 0
+
+
+def should_strip_persisted_field(
+    key: str,
+    value: Any,
+    *,
+    explicit_exclude: frozenset[str] = _SLIM_EXCLUDE,
+) -> bool:
+    if key in explicit_exclude:
+        return True
+    if not key.endswith(_PERSIST_STRIP_PATTERNS):
+        return False
+    return _serialized_size_bytes(value) > _PERSIST_STRIP_SIZE_THRESHOLD_BYTES
+
+
+def compact_job_dict_for_persistence(
+    job_dict: dict[str, Any],
+    *,
+    explicit_exclude: frozenset[str] = _SLIM_EXCLUDE,
+) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in job_dict.items()
+        if not should_strip_persisted_field(
+            key,
+            value,
+            explicit_exclude=explicit_exclude,
+        )
+    }
 
 
 class JobStore:
@@ -185,13 +228,7 @@ class JobStore:
     def _compact_job_dict_for_persistence(
         self, job_dict: dict[str, Any]
     ) -> dict[str, Any]:
-        """
-        Entfernt Analyse-Rohdaten aus dem Persistenz-Dict.
-        Nur top-level Felder. Originales job_dict bleibt unver?ndert.
-        Ziel: < 10 MB pro Job-Datei auf Disk.
-        Pipeline-interne RAM-Objekte bleiben vollst?ndig.
-        """
-        return {k: v for k, v in job_dict.items() if k not in _SLIM_EXCLUDE}
+        return compact_job_dict_for_persistence(job_dict)
 
     def _write_job(self, job_id: str, job_dict: dict[str, Any]) -> None:
         try:
