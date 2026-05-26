@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import uuid
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from moviepy import AudioFileClip, VideoFileClip
@@ -40,6 +41,110 @@ class EditSignalExtractor:
 
     def _safe_strength(self, value: float) -> float:
         return round(max(0.0, min(1.0, float(value))), 3)
+
+    def _job_attr(self, job: Any, name: str, default: Any = None) -> Any:
+        if isinstance(job, dict):
+            return job.get(name, default)
+        return getattr(job, name, default)
+
+    def _item_value(self, item: Any, *names: str, default: Any = None) -> Any:
+        for name in names:
+            if isinstance(item, dict) and name in item:
+                return item.get(name)
+            if not isinstance(item, dict) and hasattr(item, name):
+                return getattr(item, name)
+        return default
+
+    def _safe_float_or_none(self, value: Any) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _safe_bool(self, value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "y", "silent"}
+        return False
+
+    def _rows_from_payload(
+        self,
+        payload: Any,
+        keys: tuple[str, ...],
+    ) -> list[Any]:
+        if isinstance(payload, list):
+            return payload
+        if isinstance(payload, tuple):
+            return list(payload)
+        if isinstance(payload, dict):
+            for key in keys:
+                rows = payload.get(key)
+                if isinstance(rows, list):
+                    return rows
+            return []
+        if payload is not None:
+            for key in keys:
+                rows = getattr(payload, key, None)
+                if isinstance(rows, list):
+                    return rows
+        return []
+
+    def _nested_payload(self, payload: Any, *names: str) -> Any:
+        current = payload
+        for name in names:
+            if current is None:
+                return None
+            if isinstance(current, dict):
+                current = current.get(name)
+            else:
+                current = getattr(current, name, None)
+        return current
+
+    def _time_bounds_from_item(
+        self,
+        item: Any,
+        *,
+        duration_seconds: float,
+        fallback_window_seconds: float,
+    ) -> tuple[float, float] | None:
+        start = self._safe_float_or_none(
+            self._item_value(item, "start_seconds", "start_time", "start")
+        )
+        end = self._safe_float_or_none(
+            self._item_value(item, "end_seconds", "end_time", "end")
+        )
+        center = self._safe_float_or_none(
+            self._item_value(item, "center_seconds", "time_seconds", "time", "timestamp")
+        )
+
+        if start is None and end is None and center is None:
+            return None
+
+        if start is None:
+            if center is None:
+                start = 0.0
+            else:
+                start = center - (fallback_window_seconds / 2.0)
+        if end is None:
+            if center is not None:
+                end = center + (fallback_window_seconds / 2.0)
+            else:
+                end = start + fallback_window_seconds
+
+        start = max(0.0, min(float(start), duration_seconds))
+        end = max(0.0, min(float(end), duration_seconds))
+        if end <= start:
+            end = min(duration_seconds, start + fallback_window_seconds)
+
+        if end <= start:
+            return None
+
+        return round(start, 3), round(end, 3)
 
     def _build_position_tags(
         self,
@@ -180,6 +285,168 @@ class EditSignalExtractor:
         except Exception as exc:
             raise ValidationError(f"Could not extract audio edit signals: {exc}") from exc
 
+    def _select_cached_audio_rows(self, job: Job) -> tuple[list[Any], str | None]:
+        sources: list[tuple[str, Any, tuple[str, ...]]] = [
+            (
+                "rms_energy_context_timeline",
+                self._job_attr(job, "rms_energy_context_timeline"),
+                ("energy_timeline", "points"),
+            ),
+            (
+                "rms_energy_context_adapter",
+                self._job_attr(job, "rms_energy_context_adapter"),
+                ("energy_timeline", "points"),
+            ),
+            (
+                "rms_energy_timeline_result",
+                self._job_attr(job, "rms_energy_timeline_result"),
+                ("points", "energy_timeline"),
+            ),
+            (
+                "rms_energy_report.energy_timeline_result",
+                self._nested_payload(
+                    self._job_attr(job, "rms_energy_report"),
+                    "energy_timeline_result",
+                ),
+                ("points", "energy_timeline"),
+            ),
+            (
+                "rms_energy_run_report.energy_timeline_result",
+                self._nested_payload(
+                    self._job_attr(job, "rms_energy_run_report"),
+                    "energy_timeline_result",
+                ),
+                ("points", "energy_timeline"),
+            ),
+        ]
+
+        for source_name, payload, keys in sources:
+            rows = self._rows_from_payload(payload, keys)
+            if rows:
+                return rows, source_name
+
+        return [], None
+
+    def _extract_cached_audio_energy_signals(
+        self,
+        *,
+        job: Job,
+        duration_seconds: float,
+        bucket_seconds: float = 1.0,
+    ) -> list[EditSignal]:
+        rows, source_name = self._select_cached_audio_rows(job)
+        if not rows:
+            return []
+
+        buckets: dict[int, dict[str, Any]] = {}
+        bucket_seconds = max(0.25, float(bucket_seconds))
+        effective_duration = max(0.0, float(duration_seconds))
+
+        for row in rows:
+            bounds = self._time_bounds_from_item(
+                row,
+                duration_seconds=effective_duration,
+                fallback_window_seconds=0.01,
+            )
+            if bounds is None:
+                continue
+            start_time, end_time = bounds
+            midpoint = (start_time + end_time) / 2.0
+            bucket_index = int(midpoint // bucket_seconds)
+
+            energy = self._safe_float_or_none(
+                self._item_value(
+                    row,
+                    "energy_score",
+                    "normalized_energy",
+                    "rms",
+                    "score",
+                    "strength",
+                )
+            )
+            if energy is None:
+                continue
+
+            energy = self._safe_strength(energy)
+            is_silent = self._safe_bool(self._item_value(row, "is_silent", default=False))
+
+            bucket = buckets.setdefault(
+                bucket_index,
+                {
+                    "sum": 0.0,
+                    "count": 0,
+                    "max": 0.0,
+                    "silent_count": 0,
+                    "rms_max": 0.0,
+                },
+            )
+            bucket["sum"] += energy
+            bucket["count"] += 1
+            bucket["max"] = max(float(bucket["max"]), energy)
+            if is_silent:
+                bucket["silent_count"] += 1
+            rms_value = self._safe_float_or_none(self._item_value(row, "rms"))
+            if rms_value is not None:
+                bucket["rms_max"] = max(float(bucket["rms_max"]), rms_value)
+
+        if not buckets:
+            return []
+
+        signals: list[EditSignal] = []
+        job_id = str(self._job_attr(job, "job_id", "unknown_job"))
+
+        for bucket_index in sorted(buckets):
+            bucket = buckets[bucket_index]
+            count = max(1, int(bucket["count"]))
+            avg_energy = float(bucket["sum"]) / count
+            max_energy = float(bucket["max"])
+            silent_ratio = float(bucket["silent_count"]) / count
+            strength = self._safe_strength(max(avg_energy, max_energy * 0.75))
+            start_time = round(bucket_index * bucket_seconds, 3)
+            end_time = round(min(start_time + bucket_seconds, effective_duration), 3)
+            if end_time <= start_time:
+                continue
+
+            if silent_ratio >= 0.60 or strength <= 0.12:
+                signal_type = "silence_zone"
+                notes = [f"Cached low audio energy detected ({strength:.3f})"]
+            elif strength >= 0.50 or max_energy >= 0.85:
+                signal_type = "audio_peak"
+                notes = [f"Cached high audio energy detected ({strength:.3f})"]
+            else:
+                signal_type = "audio_activity"
+                notes = [f"Cached normal audio activity detected ({strength:.3f})"]
+
+            signals.append(
+                EditSignal(
+                    signal_id=self._make_signal_id(),
+                    job_id=job_id,
+                    start_time=start_time,
+                    end_time=end_time,
+                    signal_type=signal_type,
+                    strength=strength,
+                    confidence=0.74,
+                    tags=self._build_position_tags(
+                        start_time=start_time,
+                        end_time=end_time,
+                        duration_seconds=effective_duration,
+                    ),
+                    source="edit_signal_extractor.cached_audio",
+                    notes=notes,
+                    metadata={
+                        "cache_source": source_name,
+                        "bucket_seconds": bucket_seconds,
+                        "point_count": count,
+                        "avg_energy": round(avg_energy, 6),
+                        "max_energy": round(max_energy, 6),
+                        "silent_ratio": round(silent_ratio, 6),
+                        "raw_rms_max": round(float(bucket["rms_max"]), 6),
+                    },
+                )
+            )
+
+        return signals
+
     def _extract_video_activity_signals(
         self,
         *,
@@ -277,6 +544,153 @@ class EditSignalExtractor:
         except Exception as exc:
             raise ValidationError(f"Could not extract video edit signals: {exc}") from exc
 
+    def _select_cached_video_rows(self, job: Job) -> tuple[list[Any], str | None]:
+        sources: list[tuple[str, Any, tuple[str, ...]]] = [
+            (
+                "motion_analysis_segments",
+                self._job_attr(job, "motion_analysis_segments"),
+                ("motion_segments", "segments"),
+            ),
+            (
+                "motion_analysis_report.motion_segments",
+                self._job_attr(job, "motion_analysis_report"),
+                ("motion_segments", "segments"),
+            ),
+            (
+                "visual_energy_segments",
+                self._job_attr(job, "visual_energy_segments"),
+                ("visual_energy_segments", "segments"),
+            ),
+            (
+                "visual_energy_report.visual_energy_segments",
+                self._job_attr(job, "visual_energy_report"),
+                ("visual_energy_segments", "segments"),
+            ),
+            (
+                "motion_analysis_points",
+                self._job_attr(job, "motion_analysis_points"),
+                ("motion_points", "points"),
+            ),
+            (
+                "visual_energy_points",
+                self._job_attr(job, "visual_energy_points"),
+                ("visual_energy_points", "points"),
+            ),
+        ]
+
+        for source_name, payload, keys in sources:
+            rows = self._rows_from_payload(payload, keys)
+            if rows:
+                return rows, source_name
+
+        return [], None
+
+    def _video_strength_from_row(self, row: Any) -> float | None:
+        values = [
+            self._safe_float_or_none(
+                self._item_value(
+                    row,
+                    "max_motion_score",
+                    "avg_motion_score",
+                    "motion_score",
+                    "raw_motion_value",
+                )
+            ),
+            self._safe_float_or_none(
+                self._item_value(
+                    row,
+                    "max_visual_energy_score",
+                    "avg_visual_energy_score",
+                    "visual_energy_score",
+                    "combined_video_score",
+                    "score",
+                    "strength",
+                )
+            ),
+        ]
+        numeric = [value for value in values if value is not None]
+        if not numeric:
+            return None
+        return self._safe_strength(max(numeric))
+
+    def _extract_cached_video_activity_signals(
+        self,
+        *,
+        job: Job,
+        duration_seconds: float,
+        fallback_window_seconds: float = 1.5,
+    ) -> list[EditSignal]:
+        rows, source_name = self._select_cached_video_rows(job)
+        if not rows:
+            return []
+
+        effective_duration = max(0.0, float(duration_seconds))
+        signals: list[EditSignal] = []
+        job_id = str(self._job_attr(job, "job_id", "unknown_job"))
+
+        for row in rows:
+            bounds = self._time_bounds_from_item(
+                row,
+                duration_seconds=effective_duration,
+                fallback_window_seconds=fallback_window_seconds,
+            )
+            if bounds is None:
+                continue
+            start_time, end_time = bounds
+            strength = self._video_strength_from_row(row)
+            if strength is None:
+                continue
+
+            classification = str(
+                self._item_value(row, "classification", "label", default="")
+            ).strip().lower()
+
+            if classification in {
+                "high_motion",
+                "high_visual_energy",
+                "peak_visual_energy",
+            } or strength >= 0.45:
+                signal_type = "motion_peak"
+                notes = [f"Cached high visual activity detected ({strength:.3f})"]
+            elif classification in {
+                "static",
+                "low_motion",
+                "dead_visual_candidate",
+                "low_visual_energy",
+                "technical_warning",
+            } or strength <= 0.10:
+                signal_type = "low_motion_zone"
+                notes = [f"Cached low visual activity detected ({strength:.3f})"]
+            else:
+                signal_type = "motion_activity"
+                notes = [f"Cached normal visual activity detected ({strength:.3f})"]
+
+            signals.append(
+                EditSignal(
+                    signal_id=self._make_signal_id(),
+                    job_id=job_id,
+                    start_time=start_time,
+                    end_time=end_time,
+                    signal_type=signal_type,
+                    strength=strength,
+                    confidence=0.66,
+                    tags=self._build_position_tags(
+                        start_time=start_time,
+                        end_time=end_time,
+                        duration_seconds=effective_duration,
+                    ),
+                    source="edit_signal_extractor.cached_video",
+                    notes=notes,
+                    metadata={
+                        "cache_source": source_name,
+                        "classification": classification,
+                        "fallback_window_seconds": fallback_window_seconds,
+                    },
+                )
+            )
+
+        return signals
+
     def extract(self, job: Job, analysis_result: AnalysisResult) -> list[EditSignal]:
         if not job.raw_video_path:
             raise ValidationError("EditSignalExtractor needs raw_video_path")
@@ -313,21 +727,35 @@ class EditSignalExtractor:
             )
         )
 
-        signals.extend(
-            self._extract_audio_energy_signals(
-                job=job,
-                audio_path=str(source_path),
-                duration_seconds=float(analysis_result.duration_seconds),
-            )
+        cached_audio_signals = self._extract_cached_audio_energy_signals(
+            job=job,
+            duration_seconds=float(analysis_result.duration_seconds),
         )
+        if cached_audio_signals:
+            signals.extend(cached_audio_signals)
+        else:
+            signals.extend(
+                self._extract_audio_energy_signals(
+                    job=job,
+                    audio_path=str(source_path),
+                    duration_seconds=float(analysis_result.duration_seconds),
+                )
+            )
 
-        signals.extend(
-            self._extract_video_activity_signals(
-                job=job,
-                video_path=str(source_path),
-                duration_seconds=float(analysis_result.duration_seconds),
-            )
+        cached_video_signals = self._extract_cached_video_activity_signals(
+            job=job,
+            duration_seconds=float(analysis_result.duration_seconds),
         )
+        if cached_video_signals:
+            signals.extend(cached_video_signals)
+        else:
+            signals.extend(
+                self._extract_video_activity_signals(
+                    job=job,
+                    video_path=str(source_path),
+                    duration_seconds=float(analysis_result.duration_seconds),
+                )
+            )
 
         return sorted(
             signals,
