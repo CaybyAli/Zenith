@@ -102,7 +102,9 @@ def test_cached_audio_points_are_bucketed_to_seconds() -> None:
 
     assert 1 <= len(signals) <= 3
     assert {signal.start_time for signal in signals} == {0.0, 1.0, 2.0}
+    assert signals[0].end_time == 3.0
     assert all(signal.metadata["point_count"] >= 1 for signal in signals)
+    assert all(signal.metadata["window_seconds"] == 4.0 for signal in signals)
 
 
 def test_cached_audio_mixed_silent_bucket_stays_activity() -> None:

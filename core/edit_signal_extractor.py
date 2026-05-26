@@ -333,6 +333,7 @@ class EditSignalExtractor:
         job: Job,
         duration_seconds: float,
         bucket_seconds: float = 1.0,
+        window_seconds: float = 4.0,
     ) -> list[EditSignal]:
         rows, source_name = self._select_cached_audio_rows(job)
         if not rows:
@@ -395,15 +396,30 @@ class EditSignalExtractor:
         signals: list[EditSignal] = []
         job_id = str(self._job_attr(job, "job_id", "unknown_job"))
 
+        span_bucket_count = max(1, int(round(max(bucket_seconds, window_seconds) / bucket_seconds)))
+
         for bucket_index in sorted(buckets):
-            bucket = buckets[bucket_index]
+            span_buckets = [
+                buckets[index]
+                for index in range(bucket_index, bucket_index + span_bucket_count)
+                if index in buckets
+            ]
+            if not span_buckets:
+                continue
+            bucket = {
+                "sum": sum(float(item["sum"]) for item in span_buckets),
+                "count": sum(int(item["count"]) for item in span_buckets),
+                "max": max(float(item["max"]) for item in span_buckets),
+                "silent_count": sum(int(item["silent_count"]) for item in span_buckets),
+                "rms_max": max(float(item["rms_max"]) for item in span_buckets),
+            }
             count = max(1, int(bucket["count"]))
             avg_energy = float(bucket["sum"]) / count
             max_energy = float(bucket["max"])
             silent_ratio = float(bucket["silent_count"]) / count
             strength = self._safe_strength(max(avg_energy, max_energy * 0.75))
             start_time = round(bucket_index * bucket_seconds, 3)
-            end_time = round(min(start_time + bucket_seconds, effective_duration), 3)
+            end_time = round(min(start_time + window_seconds, effective_duration), 3)
             if end_time <= start_time:
                 continue
 
@@ -436,6 +452,7 @@ class EditSignalExtractor:
                     metadata={
                         "cache_source": source_name,
                         "bucket_seconds": bucket_seconds,
+                        "window_seconds": window_seconds,
                         "point_count": count,
                         "avg_energy": round(avg_energy, 6),
                         "max_energy": round(max_energy, 6),
