@@ -85,6 +85,11 @@ def _safe_confidence(value: Any) -> float | None:
     return confidence
 
 
+def _safe_audio_track(value: Any) -> str:
+    clean = _safe_text(value).lower()
+    return clean or "mic"
+
+
 def _metadata_from(source: Any) -> dict[str, Any]:
     metadata = _get_value(source, "metadata")
 
@@ -186,6 +191,7 @@ def normalize_transcript_segment(
     end_seconds = _to_float(_first_value(segment, ["end_seconds", "end"]))
     text = _safe_text(_get_value(segment, "text"))
     confidence = _safe_confidence(_get_value(segment, "confidence"))
+    audio_track = _safe_audio_track(_get_value(segment, "audio_track"))
 
     if start_seconds is None:
         errors.append("missing_start_seconds")
@@ -248,6 +254,7 @@ def normalize_transcript_segment(
         "text": text,
         "words": words,
         "confidence": confidence,
+        "audio_track": audio_track,
         "source_index": int(source_index),
         "is_valid": not errors,
         "warnings": warnings,

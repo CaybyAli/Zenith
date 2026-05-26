@@ -1,8 +1,15 @@
 import os
 import subprocess
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Iterator, Optional
 
+from core.audio_stream_inspector import (
+    AudioStream,
+    AudioStreamInspectionError,
+    AudioStreamInspector,
+)
 from models.transcript_result import TranscriptResult, TranscriptSegment, TranscriptWord
 
 
@@ -11,15 +18,21 @@ class TranscriptUnavailableError(RuntimeError):
 
 
 class TranscriptProcessor:
-    def __init__(self, model_name: Optional[str] = None, allow_test_fallback: Optional[bool] = None) -> None:
+    def __init__(
+        self,
+        model_name: Optional[str] = None,
+        allow_test_fallback: Optional[bool] = None,
+        audio_stream_inspector: AudioStreamInspector | None = None,
+    ) -> None:
         self.model_name = model_name or os.getenv("ZENITH_WHISPER_MODEL", "base")
         self.allow_test_fallback = (
             allow_test_fallback
             if allow_test_fallback is not None
             else os.getenv("ZENITH_TRANSCRIPT_TEST_MODE") == "1"
         )
+        self.audio_stream_inspector = audio_stream_inspector or AudioStreamInspector()
 
-    def transcribe(self, video_path: str) -> TranscriptResult:
+    def transcribe(self, video_path: str, audio_stream_index: int = 1) -> TranscriptResult:
         source_path = str(video_path)
         source = Path(source_path)
 
@@ -31,23 +44,68 @@ class TranscriptProcessor:
 
         errors = []
 
-        try:
-            return self._transcribe_with_faster_whisper(source_path)
-        except ImportError as exc:
-            errors.append(f"faster-whisper unavailable: {exc}")
-        except Exception as exc:
-            errors.append(f"faster-whisper failed: {exc}")
+        with self._selected_audio_source(source_path, audio_stream_index) as selected:
+            try:
+                return self._transcribe_with_faster_whisper(
+                    selected.source_path,
+                    result_source_path=source_path,
+                    audio_track=selected.audio_track,
+                )
+            except ImportError as exc:
+                errors.append(f"faster-whisper unavailable: {exc}")
+            except Exception as exc:
+                errors.append(f"faster-whisper failed: {exc}")
 
-        try:
-            return self._transcribe_with_openai_whisper(source_path)
-        except ImportError as exc:
-            errors.append(f"whisper unavailable: {exc}")
-        except Exception as exc:
-            errors.append(f"whisper failed: {exc}")
+            try:
+                return self._transcribe_with_openai_whisper(
+                    selected.source_path,
+                    result_source_path=source_path,
+                    audio_track=selected.audio_track,
+                )
+            except ImportError as exc:
+                errors.append(f"whisper unavailable: {exc}")
+            except Exception as exc:
+                errors.append(f"whisper failed: {exc}")
 
         raise TranscriptUnavailableError("; ".join(errors) or "No transcript engine available")
 
-    def _transcribe_with_faster_whisper(self, source_path: str) -> TranscriptResult:
+    def transcribe_all_streams(self, video_path: str) -> dict[str, TranscriptResult]:
+        source_path = str(video_path)
+        source = Path(source_path)
+
+        if not source.exists() and not self.allow_test_fallback:
+            raise FileNotFoundError(f"Transcript source not found: {source_path}")
+
+        try:
+            inventory = self.audio_stream_inspector.inspect(source_path)
+        except (AudioStreamInspectionError, FileNotFoundError):
+            if not self.allow_test_fallback:
+                raise
+            return {"mic": self._test_fallback(source_path, audio_track="mic")}
+
+        if not inventory.streams:
+            raise TranscriptUnavailableError("No audio streams available for transcription")
+
+        results: dict[str, TranscriptResult] = {}
+        for stream in inventory.streams:
+            label = self._unique_track_label(stream.label, results)
+            if self.allow_test_fallback:
+                results[label] = self._test_fallback(source_path, audio_track=label)
+                continue
+
+            result = self.transcribe(source_path, audio_stream_index=stream.index)
+            self._stamp_audio_track(result, label)
+            results[label] = result
+
+        return results
+
+    def _transcribe_with_faster_whisper(
+        self,
+        source_path: str,
+        *,
+        result_source_path: str | None = None,
+        audio_track: str = "mic",
+    ) -> TranscriptResult:
         from faster_whisper import WhisperModel
 
         errors: list[str] = []
@@ -66,14 +124,17 @@ class TranscriptProcessor:
                 )
 
                 segments = self._sanitize_segments(
-                    {
-                        "start": segment.start,
-                        "end": segment.end,
-                        "text": segment.text,
-                        "confidence": None,
-                        "words": getattr(segment, "words", None),
-                    }
-                    for segment in raw_segments
+                    (
+                        {
+                            "start": segment.start,
+                            "end": segment.end,
+                            "text": segment.text,
+                            "confidence": None,
+                            "words": getattr(segment, "words", None),
+                        }
+                        for segment in raw_segments
+                    ),
+                    audio_track=audio_track,
                 )
 
                 if not segments:
@@ -82,7 +143,7 @@ class TranscriptProcessor:
                     )
 
                 return TranscriptResult(
-                    source_path=source_path,
+                    source_path=result_source_path or source_path,
                     language=getattr(info, "language", None),
                     segments=segments,
                     full_text=self._build_full_text(segments),
@@ -134,38 +195,49 @@ class TranscriptProcessor:
 
         return probe.returncode == 0 and bool(probe.stdout.strip())
 
-    def _transcribe_with_openai_whisper(self, source_path: str) -> TranscriptResult:
+    def _transcribe_with_openai_whisper(
+        self,
+        source_path: str,
+        *,
+        result_source_path: str | None = None,
+        audio_track: str = "mic",
+    ) -> TranscriptResult:
         import whisper
 
         model = whisper.load_model(self.model_name)
         result = model.transcribe(source_path)
 
-        segments = self._sanitize_segments(result.get("segments", []))
+        segments = self._sanitize_segments(
+            result.get("segments", []),
+            audio_track=audio_track,
+        )
 
         if not segments:
             raise TranscriptUnavailableError("whisper returned no valid segments")
 
         return TranscriptResult(
-            source_path=source_path,
+            source_path=result_source_path or source_path,
             language=result.get("language"),
             segments=segments,
             full_text=self._build_full_text(segments),
             engine="whisper",
         )
 
-    def _test_fallback(self, source_path: str) -> TranscriptResult:
+    def _test_fallback(self, source_path: str, audio_track: str = "mic") -> TranscriptResult:
         segments = [
             TranscriptSegment(
                 start_seconds=0.0,
                 end_seconds=1.4,
                 text="Zenith transcript smoke test segment one.",
                 confidence=None,
+                audio_track=audio_track,
             ),
             TranscriptSegment(
                 start_seconds=1.5,
                 end_seconds=3.2,
                 text="This is a deterministic test fallback, not productive Whisper output.",
                 confidence=None,
+                audio_track=audio_track,
             ),
         ]
 
@@ -177,7 +249,11 @@ class TranscriptProcessor:
             engine="test-fallback",
         )
 
-    def _sanitize_segments(self, raw_segments: Iterable[Any]) -> list[TranscriptSegment]:
+    def _sanitize_segments(
+        self,
+        raw_segments: Iterable[Any],
+        audio_track: str = "mic",
+    ) -> list[TranscriptSegment]:
         sanitized = []
 
         for item in raw_segments:
@@ -187,12 +263,14 @@ class TranscriptProcessor:
                 text = item.get("text")
                 confidence = item.get("confidence")
                 raw_words = item.get("words") or []
+                item_audio_track = item.get("audio_track")
             else:
                 start = getattr(item, "start", None)
                 end = getattr(item, "end", None)
                 text = getattr(item, "text", None)
                 confidence = getattr(item, "confidence", None)
                 raw_words = getattr(item, "words", None) or []
+                item_audio_track = getattr(item, "audio_track", None)
 
             try:
                 start_seconds = max(0.0, float(start))
@@ -217,6 +295,7 @@ class TranscriptProcessor:
                     text=clean_text,
                     confidence=confidence if isinstance(confidence, float) else None,
                     words=words,
+                    audio_track=self._safe_audio_track(item_audio_track, audio_track),
                 )
             )
 
@@ -270,3 +349,130 @@ class TranscriptProcessor:
 
     def _build_full_text(self, segments: list[TranscriptSegment]) -> str:
         return " ".join(segment.text.strip() for segment in segments if segment.text.strip()).strip()
+
+    @contextmanager
+    def _selected_audio_source(
+        self,
+        source_path: str,
+        audio_stream_index: int,
+    ) -> Iterator["_SelectedAudioSource"]:
+        try:
+            inventory = self.audio_stream_inspector.inspect(source_path)
+        except (AudioStreamInspectionError, FileNotFoundError):
+            yield _SelectedAudioSource(source_path=source_path, audio_track="mic")
+            return
+
+        if not inventory.streams:
+            raise TranscriptUnavailableError("No audio streams available for transcription")
+
+        selected_stream = self._resolve_audio_stream(
+            inventory.streams,
+            audio_stream_index=audio_stream_index,
+        )
+
+        if len(inventory.streams) == 1:
+            yield _SelectedAudioSource(source_path=source_path, audio_track="mic")
+            return
+
+        audio_track = self._safe_audio_track(selected_stream.label, "unknown")
+        with tempfile.TemporaryDirectory(prefix="zenith_audio_stream_") as temp_dir:
+            extracted_path = str(Path(temp_dir) / f"stream_{selected_stream.index}.wav")
+            self._extract_audio_stream(
+                source_path=source_path,
+                stream_index=selected_stream.index,
+                output_path=extracted_path,
+            )
+            yield _SelectedAudioSource(
+                source_path=extracted_path,
+                audio_track=audio_track,
+            )
+
+    def _resolve_audio_stream(
+        self,
+        streams: list[AudioStream],
+        *,
+        audio_stream_index: int,
+    ) -> AudioStream:
+        for stream in streams:
+            if stream.index == audio_stream_index:
+                return stream
+
+        if len(streams) == 1:
+            return streams[0]
+
+        if 0 <= audio_stream_index < len(streams):
+            return streams[audio_stream_index]
+
+        available = ", ".join(str(stream.index) for stream in streams)
+        raise TranscriptUnavailableError(
+            f"Audio stream {audio_stream_index} not found; available streams: {available}"
+        )
+
+    def _extract_audio_stream(
+        self,
+        *,
+        source_path: str,
+        stream_index: int,
+        output_path: str,
+    ) -> None:
+        command = [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-i",
+            source_path,
+            "-map",
+            f"0:{stream_index}",
+            "-vn",
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            output_path,
+        ]
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
+        )
+        if completed.returncode != 0:
+            message = (completed.stderr or completed.stdout or "").strip()
+            raise TranscriptUnavailableError(
+                f"Failed to extract audio stream {stream_index}: {message}"
+            )
+
+    def _unique_track_label(
+        self,
+        label: str,
+        existing_results: dict[str, TranscriptResult],
+    ) -> str:
+        safe_label = self._safe_audio_track(label, "unknown")
+        if safe_label not in existing_results:
+            return safe_label
+
+        suffix = 2
+        while f"{safe_label}_{suffix}" in existing_results:
+            suffix += 1
+        return f"{safe_label}_{suffix}"
+
+    def _stamp_audio_track(self, result: TranscriptResult, audio_track: str) -> None:
+        safe_track = self._safe_audio_track(audio_track, "unknown")
+        for segment in result.segments or []:
+            segment.audio_track = safe_track
+
+    def _safe_audio_track(self, value: Any, default: str) -> str:
+        clean = str(value or "").strip().lower()
+        if clean in {"mic", "discord", "ingame", "unknown"}:
+            return clean
+        if clean:
+            return clean
+        return default
+
+
+class _SelectedAudioSource:
+    def __init__(self, source_path: str, audio_track: str) -> None:
+        self.source_path = source_path
+        self.audio_track = audio_track

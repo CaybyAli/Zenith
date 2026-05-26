@@ -25,6 +25,7 @@ class TranscriptSegment:
     text: str
     confidence: Optional[float] = None
     words: list[TranscriptWord] = field(default_factory=list)
+    audio_track: str = "mic"
 
     def to_dict(self) -> dict:
         return {
@@ -33,6 +34,7 @@ class TranscriptSegment:
             "text": self.text,
             "confidence": self.confidence,
             "words": [word.to_dict() for word in self.words],
+            "audio_track": self.audio_track,
         }
 
 
