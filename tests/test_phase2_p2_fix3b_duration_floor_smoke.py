@@ -9,6 +9,7 @@ from core.power_profile import PowerProfile
 from models.analysis_result import AnalysisResult
 from models.highlight_candidate import HighlightCandidate
 from models.job import Job
+from models.timeline_segment import TimelineSegment
 from shared.enums import (
     AutopublishClass,
     ChannelType,
@@ -164,7 +165,7 @@ def test_upper_cap_stays_at_or_below_1200s() -> None:
     assert _duration(selected) <= 1200.0
 
 
-def test_performance_power_profile_caps_longform_target_to_720s() -> None:
+def test_performance_power_profile_caps_longform_target_to_540s() -> None:
     builder = LongformTimelineBuilder()
     job = SimpleNamespace(power_profile=PowerProfile.PERFORMANCE)
 
@@ -174,7 +175,7 @@ def test_performance_power_profile_caps_longform_target_to_720s() -> None:
         source_duration_seconds=1476.0,
     )
 
-    assert capped == 720.0
+    assert capped == 540.0
 
 
 def test_eco_power_profile_caps_longform_target_to_540s() -> None:
@@ -187,7 +188,7 @@ def test_eco_power_profile_caps_longform_target_to_540s() -> None:
         source_duration_seconds=1476.0,
     )
 
-    assert capped == 540.0
+    assert capped == YOUTUBE_MIN_DURATION
 
 
 def test_balanced_power_profile_keeps_longform_target_uncapped() -> None:
@@ -201,3 +202,53 @@ def test_balanced_power_profile_keeps_longform_target_uncapped() -> None:
     )
 
     assert capped == 1200.0
+
+
+def test_performance_power_profile_final_budget_removes_low_value_segments() -> None:
+    builder = LongformTimelineBuilder()
+    job = SimpleNamespace(power_profile=PowerProfile.PERFORMANCE, job_id="job_budget")
+    segments = [
+        TimelineSegment(
+            segment_id="hook",
+            job_id="job_budget",
+            candidate_id=None,
+            start_time=0.0,
+            end_time=60.0,
+            segment_role="hook",
+            selection_score=0.95,
+        ),
+        *[
+            TimelineSegment(
+                segment_id=f"bridge_{index}",
+                job_id="job_budget",
+                candidate_id=None,
+                start_time=60.0 + index * 60.0,
+                end_time=120.0 + index * 60.0,
+                segment_role="bridge",
+                selection_score=0.40 + index * 0.01,
+            )
+            for index in range(10)
+        ],
+        TimelineSegment(
+            segment_id="payoff",
+            job_id="job_budget",
+            candidate_id=None,
+            start_time=660.0,
+            end_time=720.0,
+            segment_role="payoff",
+            selection_score=0.90,
+        ),
+    ]
+
+    budgeted, summary = builder._apply_power_profile_final_duration_budget(
+        job,
+        segments,
+        target_duration=540.0,
+        duration_floor=YOUTUBE_MIN_DURATION,
+    )
+
+    assert sum(segment.duration for segment in budgeted) <= 540.0
+    assert sum(segment.duration for segment in budgeted) >= YOUTUBE_MIN_DURATION
+    assert int(summary["removed"]) > 0
+    assert budgeted[0].segment_id == "hook"
+    assert budgeted[-1].segment_id == "payoff"

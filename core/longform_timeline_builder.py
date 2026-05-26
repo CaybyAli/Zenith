@@ -152,7 +152,7 @@ class LongformTimelineBuilder:
         if source_duration_seconds < YOUTUBE_MIN_DURATION:
             return target_duration
 
-        cap = 540.0 if profile == PowerProfile.ECO else 720.0
+        cap = YOUTUBE_MIN_DURATION if profile == PowerProfile.ECO else 540.0
         capped = max(YOUTUBE_MIN_DURATION, min(float(target_duration), cap))
         if capped < target_duration:
             print(
@@ -160,6 +160,84 @@ class LongformTimelineBuilder:
                 f"profile={profile} target={target_duration:.3f}s -> {capped:.3f}s"
             )
         return round(capped, 3)
+
+    def _apply_power_profile_final_duration_budget(
+        self,
+        job: Job,
+        selected_segments: list[TimelineSegment],
+        target_duration: float,
+        duration_floor: float | None,
+    ) -> tuple[list[TimelineSegment], dict[str, float | int]]:
+        profile = PowerProfile.normalize(getattr(job, "power_profile", PowerProfile.DEFAULT))
+        if profile not in {PowerProfile.ECO, PowerProfile.PERFORMANCE}:
+            return selected_segments, {
+                "removed": 0,
+                "duration_before": round(sum(segment.duration for segment in selected_segments), 3),
+                "duration_after": round(sum(segment.duration for segment in selected_segments), 3),
+            }
+
+        floor = float(duration_floor or 0.0)
+        budget = max(floor, float(target_duration))
+        duration_before = round(sum(segment.duration for segment in selected_segments), 3)
+        if duration_before <= budget:
+            return selected_segments, {
+                "removed": 0,
+                "duration_before": duration_before,
+                "duration_after": duration_before,
+            }
+
+        removable = [
+            segment
+            for segment in selected_segments
+            if segment.segment_role not in {"hook", "payoff"}
+        ]
+        role_priority = {
+            "bridge": 0,
+            "build": 1,
+            "peak": 2,
+        }
+        removable.sort(
+            key=lambda segment: (
+                role_priority.get(segment.segment_role, 1),
+                segment.selection_score,
+                -segment.duration,
+            )
+        )
+
+        removed_ids: set[str] = set()
+        current_duration = duration_before
+        for segment in removable:
+            next_duration = round(current_duration - segment.duration, 3)
+            if next_duration < floor:
+                continue
+            removed_ids.add(segment.segment_id)
+            current_duration = next_duration
+            if current_duration <= budget:
+                break
+
+        if not removed_ids:
+            return selected_segments, {
+                "removed": 0,
+                "duration_before": duration_before,
+                "duration_after": duration_before,
+            }
+
+        trimmed_segments = [
+            segment for segment in selected_segments if segment.segment_id not in removed_ids
+        ]
+        duration_after = round(sum(segment.duration for segment in trimmed_segments), 3)
+        print(
+            "[TIMELINE-POWER-BUDGET] "
+            f"profile={profile} target={target_duration:.3f}s "
+            f"floor={floor:.3f}s removed={len(removed_ids)} "
+            f"duration_before={duration_before:.3f}s "
+            f"duration_after={duration_after:.3f}s"
+        )
+        return trimmed_segments, {
+            "removed": len(removed_ids),
+            "duration_before": duration_before,
+            "duration_after": duration_after,
+        }
 
     def _score_candidate_for_longform(
         self,
@@ -1170,6 +1248,16 @@ class LongformTimelineBuilder:
             universal_moment_result=universal_moment_result,
             soft_decision_report=soft_decision_report,
         )
+        selected_segments, power_budget_summary = (
+            self._apply_power_profile_final_duration_budget(
+                job,
+                selected_segments,
+                target_duration,
+                duration_floor,
+            )
+        )
+        if not selected_segments:
+            raise ValidationError("No longform segments selected after power profile budget")
 
         final_selected_duration = sum(
             max(0.0, segment.end_time - segment.start_time)
@@ -1403,6 +1491,10 @@ class LongformTimelineBuilder:
             f"total_trimmed_seconds={safe_trim_summary.total_trimmed_seconds:.3f} "
             f"duration_before={safe_trim_summary.duration_before:.3f}s "
             f"duration_after={safe_trim_summary.duration_after:.3f}s",
+            "Power profile budget: "
+            f"removed={int(power_budget_summary['removed'])} "
+            f"duration_before={float(power_budget_summary['duration_before']):.3f}s "
+            f"duration_after={float(power_budget_summary['duration_after']):.3f}s",
         ]
 
         if universal_moment_stats is not None:

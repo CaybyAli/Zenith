@@ -17,6 +17,7 @@ Entfernt gegenÃ¼ber app.py (werden in spÃ¤teren Phasen separat gebaut):
 import json
 import logging
 import os
+import time
 
 from shared.enums import ChannelType, JobStatus, TargetFormat, ValidatorStatus
 
@@ -302,6 +303,15 @@ def _safe_log_decision(
             f"job={getattr(job, 'job_id', '-')} error={exc}"
         )
         return None
+
+
+def _log_postcut_timing(job, label: str, started_at: float) -> float:
+    elapsed = time.perf_counter() - started_at
+    print(
+        f"[POSTCUT-TIMING] {getattr(job, 'job_id', '-')} "
+        f"{label}={elapsed:.3f}s"
+    )
+    return time.perf_counter()
 
 
 def _target_format_requests_shorts(job) -> bool:
@@ -9264,11 +9274,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         },
     )
     print(f"[gaming_pipeline] CUT       {job.job_id}  done")
+    _postcut_timer = time.perf_counter()
 
     # ------------------------------------------------------------------
     # 2) Edit-Signale
     # ------------------------------------------------------------------
     edit_signals = EditSignalExtractor().extract(job, analysis_result)
+    _postcut_timer = _log_postcut_timing(job, "edit_signals", _postcut_timer)
     print(f"[gaming_pipeline] SIGNALS   {job.job_id}  "
           f"signals={len(edit_signals)}")
 
@@ -9298,6 +9310,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         window_seconds=5.0,
         max_peaks=5,
     )
+    _postcut_timer = _log_postcut_timing(job, "energy_curve", _postcut_timer)
     print(
         f"[gaming_pipeline] ENERGY   {job.job_id} "
         f"points={len(energy_curve_result.points)} "
@@ -9314,6 +9327,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         energy_curve_result=energy_curve_result,
         channel_type=job.channel_type,
     )
+    _postcut_timer = _log_postcut_timing(job, "audio_roles", _postcut_timer)
     audio_role_counts = audio_role_result.role_counts
     print(
         f"[gaming_pipeline] AUDIO_ROLES {job.job_id} "
@@ -9342,6 +9356,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 video_path=gameplay_vision_source_path,
                 max_frames=160,
             )
+            _postcut_timer = _log_postcut_timing(job, "gameplay_vision", _postcut_timer)
 
             if gameplay_vision_result.skipped_reason:
                 print(
@@ -9371,6 +9386,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         sentence_timeline_result=sentence_timeline_result,
         channel_type=job.channel_type,
     )
+    _postcut_timer = _log_postcut_timing(job, "gameplay_events", _postcut_timer)
     gameplay_event_counts = gameplay_event_result.event_counts
     print(
         f"[gaming_pipeline] GAMEPLAY_EVENTS {job.job_id} "
@@ -9399,6 +9415,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 sample_every_seconds=1.0,
                 max_frames=160,
             )
+            _postcut_timer = _log_postcut_timing(job, "facecam_reaction", _postcut_timer)
 
             if facecam_reaction_result.skipped_reason:
                 print(
@@ -9428,6 +9445,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         gameplay_event_result=gameplay_event_result,
         channel_type="gaming_main",
     )
+    _postcut_timer = _log_postcut_timing(job, "facecam_emotions", _postcut_timer)
     facecam_emotion_counts = facecam_emotion_result.emotion_counts
     print(
         f"[gaming_pipeline] FACECAM_EMOTIONS {job.job_id} "
@@ -9457,6 +9475,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             facecam_reaction_result=facecam_reaction_result,
             gameplay_event_result=gameplay_event_result,
         )
+        _postcut_timer = _log_postcut_timing(job, "round_phase", _postcut_timer)
         phase_counts = round_phase_result.phase_counts
         print(
             f"[gaming_pipeline] PHASES {job.job_id} "
@@ -9478,6 +9497,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             gameplay_event_result=gameplay_event_result,
             round_phase_result=round_phase_result,
         )
+        _postcut_timer = _log_postcut_timing(job, "gameplay_state", _postcut_timer)
         state_counts = gameplay_state_result.state_counts
         print(
             f"[gaming_pipeline] GAMEPLAY_STATE {job.job_id} "
@@ -9501,6 +9521,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         analysis_result,
         edit_signals,
     )
+    _postcut_timer = _log_postcut_timing(job, "highlight_select", _postcut_timer)
     print(f"[gaming_pipeline] HIGHLIGHTS {job.job_id}  "
           f"candidates={len(highlight_result.get('highlight_candidates', []))}")
 
@@ -9517,6 +9538,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         edit_timeline=None,
         channel_type=job.channel_type,
     )
+    _postcut_timer = _log_postcut_timing(job, "cut_indicators", _postcut_timer)
     print(
         f"[gaming_pipeline] INDICATORS {job.job_id} "
         f"total={len(cut_indicator_result.indicators)} "
@@ -9559,6 +9581,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         cut_indicator_result=cut_indicator_result,
         round_phase_result=round_phase_result,
     )
+    _postcut_timer = _log_postcut_timing(job, "universal_moments", _postcut_timer)
     print(
         f"[gaming_pipeline] UNIVERSAL_MOMENTS {job.job_id} "
         f"windows={universal_moment_result.total_windows} "
@@ -9577,6 +9600,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         cut_indicator_result,
         transcript_result,
     )
+    _postcut_timer = _log_postcut_timing(job, "phase_filter", _postcut_timer)
     highlight_result["highlight_candidates"] = filtered_highlights
     print(
         "[PHASE-FILTER] "
@@ -9617,6 +9641,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             gameplay_state_result=gameplay_state_result,
             universal_moment_result=universal_moment_result,
         )
+        _postcut_timer = _log_postcut_timing(job, "longform_timeline", _postcut_timer)
         _timeline_notes = getattr(edit_timeline, "timeline_notes", []) or []
         _fusion_timeline_note = next(
             (n for n in _timeline_notes if n.startswith("Indicator fusion:")),
@@ -9961,6 +9986,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             boundary_evidence_report=universal_boundary_evidence_report,
             final_review_report=phase_2b_final_review_report,
         )
+        _postcut_timer = _log_postcut_timing(job, "universal_reports", _postcut_timer)
         print(
             f"[gaming_pipeline] UNIVERSAL_DEBUG {job.job_id} "
             f"segments={universal_moment_debug_report.total_segments} "
@@ -10081,6 +10107,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             soft_decision_report=universal_moment_soft_decision_report,
         )
         edit_timeline.selected_segments = _safe_trim_segments
+        _postcut_timer = _log_postcut_timing(job, "post_report_safe_trim", _postcut_timer)
         print(
             f"[gaming_pipeline] UNIVERSAL_SAFE_TRIM {job.job_id} "
             f"candidates={_safe_trim_summary.trim_candidates_seen} "
@@ -10142,6 +10169,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             reframe_plan=reframe_plan,
             facecam_reaction_result=facecam_reaction_result,
         )
+        _postcut_timer = _log_postcut_timing(job, "reframe_plan", _postcut_timer)
         print(
             f"[gaming_pipeline] FACECAM_GUARD {job.job_id} "
             f"converted={facecam_guard_summary.converted} "
@@ -10169,6 +10197,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             edit_signals=edit_signals,
             reframe_plan=reframe_plan,
         )
+        _postcut_timer = _log_postcut_timing(job, "reaction_moments", _postcut_timer)
 
         dynamic_edit_plan = ZoomPacingEngine().build_plan(
             job=job,
@@ -10176,6 +10205,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             reframe_plan=reframe_plan,
             reaction_moments=reaction_moments,
         )
+        _postcut_timer = _log_postcut_timing(job, "zoom_plan", _postcut_timer)
 
         zoom_smooth_summary = FacecamZoomSmoothnessGuard().apply(
             edit_timeline,
@@ -10186,6 +10216,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             reframe_plan=reframe_plan,
             gameplay_state_result=gameplay_state_result,
         )
+        _postcut_timer = _log_postcut_timing(job, "zoom_smoothness", _postcut_timer)
         print(
             f"[gaming_pipeline] FACECAM_ZOOM_SMOOTHNESS {job.job_id} "
             f"removed={zoom_smooth_summary.removed} "
@@ -10218,6 +10249,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # 6.9) Pre-render gate (2.C.2-B)
     # ------------------------------------------------------------------
     render_gate_result = evaluate_render_gate(job)
+    _postcut_timer = _log_postcut_timing(job, "render_gate_eval", _postcut_timer)
     render_gate_payload = {
         "decision": render_gate_result.decision.value,
         "reason": render_gate_result.reason,
