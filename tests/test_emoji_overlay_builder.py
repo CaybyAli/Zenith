@@ -73,6 +73,8 @@ def test_renderer_filter_contains_final_visual_position_and_outline() -> None:
 
     filter_complex = EmojiOverlayRenderer()._filter_complex(events)
 
+    assert filter_complex.startswith("[0:v]format=yuv420p[base0]")
+    assert "hwdownload" not in filter_complex
     assert f"scale={EMOJI_SIZE}:{EMOJI_SIZE}:flags=lanczos" in filter_complex
     assert f"boxblur={EMOJI_OUTLINE_BLUR}:1" in filter_complex
     assert f"color=white@{EMOJI_OUTLINE_ALPHA}:s={EMOJI_SIZE}x{EMOJI_SIZE}" in filter_complex

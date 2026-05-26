@@ -186,10 +186,6 @@ class EmojiOverlayRenderer:
         cmd = [
             self.ffmpeg_path,
             "-y",
-            "-hwaccel",
-            "cuda",
-            "-hwaccel_output_format",
-            "cuda",
             "-i",
             str(input_path),
         ]
@@ -235,7 +231,7 @@ class EmojiOverlayRenderer:
         return True
 
     def _filter_complex(self, events: list[EmojiOverlayEvent]) -> str:
-        parts: list[str] = ["[0:v]hwdownload,format=nv12[base0]"]
+        parts: list[str] = ["[0:v]format=yuv420p[base0]"]
         last_video = "base0"
 
         for index, event in enumerate(events, start=1):
