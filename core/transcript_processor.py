@@ -113,7 +113,7 @@ class TranscriptProcessor:
         return candidates
 
     def _should_prefer_cuda_runtime(self) -> bool:
-        if os.getenv("ZENITH_FASTER_WHISPER_AUTO_CUDA", "1").strip().lower() in {
+        if os.getenv("ZENITH_FASTER_WHISPER_AUTO_CUDA", "0").strip().lower() in {
             "0",
             "false",
             "no",

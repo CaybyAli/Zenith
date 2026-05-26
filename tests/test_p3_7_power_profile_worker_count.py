@@ -31,6 +31,28 @@ def test_analysis_workers_are_capped_for_resource_safety():
     assert PowerProfile.resolve_analysis_worker_count(PowerProfile.BALANCED) == 2
 
 
+def test_performance_profile_uses_fast_visual_sampling():
+    assert (
+        PowerProfile.resolve_visual_analysis_frame_sample_rate(
+            PowerProfile.PERFORMANCE,
+            "motion",
+        )
+        == 0.5
+    )
+    assert (
+        PowerProfile.resolve_visual_analysis_frame_sample_rate(
+            PowerProfile.PERFORMANCE,
+            "stutter",
+        )
+        == 2.0
+    )
+
+
+def test_performance_profile_caps_scene_change_timeout():
+    assert PowerProfile.resolve_scene_change_timeout_seconds(PowerProfile.PERFORMANCE) == 30.0
+    assert PowerProfile.resolve_scene_change_timeout_seconds(PowerProfile.BALANCED) == 120.0
+
+
 def test_normalize_unknown_returns_balanced():
     assert PowerProfile.normalize("xyz") == PowerProfile.BALANCED
 

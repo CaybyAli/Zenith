@@ -53,6 +53,48 @@ class PowerProfile:
         return min(4, PowerProfile.resolve_worker_count(power_profile))
 
     @staticmethod
+    def resolve_visual_analysis_frame_sample_rate(
+        power_profile: str,
+        stage: str,
+    ) -> float:
+        profile = PowerProfile.normalize(power_profile)
+        stage_key = str(stage or "").strip().lower()
+
+        defaults = {
+            "motion": 2.0,
+            "face_reaction": 2.0,
+            "screen_content": 2.0,
+            "stutter": 10.0,
+        }
+
+        if profile == PowerProfile.PERFORMANCE:
+            return {
+                "motion": 0.5,
+                "face_reaction": 0.5,
+                "screen_content": 0.5,
+                "stutter": 2.0,
+            }.get(stage_key, defaults.get(stage_key, 2.0))
+
+        if profile == PowerProfile.ECO:
+            return {
+                "motion": 0.25,
+                "face_reaction": 0.25,
+                "screen_content": 0.25,
+                "stutter": 1.0,
+            }.get(stage_key, defaults.get(stage_key, 2.0))
+
+        return defaults.get(stage_key, 2.0)
+
+    @staticmethod
+    def resolve_scene_change_timeout_seconds(power_profile: str) -> float:
+        profile = PowerProfile.normalize(power_profile)
+        if profile == PowerProfile.PERFORMANCE:
+            return 30.0
+        if profile == PowerProfile.ECO:
+            return 15.0
+        return 120.0
+
+    @staticmethod
     def resolve_model_tier(power_profile: str) -> str:
         """
         off        → "shadow_only"

@@ -8,6 +8,7 @@ import pytest
 from core.audio_extraction_executor import (
     AudioExtractionResult,
     AudioExtractionTargetResult,
+    _build_batch_command,
     apply_audio_extraction_result_to_job,
     apply_audio_extraction_result_to_manifest,
     execute_audio_extraction_plan,
@@ -117,6 +118,39 @@ def test_executor_result_roundtrip() -> None:
     assert data["status"] == "ok"
     assert data["ready_target_ids"] == ["analysis_audio", "speech_audio"]
     assert data["targets"] == []
+
+
+def test_batch_command_maps_each_audio_target(tmp_path: Path) -> None:
+    targets = [
+        AudioExtractionTarget(
+            target_id="analysis_audio",
+            purpose="analysis",
+            output_path=str(tmp_path / "analysis.wav"),
+            sample_rate=44100,
+            channels=2,
+        ),
+        AudioExtractionTarget(
+            target_id="speech_audio",
+            purpose="speech",
+            output_path=str(tmp_path / "speech.wav"),
+            sample_rate=16000,
+            channels=1,
+        ),
+        AudioExtractionTarget(
+            target_id="music_reference_audio",
+            purpose="music_reference",
+            output_path=str(tmp_path / "music.wav"),
+            sample_rate=44100,
+            channels=2,
+        ),
+    ]
+
+    command = _build_batch_command("ffmpeg", targets, "source.mp4")
+
+    assert command.count("-i") == 1
+    assert command.count("-map") == 3
+    assert command.count("-c:a") == 3
+    assert command[-1] == str(tmp_path / "music.wav")
 
 
 @pytest.mark.skipif(not _ffmpeg_available(), reason="ffmpeg not available")

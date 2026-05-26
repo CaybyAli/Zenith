@@ -170,15 +170,20 @@ class GameplayVisionAnalyzer:
             frame_index = 0
 
             while len(frames) < max(1, int(max_frames)):
+                if frame_index % sample_step != 0:
+                    ok = capture.grab()
+                    if not ok:
+                        break
+                    frame_index += 1
+                    continue
+
                 ok, frame = capture.read()
                 if not ok:
                     break
 
-                if frame_index % sample_step == 0:
-                    resized = cv2.resize(frame, (self.width, self.height))
-                    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-                    frames.append(gray)
-
+                resized = cv2.resize(frame, (self.width, self.height))
+                gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+                frames.append(gray)
                 frame_index += 1
         finally:
             capture.release()

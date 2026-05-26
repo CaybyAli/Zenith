@@ -6,7 +6,7 @@ from core.transcript_processor import TranscriptProcessor
 def test_faster_whisper_runtime_prefers_cuda_when_available(monkeypatch) -> None:
     monkeypatch.delenv("ZENITH_FASTER_WHISPER_DEVICE", raising=False)
     monkeypatch.delenv("ZENITH_FASTER_WHISPER_COMPUTE_TYPE", raising=False)
-    monkeypatch.delenv("ZENITH_FASTER_WHISPER_AUTO_CUDA", raising=False)
+    monkeypatch.setenv("ZENITH_FASTER_WHISPER_AUTO_CUDA", "1")
     monkeypatch.setattr(
         TranscriptProcessor,
         "_should_prefer_cuda_runtime",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -122,6 +123,41 @@ def _build_command(ffmpeg_path: str, target: AudioExtractionTarget, source_path:
     return command
 
 
+def _build_batch_command(
+    ffmpeg_path: str,
+    targets: list[AudioExtractionTarget],
+    source_path: str,
+) -> list[str]:
+    command: list[str] = [
+        ffmpeg_path,
+        "-hide_banner",
+        "-nostdin",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        source_path,
+    ]
+
+    for target in targets:
+        if target.source_stream_index is not None:
+            command.extend(["-map", f"0:{target.source_stream_index}"])
+        else:
+            command.extend(["-map", "0:a:0"])
+
+        command.append("-vn")
+
+        if target.channels is not None:
+            command.extend(["-ac", str(target.channels)])
+
+        if target.sample_rate is not None:
+            command.extend(["-ar", str(target.sample_rate)])
+
+        command.extend(["-c:a", "pcm_s16le", target.output_path])
+
+    return command
+
+
 def _existing_output_is_reusable(output_path: str) -> bool:
     path = Path(output_path)
     if not path.exists():
@@ -140,6 +176,53 @@ def _resolve_ffmpeg_or_none() -> tuple[str | None, str | None]:
         return None, str(exc)
 
 
+def _precheck_target_for_execution(
+    target: AudioExtractionTarget,
+    source_path: str,
+    ffmpeg_path: str | None,
+    ffmpeg_error: str | None,
+    overwrite_existing: bool,
+) -> AudioExtractionTargetResult | None:
+    output_path = target.output_path or ""
+    result = AudioExtractionTargetResult(
+        target_id=target.target_id,
+        purpose=target.purpose,
+        output_path=output_path,
+        status="planned",
+    )
+
+    if not target.enabled:
+        result.status = "skipped_disabled"
+        return result
+
+    if not source_path or not Path(source_path).exists():
+        result.status = "blocked_missing_source"
+        result.errors.append("source_missing")
+        return result
+
+    if not output_path:
+        result.status = "failed"
+        result.errors.append("output_path_missing")
+        return result
+
+    if not overwrite_existing and _existing_output_is_reusable(output_path):
+        result.status = "skipped_existing_reusable"
+        try:
+            result.output_size_bytes = Path(output_path).stat().st_size
+        except OSError:
+            result.output_size_bytes = None
+        return result
+
+    if ffmpeg_path is None:
+        result.status = "failed"
+        result.errors.append("ffmpeg_unavailable")
+        if ffmpeg_error:
+            result.stderr_tail = _tail(ffmpeg_error, _STDERR_TAIL_LIMIT)
+        return result
+
+    return None
+
+
 def _execute_target(
     target: AudioExtractionTarget,
     source_path: str,
@@ -147,6 +230,16 @@ def _execute_target(
     ffmpeg_error: str | None,
     overwrite_existing: bool,
 ) -> AudioExtractionTargetResult:
+    precheck = _precheck_target_for_execution(
+        target=target,
+        source_path=source_path,
+        ffmpeg_path=ffmpeg_path,
+        ffmpeg_error=ffmpeg_error,
+        overwrite_existing=overwrite_existing,
+    )
+    if precheck is not None:
+        return precheck
+
     output_path = target.output_path or ""
     result = AudioExtractionTargetResult(
         target_id=target.target_id,
@@ -240,6 +333,87 @@ def _execute_target(
     return result
 
 
+def _execute_targets_batch(
+    targets: list[AudioExtractionTarget],
+    source_path: str,
+    ffmpeg_path: str,
+) -> list[AudioExtractionTargetResult] | None:
+    if len(targets) < 2:
+        return None
+
+    for target in targets:
+        if not target.output_path:
+            return None
+        Path(target.output_path).parent.mkdir(parents=True, exist_ok=True)
+
+    command = apply_ffmpeg_thread_cap(_build_batch_command(ffmpeg_path, targets, source_path))
+    started = time.perf_counter()
+
+    def _cleanup_batch_outputs() -> None:
+        for item in targets:
+            try:
+                Path(item.output_path).unlink(missing_ok=True)
+            except OSError:
+                pass
+
+    try:
+        with guarded_ffmpeg_execution(command):
+            completed = subprocess.run(
+                command,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=_FFMPEG_TIMEOUT_SECONDS,
+                check=False,
+            )
+    except (OSError, subprocess.TimeoutExpired):
+        _cleanup_batch_outputs()
+        return None
+
+    if completed.returncode != 0:
+        _cleanup_batch_outputs()
+        return None
+
+    duration_seconds = round(time.perf_counter() - started, 3)
+    results: list[AudioExtractionTargetResult] = []
+
+    for target in targets:
+        output = Path(target.output_path)
+        result = AudioExtractionTargetResult(
+            target_id=target.target_id,
+            purpose=target.purpose,
+            output_path=target.output_path,
+            status="planned",
+            command=list(command),
+            returncode=int(completed.returncode),
+            stdout_tail=_tail(completed.stdout, _STDOUT_TAIL_LIMIT),
+            stderr_tail=_tail(completed.stderr, _STDERR_TAIL_LIMIT),
+            duration_seconds=duration_seconds,
+        )
+
+        if not output.exists():
+            result.status = "failed"
+            result.errors.append("output_not_created")
+            results.append(result)
+            continue
+
+        try:
+            size_bytes = output.stat().st_size
+        except OSError:
+            size_bytes = 0
+
+        result.output_size_bytes = size_bytes
+        if size_bytes <= 0:
+            result.status = "failed"
+            result.errors.append("output_empty")
+        else:
+            result.status = "ok"
+
+        results.append(result)
+
+    return results
+
+
 def _aggregate_result(
     job_id: str,
     source_path: str,
@@ -314,9 +488,45 @@ def execute_audio_extraction_plan(
 ) -> AudioExtractionResult:
     ffmpeg_path, ffmpeg_error = _resolve_ffmpeg_or_none()
 
-    target_results: list[AudioExtractionTargetResult] = []
+    planned_results: list[AudioExtractionTargetResult | None] = []
+    targets_to_extract: list[AudioExtractionTarget] = []
 
     for target in plan.targets:
+        precheck = _precheck_target_for_execution(
+            target=target,
+            source_path=plan.source_path,
+            ffmpeg_path=ffmpeg_path,
+            ffmpeg_error=ffmpeg_error,
+            overwrite_existing=overwrite_existing,
+        )
+        planned_results.append(precheck)
+        if precheck is None:
+            targets_to_extract.append(target)
+
+    batch_results: list[AudioExtractionTargetResult] | None = None
+    if ffmpeg_path is not None:
+        batch_results = _execute_targets_batch(
+            targets=targets_to_extract,
+            source_path=plan.source_path,
+            ffmpeg_path=ffmpeg_path,
+        )
+
+    batch_by_id = {
+        result.target_id: result
+        for result in batch_results
+    } if batch_results is not None else {}
+
+    target_results: list[AudioExtractionTargetResult] = []
+    for target, precheck in zip(plan.targets, planned_results):
+        if precheck is not None:
+            target_results.append(precheck)
+            continue
+
+        batch_result = batch_by_id.get(target.target_id)
+        if batch_result is not None:
+            target_results.append(batch_result)
+            continue
+
         target_results.append(
             _execute_target(
                 target=target,

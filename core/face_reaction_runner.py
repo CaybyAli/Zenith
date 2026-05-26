@@ -4,6 +4,11 @@ from typing import Any
 
 from core.face_reaction_analyzer import analyze_face_reactions
 from core.face_reaction_source_selector import select_face_reaction_source
+from core.power_profile import PowerProfile
+from core.visual_analysis_proxy import (
+    ensure_visual_analysis_proxy_for_job,
+    with_visual_analysis_proxy_source_selection,
+)
 from models.face_reaction_run import (
     FACE_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
     FACE_RUN_STATUS_FAILED,
@@ -23,6 +28,12 @@ def _set_job_value(job: Any, key: str, value: Any) -> None:
         return
 
     setattr(job, key, value)
+
+
+def _job_power_profile(job: Any) -> str | None:
+    if isinstance(job, dict):
+        return job.get("power_profile")
+    return getattr(job, "power_profile", None)
 
 
 def _result_points_as_dicts(result: Any) -> list[dict[str, Any]]:
@@ -103,13 +114,21 @@ def _build_report_from_face_reaction_result(
 
 def run_face_reaction_for_job(
     job: Any,
-    frame_sample_rate: float = 2.0,
+    frame_sample_rate: float | None = None,
     min_face_area_ratio: float = 0.005,
     high_reaction_threshold: float = 0.55,
     min_reaction_segment_duration_seconds: float = 0.5,
     resize_width: int = 320,
     resize_height: int = 180,
 ) -> FaceReactionRunReport:
+    resolved_frame_sample_rate = (
+        float(frame_sample_rate)
+        if frame_sample_rate is not None
+        else PowerProfile.resolve_visual_analysis_frame_sample_rate(
+            _job_power_profile(job),
+            "face_reaction",
+        )
+    )
     try:
         source_selection = select_face_reaction_source(job)
 
@@ -117,33 +136,39 @@ def run_face_reaction_for_job(
             return _build_report_from_blocked_source(
                 status=FACE_RUN_STATUS_SKIPPED_NO_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if source_selection.status == FACE_SOURCE_STATUS_BLOCKED_MISSING_VIDEO_SOURCE:
             return _build_report_from_blocked_source(
                 status=FACE_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if source_selection.status == FACE_SOURCE_STATUS_FAILED:
             return _build_report_from_blocked_source(
                 status=FACE_RUN_STATUS_FAILED,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if not source_selection.selected_path:
             return _build_report_from_blocked_source(
                 status=FACE_RUN_STATUS_SKIPPED_NO_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
+
+        proxy_path = ensure_visual_analysis_proxy_for_job(job, source_selection.selected_path)
+        source_selection = with_visual_analysis_proxy_source_selection(
+            source_selection,
+            proxy_path,
+        )
 
         face_reaction_result = analyze_face_reactions(
             input_path=source_selection.selected_path,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             min_face_area_ratio=min_face_area_ratio,
             high_reaction_threshold=high_reaction_threshold,
             min_reaction_segment_duration_seconds=(
@@ -174,7 +199,7 @@ def run_face_reaction_for_job(
             reaction_candidate_count=0,
             high_reaction_segment_count=0,
             duration_seconds=None,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             recommendation="review_face_reaction_runner_error",
             warnings=[],
             errors=[f"face_reaction_runner_failed: {exc}"],

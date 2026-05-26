@@ -2,8 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.power_profile import PowerProfile
 from core.stutter_detection_source_selector import select_stutter_detection_source
 from core.stutter_detector import analyze_stutter_frames
+from core.visual_analysis_proxy import (
+    ensure_visual_analysis_proxy_for_job,
+    with_visual_analysis_proxy_source_selection,
+)
 from models.stutter_detection_run import (
     STUTTER_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
     STUTTER_RUN_STATUS_FAILED,
@@ -23,6 +28,12 @@ def _set_job_value(job: Any, key: str, value: Any) -> None:
         return
 
     setattr(job, key, value)
+
+
+def _job_power_profile(job: Any) -> str | None:
+    if isinstance(job, dict):
+        return job.get("power_profile")
+    return getattr(job, "power_profile", None)
 
 
 def _result_points_as_dicts(result: Any) -> list[dict[str, Any]]:
@@ -101,7 +112,7 @@ def _build_report_from_stutter_result(
 
 def run_stutter_detection_for_job(
     job: Any,
-    frame_sample_rate: float = 10.0,
+    frame_sample_rate: float | None = None,
     duplicate_score_threshold: float = 0.985,
     difference_score_threshold: float = 0.015,
     min_duplicate_frames_for_stutter: int = 4,
@@ -109,6 +120,14 @@ def run_stutter_detection_for_job(
     resize_width: int = 160,
     resize_height: int = 90,
 ) -> StutterDetectionRunReport:
+    resolved_frame_sample_rate = (
+        float(frame_sample_rate)
+        if frame_sample_rate is not None
+        else PowerProfile.resolve_visual_analysis_frame_sample_rate(
+            _job_power_profile(job),
+            "stutter",
+        )
+    )
     try:
         source_selection = select_stutter_detection_source(job)
 
@@ -116,33 +135,39 @@ def run_stutter_detection_for_job(
             return _build_report_from_blocked_source(
                 status=STUTTER_RUN_STATUS_SKIPPED_NO_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if source_selection.status == STUTTER_SOURCE_STATUS_BLOCKED_MISSING_VIDEO_SOURCE:
             return _build_report_from_blocked_source(
                 status=STUTTER_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if source_selection.status == STUTTER_SOURCE_STATUS_FAILED:
             return _build_report_from_blocked_source(
                 status=STUTTER_RUN_STATUS_FAILED,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if not source_selection.selected_path:
             return _build_report_from_blocked_source(
                 status=STUTTER_RUN_STATUS_SKIPPED_NO_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
+
+        proxy_path = ensure_visual_analysis_proxy_for_job(job, source_selection.selected_path)
+        source_selection = with_visual_analysis_proxy_source_selection(
+            source_selection,
+            proxy_path,
+        )
 
         stutter_result = analyze_stutter_frames(
             input_path=source_selection.selected_path,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             duplicate_score_threshold=duplicate_score_threshold,
             difference_score_threshold=difference_score_threshold,
             min_duplicate_frames_for_stutter=min_duplicate_frames_for_stutter,
@@ -172,7 +197,7 @@ def run_stutter_detection_for_job(
             stutter_segment_count=0,
             freeze_segment_count=0,
             duration_seconds=None,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             recommendation="review_stutter_detection_runner_error",
             warnings=[],
             errors=[f"stutter_detection_runner_failed: {exc}"],

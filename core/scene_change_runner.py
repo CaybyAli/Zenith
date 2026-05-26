@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.power_profile import PowerProfile
 from core.scene_change_detector import analyze_scene_changes
 from core.scene_change_source_selector import (
     select_scene_change_source,
@@ -34,6 +35,12 @@ def _safe_dict(value: Any) -> dict[str, Any]:
         except Exception:
             return {}
     return {}
+
+
+def _job_power_profile(job: Any) -> str | None:
+    if isinstance(job, dict):
+        return job.get("power_profile")
+    return getattr(job, "power_profile", None)
 
 
 def _merge_unique(left: list[str], right: list[str]) -> list[str]:
@@ -246,11 +253,16 @@ def run_scene_change_for_job(
     flash_threshold: float = 0.85,
     min_distance_seconds: float = 0.25,
     flash_neighbor_window_seconds: float = 0.40,
-    timeout_seconds: float = 120.0,
+    timeout_seconds: float | None = None,
     require_existing_file: bool = True,
     metadata: dict[str, Any] | None = None,
 ) -> SceneChangeRunReport:
     safe_metadata = dict(metadata) if isinstance(metadata, dict) else {}
+    resolved_timeout_seconds = (
+        float(timeout_seconds)
+        if timeout_seconds is not None
+        else PowerProfile.resolve_scene_change_timeout_seconds(_job_power_profile(job))
+    )
 
     try:
         if source_selection is None:
@@ -269,7 +281,7 @@ def run_scene_change_for_job(
             flash_threshold=flash_threshold,
             min_distance_seconds=min_distance_seconds,
             flash_neighbor_window_seconds=flash_neighbor_window_seconds,
-            timeout_seconds=timeout_seconds,
+            timeout_seconds=resolved_timeout_seconds,
             require_existing_file=require_existing_file,
             metadata=safe_metadata,
         )

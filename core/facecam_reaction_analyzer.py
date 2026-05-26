@@ -150,22 +150,27 @@ class FacecamReactionAnalyzer:
             frame_index = 0
 
             while len(frames) < max(1, int(max_frames)):
+                if frame_index % sample_step != 0:
+                    ok = capture.grab()
+                    if not ok:
+                        break
+                    frame_index += 1
+                    continue
+
                 ok, frame = capture.read()
                 if not ok:
                     break
 
-                if frame_index % sample_step == 0:
-                    height, width = frame.shape[:2]
+                height, width = frame.shape[:2]
 
-                    # 32:9 recordings in Zenith usually keep facecam on the left side.
-                    # This is a safe first crop for reaction activity, not identity detection.
-                    facecam_width = max(1, int(width * 0.28))
-                    facecam_frame = frame[:, :facecam_width]
+                # 32:9 recordings in Zenith usually keep facecam on the left side.
+                # This is a safe first crop for reaction activity, not identity detection.
+                facecam_width = max(1, int(width * 0.28))
+                facecam_frame = frame[:, :facecam_width]
 
-                    resized = cv2.resize(facecam_frame, (32, 32))
-                    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-                    frames.append(gray)
-
+                resized = cv2.resize(facecam_frame, (32, 32))
+                gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+                frames.append(gray)
                 frame_index += 1
         finally:
             capture.release()

@@ -407,14 +407,16 @@ def analyze_motion(
         frame_index = 0
 
         while True:
-            ok, frame = cap.read()
-
-            if not ok:
-                break
-
             if frame_index % sample_every_frames != 0:
+                ok = cap.grab()
+                if not ok:
+                    break
                 frame_index += 1
                 continue
+
+            ok, frame = cap.read()
+            if not ok:
+                break
 
             resized = cv2.resize(frame, (resize_width, resize_height))
             gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)

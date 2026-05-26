@@ -2,8 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.power_profile import PowerProfile
 from core.screen_content_classifier import classify_screen_content
 from core.screen_content_source_selector import select_screen_content_source
+from core.visual_analysis_proxy import (
+    ensure_visual_analysis_proxy_for_job,
+    with_visual_analysis_proxy_source_selection,
+)
 from models.screen_content_run import (
     SCREEN_CONTENT_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
     SCREEN_CONTENT_RUN_STATUS_FAILED,
@@ -23,6 +28,12 @@ def _set_job_value(job: Any, key: str, value: Any) -> None:
         return
 
     setattr(job, key, value)
+
+
+def _job_power_profile(job: Any) -> str | None:
+    if isinstance(job, dict):
+        return job.get("power_profile")
+    return getattr(job, "power_profile", None)
 
 
 def _result_points_as_dicts(result: Any) -> list[dict[str, Any]]:
@@ -109,7 +120,7 @@ def _build_report_from_screen_content_result(
 
 def run_screen_content_classification_for_job(
     job: Any,
-    frame_sample_rate: float = 2.0,
+    frame_sample_rate: float | None = None,
     resize_width: int = 320,
     resize_height: int = 180,
     black_brightness_threshold: float = 0.08,
@@ -117,6 +128,14 @@ def run_screen_content_classification_for_job(
     text_like_threshold: float = 0.25,
     confidence_threshold: float = 0.50,
 ) -> ScreenContentRunReport:
+    resolved_frame_sample_rate = (
+        float(frame_sample_rate)
+        if frame_sample_rate is not None
+        else PowerProfile.resolve_visual_analysis_frame_sample_rate(
+            _job_power_profile(job),
+            "screen_content",
+        )
+    )
     try:
         source_selection = select_screen_content_source(job)
 
@@ -124,33 +143,39 @@ def run_screen_content_classification_for_job(
             return _build_report_from_blocked_source(
                 status=SCREEN_CONTENT_RUN_STATUS_SKIPPED_NO_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if source_selection.status == SCREEN_CONTENT_SOURCE_STATUS_BLOCKED_MISSING_VIDEO_SOURCE:
             return _build_report_from_blocked_source(
                 status=SCREEN_CONTENT_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if source_selection.status == SCREEN_CONTENT_SOURCE_STATUS_FAILED:
             return _build_report_from_blocked_source(
                 status=SCREEN_CONTENT_RUN_STATUS_FAILED,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
 
         if not source_selection.selected_path:
             return _build_report_from_blocked_source(
                 status=SCREEN_CONTENT_RUN_STATUS_SKIPPED_NO_VIDEO_SOURCE,
                 source_selection=source_selection,
-                frame_sample_rate=frame_sample_rate,
+                frame_sample_rate=resolved_frame_sample_rate,
             )
+
+        proxy_path = ensure_visual_analysis_proxy_for_job(job, source_selection.selected_path)
+        source_selection = with_visual_analysis_proxy_source_selection(
+            source_selection,
+            proxy_path,
+        )
 
         screen_content_result = classify_screen_content(
             input_path=source_selection.selected_path,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             resize_width=resize_width,
             resize_height=resize_height,
             black_brightness_threshold=black_brightness_threshold,
@@ -184,7 +209,7 @@ def run_screen_content_classification_for_job(
             victory_screen_segment_count=0,
             black_screen_segment_count=0,
             duration_seconds=None,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             recommendation="review_screen_content_runner_error",
             warnings=[],
             errors=[f"screen_content_runner_failed: {exc}"],

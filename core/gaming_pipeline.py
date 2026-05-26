@@ -256,6 +256,7 @@ from core.existing_longform_shorts_stage import (
     is_existing_longform_output_path,
     run_shorts_from_existing_longform_output,
 )
+from core.visual_analysis_proxy import ensure_visual_analysis_proxy_for_job
 
 from core.highlight_candidate_repository import HighlightCandidateRepository
 from core.edit_timeline_repository import EditTimelineRepository
@@ -9333,8 +9334,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         gameplay_vision_analyzer = services.get("gameplay_vision_analyzer") or GameplayVisionAnalyzer()
 
         if job.raw_video_path:
+            gameplay_vision_source_path = (
+                ensure_visual_analysis_proxy_for_job(job, str(job.raw_video_path))
+                or str(job.raw_video_path)
+            )
             gameplay_vision_result = gameplay_vision_analyzer.analyze_video(
-                video_path=str(job.raw_video_path),
+                video_path=gameplay_vision_source_path,
                 max_frames=160,
             )
 
@@ -9385,8 +9390,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         facecam_reaction_analyzer = services.get("facecam_reaction_analyzer") or FacecamReactionAnalyzer()
 
         if job.raw_video_path:
+            facecam_reaction_source_path = (
+                ensure_visual_analysis_proxy_for_job(job, str(job.raw_video_path))
+                or str(job.raw_video_path)
+            )
             facecam_reaction_result = facecam_reaction_analyzer.analyze_video(
-                video_path=str(job.raw_video_path),
+                video_path=facecam_reaction_source_path,
                 sample_every_seconds=1.0,
                 max_frames=160,
             )

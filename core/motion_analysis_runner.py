@@ -4,6 +4,11 @@ from typing import Any
 
 from core.motion_analysis_source_selector import select_motion_analysis_source
 from core.motion_analyzer import analyze_motion
+from core.power_profile import PowerProfile
+from core.visual_analysis_proxy import (
+    ensure_visual_analysis_proxy_for_job,
+    with_visual_analysis_proxy_source_selection,
+)
 from models.motion_analysis_run import (
     MOTION_RUN_STATUS_BLOCKED_MISSING_VIDEO_SOURCE,
     MOTION_RUN_STATUS_FAILED,
@@ -23,6 +28,12 @@ def _set_job_value(job: Any, key: str, value: Any) -> None:
         return
 
     setattr(job, key, value)
+
+
+def _job_power_profile(job: Any) -> str | None:
+    if isinstance(job, dict):
+        return job.get("power_profile")
+    return getattr(job, "power_profile", None)
 
 
 def _result_points_as_dicts(result: Any) -> list[dict[str, Any]]:
@@ -102,13 +113,21 @@ def _build_report_from_motion_result(
 
 def run_motion_analysis_for_job(
     job: Any,
-    frame_sample_rate: float = 2.0,
+    frame_sample_rate: float | None = None,
     low_motion_threshold: float = 0.08,
     high_motion_threshold: float = 0.35,
     dead_visual_min_duration_seconds: float = 3.0,
     resize_width: int = 160,
     resize_height: int = 90,
 ) -> MotionAnalysisRunReport:
+    resolved_frame_sample_rate = (
+        float(frame_sample_rate)
+        if frame_sample_rate is not None
+        else PowerProfile.resolve_visual_analysis_frame_sample_rate(
+            _job_power_profile(job),
+            "motion",
+        )
+    )
     try:
         source_selection = select_motion_analysis_source(job)
 
@@ -136,9 +155,15 @@ def run_motion_analysis_for_job(
                 source_selection=source_selection,
             )
 
+        proxy_path = ensure_visual_analysis_proxy_for_job(job, source_selection.selected_path)
+        source_selection = with_visual_analysis_proxy_source_selection(
+            source_selection,
+            proxy_path,
+        )
+
         motion_result = analyze_motion(
             input_path=source_selection.selected_path,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             low_motion_threshold=low_motion_threshold,
             high_motion_threshold=high_motion_threshold,
             dead_visual_min_duration_seconds=dead_visual_min_duration_seconds,
@@ -167,7 +192,7 @@ def run_motion_analysis_for_job(
             high_motion_segment_count=0,
             dead_visual_candidate_count=0,
             duration_seconds=None,
-            frame_sample_rate=frame_sample_rate,
+            frame_sample_rate=resolved_frame_sample_rate,
             recommendation="review_motion_analysis_runner_error",
             warnings=[],
             errors=[f"motion_analysis_runner_failed: {exc}"],

@@ -743,13 +743,19 @@ def classify_screen_content(
         frame_index = 0
 
         while True:
+            if frame_index % sample_every_frames != 0:
+                ok = cap.grab()
+                if not ok:
+                    break
+                frame_index += 1
+                continue
+
             ok, frame = cap.read()
             if not ok:
                 break
 
-            if frame_index % sample_every_frames == 0:
-                sampled_frames.append(frame)
-                frame_indices.append(frame_index)
+            sampled_frames.append(frame)
+            frame_indices.append(frame_index)
 
             frame_index += 1
 
