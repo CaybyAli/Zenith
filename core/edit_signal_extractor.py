@@ -407,7 +407,7 @@ class EditSignalExtractor:
             if end_time <= start_time:
                 continue
 
-            if silent_ratio >= 0.60 or strength <= 0.12:
+            if strength <= 0.06 or (silent_ratio >= 0.95 and max_energy <= 0.12):
                 signal_type = "silence_zone"
                 notes = [f"Cached low audio energy detected ({strength:.3f})"]
             elif strength >= 0.50 or max_energy >= 0.85:

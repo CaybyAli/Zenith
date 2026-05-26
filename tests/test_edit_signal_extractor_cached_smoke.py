@@ -105,6 +105,30 @@ def test_cached_audio_points_are_bucketed_to_seconds() -> None:
     assert all(signal.metadata["point_count"] >= 1 for signal in signals)
 
 
+def test_cached_audio_mixed_silent_bucket_stays_activity() -> None:
+    job = SimpleNamespace(
+        job_id="job_cached_audio_mixed_silence",
+        rms_energy_context_timeline=[
+            {
+                "start_seconds": index * 0.01,
+                "end_seconds": (index * 0.01) + 0.01,
+                "energy_score": 0.25,
+                "is_silent": index < 70,
+            }
+            for index in range(100)
+        ],
+    )
+
+    signals = EditSignalExtractor()._extract_cached_audio_energy_signals(
+        job=job,
+        duration_seconds=1.0,
+    )
+
+    assert len(signals) == 1
+    assert signals[0].signal_type == "audio_activity"
+    assert signals[0].metadata["silent_ratio"] == 0.7
+
+
 def test_cached_visual_energy_segments_are_video_fallback_source() -> None:
     job = SimpleNamespace(
         job_id="job_cached_visual_energy",
