@@ -140,6 +140,27 @@ class LongformTimelineBuilder:
         
         return round(target, 3)
 
+    def _apply_power_profile_target_duration_cap(
+        self,
+        job: Job,
+        target_duration: float,
+        source_duration_seconds: float,
+    ) -> float:
+        profile = PowerProfile.normalize(getattr(job, "power_profile", PowerProfile.DEFAULT))
+        if profile not in {PowerProfile.ECO, PowerProfile.PERFORMANCE}:
+            return target_duration
+        if source_duration_seconds < YOUTUBE_MIN_DURATION:
+            return target_duration
+
+        cap = 540.0 if profile == PowerProfile.ECO else 720.0
+        capped = max(YOUTUBE_MIN_DURATION, min(float(target_duration), cap))
+        if capped < target_duration:
+            print(
+                "[TIMELINE-POWER-CAP] "
+                f"profile={profile} target={target_duration:.3f}s -> {capped:.3f}s"
+            )
+        return round(capped, 3)
+
     def _score_candidate_for_longform(
         self,
         candidate: HighlightCandidate,
@@ -754,6 +775,11 @@ class LongformTimelineBuilder:
         target_duration = self._build_target_duration(
             analysis_result.duration_seconds,
             target_scoring_pool,
+        )
+        target_duration = self._apply_power_profile_target_duration_cap(
+            job,
+            target_duration,
+            analysis_result.duration_seconds,
         )
 
         calculated_max = int(target_duration / 10.0)

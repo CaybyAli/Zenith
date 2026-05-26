@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from models.dynamic_edit_plan import DynamicEditPlan
@@ -938,6 +939,23 @@ class FinalRenderDriver:
         ]
         return any(marker in lower for marker in retry_markers)
 
+    def _resolve_segment_render_worker_count(
+        self,
+        job: Job,
+        video_encoder: dict,
+        total_segments: int,
+    ) -> int:
+        if total_segments <= 1:
+            return 1
+        if str(video_encoder.get("codec") or "").lower() != "h264_nvenc":
+            return 1
+
+        profile = PowerProfile.normalize(getattr(job, "power_profile", PowerProfile.DEFAULT))
+        if profile in {PowerProfile.OFF, PowerProfile.ECO}:
+            return 1
+
+        return min(2, total_segments)
+
 
     # ------------------------------------------------------------------ #
     #  FFmpeg operations                                                   #
@@ -1078,13 +1096,20 @@ class FinalRenderDriver:
             src_w, src_h = self._get_video_dimensions(source)
             video_encoder = self._resolve_video_encoder(job)
 
-            seg_paths: list[Path] = []
+            seg_paths: list[Path | None] = [None] * len(segments)
             total_segments = len(segments)
+            render_workers = self._resolve_segment_render_worker_count(
+                job,
+                video_encoder,
+                total_segments,
+            )
 
             print(f"\n{'='*60}")
             print(f"[CUT] RENDERING GESTARTET: {total_segments} Segmente")
+            print(f"[CUT] SEGMENT_WORKERS: {render_workers}")
             print(f"{'='*60}\n")
 
+            render_tasks: list[dict] = []
             for i, seg in enumerate(segments):
                 zoom_instructions = self._find_zoom_instructions(
                     seg,
@@ -1122,17 +1147,57 @@ class FinalRenderDriver:
                     seg, reframe_plan, dynamic_edit_plan, audio_peaks, src_w, src_h
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
-                
-                self._extract_segment(source, seg, fc, label, tmp_path, video_encoder)
-                seg_paths.append(tmp_path)
-                
-                print(f"   [OK] Segment fertig!\n")
-                print(f"{'='*60}")
-                print(f"[DONE] ALLE SEGMENTE GERENDERT - Jetzt zusammenfuegen...")
-                print(f"{'='*60}\n")
+                render_tasks.append(
+                    {
+                        "index": i,
+                        "segment": seg,
+                        "filter_complex": fc,
+                        "label": label,
+                        "tmp_path": tmp_path,
+                    }
+                )
+
+            def _render_task(task: dict) -> tuple[int, Path]:
+                self._extract_segment(
+                    source,
+                    task["segment"],
+                    task["filter_complex"],
+                    task["label"],
+                    task["tmp_path"],
+                    video_encoder,
+                )
+                return int(task["index"]), task["tmp_path"]
+
+            if render_workers <= 1:
+                for task in render_tasks:
+                    index, tmp_path = _render_task(task)
+                    seg_paths[index] = tmp_path
+                    print(f"   [OK] Segment {index + 1}/{total_segments} fertig!\n")
+            else:
+                with ThreadPoolExecutor(max_workers=render_workers) as executor:
+                    future_to_task = {
+                        executor.submit(_render_task, task): task
+                        for task in render_tasks
+                    }
+                    for future in as_completed(future_to_task):
+                        task = future_to_task[future]
+                        index, tmp_path = future.result()
+                        seg_paths[index] = tmp_path
+                        print(
+                            f"   [OK] Segment {index + 1}/{total_segments} "
+                            f"fertig ({task['segment'].segment_role})\n"
+                        )
+
+            ordered_seg_paths = [path for path in seg_paths if path is not None]
+            if len(ordered_seg_paths) != total_segments:
+                raise ValidationError("Segment render did not produce all expected outputs")
+
+            print(f"{'='*60}")
+            print(f"[DONE] ALLE SEGMENTE GERENDERT - Jetzt zusammenfuegen...")
+            print(f"{'='*60}\n")
 
             concat_path = out_dir / f"{job.job_id}_final.mp4"
-            self._concat_segments(seg_paths, concat_path)
+            self._concat_segments(ordered_seg_paths, concat_path)
             
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -1172,6 +1237,7 @@ class FinalRenderDriver:
                 len(reframe_plan.instructions) if reframe_plan is not None else 0
             ),
             "dynamic_edit_plan_used": dynamic_edit_plan is not None,
+            "segment_render_workers": render_workers,
             "zoom_instructions_count": (
                 len(dynamic_edit_plan.zoom_instructions)
                 if dynamic_edit_plan is not None

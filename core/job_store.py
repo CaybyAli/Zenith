@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from dataclasses import fields, is_dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +41,7 @@ _PERSIST_STRIP_PATTERNS: tuple[str, ...] = (
 )
 _PERSIST_STRIP_SIZE_THRESHOLD_BYTES = 100_000
 _PERSIST_STRIP_CONTAINER_TYPES = (dict, list, tuple, set)
+_PERSIST_STRIP_SCALAR_TYPES = (str, bytes, bytearray, int, float, bool, type(None), Enum)
 
 
 def _serialized_size_bytes(value: Any) -> int:
@@ -46,6 +49,67 @@ def _serialized_size_bytes(value: Any) -> int:
         return len(json.dumps(value, default=str, ensure_ascii=False).encode("utf-8"))
     except (TypeError, ValueError, RecursionError):
         return 0
+
+
+def _estimated_serialized_size_exceeds(value: Any, threshold: int) -> bool:
+    if threshold <= 0:
+        return True
+
+    total = 0
+    seen: set[int] = set()
+    stack: list[Any] = [value]
+
+    while stack:
+        item = stack.pop()
+
+        if isinstance(item, str):
+            total += len(item.encode("utf-8")) + 2
+        elif isinstance(item, (bytes, bytearray)):
+            total += len(item) + 2
+        elif isinstance(item, Enum):
+            total += len(str(item.value).encode("utf-8")) + 2
+        elif isinstance(item, (int, float, bool)) or item is None:
+            total += len(str(item))
+        elif isinstance(item, dict):
+            marker = id(item)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            total += 2 + max(0, len(item) - 1)
+            for key, child in item.items():
+                total += len(str(key).encode("utf-8")) + 4
+                stack.append(child)
+        elif isinstance(item, (list, tuple, set, frozenset)):
+            marker = id(item)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            total += 2 + max(0, len(item) - 1)
+            stack.extend(item)
+        elif is_dataclass(item):
+            marker = id(item)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            total += 2
+            for item_field in fields(item):
+                total += len(item_field.name.encode("utf-8")) + 4
+                stack.append(getattr(item, item_field.name))
+        else:
+            total += len(str(item).encode("utf-8")) + 2
+
+        if total > threshold:
+            return True
+
+    return False
+
+
+def _serialized_size_exceeds_threshold(value: Any, threshold: int) -> bool:
+    if isinstance(value, _PERSIST_STRIP_SCALAR_TYPES):
+        return _serialized_size_bytes(value) > threshold
+    if _estimated_serialized_size_exceeds(value, threshold):
+        return True
+    return _serialized_size_bytes(value) > threshold
 
 
 def should_strip_persisted_field(
@@ -56,13 +120,18 @@ def should_strip_persisted_field(
 ) -> bool:
     if key in explicit_exclude:
         return True
-    value_size = _serialized_size_bytes(value)
     if not key.endswith(_PERSIST_STRIP_PATTERNS):
         return (
             isinstance(value, _PERSIST_STRIP_CONTAINER_TYPES)
-            and value_size > _PERSIST_STRIP_SIZE_THRESHOLD_BYTES
+            and _serialized_size_exceeds_threshold(
+                value,
+                _PERSIST_STRIP_SIZE_THRESHOLD_BYTES,
+            )
         )
-    return value_size > _PERSIST_STRIP_SIZE_THRESHOLD_BYTES
+    return _serialized_size_exceeds_threshold(
+        value,
+        _PERSIST_STRIP_SIZE_THRESHOLD_BYTES,
+    )
 
 
 def compact_job_dict_for_persistence(
@@ -129,19 +198,20 @@ class JobStore:
         if not self._job_exists(job_id):
             raise NotFoundError(f"Job not found: {job_id}")
 
-        current_hash = self._job_hash(initial_dict)
+        compact = self._compact_job_dict_for_persistence(initial_dict)
+        current_hash = self._job_hash_from_compact(compact)
         if self._last_hash.get(job_id) == current_hash:
             return job
 
         job.touch()
-        job_dict = job.to_dict()
-        new_hash = self._job_hash(job_dict)
+        compact["updated_at"] = job.updated_at
+        new_hash = self._job_hash_from_compact(compact)
 
         if self._last_hash.get(job_id) == new_hash:
             return job
 
         self._last_hash[job_id] = new_hash
-        self._write_job(job_id, job_dict)
+        self._write_compact_job(job_id, compact)
         return job
 
     def get_job(self, job_id: str) -> Job:
@@ -175,6 +245,9 @@ class JobStore:
 
     def _job_hash(self, job_dict: dict[str, Any]) -> str:
         compact = self._compact_job_dict_for_persistence(job_dict)
+        return self._job_hash_from_compact(compact)
+
+    def _job_hash_from_compact(self, compact: dict[str, Any]) -> str:
         content = json.dumps(compact, sort_keys=True, default=str)
         return hashlib.md5(content.encode()).hexdigest()
 
@@ -238,6 +311,12 @@ class JobStore:
     def _write_job(self, job_id: str, job_dict: dict[str, Any]) -> None:
         try:
             compact = self._compact_job_dict_for_persistence(job_dict)
+            self._write_compact_job(job_id, compact)
+        except Exception as exc:
+            raise StorageError(f"Could not write job file {job_id}: {exc}") from exc
+
+    def _write_compact_job(self, job_id: str, compact: dict[str, Any]) -> None:
+        try:
             self.storage.write_json(str(self._job_path(job_id)), compact, indent=2)
         except Exception as exc:
             raise StorageError(f"Could not write job file {job_id}: {exc}") from exc

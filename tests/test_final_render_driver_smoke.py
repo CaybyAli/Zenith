@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+from types import SimpleNamespace
 
 from core.ffmpeg_helper import get_ffmpeg_path
 
@@ -12,6 +13,7 @@ import pytest
 from moviepy import VideoFileClip
 
 from core.final_render_driver import FinalRenderDriver
+from core.power_profile import PowerProfile
 from models.dynamic_edit_plan import DynamicEditPlan
 from models.edit_timeline import EditTimeline
 from models.framing_instruction import FramingInstruction
@@ -300,6 +302,52 @@ def test_reaction_shot_reframe_instruction_changes_32x9_filter_complex() -> None
     assert "scale_cuda=1920:1080" in reaction_filter
     assert reaction_filter.endswith("hwdownload,format=yuv420p[out]")
     assert "overlay=" not in reaction_filter
+
+
+def test_segment_render_worker_count_uses_two_nvenc_workers_for_performance() -> None:
+    driver = FinalRenderDriver()
+    video_encoder = {"codec": "h264_nvenc"}
+
+    assert (
+        driver._resolve_segment_render_worker_count(
+            SimpleNamespace(power_profile=PowerProfile.PERFORMANCE),
+            video_encoder,
+            total_segments=3,
+        )
+        == 2
+    )
+    assert (
+        driver._resolve_segment_render_worker_count(
+            SimpleNamespace(power_profile=PowerProfile.BALANCED),
+            video_encoder,
+            total_segments=3,
+        )
+        == 2
+    )
+    assert (
+        driver._resolve_segment_render_worker_count(
+            SimpleNamespace(power_profile=PowerProfile.ECO),
+            video_encoder,
+            total_segments=3,
+        )
+        == 1
+    )
+    assert (
+        driver._resolve_segment_render_worker_count(
+            SimpleNamespace(power_profile=PowerProfile.PERFORMANCE),
+            {"codec": "libx264"},
+            total_segments=3,
+        )
+        == 1
+    )
+    assert (
+        driver._resolve_segment_render_worker_count(
+            SimpleNamespace(power_profile=PowerProfile.PERFORMANCE),
+            video_encoder,
+            total_segments=1,
+        )
+        == 1
+    )
 
 
 # ------------------------------------------------------------------ #

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from core.longform_timeline_builder import LongformTimelineBuilder, YOUTUBE_MIN_DURATION
+from core.power_profile import PowerProfile
 from models.analysis_result import AnalysisResult
 from models.highlight_candidate import HighlightCandidate
 from models.job import Job
@@ -161,3 +162,42 @@ def test_upper_cap_stays_at_or_below_1200s() -> None:
 
     assert target <= 1200.0
     assert _duration(selected) <= 1200.0
+
+
+def test_performance_power_profile_caps_longform_target_to_720s() -> None:
+    builder = LongformTimelineBuilder()
+    job = SimpleNamespace(power_profile=PowerProfile.PERFORMANCE)
+
+    capped = builder._apply_power_profile_target_duration_cap(
+        job,
+        target_duration=1200.0,
+        source_duration_seconds=1476.0,
+    )
+
+    assert capped == 720.0
+
+
+def test_eco_power_profile_caps_longform_target_to_540s() -> None:
+    builder = LongformTimelineBuilder()
+    job = SimpleNamespace(power_profile=PowerProfile.ECO)
+
+    capped = builder._apply_power_profile_target_duration_cap(
+        job,
+        target_duration=1200.0,
+        source_duration_seconds=1476.0,
+    )
+
+    assert capped == 540.0
+
+
+def test_balanced_power_profile_keeps_longform_target_uncapped() -> None:
+    builder = LongformTimelineBuilder()
+    job = SimpleNamespace(power_profile=PowerProfile.BALANCED)
+
+    capped = builder._apply_power_profile_target_duration_cap(
+        job,
+        target_duration=1200.0,
+        source_duration_seconds=1476.0,
+    )
+
+    assert capped == 1200.0
