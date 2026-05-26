@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,6 +20,18 @@ from shared.errors import ValidationError
 from typing import Literal
 
 ZoomSize = Literal["tiny", "small", "medium", "large"]
+
+_CUDA_SCALE_DOWNLOAD_RE = re.compile(
+    r"hwupload_cuda,scale_cuda=(?P<args>[^,;\[]+),"
+    r"hwdownload,format=(?:nv12,format=)?yuv420p"
+)
+
+
+def _cuda_scale_filter(width: int, height: int, extra: str = "") -> str:
+    return (
+        f"hwupload_cuda,scale_cuda={width}:{height}{extra},"
+        "hwdownload,format=yuv420p"
+    )
 
 class ZoomTimelineBuilder:
     """Baut eine kontinuierliche Timeline fuer smooth zoom transitions."""
@@ -288,8 +301,9 @@ class FinalRenderDriver:
             if layout_kind == "facecam_emphasis":
                 print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
                 fc = (
-                    f"[0:v]hwdownload,format=nv12,crop={src_w//2}:1080:0:0,"
-                    "scale=1920:1080[out]"
+                    f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+                    f"crop={src_w//2}:1080:0:0,"
+                    f"{_cuda_scale_filter(1920, 1080)}[out]"
                 )
                 return fc, "[out]"
             
@@ -309,9 +323,11 @@ class FinalRenderDriver:
                 # Keine Zooms -> immer kleine Groesse
                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
                 fc = (
-                    "[0:v]hwdownload,format=nv12,split=2[gp_src][fc_src];"
-                    f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
-                    f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_SMALL_W}:{PIP_SMALL_H}[fc];"
+                    "[0:v]hwdownload,format=nv12,format=yuv420p,split=2[gp_src][fc_src];"
+                    f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,"
+                    f"{_cuda_scale_filter(1920, 1080)}[gp];"
+                    f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                    f"{_cuda_scale_filter(PIP_SMALL_W, PIP_SMALL_H)}[fc];"
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
                 )
                 return fc, "[out]"
@@ -350,9 +366,11 @@ class FinalRenderDriver:
                 print(f"[DEBUG] -> Found {len(zoom_instructions)} zoom(s), but all low intensity")
                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
                 fc = (
-                    "[0:v]hwdownload,format=nv12,split=2[gp_src][fc_src];"
-                    f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
-                    f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_SMALL_W}:{PIP_SMALL_H}[fc];"
+                    "[0:v]hwdownload,format=nv12,format=yuv420p,split=2[gp_src][fc_src];"
+                    f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,"
+                    f"{_cuda_scale_filter(1920, 1080)}[gp];"
+                    f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                    f"{_cuda_scale_filter(PIP_SMALL_W, PIP_SMALL_H)}[fc];"
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
                 )
                 return fc, "[out]"
@@ -366,20 +384,25 @@ class FinalRenderDriver:
             
             # Vier PiP-Groessen, INSTANT switching mit enable-Conditions
             fc = (
-                "[0:v]hwdownload,format=nv12,split=5[gp_src][fc_tiny_src][fc_small_src][fc_medium_src][fc_large_src];"
-                f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,scale=1920:1080[gp];"
+                "[0:v]hwdownload,format=nv12,format=yuv420p,split=5[gp_src][fc_tiny_src][fc_small_src][fc_medium_src][fc_large_src];"
+                f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,"
+                f"{_cuda_scale_filter(1920, 1080)}[gp];"
                 
                 # TINY PiP (default - leise Momente)
-                f"[fc_tiny_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_TINY_W}:{PIP_TINY_H}[fc_tiny];"
+                f"[fc_tiny_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"{_cuda_scale_filter(PIP_TINY_W, PIP_TINY_H)}[fc_tiny];"
                 
                 # SMALL PiP (normal reden)
-                f"[fc_small_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_SMALL_W}:{PIP_SMALL_H}[fc_small];"
+                f"[fc_small_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"{_cuda_scale_filter(PIP_SMALL_W, PIP_SMALL_H)}[fc_small];"
                 
                 # MEDIUM PiP (laut/aufgeregt)
-                f"[fc_medium_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_MEDIUM_W}:{PIP_MEDIUM_H}[fc_medium];"
+                f"[fc_medium_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"{_cuda_scale_filter(PIP_MEDIUM_W, PIP_MEDIUM_H)}[fc_medium];"
                 
                 # LARGE PiP (schreien)
-                f"[fc_large_src]crop={src_w//2 - crop_offset}:1068:0:2,scale={PIP_LARGE_W}:{PIP_LARGE_H}[fc_large];"
+                f"[fc_large_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"{_cuda_scale_filter(PIP_LARGE_W, PIP_LARGE_H)}[fc_large];"
                 
                 # Overlays: TINY (default), dann SMALL, MEDIUM, LARGE (Prioritaet steigend)
                 f"[gp][fc_tiny]overlay={PIP_X}:{PIP_Y}:enable='not(({enable_small_str})+({enable_medium_str})+({enable_large_str}))':shortest=1[tmp1];"
@@ -414,8 +437,9 @@ class FinalRenderDriver:
                 f"{crop_w}x{crop_h}+{crop_x}+{crop_y} -> 1920x1080"
             )
             fc = (
-                f"[0:v]hwdownload,format=nv12,crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
-                "scale=1920:1080:force_original_aspect_ratio=decrease,"
+                f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+                f"crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
+                f"{_cuda_scale_filter(1920, 1080, ':force_original_aspect_ratio=decrease')},"
                 "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
                 "setsar=1[out]"
             )
@@ -423,7 +447,8 @@ class FinalRenderDriver:
 
         print(f"[DEBUG] -> Rendering STANDARD 16:9 source -> 1920x1080")
         fc = (
-            "[0:v]hwdownload,format=nv12,scale=1920:1080:force_original_aspect_ratio=decrease,"
+            "[0:v]hwdownload,format=nv12,format=yuv420p,"
+            f"{_cuda_scale_filter(1920, 1080, ':force_original_aspect_ratio=decrease')},"
             "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
             "setsar=1[out]"
         )
@@ -772,7 +797,7 @@ class FinalRenderDriver:
             self._ffmpeg(),
             "-y",
             "-f", "lavfi",
-            "-i", "color=c=black:s=16x16:r=1:d=0.1",
+            "-i", "color=c=black:s=256x144:r=1:d=0.1",
             "-frames:v", "1",
             "-an",
             "-c:v", clean_encoder,
@@ -856,7 +881,13 @@ class FinalRenderDriver:
 
     def _strip_hwdownload_from_filter(self, filter_complex: str) -> str:
         clean = str(filter_complex or "")
+        clean = _CUDA_SCALE_DOWNLOAD_RE.sub(
+            lambda match: f"scale={match.group('args')}",
+            clean,
+        )
         for marker in (
+            "hwdownload,format=nv12,format=yuv420p,",
+            ",hwdownload,format=nv12,format=yuv420p",
             "hwdownload,format=nv12,",
             ",hwdownload,format=nv12",
             "hwdownload,format=yuv420p,",
@@ -1042,14 +1073,22 @@ class FinalRenderDriver:
             print(f"{'='*60}\n")
 
             for i, seg in enumerate(segments):
-                # AUDIO-PEAK DETECTION fuer reactive zoom
-                audio_peaks = AudioPeakDetector().detect_peaks(
-                    video_path=source_path,
-                    segment_start=seg.start_time,
-                    segment_duration=seg.duration,
-                    threshold_db=-20.0,
-                    min_duration=0.5,
+                zoom_instructions = self._find_zoom_instructions(
+                    seg,
+                    dynamic_edit_plan,
                 )
+                if zoom_instructions:
+                    # AUDIO-PEAK DETECTION fuer reactive zoom
+                    audio_peaks = AudioPeakDetector().detect_peaks(
+                        video_path=source_path,
+                        segment_start=seg.start_time,
+                        segment_duration=seg.duration,
+                        threshold_db=-20.0,
+                        min_duration=0.5,
+                    )
+                else:
+                    audio_peaks = []
+                    print("[DEBUG] [AUDIO] Skipped peak detection (no reactive zooms)")
                 
                 if audio_peaks:
                     print(f"[DEBUG] [AUDIO] Found {len(audio_peaks)} audio peaks in segment:")

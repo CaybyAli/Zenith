@@ -178,7 +178,7 @@ def test_build_filter_complex_returns_16x9_fallback_without_reframe_plan() -> No
     )
 
     assert label == "[out]"
-    assert "scale=1920:1080" in fc
+    assert "scale_cuda=1920:1080" in fc
     assert "setsar=1[out]" in fc
 
 
@@ -227,7 +227,7 @@ def test_build_filter_complex_returns_16x9_crop_from_reframe_plan() -> None:
 
     assert label == "[out]"
     assert "crop=1536:1080:192:0" in fc
-    assert "scale=1920:1080" in fc
+    assert "scale_cuda=1920:1080" in fc
 
 
 def test_reaction_shot_reframe_instruction_changes_32x9_filter_complex() -> None:
@@ -297,7 +297,8 @@ def test_reaction_shot_reframe_instruction_changes_32x9_filter_complex() -> None
     assert "overlay=" in base_filter
 
     assert "crop=1920:1080:0:0" in reaction_filter
-    assert "scale=1920:1080[out]" in reaction_filter
+    assert "scale_cuda=1920:1080" in reaction_filter
+    assert reaction_filter.endswith("hwdownload,format=yuv420p[out]")
     assert "overlay=" not in reaction_filter
 
 

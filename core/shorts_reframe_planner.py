@@ -47,24 +47,35 @@ def build_stack_filter_60_40(source: SourceFormat) -> str:
             f"aspect_ratio={source.aspect_ratio:.2f}"
         )
 
-    # Final P4-HOTFIX-A geometry for 3840x1080 Rocket League SBS:
-    # source left  = facecam
-    # source right = gameplay
-    # output top   = facecam 1/3 = 640 px
-    # output bottom= gameplay 2/3 = 1280 px
-    facecam_x = 0
-    gameplay_x = 1850
-    source_w = 1920
-    source_h = 1080
-    facecam_final_crop_x = 10
+    if source.width < 3840:
+        facecam_x, facecam_y, facecam_w, facecam_h = source.facecam_region
+        gameplay_x, gameplay_y, gameplay_w, gameplay_h = source.gameplay_region
+        facecam_final_crop_x = 0
+    else:
+        # Final P4-HOTFIX-A geometry for 3840x1080 Rocket League SBS:
+        # source left  = facecam
+        # source right = gameplay
+        # output top   = facecam 1/3 = 640 px
+        # output bottom= gameplay 2/3 = 1280 px
+        facecam_x = 0
+        facecam_y = 0
+        facecam_w = 1920
+        facecam_h = 1080
+        gameplay_x = 1850
+        gameplay_y = 0
+        gameplay_w = 1920
+        gameplay_h = 1080
+        facecam_final_crop_x = 10
 
     return (
-        f"[0:v]hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p,setsar=1,split=2[facecam_src][gameplay_src];"
-        f"[facecam_src]crop={source_w}:{source_h}:{facecam_x}:0,"
-        f"scale=1080:640:force_original_aspect_ratio=increase,"
+        f"[0:v]hwdownload,format=nv12,format=yuv420p,setsar=1,split=2[facecam_src][gameplay_src];"
+        f"[facecam_src]crop={facecam_w}:{facecam_h}:{facecam_x}:{facecam_y},"
+        f"hwupload_cuda,scale_cuda=1080:640:force_original_aspect_ratio=increase,"
+        f"hwdownload,format=yuv420p,"
         f"crop=1080:640:{facecam_final_crop_x}:0[facecam_block];"
-        f"[gameplay_src]crop={source_w}:{source_h}:{gameplay_x}:0,"
-        f"scale=1080:1280:force_original_aspect_ratio=increase,"
+        f"[gameplay_src]crop={gameplay_w}:{gameplay_h}:{gameplay_x}:{gameplay_y},"
+        f"hwupload_cuda,scale_cuda=1080:1280:force_original_aspect_ratio=increase,"
+        f"hwdownload,format=yuv420p,"
         f"crop=1080:1280[gameplay_block];"
         f"[facecam_block][gameplay_block]vstack=inputs=2[out]"
     )

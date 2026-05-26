@@ -98,13 +98,15 @@ def _driver(
 def test_hwaccel_fallback_converts_gpu_stack_filter_to_cpu_filter() -> None:
     driver, _, _ = _driver()
     gpu_filter = (
-        "[0:v]hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p,"
-        "setsar=1,split=2[facecam_src][gameplay_src];"
+        "[0:v]hwdownload,format=nv12,format=yuv420p,setsar=1,"
+        "split=2[facecam_src][gameplay_src];"
         "[facecam_src]crop=1920:1080:0:0,"
-        "scale=1080:640:force_original_aspect_ratio=increase,"
+        "hwupload_cuda,scale_cuda=1080:640:force_original_aspect_ratio=increase,"
+        "hwdownload,format=yuv420p,"
         "crop=1080:640:10:0[facecam_block];"
         "[gameplay_src]crop=1920:1080:1850:0,"
-        "scale=1080:1280:force_original_aspect_ratio=increase,"
+        "hwupload_cuda,scale_cuda=1080:1280:force_original_aspect_ratio=increase,"
+        "hwdownload,format=yuv420p,"
         "crop=1080:1280[gameplay_block];"
         "[facecam_block][gameplay_block]vstack=inputs=2[out]"
     )
@@ -135,7 +137,9 @@ def test_hwaccel_fallback_converts_gpu_stack_filter_to_cpu_filter() -> None:
     assert "hwupload_cuda" not in fallback_filter
     assert "scale_cuda" not in fallback_filter
     assert "hwdownload" not in fallback_filter
-    assert fallback_filter.startswith("[0:v]scale=3840:1080,setsar=1")
+    assert fallback_filter.startswith("[0:v]setsar=1")
+    assert "scale=1080:640:force_original_aspect_ratio=increase" in fallback_filter
+    assert "scale=1080:1280:force_original_aspect_ratio=increase" in fallback_filter
 
 
 @pytest.mark.ffmpeg_integration

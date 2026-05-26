@@ -23,13 +23,15 @@ def test_stack_filter_uses_final_p4_hotfix_a_geometry() -> None:
     filter_text = build_stack_filter_60_40(_custom_source_format())
 
     assert "[facecam_src]crop=1920:1080:0:0" in filter_text
-    assert "scale=1080:640" in filter_text
+    assert "scale_cuda=1080:640" in filter_text
     assert "crop=1080:640:10:0[facecam_block]" in filter_text
     assert "[gameplay_src]crop=1920:1080:1850:0" in filter_text
-    assert "scale=1080:1280" in filter_text
+    assert "scale_cuda=1080:1280" in filter_text
     assert "crop=1080:1280[gameplay_block]" in filter_text
     assert "[facecam_block][gameplay_block]vstack=inputs=2[out]" in filter_text
-    assert "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p" in filter_text
+    assert "[0:v]hwdownload,format=nv12,format=yuv420p" in filter_text
+    assert "hwupload_cuda,scale_cuda=1080:640" in filter_text
+    assert "hwupload_cuda,scale_cuda=1080:1280" in filter_text
 
 
 def test_gameplay_centered_filter_uses_source_format_gameplay_region() -> None:
@@ -63,6 +65,25 @@ def test_all_planner_filters_avoid_render_driver_legacy_crop_normalizer() -> Non
         assert "[0:v]crop=" not in filter_text
 
     stack_filter = build_stack_filter_60_40(source)
-    assert "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p" in stack_filter
+    assert "[0:v]hwdownload,format=nv12,format=yuv420p" in stack_filter
+    assert "hwupload_cuda,scale_cuda=1080:640" in stack_filter
+    assert "hwupload_cuda,scale_cuda=1080:1280" in stack_filter
     assert "420" not in build_gameplay_centered_filter(source)
     assert "420" not in build_facecam_centered_filter(source)
+
+
+def test_stack_filter_scales_down_geometry_for_small_32_9_smoke_sources() -> None:
+    source = SourceFormat(
+        width=1280,
+        height=360,
+        aspect_ratio=1280 / 360,
+        is_32_9_composite=True,
+        gameplay_region=(640, 0, 640, 360),
+        facecam_region=(0, 0, 640, 360),
+    )
+
+    filter_text = build_stack_filter_60_40(source)
+
+    assert "[facecam_src]crop=640:360:0:0" in filter_text
+    assert "[gameplay_src]crop=640:360:640:0" in filter_text
+    assert "crop=1080:640:0:0[facecam_block]" in filter_text

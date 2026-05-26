@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -61,6 +62,11 @@ POWER_PROFILE_CRF = {
     PowerProfile.PERFORMANCE: 15,
     PowerProfile.FULL_POWER: 15,
 }
+
+_CUDA_SCALE_DOWNLOAD_RE = re.compile(
+    r"hwupload_cuda,scale_cuda=(?P<args>[^,;\[]+),"
+    r"hwdownload,format=(?:nv12,format=)?yuv420p,"
+)
 
 
 @dataclass(frozen=True)
@@ -613,18 +619,38 @@ class ShortsRenderDriver:
 
     def _should_retry_without_hwaccel(self, stderr: str) -> bool:
         lower = str(stderr or "").lower()
-        retry_markers = [
-            "function not implemented",
-            "hwdownload",
+        if not lower:
+            return False
+
+        hw_markers = (
             "cuda",
+            "cuvid",
+            "nvenc",
+            "hwaccel",
+            "hwdownload",
+            "hwupload",
             "hardware",
             "device",
+            "hwframe",
+        )
+        failure_markers = (
+            "function not implemented",
             "invalid argument",
+            "invalid output format",
+            "failed to configure output pad",
             "no filtered frames",
             "nothing was written",
             "conversion failed",
+        )
+        error_lines = [
+            line
+            for line in lower.splitlines()
+            if any(marker in line for marker in failure_markers)
         ]
-        return any(marker in lower for marker in retry_markers)
+        return any(
+            any(hw_marker in line for hw_marker in hw_markers)
+            for line in error_lines
+        )
 
     def _strip_hwaccel_from_cmd(self, cmd: list[str]) -> list[str]:
         stripped: list[str] = []
@@ -647,22 +673,45 @@ class ShortsRenderDriver:
         cleaned = list(cmd)
         for index, part in enumerate(cleaned):
             if part in {"-vf", "-filter_complex"} and index + 1 < len(cleaned):
+                filter_value = cleaned[index + 1]
+                # CPU fallback after a real CUDA failure: replace the GPU-only
+                # bootstrap with an equivalent CPU scale before CPU filters.
+                filter_value = _CUDA_SCALE_DOWNLOAD_RE.sub(
+                    lambda match: f"scale={match.group('args')},",
+                    filter_value
+                )
                 cleaned[index + 1] = (
-                    cleaned[index + 1]
+                    filter_value
                     .replace(
                         "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=yuv420p,",
+                        "scale=3840:1080,",
+                    )
+                    .replace(
+                        "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=nv12,format=yuv420p,",
+                        "scale=3840:1080,",
+                    )
+                    .replace(
+                        "scale_cuda=3840:1080,hwdownload,format=nv12,format=yuv420p,",
+                        "scale=3840:1080,",
+                    )
+                    .replace(
+                        "scale_cuda=3840:1080,hwdownload,format=nv12,",
+                        "scale=3840:1080,",
+                    )
+                    .replace(
+                        "scale_cuda=3840:1080,hwdownload,format=yuv420p,",
                         "scale=3840:1080,",
                     )
                     .replace(
                         "hwupload_cuda,scale_cuda=3840:1080,hwdownload,format=nv12,",
                         "scale=3840:1080,",
                     )
-                    .replace(
-                        "hwupload_cuda,scale_cuda=3840:1080,",
-                        "scale=3840:1080,",
-                    )
+                    .replace("hwupload_cuda,scale_cuda=3840:1080,", "scale=3840:1080,")
+                    .replace("hwupload_cuda,", "")
+                    .replace("hwdownload,format=nv12,format=yuv420p,", "")
                     .replace("hwdownload,format=nv12,", "")
                     .replace("hwdownload,format=yuv420p,", "")
+                    .replace("[0:v]hwdownload,format=nv12,format=yuv420p,", "[0:v]")
                     .replace("[0:v]hwdownload,format=nv12,", "[0:v]")
                     .replace("[0:v]hwdownload,format=yuv420p,", "[0:v]")
                 )
@@ -862,11 +911,11 @@ class ShortsRenderDriver:
         if self._is_complex_filter(clean_filter):
             return clean_filter.replace(
                 "[0:v]",
-                "[0:v]hwdownload,format=nv12,",
+                "[0:v]hwdownload,format=nv12,format=yuv420p,",
                 1,
             )
 
-        return f"hwdownload,format=nv12,{clean_filter}"
+        return f"hwdownload,format=nv12,format=yuv420p,{clean_filter}"
 
     def _is_complex_filter(self, filter_string: str) -> bool:
         return "[" in filter_string and "]" in filter_string
