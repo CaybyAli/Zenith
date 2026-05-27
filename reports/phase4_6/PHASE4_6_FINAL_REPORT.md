@@ -4,11 +4,11 @@
 
 Phase 4.6 wurde technisch durch P4.6-1 bis P4.6-9-NEU implementiert und ein Vollrender fuer `pair_001` lief erfolgreich durch. Die Phase ist aber nicht als vollstaendig gruen freigegeben, weil mehrere harte Akzeptanzmetriken mit dem aktuellen Single-Track-Korpus nicht belegbar oder nicht erreicht sind.
 
-## Verifizierter HEAD vor Final-Doc-Push
+## Verifizierter P4.6-FINAL-Doc-Commit
 
-`85b4d4667b4c8319c9b2b1188a7458bce601add4 feat(P4.6-9): extend learning fingerprints with 4.6 signals`
+`1cc0561f15735018ccf65985ccdd602a4852f46e docs(P4.6): finalize phase 4.6 cut engine foundation`
 
-Der P4.6-FINAL-Doc-Commit wird nach dem Push in `PROGRESS.md` nachgetragen.
+Der abschliessende PROGRESS-Hash wird nach dem letzten Nachtrags-Push in der Chat-Antwort genannt.
 
 ## Sub-Phasen-Uebersicht
 
@@ -23,7 +23,7 @@ Der P4.6-FINAL-Doc-Commit wird nach dem Push in `PROGRESS.md` nachgetragen.
 | P4.6-7 Smooth-Zoom-Engine | abgeschlossen | `878846e712e1d7b4df9d5807ca7ba550d268b8b2` |
 | P4.6-8 Focus-Switch-Engine | abgeschlossen | `afe1c524573b301eb3ecae0f1da97ee6589f0e84` |
 | P4.6-9-NEU Fingerprint-Erweiterung | abgeschlossen | `85b4d4667b4c8319c9b2b1188a7458bce601add4` |
-| P4.6-FINAL E2E + Doc | beendet mit offenen Punkten | `<pending final docs commit>` |
+| P4.6-FINAL E2E + Doc | beendet mit offenen Punkten | `1cc0561f15735018ccf65985ccdd602a4852f46e` |
 
 ## Funktionale Akzeptanz
 

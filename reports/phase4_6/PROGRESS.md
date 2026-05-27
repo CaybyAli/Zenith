@@ -72,7 +72,7 @@
 
 ## 2026-05-27 07:45:00 +02:00
 - Sub-Phase: P4.6-FINAL E2E + Abschlussbericht
-- Commit-Hash: <pending final docs commit>
+- Commit-Hash: 1cc0561f15735018ccf65985ccdd602a4852f46e
 - Tests: 3818 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
 - Modul-Tests: 10 passed targeted duration-floor smoke after final guard-tolerance fix
 - Full-Render: pair_001 Exitcode 0, duration 00:32:41.1312051, output exports/gaming_main/job_059053a7fa2a/job_059053a7fa2a_v1_final.mp4
