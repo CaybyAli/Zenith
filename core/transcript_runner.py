@@ -34,6 +34,8 @@ def _serialize_segments(result: TranscriptResult) -> list[dict[str, Any]]:
                 "text": str(getattr(segment, "text", "") or ""),
                 "confidence": getattr(segment, "confidence", None),
                 "words": list(getattr(segment, "words", []) or []),
+                "audio_track": str(getattr(segment, "audio_track", "mic") or "mic"),
+                "speaker": str(getattr(segment, "speaker", "unknown") or "unknown"),
             }
         )
 

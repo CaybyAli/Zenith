@@ -47,7 +47,9 @@ def test_transcript_segment_to_dict_includes_audio_track() -> None:
 
     assert result.segments
     assert result.segments[0].audio_track == "mic"
+    assert result.segments[0].speaker == "unknown"
     assert result.segments[0].to_dict()["audio_track"] == "mic"
+    assert result.segments[0].to_dict()["speaker"] == "unknown"
 
 
 def test_transcribe_all_streams_returns_one_result_per_label() -> None:

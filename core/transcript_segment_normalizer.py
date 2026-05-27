@@ -90,6 +90,13 @@ def _safe_audio_track(value: Any) -> str:
     return clean or "mic"
 
 
+def _safe_speaker(value: Any) -> str:
+    clean = _safe_text(value).lower()
+    if clean in {"ali", "friend", "unknown"}:
+        return clean
+    return "unknown"
+
+
 def _metadata_from(source: Any) -> dict[str, Any]:
     metadata = _get_value(source, "metadata")
 
@@ -192,6 +199,7 @@ def normalize_transcript_segment(
     text = _safe_text(_get_value(segment, "text"))
     confidence = _safe_confidence(_get_value(segment, "confidence"))
     audio_track = _safe_audio_track(_get_value(segment, "audio_track"))
+    speaker = _safe_speaker(_get_value(segment, "speaker"))
 
     if start_seconds is None:
         errors.append("missing_start_seconds")
@@ -255,6 +263,7 @@ def normalize_transcript_segment(
         "words": words,
         "confidence": confidence,
         "audio_track": audio_track,
+        "speaker": speaker,
         "source_index": int(source_index),
         "is_valid": not errors,
         "warnings": warnings,

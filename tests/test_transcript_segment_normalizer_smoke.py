@@ -31,6 +31,7 @@ def test_dict_with_start_seconds_end_seconds_text_is_normalized() -> None:
             "text": "Hallo Welt",
             "confidence": 0.95,
             "audio_track": "discord",
+            "speaker": "friend",
         },
         source_index=3,
     )
@@ -41,6 +42,7 @@ def test_dict_with_start_seconds_end_seconds_text_is_normalized() -> None:
     assert segment["text"] == "Hallo Welt"
     assert segment["confidence"] == 0.95
     assert segment["audio_track"] == "discord"
+    assert segment["speaker"] == "friend"
     assert segment["source_index"] == 3
     assert segment["is_valid"] is True
     assert segment["errors"] == []
@@ -189,6 +191,7 @@ def test_missing_words_mean_no_word_level_timestamps() -> None:
 
     assert result.status == "ok"
     assert result.segments[0]["audio_track"] == "mic"
+    assert result.segments[0]["speaker"] == "unknown"
     assert result.has_word_level_timestamps is False
     assert result.word_count == 0
 

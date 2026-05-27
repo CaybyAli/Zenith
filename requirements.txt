@@ -41,6 +41,7 @@ pytest==9.0.3
 python-dotenv==1.2.2
 requests==2.33.1
 requests-oauthlib==2.0.0
+resemblyzer==0.1.4
 tqdm==4.67.3
 uritemplate==4.2.0
 urllib3==2.6.3

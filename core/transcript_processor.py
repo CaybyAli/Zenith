@@ -231,6 +231,7 @@ class TranscriptProcessor:
                 text="Zenith transcript smoke test segment one.",
                 confidence=None,
                 audio_track=audio_track,
+                speaker="unknown",
             ),
             TranscriptSegment(
                 start_seconds=1.5,
@@ -238,6 +239,7 @@ class TranscriptProcessor:
                 text="This is a deterministic test fallback, not productive Whisper output.",
                 confidence=None,
                 audio_track=audio_track,
+                speaker="unknown",
             ),
         ]
 
@@ -264,6 +266,7 @@ class TranscriptProcessor:
                 confidence = item.get("confidence")
                 raw_words = item.get("words") or []
                 item_audio_track = item.get("audio_track")
+                item_speaker = item.get("speaker")
             else:
                 start = getattr(item, "start", None)
                 end = getattr(item, "end", None)
@@ -271,6 +274,7 @@ class TranscriptProcessor:
                 confidence = getattr(item, "confidence", None)
                 raw_words = getattr(item, "words", None) or []
                 item_audio_track = getattr(item, "audio_track", None)
+                item_speaker = getattr(item, "speaker", None)
 
             try:
                 start_seconds = max(0.0, float(start))
@@ -296,6 +300,7 @@ class TranscriptProcessor:
                     confidence=confidence if isinstance(confidence, float) else None,
                     words=words,
                     audio_track=self._safe_audio_track(item_audio_track, audio_track),
+                    speaker=self._safe_speaker(item_speaker),
                 )
             )
 
@@ -470,6 +475,12 @@ class TranscriptProcessor:
         if clean:
             return clean
         return default
+
+    def _safe_speaker(self, value: Any) -> str:
+        clean = str(value or "").strip().lower()
+        if clean in {"ali", "friend", "unknown"}:
+            return clean
+        return "unknown"
 
 
 class _SelectedAudioSource:

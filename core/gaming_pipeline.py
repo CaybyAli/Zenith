@@ -31,6 +31,7 @@ from core.title_generator import TitleGenerator
 from core.metadata_generator import MetadataGenerator
 from core.validator import Validator
 from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
+from core.speaker_identifier import SpeakerIdentifier
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9124,14 +9125,56 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             )
         elif job.raw_video_path:
             try:
-                transcript_result = transcript_processor.transcribe(str(job.raw_video_path))
+                transcript_stream_results = transcript_processor.transcribe_all_streams(
+                    str(job.raw_video_path)
+                )
+                speaker_identifier = (
+                    services.get("speaker_identifier") or SpeakerIdentifier()
+                )
+                transcript_result = speaker_identifier.identify_transcript_results(
+                    transcript_stream_results,
+                    source_media_path=str(job.raw_video_path),
+                )
+                speaker_summary = getattr(speaker_identifier, "last_summary", None)
+                speaker_summary_data = (
+                    speaker_summary.to_dict()
+                    if speaker_summary is not None
+                    and callable(getattr(speaker_summary, "to_dict", None))
+                    else {}
+                )
+                if hasattr(job, "speaker_identification_summary"):
+                    job.speaker_identification_summary = speaker_summary_data
                 print(
                     f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
                     f"segments={len(transcript_result.segments)} "
                     f"engine={transcript_result.engine}"
                 )
+                print(
+                    f"[gaming_pipeline] SPEAKERS  {job.job_id} "
+                    f"strategy={speaker_summary_data.get('strategy', '-')} "
+                    f"ali={speaker_summary_data.get('ali_segments', 0)} "
+                    f"friend={speaker_summary_data.get('friend_segments', 0)} "
+                    f"unknown={speaker_summary_data.get('unknown_segments', 0)}"
+                )
             except (TranscriptUnavailableError, ImportError, FileNotFoundError, RuntimeError) as exc:
-                print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason={exc}")
+                try:
+                    transcript_result = transcript_processor.transcribe(str(job.raw_video_path))
+                    print(
+                        f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+                        f"segments={len(transcript_result.segments)} "
+                        f"engine={transcript_result.engine} "
+                        f"speaker_fallback=legacy reason={exc}"
+                    )
+                except (
+                    TranscriptUnavailableError,
+                    ImportError,
+                    FileNotFoundError,
+                    RuntimeError,
+                ) as fallback_exc:
+                    print(
+                        f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped "
+                        f"reason={fallback_exc}"
+                    )
         else:
             print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=no raw_video_path")
 
