@@ -1,0 +1,12 @@
+{
+  "source_pair": "pair_001",
+  "source_path": "learning_corpus\\pairs\\pair_001\\raw.mp4",
+  "output_path": "data\\voice_references\\ali_voice_reference.wav",
+  "audio_map": "0:a:1",
+  "start_seconds": 60,
+  "duration_seconds": 10,
+  "returncode": 0,
+  "size_bytes": 320088,
+  "meets_min_size": true,
+  "stderr": ""
+}

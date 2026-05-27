@@ -19,3 +19,10 @@ Die erzeugten Medien liegen unter `learning_corpus/` und bleiben wegen `.gitigno
 Veraltete Single-Track-Korpusannahmen in drei Tests auf den neuen Multi-Track-Stand angepasst.
 Testlauf: `python -m pytest -x -q` -> 3826 passed, 3 skipped, 24 deselected.
 
+## 2026-05-27 23:20:20 P4.8-A3 abgeschlossen
+Ali-Voice-Reference lokal extrahiert aus `learning_corpus/pairs/pair_001/raw.mp4`, Audio-Map `0:a:1`, 10 Sekunden ab Sekunde 60.
+Ergebnis: `data/voice_references/ali_voice_reference.wav`, 320088 Bytes, >100 KB.
+Die WAV-Datei ist durch `.gitignore` unter `data/` ausgeschlossen und wird nicht committed.
+Audit-Metadaten gespeichert in `reports/phase4_8/p4_8_a3_voice_reference_audit.json`.
+Testlauf: `python -m pytest -x -q` -> 3826 passed, 3 skipped, 24 deselected.
+
