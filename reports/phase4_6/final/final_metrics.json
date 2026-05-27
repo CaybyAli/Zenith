@@ -1,0 +1,136 @@
+{
+  "job_id": "job_059053a7fa2a",
+  "head_before_final_docs": "85b4d4667b4c8319c9b2b1188a7458bce601add4",
+  "render": {
+    "exitcode": 0,
+    "duration_wall_clock": "00:32:41.1312051",
+    "output_video": "exports\\gaming_main\\job_059053a7fa2a\\job_059053a7fa2a_v1_final.mp4",
+    "output_duration_seconds": 528.302,
+    "output_size_bytes": 1681659259,
+    "job_json": "exports\\gaming_main\\job_059053a7fa2a\\job.json",
+    "job_json_size_bytes": 1401900,
+    "focus_decision_log": "data\\jobs\\job_059053a7fa2a_focus_decision_log.json",
+    "focus_decision_log_size_bytes": 356774
+  },
+  "audio_streams_pair_001": [
+    {
+      "index": 1,
+      "codec_name": "aac",
+      "sample_rate": "48000",
+      "channels": 2
+    }
+  ],
+  "transcript": {
+    "segments": 713,
+    "engine": "faster-whisper"
+  },
+  "speaker_identification": {
+    "strategy": "single_track_embedding",
+    "ali_segments": 100,
+    "friend_segments": 139,
+    "unknown_segments": 474,
+    "accuracy_annotation_available": false
+  },
+  "voice_intensity": {
+    "points": 1476,
+    "distribution_percent": {
+      "normal": 62.06,
+      "leise_erhoeht": 23.713,
+      "schreien": 11.382,
+      "bruellen": 2.846
+    }
+  },
+  "face_detection": {
+    "points": 1476,
+    "detected": 1475,
+    "rate": 0.999
+  },
+  "facial_expressions": {
+    "points": 1476,
+    "active": 1475,
+    "patterns": 6
+  },
+  "gameplay_menu": {
+    "points": 1476,
+    "gameplay_percent": 92.615,
+    "menu_percent": 7.385,
+    "manual_accuracy_annotation_available": false
+  },
+  "smooth_zoom": {
+    "keyframes": 742,
+    "max_zoom": 1.8,
+    "targets": [
+      "balanced",
+      "facecam",
+      "gameplay"
+    ],
+    "hard_jumps": 0
+  },
+  "focus_switch": {
+    "decision_count": 1476,
+    "focus_counts": {
+      "balanced": 33,
+      "facecam": 765,
+      "gameplay": 678
+    },
+    "focus_distribution": {
+      "balanced": 2.236,
+      "facecam": 51.829,
+      "gameplay": 45.935
+    },
+    "friend_reaction_count": 11,
+    "ali_strong_count": 210,
+    "drop_count": 0
+  },
+  "fingerprint_extension": {
+    "entry_count": 40,
+    "expected_count": 40,
+    "extended_count": 40,
+    "pair_speaker_distribution_count": 7,
+    "problem_count": 0,
+    "problems": [],
+    "run_results": []
+  },
+  "hardware_monitoring": {
+    "dmon_rows": 1800,
+    "gpu_sm_percent": {
+      "avg": 3.568,
+      "max": 49.0
+    },
+    "gpu_mem_percent": {
+      "avg": 8.872,
+      "max": 16.0
+    },
+    "gpu_enc_percent": {
+      "avg": 4.899,
+      "max": 99.0
+    },
+    "gpu_dec_percent": {
+      "avg": 21.65,
+      "max": 100.0
+    },
+    "resource_rows": 922,
+    "cpu_percent": {
+      "avg": 9.193,
+      "max": 60.0
+    },
+    "ram_used_gb": {
+      "avg": 17.287,
+      "max": 25.8
+    },
+    "resource_monitor_note": "CSV was reconstructed from one-value-per-line PowerShell output with decimal commas."
+  },
+  "tests": {
+    "full_pytest": "3818 passed, 2 skipped, 24 deselected",
+    "final_targeted": "10 passed duration-floor smoke tests after guard-tolerance fix"
+  },
+  "visual_stills": {
+    "normal_voice": "reports/phase4_6/final/stills/still_normal_voice.png",
+    "yell": "reports/phase4_6/final/stills/still_yell.png",
+    "max_yell": "reports/phase4_6/final/stills/still_max_yell.png",
+    "smooth_t0": "reports/phase4_6/final/stills/still_smooth_t0.png",
+    "smooth_t1": "reports/phase4_6/final/stills/still_smooth_t1.png",
+    "friend_react": "reports/phase4_6/final/stills/still_friend_react.png",
+    "menu_cut": "reports/phase4_6/final/stills/still_menu_cut.png"
+  }
+}

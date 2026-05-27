@@ -43,6 +43,7 @@ from shared.errors import ValidationError
 
 
 YOUTUBE_MIN_DURATION = 480.0
+YOUTUBE_DURATION_FLOOR_TOLERANCE_SECONDS = 5.0
 LONGFORM_PRIMARY_SCORE_FLOOR = 0.45
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,18 @@ class LongformTimelineBuilder:
 
     def _clamp_score(self, value: float) -> float:
         return round(max(0.0, min(1.0, float(value))), 3)
+
+    def _below_duration_floor(
+        self,
+        duration_seconds: float,
+        duration_floor: float | None,
+    ) -> bool:
+        if duration_floor is None:
+            return False
+        return (
+            float(duration_seconds) + YOUTUBE_DURATION_FLOOR_TOLERANCE_SECONDS
+            < float(duration_floor)
+        )
 
     def _overlap_ratio(
         self,
@@ -897,7 +910,7 @@ class LongformTimelineBuilder:
             max(0.0, item["candidate"].end_time - item["candidate"].start_time)
             for item in selected_items
         )
-        if duration_floor is not None and selected_items_duration < duration_floor:
+        if self._below_duration_floor(selected_items_duration, duration_floor):
             print(
                 "[TIMELINE-DURATION-FLOOR-BLOCKED] "
                 f"selected={selected_items_duration:.3f}s "
@@ -1263,7 +1276,7 @@ class LongformTimelineBuilder:
             max(0.0, segment.end_time - segment.start_time)
             for segment in selected_segments
         )
-        if duration_floor is not None and final_selected_duration < duration_floor:
+        if self._below_duration_floor(final_selected_duration, duration_floor):
             print(
                 "[TIMELINE-DURATION-FLOOR-BLOCKED] "
                 f"selected_after_guards={final_selected_duration:.3f}s "
@@ -1277,6 +1290,11 @@ class LongformTimelineBuilder:
             )
 
         if duration_floor is not None:
+            tolerance_note = (
+                f" tolerance={YOUTUBE_DURATION_FLOOR_TOLERANCE_SECONDS:.3f}s"
+                if final_selected_duration < duration_floor
+                else ""
+            )
             print(
                 "[TIMELINE-DURATION-OK] "
                 f"selected_after_guards={final_selected_duration:.3f}s "
@@ -1284,6 +1302,7 @@ class LongformTimelineBuilder:
                 f"primary={len(scored_candidates)} "
                 f"reserve={len(reserve_scored_candidates)} "
                 f"target={target_duration:.3f}s"
+                f"{tolerance_note}"
             )
 
         peak_segment_ids = [

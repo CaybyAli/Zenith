@@ -60,3 +60,21 @@
 - Mini-Render: 30s probe Exitcode 0, duration 00:00:08.6175680
 - Visual-Check: reports/phase4_6/p4_6_8/probe_clip/still_010s.png
 - Next: P4.6-9-NEU Fingerprint-Erweiterung
+
+## 2026-05-27 06:20:52 +02:00
+- Sub-Phase: P4.6-9-NEU Fingerprint-Erweiterung
+- Commit-Hash: 85b4d4667b4c8319c9b2b1188a7458bce601add4
+- Tests: 3817 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 15 passed targeted; 40/40 fingerprint extension audit green
+- Mini-Render: 30s probe Exitcode 0, duration 00:00:08.0708850
+- Visual-Check: reports/phase4_6/p4_6_9/probe_clip/still_010s.png
+- Next: P4.6-FINAL E2E + Abschlussbericht
+
+## 2026-05-27 07:45:00 +02:00
+- Sub-Phase: P4.6-FINAL E2E + Abschlussbericht
+- Commit-Hash: <pending final docs commit>
+- Tests: 3818 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 10 passed targeted duration-floor smoke after final guard-tolerance fix
+- Full-Render: pair_001 Exitcode 0, duration 00:32:41.1312051, output exports/gaming_main/job_059053a7fa2a/job_059053a7fa2a_v1_final.mp4
+- Visual-Check: reports/phase4_6/final/stills/*.png
+- Final Status: PHASE 4.6 BEENDET MIT 0 SUB-PHASEN UEBERSPRUNGEN, ABER OFFENEN AKZEPTANZPUNKTEN

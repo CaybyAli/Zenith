@@ -146,6 +146,13 @@ def test_build_raises_validation_error_when_480s_floor_unreachable() -> None:
         )
 
 
+def test_duration_floor_allows_small_guard_tolerance() -> None:
+    builder = LongformTimelineBuilder()
+
+    assert builder._below_duration_floor(476.26, YOUTUBE_MIN_DURATION) is False
+    assert builder._below_duration_floor(470.0, YOUTUBE_MIN_DURATION) is True
+
+
 def test_upper_cap_stays_at_or_below_1200s() -> None:
     builder = LongformTimelineBuilder()
     scored = [
