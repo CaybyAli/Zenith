@@ -1,0 +1,97 @@
+{
+  "pair_001": {
+    "duration_seconds": 1475.77,
+    "audio": {
+      "lufs_integrated": -24.43,
+      "peak_db": -13.0,
+      "rms_samples": 148
+    },
+    "scene_changes": {
+      "count": 13,
+      "rate_per_minute": 0.528538
+    },
+    "pacing": {
+      "cut_count": 13,
+      "cuts_per_minute": 0.528538,
+      "median_clip_seconds": 91.3915
+    }
+  },
+  "zero_peak_repairs": [
+    {
+      "source": "top_solo\\video_001",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_003",
+      "old_peak_db": -0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_004",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_005",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_006",
+      "old_peak_db": -0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_007",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_009",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_016",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_026",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "top_solo\\video_029",
+      "old_peak_db": -0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "old_peak_db": 0.0,
+      "new_peak_db": -0.001
+    }
+  ],
+  "audit": {
+    "entry_count": 40,
+    "problem_count": 1,
+    "problems": [
+      {
+        "source": "top_solo\\video_017",
+        "checks": {
+          "audio_lufs_ok": true,
+          "audio_peak_ok": true,
+          "audio_rms_ok": true,
+          "pacing_ok": false,
+          "scene_changes_ok": false
+        }
+      }
+    ]
+  }
+}

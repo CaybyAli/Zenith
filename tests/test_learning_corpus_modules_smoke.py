@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from core.learning_corpus_audio_profile import extract_audio_profile
+from core.learning_corpus_audio_profile import extract_audio_profile, parse_peak_db_from_value
 from core.learning_corpus_fingerprint_writer import (
     build_style_fingerprint,
     fingerprint_for_determinism_compare,
@@ -112,6 +112,11 @@ def test_learning_corpus_audio_profile_smoke():
     assert isinstance(result["peak_db"], float)
 
 
+def test_learning_corpus_peak_db_is_negative_for_full_scale_peak():
+    assert parse_peak_db_from_value("0.0") == -0.001
+    assert parse_peak_db_from_value("-2.5") == -2.5
+
+
 def test_learning_corpus_pacing_metrics_smoke():
     result = extract_pacing_metrics([1.0, 3.0], duration_seconds=5.0)
 
@@ -207,4 +212,3 @@ def test_learning_corpus_ingestor_discovers_top_solo_alias(tmp_path):
     ingestor = LearningCorpusIngestor(corpus_root=tmp_path)
 
     assert list(ingestor.iter_video_folders()) == [top_solo_dir]
-

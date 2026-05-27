@@ -1,0 +1,16 @@
+{
+  "empty_scene_pacing_repairs": [
+    {
+      "source": "top_solo\\video_017",
+      "duration_seconds": 403.633,
+      "scene_count": 14,
+      "scene_threshold": 0.25,
+      "cut_count": 14
+    }
+  ],
+  "audit": {
+    "entry_count": 40,
+    "problem_count": 0,
+    "problems": []
+  }
+}

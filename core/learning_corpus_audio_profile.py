@@ -135,7 +135,14 @@ def extract_peak_db(
     if not match:
         return 0.0
 
-    return _safe_float(match.group("value"), default=0.0)
+    return parse_peak_db_from_value(match.group("value"))
+
+
+def parse_peak_db_from_value(value: Any) -> float:
+    parsed = _safe_float(value, default=0.0)
+    if parsed >= 0.0:
+        return -0.001
+    return parsed
 
 
 def extract_rms_curve_sampled(
