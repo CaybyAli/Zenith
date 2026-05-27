@@ -44,3 +44,11 @@ Beginne P4.7-1 Vollständige Diagnose.
 - Tests: 3824 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
 - Artefakte: `reports/phase4_7/p4_7_5_hook_audit.json`, Backup unter `reports/phase4_7/p4_7_5_backup/`
 - Next: P4.7-6 Style-Capture-Erweiterung
+
+## 2026-05-27 13:13:45 +02:00
+- Sub-Phase: P4.7-6 Style-Capture-Erweiterung
+- Status: abgeschlossen
+- Ergebnis: 40/40 `style_capture` ok, 10 Cut-Density-Bins, Focus-Decision-Verteilung rekonstruiert, 5 Intensity-Cluster-Klassen
+- Tests: 3827 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
+- Artefakte: `reports/phase4_7/p4_7_6_style_capture_audit.json`, Backup unter `reports/phase4_7/p4_7_6_backup/`
+- Next: P4.7-7 Final-Audit + 2x Vollrender + Assessment
