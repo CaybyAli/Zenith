@@ -32,6 +32,7 @@ from core.metadata_generator import MetadataGenerator
 from core.validator import Validator
 from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
 from core.speaker_identifier import SpeakerIdentifier
+from core.voice_intensity_analyzer import VoiceIntensityAnalyzer
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9115,6 +9116,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         return _existing_shorts_result
 
     transcript_result = None
+    voice_intensity_points = []
+    voice_intensity_distribution = {}
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
@@ -9177,6 +9180,36 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     )
         else:
             print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=no raw_video_path")
+
+    if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+        try:
+            voice_intensity_analyzer = (
+                services.get("voice_intensity_analyzer") or VoiceIntensityAnalyzer()
+            )
+            voice_intensity_points = voice_intensity_analyzer.analyze(
+                str(job.raw_video_path),
+                speaker="ali",
+            )
+            voice_intensity_distribution = voice_intensity_analyzer.distribution(
+                voice_intensity_points
+            )
+            if hasattr(job, "voice_intensity_distribution"):
+                job.voice_intensity_distribution = dict(voice_intensity_distribution)
+            print(
+                f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
+                f"points={len(voice_intensity_points)} "
+                f"normal={voice_intensity_distribution.get('normal', 0.0)} "
+                f"leise={voice_intensity_distribution.get('leise_erhoeht', 0.0)} "
+                f"schreien={voice_intensity_distribution.get('schreien', 0.0)} "
+                f"bruellen={voice_intensity_distribution.get('bruellen', 0.0)}"
+            )
+        except Exception as voice_intensity_exc:
+            voice_intensity_points = []
+            voice_intensity_distribution = {}
+            print(
+                f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
+                f"skipped reason={voice_intensity_exc}"
+            )
 
     hook_keyword_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
@@ -10797,6 +10830,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "energy_curve_result":   energy_curve_result,
         "gameplay_vision_result": gameplay_vision_result,
         "sentence_timeline_result": sentence_timeline_result,
+        "voice_intensity_points": [
+            point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+            for point in (voice_intensity_points or [])
+        ],
+        "voice_intensity_distribution": dict(voice_intensity_distribution or {}),
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -10922,6 +10960,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "profile_version":       json_profile.get("version"),
         # Analyse
         "transcript_result":     transcript_result,
+        "voice_intensity_points": voice_intensity_points,
+        "voice_intensity_distribution": voice_intensity_distribution,
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,
