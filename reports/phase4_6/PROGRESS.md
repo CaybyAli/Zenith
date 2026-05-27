@@ -42,3 +42,12 @@
 - Mini-Render: 30s probe Exitcode 0, duration 00:00:09.3247534
 - Visual-Check: reports/phase4_6/p4_6_6/probe_clip/still_010s.png
 - Next: P4.6-7 Smooth-Zoom-Engine
+
+## 2026-05-27 03:25:46 +02:00
+- Sub-Phase: P4.6-7 Smooth-Zoom-Engine
+- Commit-Hash: 878846e712e1d7b4df9d5807ca7ba550d268b8b2
+- Tests: 3806 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 14 passed targeted; easing, curve generation, hard-jump guard, pipeline regressions
+- Mini-Render: 30s probe Exitcode 0, duration 00:00:09.4989419
+- Visual-Check: reports/phase4_6/p4_6_7/probe_clip/still_010s.png
+- Next: P4.6-8 Focus-Switch-Engine

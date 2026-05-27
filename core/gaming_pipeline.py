@@ -37,6 +37,7 @@ from core.face_detector_mediapipe import MediaPipeFaceDetector
 from core.facial_expression_analyzer import FacialExpressionAnalyzer
 from core.gameplay_menu_detector import GameplayMenuDetector
 from core.smooth_zoom_engine import SmoothZoomEngine
+from core.focus_switch_engine import FocusSwitchEngine, focus_decision_log_path
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9130,6 +9131,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     gameplay_detection_distribution = {}
     smooth_zoom_curve = None
     smooth_zoom_summary = {}
+    focus_decisions = []
+    focus_decision_summary = {}
+    focus_decision_log = None
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
@@ -9346,6 +9350,44 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
                 f"skipped reason={smooth_zoom_exc}"
+            )
+
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        try:
+            focus_switch_engine = (
+                services.get("focus_switch_engine") or FocusSwitchEngine()
+            )
+            speaker_segments = list(getattr(transcript_result, "segments", []) or [])
+            focus_decisions = focus_switch_engine.decide(
+                voice_intensity=voice_intensity_points,
+                facial_expressions=facial_expression_points,
+                speaker_segments=speaker_segments,
+                gameplay_points=gameplay_detection_points,
+            )
+            focus_decision_summary = focus_switch_engine.summarize(focus_decisions)
+            focus_decision_log = focus_switch_engine.write_decision_log(
+                focus_decisions,
+                focus_decision_log_path(str(job.job_id)),
+            )
+            job.focus_decisions = [
+                decision.to_dict() if callable(getattr(decision, "to_dict", None)) else decision
+                for decision in focus_decisions
+            ]
+            job.focus_decision_summary = dict(focus_decision_summary)
+            job.focus_decision_log_path = str(focus_decision_log)
+            print(
+                f"[gaming_pipeline] FOCUS_SWITCH {job.job_id} "
+                f"decisions={focus_decision_summary.get('decision_count', 0)} "
+                f"counts={focus_decision_summary.get('focus_counts', {})} "
+                f"log={focus_decision_log}"
+            )
+        except Exception as focus_switch_exc:
+            focus_decisions = []
+            focus_decision_summary = {}
+            focus_decision_log = None
+            print(
+                f"[gaming_pipeline] FOCUS_SWITCH {job.job_id} "
+                f"skipped reason={focus_switch_exc}"
             )
 
     hook_keyword_result = None
@@ -10994,6 +11036,12 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             else None
         ),
         "smooth_zoom_summary": dict(smooth_zoom_summary or {}),
+        "focus_decisions": [
+            decision.to_dict() if callable(getattr(decision, "to_dict", None)) else decision
+            for decision in (focus_decisions or [])
+        ],
+        "focus_decision_summary": dict(focus_decision_summary or {}),
+        "focus_decision_log_path": str(focus_decision_log) if focus_decision_log else None,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -11129,6 +11177,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "gameplay_detection_distribution": gameplay_detection_distribution,
         "smooth_zoom_curve": smooth_zoom_curve,
         "smooth_zoom_summary": smooth_zoom_summary,
+        "focus_decisions": focus_decisions,
+        "focus_decision_summary": focus_decision_summary,
+        "focus_decision_log_path": str(focus_decision_log) if focus_decision_log else None,
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,

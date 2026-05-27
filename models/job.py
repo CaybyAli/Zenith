@@ -1204,6 +1204,9 @@ class Job:
     error_log_path: str | None = None
     error_jsonl_path: str | None = None
     log_index: dict[str, Any] = field(default_factory=dict)
+    focus_decisions: list[dict[str, Any]] = field(default_factory=list)
+    focus_decision_summary: dict[str, Any] = field(default_factory=dict)
+    focus_decision_log_path: str | None = None
 
     debug_mode: str = "off"
     debug_context: dict[str, Any] = field(default_factory=dict)
@@ -3146,6 +3149,9 @@ class Job:
             error_log_path=data.get("error_log_path"),
             error_jsonl_path=data.get("error_jsonl_path"),
             log_index=dict(data.get("log_index") or {}),
+            focus_decisions=list(data.get("focus_decisions") or []),
+            focus_decision_summary=dict(data.get("focus_decision_summary") or {}),
+            focus_decision_log_path=data.get("focus_decision_log_path"),
             debug_mode=data.get("debug_mode", "off"),
             debug_context=dict(data.get("debug_context") or {}),
             review_status=data.get("review_status", "pending"),
