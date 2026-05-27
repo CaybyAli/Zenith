@@ -1,0 +1,571 @@
+{
+  "entry_count": 40,
+  "transcript_ok_count": 1,
+  "problem_count": 39,
+  "problems": [
+    {
+      "source": "pairs\\pair_002",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_003",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_004",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_005",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_006",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_007",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_001",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_002",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_003",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_004",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_005",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_006",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_007",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_008",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_009",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_010",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_011",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_012",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_013",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_014",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_015",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_016",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_017",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_018",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_019",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_020",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_021",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_022",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_023",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_024",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_025",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_026",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_027",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_028",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_029",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_030",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    }
+  ],
+  "entries": [
+    {
+      "source": "pairs\\pair_001",
+      "ok": true,
+      "language": "de",
+      "segments_count": 661,
+      "first_10s_length": 145
+    },
+    {
+      "source": "pairs\\pair_002",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_003",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_004",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_005",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_006",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "pairs\\pair_007",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_001",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_002",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_003",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_004",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_005",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_006",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_007",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_008",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_009",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_010",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_011",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_012",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_013",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_014",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_015",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_016",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_017",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_018",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_019",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_020",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_021",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_022",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_023",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_024",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_025",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_026",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_027",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_028",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_029",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "top_solo\\video_030",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "ok": false,
+      "language": "unknown",
+      "segments_count": 0,
+      "first_10s_length": 0
+    }
+  ],
+  "run_results": [
+    {
+      "source": "pairs\\pair_001",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 661,
+      "first_10s_text": "Du musst auch daten, sonst wird es nicht. Sorry, mach mal frei, wenn man voll is"
+    }
+  ]
+}

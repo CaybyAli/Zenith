@@ -1,0 +1,563 @@
+{
+  "entry_count": 40,
+  "transcript_ok_count": 40,
+  "problem_count": 0,
+  "problems": [],
+  "entries": [
+    {
+      "source": "pairs\\pair_001",
+      "ok": true,
+      "language": "de",
+      "segments_count": 661,
+      "first_10s_length": 145
+    },
+    {
+      "source": "pairs\\pair_002",
+      "ok": true,
+      "language": "de",
+      "segments_count": 474,
+      "first_10s_length": 47
+    },
+    {
+      "source": "pairs\\pair_003",
+      "ok": true,
+      "language": "de",
+      "segments_count": 238,
+      "first_10s_length": 142
+    },
+    {
+      "source": "pairs\\pair_004",
+      "ok": true,
+      "language": "de",
+      "segments_count": 868,
+      "first_10s_length": 124
+    },
+    {
+      "source": "pairs\\pair_005",
+      "ok": true,
+      "language": "de",
+      "segments_count": 647,
+      "first_10s_length": 105
+    },
+    {
+      "source": "pairs\\pair_006",
+      "ok": true,
+      "language": "de",
+      "segments_count": 349,
+      "first_10s_length": 64
+    },
+    {
+      "source": "pairs\\pair_007",
+      "ok": true,
+      "language": "de",
+      "segments_count": 636,
+      "first_10s_length": 108
+    },
+    {
+      "source": "top_solo\\video_001",
+      "ok": true,
+      "language": "de",
+      "segments_count": 389,
+      "first_10s_length": 245
+    },
+    {
+      "source": "top_solo\\video_002",
+      "ok": true,
+      "language": "de",
+      "segments_count": 214,
+      "first_10s_length": 151
+    },
+    {
+      "source": "top_solo\\video_003",
+      "ok": true,
+      "language": "de",
+      "segments_count": 499,
+      "first_10s_length": 247
+    },
+    {
+      "source": "top_solo\\video_004",
+      "ok": true,
+      "language": "de",
+      "segments_count": 472,
+      "first_10s_length": 212
+    },
+    {
+      "source": "top_solo\\video_005",
+      "ok": true,
+      "language": "de",
+      "segments_count": 425,
+      "first_10s_length": 152
+    },
+    {
+      "source": "top_solo\\video_006",
+      "ok": true,
+      "language": "de",
+      "segments_count": 444,
+      "first_10s_length": 191
+    },
+    {
+      "source": "top_solo\\video_007",
+      "ok": true,
+      "language": "de",
+      "segments_count": 374,
+      "first_10s_length": 263
+    },
+    {
+      "source": "top_solo\\video_008",
+      "ok": true,
+      "language": "de",
+      "segments_count": 279,
+      "first_10s_length": 214
+    },
+    {
+      "source": "top_solo\\video_009",
+      "ok": true,
+      "language": "de",
+      "segments_count": 506,
+      "first_10s_length": 253
+    },
+    {
+      "source": "top_solo\\video_010",
+      "ok": true,
+      "language": "de",
+      "segments_count": 462,
+      "first_10s_length": 261
+    },
+    {
+      "source": "top_solo\\video_011",
+      "ok": true,
+      "language": "de",
+      "segments_count": 349,
+      "first_10s_length": 279
+    },
+    {
+      "source": "top_solo\\video_012",
+      "ok": true,
+      "language": "de",
+      "segments_count": 574,
+      "first_10s_length": 339
+    },
+    {
+      "source": "top_solo\\video_013",
+      "ok": true,
+      "language": "de",
+      "segments_count": 423,
+      "first_10s_length": 251
+    },
+    {
+      "source": "top_solo\\video_014",
+      "ok": true,
+      "language": "de",
+      "segments_count": 209,
+      "first_10s_length": 281
+    },
+    {
+      "source": "top_solo\\video_015",
+      "ok": true,
+      "language": "de",
+      "segments_count": 671,
+      "first_10s_length": 290
+    },
+    {
+      "source": "top_solo\\video_016",
+      "ok": true,
+      "language": "de",
+      "segments_count": 458,
+      "first_10s_length": 218
+    },
+    {
+      "source": "top_solo\\video_017",
+      "ok": true,
+      "language": "de",
+      "segments_count": 241,
+      "first_10s_length": 277
+    },
+    {
+      "source": "top_solo\\video_018",
+      "ok": true,
+      "language": "de",
+      "segments_count": 303,
+      "first_10s_length": 287
+    },
+    {
+      "source": "top_solo\\video_019",
+      "ok": true,
+      "language": "de",
+      "segments_count": 773,
+      "first_10s_length": 244
+    },
+    {
+      "source": "top_solo\\video_020",
+      "ok": true,
+      "language": "de",
+      "segments_count": 472,
+      "first_10s_length": 329
+    },
+    {
+      "source": "top_solo\\video_021",
+      "ok": true,
+      "language": "de",
+      "segments_count": 528,
+      "first_10s_length": 302
+    },
+    {
+      "source": "top_solo\\video_022",
+      "ok": true,
+      "language": "de",
+      "segments_count": 936,
+      "first_10s_length": 227
+    },
+    {
+      "source": "top_solo\\video_023",
+      "ok": true,
+      "language": "de",
+      "segments_count": 396,
+      "first_10s_length": 250
+    },
+    {
+      "source": "top_solo\\video_024",
+      "ok": true,
+      "language": "de",
+      "segments_count": 379,
+      "first_10s_length": 120
+    },
+    {
+      "source": "top_solo\\video_025",
+      "ok": true,
+      "language": "de",
+      "segments_count": 645,
+      "first_10s_length": 201
+    },
+    {
+      "source": "top_solo\\video_026",
+      "ok": true,
+      "language": "de",
+      "segments_count": 451,
+      "first_10s_length": 81
+    },
+    {
+      "source": "top_solo\\video_027",
+      "ok": true,
+      "language": "de",
+      "segments_count": 485,
+      "first_10s_length": 107
+    },
+    {
+      "source": "top_solo\\video_028",
+      "ok": true,
+      "language": "de",
+      "segments_count": 645,
+      "first_10s_length": 202
+    },
+    {
+      "source": "top_solo\\video_029",
+      "ok": true,
+      "language": "de",
+      "segments_count": 499,
+      "first_10s_length": 141
+    },
+    {
+      "source": "top_solo\\video_030",
+      "ok": true,
+      "language": "de",
+      "segments_count": 444,
+      "first_10s_length": 170
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "ok": true,
+      "language": "de",
+      "segments_count": 421,
+      "first_10s_length": 188
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "ok": true,
+      "language": "de",
+      "segments_count": 736,
+      "first_10s_length": 299
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "ok": true,
+      "language": "de",
+      "segments_count": 737,
+      "first_10s_length": 216
+    }
+  ],
+  "run_results": [
+    {
+      "source": "pairs\\pair_002",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 474,
+      "first_10s_text": "So, also noch mal eine Runde? Hä? Das ist Spaß."
+    },
+    {
+      "source": "pairs\\pair_003",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 238,
+      "first_10s_text": "So, ich würde sagen, wiegen als erstseit haben wir schon gesehen, Krakenslayer, "
+    },
+    {
+      "source": "pairs\\pair_004",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 868,
+      "first_10s_text": "Ich überwindet aus. Gegeben für Klamotten. Really talk, ich sag ehrlich, das mac"
+    },
+    {
+      "source": "pairs\\pair_005",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 647,
+      "first_10s_text": "Da war Drachenlaut ja noch normal. So, ich kann, man kann jetzt den Bus einfach "
+    },
+    {
+      "source": "pairs\\pair_006",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 349,
+      "first_10s_text": "3 Runden dabei, oder? Ja, aber er hat ja keine Waffen, der eine."
+    },
+    {
+      "source": "pairs\\pair_007",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 636,
+      "first_10s_text": "Oh mein Gott, die haben ja wirklich alle große Köpfe. Ja. Ich dachte nur, wenn m"
+    },
+    {
+      "source": "top_solo\\video_001",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 389,
+      "first_10s_text": "Die heutige Challenge ist es, nur mit grünen Waffen zu gewinnen. Keine Lille, ke"
+    },
+    {
+      "source": "top_solo\\video_002",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 214,
+      "first_10s_text": "Ihr fragt euch bestimmt, was ist das für ein Skin? Ich zerstörer in dieser Folge"
+    },
+    {
+      "source": "top_solo\\video_003",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 499,
+      "first_10s_text": "Wir dürfen heute nur mit der Waffe spielen, die wir auch die ersten Kiste erhalt"
+    },
+    {
+      "source": "top_solo\\video_004",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 472,
+      "first_10s_text": "Nach unserem letzten BadWos-Fail haben ich schon nils noch stetig für besser. Wi"
+    },
+    {
+      "source": "top_solo\\video_005",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 425,
+      "first_10s_text": "Mein letztes Bett, wo's wieder war, kann ab einem Jahr. Wie gut meine Pippo Pils"
+    },
+    {
+      "source": "top_solo\\video_006",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 444,
+      "first_10s_text": "Im heutigen Video werden wir versuchen, ein Sieg zu holen, aber nur mit grauen W"
+    },
+    {
+      "source": "top_solo\\video_007",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 374,
+      "first_10s_text": "Da ist wieder ein großen Pokémon halt, gibt dacht ich mir testen heute was Small"
+    },
+    {
+      "source": "top_solo\\video_008",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 279,
+      "first_10s_text": "Was passiert, wenn man einer Frau eine Page in die Hand gibt? Genau, man bekommt"
+    },
+    {
+      "source": "top_solo\\video_009",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 506,
+      "first_10s_text": "Wie geht er? Warum bist du so weit vorne? Warum bist du dann so weit vorne? Ja, "
+    },
+    {
+      "source": "top_solo\\video_010",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 462,
+      "first_10s_text": "So ein Freundin bekommen wir zu einer neuen Folge von League of Legends. Wir spi"
+    },
+    {
+      "source": "top_solo\\video_011",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 349,
+      "first_10s_text": "So eine Freude in der Koalition einfach auf diesen Kanal, die werden heute Yasuy"
+    },
+    {
+      "source": "top_solo\\video_012",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 574,
+      "first_10s_text": "So, meine Freunde, wir kommen wieder zu einer neuen Folge auf diesem Kanal. Heut"
+    },
+    {
+      "source": "top_solo\\video_013",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 423,
+      "first_10s_text": "So meine Freunde bekommen wieder zu einer neuen Folge von League of Legends. Heu"
+    },
+    {
+      "source": "top_solo\\video_014",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 209,
+      "first_10s_text": "So, Freunde, wir kommen wieder zur Rundfrage von League of Legends, heute spiele"
+    },
+    {
+      "source": "top_solo\\video_015",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 671,
+      "first_10s_text": "So meine Freunde, wir kommen wieder zu einer neuen Folge von Minecraft's Syrupol"
+    },
+    {
+      "source": "top_solo\\video_016",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 458,
+      "first_10s_text": "Äh, ich meine die echte Giga, wow. Das waren richtig gute Gegner. Dein Steinschl"
+    },
+    {
+      "source": "top_solo\\video_017",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 241,
+      "first_10s_text": "So meine Freundin, willkommen wieder zu einer neuen Folge von League of Legends."
+    },
+    {
+      "source": "top_solo\\video_018",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 303,
+      "first_10s_text": "So, meine Freunde, wir kommen wieder zur neuen Frühgeporne League of Legends. Wi"
+    },
+    {
+      "source": "top_solo\\video_019",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 773,
+      "first_10s_text": "So in der Freunde bekommen wir wieder zu einer neuen Folge von Minecraft-Zu-Puli"
+    },
+    {
+      "source": "top_solo\\video_020",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 472,
+      "first_10s_text": "So, meine Freunde, willkommen wieder zu einer neuen Folge von League of Legends."
+    },
+    {
+      "source": "top_solo\\video_021",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 528,
+      "first_10s_text": "So, meine Freunde, bekommen wir jetzt zum neuen Bier auf diesem Kanal. Wir sprin"
+    },
+    {
+      "source": "top_solo\\video_022",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 936,
+      "first_10s_text": "So, meine Freunde, willkommen wieder zu einer neuen Folge von Microfzio-Produce."
+    },
+    {
+      "source": "top_solo\\video_023",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 396,
+      "first_10s_text": "So meine Freunde, du kommst wieder zur neuen Konto von League of Randomizer. Wir"
+    },
+    {
+      "source": "top_solo\\video_024",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 379,
+      "first_10s_text": "Hier ist ein Gegner vor mir. Wau, digger, ich treffe wieder gar nichts zu den Nä"
+    },
+    {
+      "source": "top_solo\\video_025",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 645,
+      "first_10s_text": "So meine Freunde, wir kommen wieder zu einer neuen Folge von Minecraft-Ciopulis."
+    },
+    {
+      "source": "top_solo\\video_026",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 451,
+      "first_10s_text": "Die ist noch eine Kiste. Mit nichts. Stark. Wow, bigger. Mein Aim ist... ...Auer"
+    },
+    {
+      "source": "top_solo\\video_027",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 485,
+      "first_10s_text": "Seid ihr gedärscht? Oh mein Gott, die Dasch wird! Oha! Jawoll! Wusst ihr echt mi"
+    },
+    {
+      "source": "top_solo\\video_028",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 645,
+      "first_10s_text": "Ja, du wirst gleich hier, äh, ob der Baummeister seh wie ich, ob ich hier Baum w"
+    },
+    {
+      "source": "top_solo\\video_029",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 499,
+      "first_10s_text": "Ich komme zu den Hilfe, ich mein es ernst Hilfe. Digger, ich bin tot, laber mich"
+    },
+    {
+      "source": "top_solo\\video_030",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 444,
+      "first_10s_text": "Warum bist du stehen geblieben? Warum bist du genau die Wunsch stehen geblieben?"
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 421,
+      "first_10s_text": "So meine Freunde, willkommen zu einem neuen Video hier auf diesem Kanal. Mal was"
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 736,
+      "first_10s_text": "So meine Freude, Willkommen zu einem neuen Video auf diesem Kanal, aber keinen g"
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "status": "ok",
+      "language": "de",
+      "segments_count": 737,
+      "first_10s_text": "So, meine Freunde, willkommen mal wieder zu einem Special-Video hier auf diesem "
+    }
+  ]
+}

@@ -27,3 +27,12 @@ Beginne P4.7-1 Vollständige Diagnose.
 - Tests: 3820 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
 - Artefakte: `reports/phase4_7/p4_7_3_pair001_repair_audit.json`, `reports/phase4_7/p4_7_3_scene_pacing_followup_audit.json`
 - Next: P4.7-4 Transcript-Re-Run für alle 40
+
+## 2026-05-27 13:00:34 +02:00
+- Sub-Phase: P4.7-4 Transcript-Re-Run für alle 40
+- Status: abgeschlossen
+- Ergebnis: 40/40 Transcripts ok, Sprache `de`, Segmente >5, Einstiegstext >=10 Zeichen
+- Tests: 3822 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
+- Laufzeit: CUDA/faster-whisper Pretest crashte ohne Log; stabiler Full-Re-Run via `base`/CPU/int8
+- Artefakte: `reports/phase4_7/p4_7_4_transcript_audit.json`, Backup unter `reports/phase4_7/p4_7_4_backup/`
+- Next: P4.7-5 Hook-Pattern-Reparatur

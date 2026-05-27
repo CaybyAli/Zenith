@@ -1,0 +1,192 @@
+{
+  "audio": {
+    "lufs_integrated": -20.05,
+    "peak_db": -6.2,
+    "rms_curve_sampled": [
+      -20.368416,
+      -21.006319,
+      -21.958556,
+      -22.229701,
+      -20.982435,
+      -22.892603,
+      -23.476546,
+      -26.753691,
+      -34.956711,
+      -24.711153,
+      -27.262225,
+      -23.345564,
+      -26.516144,
+      -28.605654,
+      -26.988913,
+      -26.629217,
+      -23.274888,
+      -23.721477,
+      -25.365122,
+      -30.751766,
+      -28.588968,
+      -25.218431,
+      -21.44988,
+      -23.489879,
+      -27.46975,
+      -25.939019,
+      -26.416324,
+      -26.234419,
+      -21.946793,
+      -23.519394,
+      -24.42242,
+      -24.375765,
+      -24.403898,
+      -22.910286,
+      -24.653757,
+      -23.944253,
+      -24.073503,
+      -24.296443,
+      -23.439419,
+      -25.936014,
+      -25.474134,
+      -21.75985,
+      -22.798119,
+      -23.765119,
+      -22.791726,
+      -22.733306,
+      -22.69512,
+      -23.048312,
+      -27.002187,
+      -35.808044,
+      -26.892134,
+      -26.283603,
+      -24.469149,
+      -23.937488,
+      -25.256797,
+      -24.269927,
+      -25.306175,
+      -25.756513,
+      -21.207006,
+      -25.546265,
+      -31.532517,
+      -21.737312,
+      -21.86527,
+      -24.768025,
+      -28.28003,
+      -22.768784,
+      -26.370908,
+      -35.114711,
+      -22.107167,
+      -22.719001,
+      -22.115518,
+      -22.115924,
+      -23.855145,
+      -35.139889,
+      -22.134265,
+      -22.911458,
+      -24.402826,
+      -26.178996,
+      -21.571893,
+      -21.005566,
+      -23.904887
+    ]
+  },
+  "facial_expression_distribution": {
+    "direct_gaze": 1.235,
+    "hand_on_mouth": 0.0,
+    "eyebrow_raised": 1.235,
+    "surprise": 0.0,
+    "frustration": 0.0,
+    "mouth_open_yell": 0.0,
+    "neutral": 98.765
+  },
+  "gameplay_ratio": {
+    "gameplay_percent": 97.531,
+    "menu_percent": 2.469,
+    "sample_count": 81
+  },
+  "hook": {
+    "first_words": "",
+    "pattern_class": "unknown"
+  },
+  "ingest_timestamp_utc": "2026-05-22T22:19:12Z",
+  "ingest_version": "1",
+  "p4_6_analysis_source": "learning_corpus\\top_solo\\video_017\\final.mp4",
+  "p4_6_extension_timestamp_utc": "2026-05-27T03:27:23Z",
+  "p4_6_extension_version": "1",
+  "pacing": {
+    "cut_count": 14,
+    "cuts_per_minute": 2.081097,
+    "median_clip_seconds": 18.066333,
+    "clip_length_histogram_bins": [
+      {
+        "label": "0-2s",
+        "min_seconds": 0.0,
+        "max_seconds": 2.0,
+        "count": 3
+      },
+      {
+        "label": "2-5s",
+        "min_seconds": 2.0,
+        "max_seconds": 5.0,
+        "count": 2
+      },
+      {
+        "label": "5-10s",
+        "min_seconds": 5.0,
+        "max_seconds": 10.0,
+        "count": 1
+      },
+      {
+        "label": "10-20s",
+        "min_seconds": 10.0,
+        "max_seconds": 20.0,
+        "count": 2
+      },
+      {
+        "label": "20s+",
+        "min_seconds": 20.0,
+        "max_seconds": null,
+        "count": 7
+      }
+    ]
+  },
+  "quality_tier": "top",
+  "reaction_timing": {
+    "applicable": false
+  },
+  "scene_changes": {
+    "count": 14,
+    "rate_per_minute": 2.081097,
+    "boundaries_seconds": [
+      16.3,
+      20.283,
+      89.367,
+      90.733,
+      177.333,
+      187.217,
+      223.783,
+      226.817,
+      281.6,
+      282.633,
+      313.883,
+      355.117,
+      355.35,
+      385.567
+    ],
+    "threshold": 0.25
+  },
+  "transcript": {
+    "first_10s_text": "",
+    "language": "unknown",
+    "segments_count": 0
+  },
+  "type": "gaming_main",
+  "video_id": "video_017",
+  "voice_intensity_distribution": {
+    "bruellen": 3.218,
+    "leise_erhoeht": 25.0,
+    "normal": 59.901,
+    "schreien": 11.881
+  },
+  "p4_7_2_facial_expression_timestamp_utc": "2026-05-27T08:40:39.059932+00:00",
+  "p4_7_2_facial_expression_source": "learning_corpus\\top_solo\\video_017\\final.mp4",
+  "p4_7_2_facial_expression_sample_count": 81,
+  "p4_7_3_scene_pacing_repair_timestamp_utc": "2026-05-27T10:01:50.437463+00:00",
+  "p4_7_3_scene_pacing_repair_source": "learning_corpus\\top_solo\\video_017\\final.mp4"
+}
