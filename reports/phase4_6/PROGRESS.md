@@ -7,3 +7,12 @@
 - Visual-Check: reports/phase4_6/p4_6_2/probe_clip/still_005s.png
 - Next: P4.6-3 Voice-Intensity-Analyzer
 
+## 2026-05-27 02:46:21 +02:00
+- Sub-Phase: P4.6-3 Voice-Intensity-Analyzer
+- Commit-Hash: dca57a121989c1b7d9313d4a4cc953269449aebc
+- Tests: 3783 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 12 passed targeted, pair_001 distribution normal=62.06%, leise_erhoeht=23.713%, schreien=11.382%, bruellen=2.846%
+- Mini-Render: 30s probe Exitcode 0, render status in reports/phase4_6/p4_6_3/probe_clip/render_status.txt
+- Visual-Check: reports/phase4_6/p4_6_3/probe_clip/still_008s.png
+- Next: P4.6-4 Face-Detection-Stabilisierung
+

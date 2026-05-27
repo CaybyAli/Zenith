@@ -33,6 +33,7 @@ from core.validator import Validator
 from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
 from core.speaker_identifier import SpeakerIdentifier
 from core.voice_intensity_analyzer import VoiceIntensityAnalyzer
+from core.face_detector_mediapipe import MediaPipeFaceDetector
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9118,6 +9119,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     transcript_result = None
     voice_intensity_points = []
     voice_intensity_distribution = {}
+    face_detection_points = []
+    face_detection_rate = 0.0
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
@@ -9210,6 +9213,41 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
                 f"skipped reason={voice_intensity_exc}"
             )
+
+    if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+        face_detector = None
+        try:
+            face_detector = services.get("face_detector") or MediaPipeFaceDetector()
+            face_detection_points = face_detector.detect_in_video(
+                str(job.raw_video_path),
+                sample_rate_fps=1.0,
+            )
+            detected_count = sum(1 for point in face_detection_points if point.detected)
+            face_detection_rate = (
+                detected_count / len(face_detection_points)
+                if face_detection_points
+                else 0.0
+            )
+            if hasattr(job, "face_detection_rate"):
+                job.face_detection_rate = float(face_detection_rate)
+            print(
+                f"[gaming_pipeline] FACE_DETECTION {job.job_id} "
+                f"points={len(face_detection_points)} "
+                f"detected={detected_count} "
+                f"rate={face_detection_rate:.3f} "
+                "engine=mediapipe_face_mesh"
+            )
+        except Exception as face_detection_exc:
+            face_detection_points = []
+            face_detection_rate = 0.0
+            print(
+                f"[gaming_pipeline] FACE_DETECTION {job.job_id} "
+                f"skipped reason={face_detection_exc}"
+            )
+        finally:
+            close = getattr(face_detector, "close", None)
+            if callable(close):
+                close()
 
     hook_keyword_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
@@ -10835,6 +10873,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             for point in (voice_intensity_points or [])
         ],
         "voice_intensity_distribution": dict(voice_intensity_distribution or {}),
+        "face_detection_points": [
+            point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+            for point in (face_detection_points or [])
+        ],
+        "face_detection_rate": face_detection_rate,
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -10962,6 +11005,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "transcript_result":     transcript_result,
         "voice_intensity_points": voice_intensity_points,
         "voice_intensity_distribution": voice_intensity_distribution,
+        "face_detection_points": face_detection_points,
+        "face_detection_rate": face_detection_rate,
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,
