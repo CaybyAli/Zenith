@@ -11,7 +11,17 @@ INGEST_VERSION = "1"
 FINGERPRINT_FILENAME = "style_fingerprint.json"
 
 _ALLOWED_VIDEO_TYPES = {"gaming_main", "vlog_main"}
-_ALLOWED_HOOK_CLASSES = {"question", "statement", "action", "name_drop", "unknown"}
+_ALLOWED_HOOK_CLASSES = {
+    "question",
+    "statement",
+    "action",
+    "name_drop",
+    "unknown",
+    "silent_start",
+    "exclamation",
+    "high_reaction",
+    "narrative",
+}
 
 _REQUIRED_TOP_LEVEL_KEYS = (
     "video_id",

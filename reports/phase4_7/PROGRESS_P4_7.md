@@ -36,3 +36,11 @@ Beginne P4.7-1 Vollständige Diagnose.
 - Laufzeit: CUDA/faster-whisper Pretest crashte ohne Log; stabiler Full-Re-Run via `base`/CPU/int8
 - Artefakte: `reports/phase4_7/p4_7_4_transcript_audit.json`, Backup unter `reports/phase4_7/p4_7_4_backup/`
 - Next: P4.7-5 Hook-Pattern-Reparatur
+
+## 2026-05-27 13:07:35 +02:00
+- Sub-Phase: P4.7-5 Hook-Pattern-Reparatur
+- Status: abgeschlossen
+- Ergebnis: 40/40 Hooks ok, keine `unknown`, Pattern-Verteilung `narrative=31`, `high_reaction=5`, `question=4`
+- Tests: 3824 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
+- Artefakte: `reports/phase4_7/p4_7_5_hook_audit.json`, Backup unter `reports/phase4_7/p4_7_5_backup/`
+- Next: P4.7-6 Style-Capture-Erweiterung

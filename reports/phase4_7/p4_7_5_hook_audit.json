@@ -1,0 +1,496 @@
+{
+  "entry_count": 40,
+  "hook_ok_count": 40,
+  "problem_count": 0,
+  "pattern_distribution": {
+    "high_reaction": 5,
+    "narrative": 31,
+    "question": 4
+  },
+  "distinct_pattern_count": 3,
+  "problems": [],
+  "entries": [
+    {
+      "source": "pairs\\pair_001",
+      "ok": true,
+      "first_words_length": 84,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "pairs\\pair_002",
+      "ok": true,
+      "first_words_length": 43,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "pairs\\pair_003",
+      "ok": true,
+      "first_words_length": 102,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "pairs\\pair_004",
+      "ok": true,
+      "first_words_length": 107,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "pairs\\pair_005",
+      "ok": true,
+      "first_words_length": 92,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "pairs\\pair_006",
+      "ok": true,
+      "first_words_length": 59,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "pairs\\pair_007",
+      "ok": true,
+      "first_words_length": 92,
+      "pattern_class": "high_reaction"
+    },
+    {
+      "source": "top_solo\\video_001",
+      "ok": true,
+      "first_words_length": 102,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_002",
+      "ok": true,
+      "first_words_length": 98,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_003",
+      "ok": true,
+      "first_words_length": 95,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_004",
+      "ok": true,
+      "first_words_length": 103,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_005",
+      "ok": true,
+      "first_words_length": 95,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_006",
+      "ok": true,
+      "first_words_length": 95,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_007",
+      "ok": true,
+      "first_words_length": 90,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_008",
+      "ok": true,
+      "first_words_length": 97,
+      "pattern_class": "question"
+    },
+    {
+      "source": "top_solo\\video_009",
+      "ok": true,
+      "first_words_length": 78,
+      "pattern_class": "question"
+    },
+    {
+      "source": "top_solo\\video_010",
+      "ok": true,
+      "first_words_length": 101,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_011",
+      "ok": true,
+      "first_words_length": 109,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_012",
+      "ok": true,
+      "first_words_length": 100,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_013",
+      "ok": true,
+      "first_words_length": 102,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_014",
+      "ok": true,
+      "first_words_length": 103,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_015",
+      "ok": true,
+      "first_words_length": 106,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_016",
+      "ok": true,
+      "first_words_length": 109,
+      "pattern_class": "high_reaction"
+    },
+    {
+      "source": "top_solo\\video_017",
+      "ok": true,
+      "first_words_length": 104,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_018",
+      "ok": true,
+      "first_words_length": 106,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_019",
+      "ok": true,
+      "first_words_length": 108,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_020",
+      "ok": true,
+      "first_words_length": 109,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_021",
+      "ok": true,
+      "first_words_length": 102,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_022",
+      "ok": true,
+      "first_words_length": 114,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_023",
+      "ok": true,
+      "first_words_length": 107,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_024",
+      "ok": true,
+      "first_words_length": 94,
+      "pattern_class": "high_reaction"
+    },
+    {
+      "source": "top_solo\\video_025",
+      "ok": true,
+      "first_words_length": 103,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_026",
+      "ok": true,
+      "first_words_length": 69,
+      "pattern_class": "high_reaction"
+    },
+    {
+      "source": "top_solo\\video_027",
+      "ok": true,
+      "first_words_length": 89,
+      "pattern_class": "question"
+    },
+    {
+      "source": "top_solo\\video_028",
+      "ok": true,
+      "first_words_length": 85,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "top_solo\\video_029",
+      "ok": true,
+      "first_words_length": 87,
+      "pattern_class": "high_reaction"
+    },
+    {
+      "source": "top_solo\\video_030",
+      "ok": true,
+      "first_words_length": 100,
+      "pattern_class": "question"
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "ok": true,
+      "first_words_length": 98,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "ok": true,
+      "first_words_length": 113,
+      "pattern_class": "narrative"
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "ok": true,
+      "first_words_length": 110,
+      "pattern_class": "narrative"
+    }
+  ],
+  "run_results": [
+    {
+      "source": "pairs\\pair_001",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Du musst auch daten sonst wird es nicht Sorry mach mal frei wenn man voll ist was du"
+    },
+    {
+      "source": "pairs\\pair_002",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So also noch mal eine Runde Hä Das ist Spaß"
+    },
+    {
+      "source": "pairs\\pair_003",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So ich würde sagen wiegen als erstseit haben wir schon gesehen Krakenslayer wie immer das hier das war"
+    },
+    {
+      "source": "pairs\\pair_004",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Ich überwindet aus Gegeben für Klamotten Really talk ich sag ehrlich das machen richtig süchtig Es geht los"
+    },
+    {
+      "source": "pairs\\pair_005",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Da war Drachenlaut ja noch normal So ich kann man kann jetzt den Bus einfach steuern Das ist"
+    },
+    {
+      "source": "pairs\\pair_006",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "3 Runden dabei oder Ja aber er hat ja keine Waffen der eine"
+    },
+    {
+      "source": "pairs\\pair_007",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "high_reaction",
+      "first_words": "Oh mein Gott die haben ja wirklich alle große Köpfe Ja Ich dachte nur wenn man Helm aufzieht"
+    },
+    {
+      "source": "top_solo\\video_001",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Die heutige Challenge ist es nur mit grünen Waffen zu gewinnen Keine Lille keine Golden nur Grüne Wenn"
+    },
+    {
+      "source": "top_solo\\video_002",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Ihr fragt euch bestimmt was ist das für ein Skin Ich zerstörer in dieser Folge die gesamte Top-Lin"
+    },
+    {
+      "source": "top_solo\\video_003",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Wir dürfen heute nur mit der Waffe spielen die wir auch die ersten Kiste erhalten haben Wie gut"
+    },
+    {
+      "source": "top_solo\\video_004",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Nach unserem letzten BadWos-Fail haben ich schon nils noch stetig für besser Wie gut wir heute sind Ich"
+    },
+    {
+      "source": "top_solo\\video_005",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Mein letztes Bett wo's wieder war kann ab einem Jahr Wie gut meine Pippo Pilskills noch sind Äh"
+    },
+    {
+      "source": "top_solo\\video_006",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Im heutigen Video werden wir versuchen ein Sieg zu holen aber nur mit grauen Waffen Ob wir Spaß"
+    },
+    {
+      "source": "top_solo\\video_007",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Da ist wieder ein großen Pok mon halt gibt dacht ich mir testen heute was Smaller aus Aber"
+    },
+    {
+      "source": "top_solo\\video_008",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "question",
+      "first_words": "Was passiert wenn man einer Frau eine Page in die Hand gibt Genau man bekommt Nieler Heute testen"
+    },
+    {
+      "source": "top_solo\\video_009",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "question",
+      "first_words": "Wie geht er Warum bist du so weit vorne Warum bist du dann so weit vorne Ja ja"
+    },
+    {
+      "source": "top_solo\\video_010",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So ein Freundin bekommen wir zu einer neuen Folge von League of Legends Wir spielen heute Nulus gerne"
+    },
+    {
+      "source": "top_solo\\video_011",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So eine Freude in der Koalition einfach auf diesen Kanal die werden heute Yasuyonig auf der Bordle entspielen"
+    },
+    {
+      "source": "top_solo\\video_012",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde wir kommen wieder zu einer neuen Folge auf diesem Kanal Heute mal nicht allein sind"
+    },
+    {
+      "source": "top_solo\\video_013",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde bekommen wieder zu einer neuen Folge von League of Legends Heute mal was anderes denn"
+    },
+    {
+      "source": "top_solo\\video_014",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So Freunde wir kommen wieder zur Rundfrage von League of Legends heute spielen wir mal Twisted Fate auf"
+    },
+    {
+      "source": "top_solo\\video_015",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde wir kommen wieder zu einer neuen Folge von Minecraft's Syrupol als wir jetzt zusammen mit"
+    },
+    {
+      "source": "top_solo\\video_016",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "high_reaction",
+      "first_words": "Äh ich meine die echte Giga wow Das waren richtig gute Gegner Dein Steinschleuder wirst die Steinschleuder Ja"
+    },
+    {
+      "source": "top_solo\\video_017",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freundin willkommen wieder zu einer neuen Folge von League of Legends Heute spielen wir mal was"
+    },
+    {
+      "source": "top_solo\\video_018",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde wir kommen wieder zur neuen Frühgeporne League of Legends Wir spielen heute mal das erste"
+    },
+    {
+      "source": "top_solo\\video_019",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So in der Freunde bekommen wir wieder zu einer neuen Folge von Minecraft-Zu-Pulis In der letzten Folge haben"
+    },
+    {
+      "source": "top_solo\\video_020",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde willkommen wieder zu einer neuen Folge von League of Legends Heute spielen wir keinen League"
+    },
+    {
+      "source": "top_solo\\video_021",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde bekommen wir jetzt zum neuen Bier auf diesem Kanal Wir springen direkt in die nächste"
+    },
+    {
+      "source": "top_solo\\video_022",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde willkommen wieder zu einer neuen Folge von Microfzio-Produce In der letzten Folge haben wir diese"
+    },
+    {
+      "source": "top_solo\\video_023",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde du kommst wieder zur neuen Konto von League of Randomizer Wir drücken direkt auf Randomize"
+    },
+    {
+      "source": "top_solo\\video_024",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "high_reaction",
+      "first_words": "Hier ist ein Gegner vor mir Wau digger ich treffe wieder gar nichts zu den Nächsten Korrekt he"
+    },
+    {
+      "source": "top_solo\\video_025",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde wir kommen wieder zu einer neuen Folge von Minecraft-Ciopulis Wir sind in der 10 Folge"
+    },
+    {
+      "source": "top_solo\\video_026",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "high_reaction",
+      "first_words": "Die ist noch eine Kiste Mit nichts Stark Wow bigger Mein Aim ist Auer"
+    },
+    {
+      "source": "top_solo\\video_027",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "question",
+      "first_words": "Seid ihr gedärscht Oh mein Gott die Dasch wird Oha Jawoll Wusst ihr echt mit Tod Reil Das"
+    },
+    {
+      "source": "top_solo\\video_028",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "Ja du wirst gleich hier äh ob der Baummeister seh wie ich ob ich hier Baum werde Wach"
+    },
+    {
+      "source": "top_solo\\video_029",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "high_reaction",
+      "first_words": "Ich komme zu den Hilfe ich mein es ernst Hilfe Digger ich bin tot laber mich nicht voll"
+    },
+    {
+      "source": "top_solo\\video_030",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "question",
+      "first_words": "Warum bist du stehen geblieben Warum bist du genau die Wunsch stehen geblieben Digger ich bin tou Ah"
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde willkommen zu einem neuen Video hier auf diesem Kanal Mal was ganz anderes äh wie"
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freude Willkommen zu einem neuen Video auf diesem Kanal aber keinen ganz normalen Video sondern erstmals"
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "old_pattern_class": "unknown",
+      "new_pattern_class": "narrative",
+      "first_words": "So meine Freunde willkommen mal wieder zu einem Special-Video hier auf diesem Kanal Ihr kennt hier alle meinen"
+    }
+  ]
+}
