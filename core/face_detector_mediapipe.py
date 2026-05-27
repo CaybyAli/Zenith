@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -45,6 +46,9 @@ class MediaPipeFaceDetector:
         self.max_num_faces = int(max_num_faces)
         self.facecam_region = str(facecam_region or "right_half")
         self.model_asset_path = Path(model_asset_path)
+
+        os.environ.setdefault("MEDIAPIPE_DISABLE_TELEMETRY", "1")
+        os.environ.setdefault("GLOG_minloglevel", "2")
 
         try:
             import mediapipe as mp

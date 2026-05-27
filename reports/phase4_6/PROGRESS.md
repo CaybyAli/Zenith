@@ -51,3 +51,12 @@
 - Mini-Render: 30s probe Exitcode 0, duration 00:00:09.4989419
 - Visual-Check: reports/phase4_6/p4_6_7/probe_clip/still_010s.png
 - Next: P4.6-8 Focus-Switch-Engine
+
+## 2026-05-27 03:55:27 +02:00
+- Sub-Phase: P4.6-8 Focus-Switch-Engine
+- Commit-Hash: afe1c524573b301eb3ecae0f1da97ee6589f0e84
+- Tests: 3813 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 18 passed targeted; decision tree, friend keywords, Ali yelling, decision_log.json
+- Mini-Render: 30s probe Exitcode 0, duration 00:00:08.6175680
+- Visual-Check: reports/phase4_6/p4_6_8/probe_clip/still_010s.png
+- Next: P4.6-9-NEU Fingerprint-Erweiterung
