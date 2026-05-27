@@ -4,13 +4,13 @@
 
 Phase 5 kann fuer Style-Learning/Fingerprint-Learning starten, aber nicht als blindes Training auf sichtbare Focus-/Zoom-Effekte. Die Datenbasis ist nach P4.7 deutlich repariert und erweitert; die Render-Pipeline konsumiert Focus- und Smooth-Zoom-Entscheidungen aber noch nicht eindeutig als sichtbare `facecam_focus`/`gameplay_focus` Layouts.
 
-## Verifizierter HEAD vor P4.7-Final-Commit
+## Verifizierter HEAD nach P4.7-7 Assessment-Commit
 
 ```text
-76b14a69b8f12db91696c54fe3ea6b3f33d9f8bd feat(P4.7-6): add deep style capture analyzer
+b87b04351a6de325804065bc4f495fa58050359a docs(P4.7-7): finalize style learning foundation assessment
 ```
 
-Der finale P4.7-7 Commit enthaelt diesen Assessment-Report, Render-Audits und Proof-Skripte; der exakte Push-Hash ist nach dem Push via `git log origin/main -1 --format='%H %s'` verifizierbar.
+Der nachfolgende Progress-Hash-Commit aktualisiert nur `PROGRESS_P4_7.md`; der inhaltliche P4.7-7 Assessment-Commit ist oben vermerkt.
 
 ## Sub-Phasen-Uebersicht
 
@@ -28,7 +28,7 @@ Phase 4, 4.5 und 4.6 sind technisch abgeschlossen. P4.6 finaler Stand vor P4.7: 
 | P4.7-4 Transcript-Re-Run | abgeschlossen | `b08d50c09cae5c2b0f92489ea8d0a3f0593b26ca` |
 | P4.7-5 Hook-Reparatur | abgeschlossen | `187a6a52ae704e8d081013e70e8657c261ddda4d` |
 | P4.7-6 Deep Style-Capture | abgeschlossen | `76b14a69b8f12db91696c54fe3ea6b3f33d9f8bd` |
-| P4.7-7 Audit, 2x Vollrender, Assessment | abgeschlossen | finaler Docs-Commit |
+| P4.7-7 Audit, 2x Vollrender, Assessment | abgeschlossen | `b87b04351a6de325804065bc4f495fa58050359a` |
 
 ## Fingerprint-Reparatur-Bilanz
 
