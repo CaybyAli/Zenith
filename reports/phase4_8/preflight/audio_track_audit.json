@@ -1,0 +1,550 @@
+{
+  "summary": {
+    "pair_count": 20,
+    "multi_track_pairs": 20,
+    "single_track_pairs": 0,
+    "no_audio_pairs": 0,
+    "fingerprint_counts": {
+      "learning_corpus/pairs": 0,
+      "learning_corpus/top_solo": 30,
+      "learning_corpus/vlogs": 3
+    },
+    "mismatches": []
+  },
+  "pairs": {
+    "pair_001": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 29039.92,
+      "final_size_mb": 8918.58,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_002": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 16659.5,
+      "final_size_mb": 5671.0,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_003": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 8858.33,
+      "final_size_mb": 4075.94,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_004": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 23911.33,
+      "final_size_mb": 6259.34,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_005": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 21972.89,
+      "final_size_mb": 5569.46,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_006": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 15111.7,
+      "final_size_mb": 6214.3,
+      "audio_tracks": 3,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        2,
+        2,
+        2
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3
+      ],
+      "ffprobe_error": null
+    },
+    "pair_007": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 21298.04,
+      "final_size_mb": 9125.89,
+      "audio_tracks": 3,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        2,
+        2,
+        2
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3
+      ],
+      "ffprobe_error": null
+    },
+    "pair_008": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 2747.54,
+      "final_size_mb": 51.86,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_009": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 3490.59,
+      "final_size_mb": 62.32,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_010": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 2473.08,
+      "final_size_mb": 63.94,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_011": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 3099.91,
+      "final_size_mb": 65.32,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_012": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 1752.82,
+      "final_size_mb": 62.11,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_013": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 2288.17,
+      "final_size_mb": 46.51,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_014": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 5360.24,
+      "final_size_mb": 74.28,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_015": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 1701.75,
+      "final_size_mb": 62.9,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_016": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 2596.05,
+      "final_size_mb": 49.99,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_017": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 3541.07,
+      "final_size_mb": 47.33,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_018": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 2600.45,
+      "final_size_mb": 43.44,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_019": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 2455.36,
+      "final_size_mb": 57.17,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    },
+    "pair_020": {
+      "has_raw": true,
+      "has_final": true,
+      "has_meta": true,
+      "raw_size_mb": 3065.22,
+      "final_size_mb": 75.42,
+      "audio_tracks": 4,
+      "audio_codecs": [
+        "aac",
+        "aac",
+        "aac",
+        "aac"
+      ],
+      "audio_channels": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "audio_stream_indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ffprobe_error": null
+    }
+  }
+}

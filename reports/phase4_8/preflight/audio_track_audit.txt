@@ -1,0 +1,40 @@
+# Phase 4.8 A1 Preflight Audio Track Audit
+
+Total Pairs: 20
+Multi-Track (>= 2 audio): 20
+Single-Track (1 audio): 0
+No-Audio: 0
+
+## Fingerprints
+- learning_corpus/pairs: 0
+- learning_corpus/top_solo: 30
+- learning_corpus/vlogs: 3
+
+## Pairs
+
+| Pair | raw.mp4 | final.mp4 | meta.json | Audio tracks | Codecs | Channels |
+|---|---:|---:|---:|---:|---|---|
+| pair_001 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_002 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_003 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_004 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_005 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_006 | True | True | True | 3 | aac, aac, aac | 2, 2, 2 |
+| pair_007 | True | True | True | 3 | aac, aac, aac | 2, 2, 2 |
+| pair_008 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_009 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_010 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_011 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_012 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_013 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_014 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_015 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_016 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_017 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_018 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_019 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+| pair_020 | True | True | True | 4 | aac, aac, aac, aac | 1, 1, 1, 1 |
+
+## Result
+
+PASS: local corpus state matches the user-reported preflight numbers.
