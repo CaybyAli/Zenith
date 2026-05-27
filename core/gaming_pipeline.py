@@ -34,6 +34,7 @@ from core.transcript_processor import TranscriptProcessor, TranscriptUnavailable
 from core.speaker_identifier import SpeakerIdentifier
 from core.voice_intensity_analyzer import VoiceIntensityAnalyzer
 from core.face_detector_mediapipe import MediaPipeFaceDetector
+from core.facial_expression_analyzer import FacialExpressionAnalyzer
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9121,6 +9122,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     voice_intensity_distribution = {}
     face_detection_points = []
     face_detection_rate = 0.0
+    facial_expression_points = []
+    facial_expression_distribution = {}
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
@@ -9248,6 +9251,39 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             close = getattr(face_detector, "close", None)
             if callable(close):
                 close()
+
+    if face_detection_points:
+        try:
+            facial_expression_analyzer = (
+                services.get("facial_expression_analyzer")
+                or FacialExpressionAnalyzer()
+            )
+            facial_expression_points = facial_expression_analyzer.analyze_video(
+                face_detection_points
+            )
+            facial_expression_distribution = facial_expression_analyzer.distribution(
+                facial_expression_points
+            )
+            if hasattr(job, "facial_expression_distribution"):
+                job.facial_expression_distribution = dict(facial_expression_distribution)
+            active_expression_count = sum(
+                1
+                for point in facial_expression_points
+                if any(expression.value != "neutral" for expression in point.expressions)
+            )
+            print(
+                f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
+                f"points={len(facial_expression_points)} "
+                f"active={active_expression_count} "
+                f"patterns={len([v for v in facial_expression_distribution.values() if v > 0.0])}"
+            )
+        except Exception as facial_expression_exc:
+            facial_expression_points = []
+            facial_expression_distribution = {}
+            print(
+                f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
+                f"skipped reason={facial_expression_exc}"
+            )
 
     hook_keyword_result = None
     if job.channel_type == ChannelType.GAMING_MAIN:
@@ -10878,6 +10914,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             for point in (face_detection_points or [])
         ],
         "face_detection_rate": face_detection_rate,
+        "facial_expression_points": [
+            point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+            for point in (facial_expression_points or [])
+        ],
+        "facial_expression_distribution": dict(facial_expression_distribution or {}),
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -11007,6 +11048,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "voice_intensity_distribution": voice_intensity_distribution,
         "face_detection_points": face_detection_points,
         "face_detection_rate": face_detection_rate,
+        "facial_expression_points": facial_expression_points,
+        "facial_expression_distribution": facial_expression_distribution,
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,

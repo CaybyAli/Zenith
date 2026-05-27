@@ -16,3 +16,12 @@
 - Visual-Check: reports/phase4_6/p4_6_3/probe_clip/still_008s.png
 - Next: P4.6-4 Face-Detection-Stabilisierung
 
+## 2026-05-27 02:57:00 +02:00
+- Sub-Phase: P4.6-4 Face-Detection MediaPipe
+- Commit-Hash: 48a36bc4430c5f74640d4e57380cd8f16d5d70da
+- Tests: 3786 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 8 passed targeted; pair_001 30-sample detection rate 100.0% with 478 landmarks
+- Mini-Render: 30s probe Exitcode 0, render status in reports/phase4_6/p4_6_4/probe_clip/render_status.txt
+- Visual-Check: reports/phase4_6/p4_6_4/probe_clip/still_010s.png
+- Next: P4.6-5 Facial-Expression-Analyzer
+
