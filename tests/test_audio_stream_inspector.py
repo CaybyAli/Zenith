@@ -82,17 +82,19 @@ def test_single_track_payload_is_unknown_fallback_not_mic() -> None:
     assert inventory.streams[0].index == 1
 
 
-def test_pair_001_current_raw_uses_single_track_fallback() -> None:
+def test_pair_001_current_raw_is_phase_4_8_multitrack() -> None:
     if not PAIR_001_RAW.exists():
         pytest.skip("pair_001 raw.mp4 not available in this checkout")
 
     inventory = AudioStreamInspector().inspect(str(PAIR_001_RAW))
 
-    assert len(inventory.streams) == 1
-    assert inventory.is_multi_track is False
-    assert inventory.streams[0].index >= 0
-    assert inventory.streams[0].channels >= 1
-    assert inventory.streams[0].sample_rate > 0
+    assert len(inventory.streams) >= 2
+    assert inventory.is_multi_track is True
+    assert inventory.has_mic_track is True
+    assert inventory.streams[0].label == "mic"
+    assert all(stream.index >= 0 for stream in inventory.streams)
+    assert all(stream.channels >= 1 for stream in inventory.streams)
+    assert all(stream.sample_rate > 0 for stream in inventory.streams)
 
 
 def test_inventory_to_dict_contains_track_flags() -> None:

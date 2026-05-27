@@ -28,4 +28,5 @@ def test_pair_001_transcript_streams_receive_speaker_labels() -> None:
     assert all(segment.audio_track for segment in result.segments)
     assert result.engine == "test-fallback"
     assert identifier.last_summary is not None
-    assert identifier.last_summary.strategy == "single_track_unavailable"
+    assert identifier.last_summary.strategy == "track_based"
+    assert identifier.last_summary.ali_segments > 0

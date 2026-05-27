@@ -12,3 +12,10 @@ Track-Verteilung entspricht Erwartung: pair_001 bis pair_005 mit 4 Tracks, pair_
 Fingerprint-Stand entspricht Erwartung: pairs=0, top_solo=30, vlogs=3.
 Kein STOPP ausgeloest.
 
+## 2026-05-27 22:52:30 P4.8-A2 abgeschlossen
+`raw_mixed_audio.mp4` fuer alle 20 Multi-Track-Pairs erzeugt.
+Audit: created=20, already_exists=0, skipped=0, failures=0, missing_outputs=0.
+Die erzeugten Medien liegen unter `learning_corpus/` und bleiben wegen `.gitignore` lokal.
+Veraltete Single-Track-Korpusannahmen in drei Tests auf den neuen Multi-Track-Stand angepasst.
+Testlauf: `python -m pytest -x -q` -> 3826 passed, 3 skipped, 24 deselected.
+

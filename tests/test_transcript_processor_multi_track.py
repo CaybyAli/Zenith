@@ -99,7 +99,7 @@ def test_sanitize_segments_accepts_audio_track_from_raw_segment() -> None:
     assert segments[0].audio_track == "discord"
 
 
-def test_pair_001_transcribe_all_streams_uses_single_track_fallback() -> None:
+def test_pair_001_transcribe_all_streams_uses_phase_4_8_multitrack() -> None:
     if not PAIR_001_RAW.exists():
         pytest.skip("pair_001 raw.mp4 not available in this checkout")
 
@@ -107,8 +107,8 @@ def test_pair_001_transcribe_all_streams_uses_single_track_fallback() -> None:
 
     results = processor.transcribe_all_streams(str(PAIR_001_RAW))
 
-    assert len(results) == 1
-    result = next(iter(results.values()))
-    assert result.engine == "test-fallback"
-    assert result.segments
-    assert result.segments[0].audio_track in {"unknown", "mic"}
+    assert len(results) >= 2
+    assert "mic" in results
+    assert all(result.engine == "test-fallback" for result in results.values())
+    assert all(result.segments for result in results.values())
+    assert {result.segments[0].audio_track for result in results.values()} == set(results)
