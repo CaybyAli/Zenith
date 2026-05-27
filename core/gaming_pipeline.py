@@ -35,6 +35,7 @@ from core.speaker_identifier import SpeakerIdentifier
 from core.voice_intensity_analyzer import VoiceIntensityAnalyzer
 from core.face_detector_mediapipe import MediaPipeFaceDetector
 from core.facial_expression_analyzer import FacialExpressionAnalyzer
+from core.gameplay_menu_detector import GameplayMenuDetector
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9124,6 +9125,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     face_detection_rate = 0.0
     facial_expression_points = []
     facial_expression_distribution = {}
+    gameplay_detection_points = []
+    gameplay_detection_distribution = {}
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
@@ -9283,6 +9286,34 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
                 f"skipped reason={facial_expression_exc}"
+            )
+
+    if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+        try:
+            gameplay_menu_detector = (
+                services.get("gameplay_menu_detector") or GameplayMenuDetector()
+            )
+            gameplay_detection_points = gameplay_menu_detector.detect(
+                str(job.raw_video_path),
+                sample_rate_fps=1.0,
+            )
+            gameplay_detection_distribution = gameplay_menu_detector.distribution(
+                gameplay_detection_points
+            )
+            if hasattr(job, "gameplay_detection_distribution"):
+                job.gameplay_detection_distribution = dict(gameplay_detection_distribution)
+            print(
+                f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
+                f"points={len(gameplay_detection_points)} "
+                f"gameplay={gameplay_detection_distribution.get('gameplay', 0.0)} "
+                f"menu={gameplay_detection_distribution.get('menu', 0.0)}"
+            )
+        except Exception as gameplay_menu_exc:
+            gameplay_detection_points = []
+            gameplay_detection_distribution = {}
+            print(
+                f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
+                f"skipped reason={gameplay_menu_exc}"
             )
 
     hook_keyword_result = None
@@ -10919,6 +10950,11 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             for point in (facial_expression_points or [])
         ],
         "facial_expression_distribution": dict(facial_expression_distribution or {}),
+        "gameplay_detection_points": [
+            point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+            for point in (gameplay_detection_points or [])
+        ],
+        "gameplay_detection_distribution": dict(gameplay_detection_distribution or {}),
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -11050,6 +11086,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "face_detection_rate": face_detection_rate,
         "facial_expression_points": facial_expression_points,
         "facial_expression_distribution": facial_expression_distribution,
+        "gameplay_detection_points": gameplay_detection_points,
+        "gameplay_detection_distribution": gameplay_detection_distribution,
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,

@@ -25,3 +25,12 @@
 - Visual-Check: reports/phase4_6/p4_6_4/probe_clip/still_010s.png
 - Next: P4.6-5 Facial-Expression-Analyzer
 
+## 2026-05-27 03:05:32 +02:00
+- Sub-Phase: P4.6-5 Facial-Expression-Analyzer
+- Commit-Hash: 301114d8682cec2c46977a07c2b57e9a7ac41fad
+- Tests: 3793 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 16 passed targeted; synthetic 6 patterns; pair_001 multiple patterns detected
+- Mini-Render: 30s probe Exitcode 0, render status in reports/phase4_6/p4_6_5/probe_clip/render_status.txt
+- Visual-Check: reports/phase4_6/p4_6_5/probe_clip/still_010s.png
+- Next: P4.6-6 Gameplay-vs-Menu Detection
+
