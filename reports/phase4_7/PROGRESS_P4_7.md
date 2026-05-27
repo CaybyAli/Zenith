@@ -11,3 +11,11 @@ Beginne P4.7-1 Vollständige Diagnose.
 - Tests: 3818 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
 - Artefakte: `reports/phase4_7/p4_7_1_diagnose/`
 - Next: P4.7-2 Facecam-ROI-Fix + Re-Run Facial-Expression
+
+## 2026-05-27 11:34:10 +02:00
+- Sub-Phase: P4.7-2 Facecam-ROI-Fix + Re-Run Facial-Expression
+- Status: abgeschlossen
+- Ergebnis: Pair-Eyebrow 7/7 im 5-25%-Fenster; Neutral 40/40 >30%
+- Tests: 3819 passed, 2 skipped, 24 deselected (`python -m pytest -x -q`)
+- Artefakte: `reports/phase4_7/p4_7_2_facial_expression_audit.json`, Backup unter `reports/phase4_7/p4_7_2_backup/`
+- Next: P4.7-3 pair_001 Sonder-Reparatur

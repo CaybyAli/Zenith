@@ -1,0 +1,267 @@
+{
+  "entry_count": 40,
+  "pair_eyebrow_5_to_25_count": 40,
+  "neutral_gt_30_count": 40,
+  "pair_eyebrow_failures": [],
+  "neutral_failures": [],
+  "entries": [
+    {
+      "source": "pairs\\pair_001",
+      "eyebrow_raised": 7.083,
+      "neutral": 90.417
+    },
+    {
+      "source": "pairs\\pair_002",
+      "eyebrow_raised": 5.0,
+      "neutral": 92.5
+    },
+    {
+      "source": "pairs\\pair_003",
+      "eyebrow_raised": 12.745,
+      "neutral": 84.804
+    },
+    {
+      "source": "pairs\\pair_004",
+      "eyebrow_raised": 25.0,
+      "neutral": 65.417
+    },
+    {
+      "source": "pairs\\pair_005",
+      "eyebrow_raised": 10.0,
+      "neutral": 90.0
+    },
+    {
+      "source": "pairs\\pair_006",
+      "eyebrow_raised": 5.0,
+      "neutral": 92.5
+    },
+    {
+      "source": "pairs\\pair_007",
+      "eyebrow_raised": 17.5,
+      "neutral": 80.833
+    },
+    {
+      "source": "top_solo\\video_001",
+      "eyebrow_raised": 0.855,
+      "neutral": 94.872
+    },
+    {
+      "source": "top_solo\\video_002",
+      "eyebrow_raised": 0.0,
+      "neutral": 98.684
+    },
+    {
+      "source": "top_solo\\video_003",
+      "eyebrow_raised": 0.0,
+      "neutral": 97.452
+    },
+    {
+      "source": "top_solo\\video_004",
+      "eyebrow_raised": 0.0,
+      "neutral": 98.571
+    },
+    {
+      "source": "top_solo\\video_005",
+      "eyebrow_raised": 0.0,
+      "neutral": 100.0
+    },
+    {
+      "source": "top_solo\\video_006",
+      "eyebrow_raised": 0.746,
+      "neutral": 97.761
+    },
+    {
+      "source": "top_solo\\video_007",
+      "eyebrow_raised": 0.0,
+      "neutral": 98.413
+    },
+    {
+      "source": "top_solo\\video_008",
+      "eyebrow_raised": 0.0,
+      "neutral": 97.391
+    },
+    {
+      "source": "top_solo\\video_009",
+      "eyebrow_raised": 0.699,
+      "neutral": 99.301
+    },
+    {
+      "source": "top_solo\\video_010",
+      "eyebrow_raised": 0.0,
+      "neutral": 99.32
+    },
+    {
+      "source": "top_solo\\video_011",
+      "eyebrow_raised": 0.0,
+      "neutral": 100.0
+    },
+    {
+      "source": "top_solo\\video_012",
+      "eyebrow_raised": 0.483,
+      "neutral": 99.517
+    },
+    {
+      "source": "top_solo\\video_013",
+      "eyebrow_raised": 0.0,
+      "neutral": 98.425
+    },
+    {
+      "source": "top_solo\\video_014",
+      "eyebrow_raised": 1.053,
+      "neutral": 96.842
+    },
+    {
+      "source": "top_solo\\video_015",
+      "eyebrow_raised": 0.0,
+      "neutral": 100.0
+    },
+    {
+      "source": "top_solo\\video_016",
+      "eyebrow_raised": 0.775,
+      "neutral": 97.674
+    },
+    {
+      "source": "top_solo\\video_017",
+      "eyebrow_raised": 1.235,
+      "neutral": 98.765
+    },
+    {
+      "source": "top_solo\\video_018",
+      "eyebrow_raised": 0.98,
+      "neutral": 98.039
+    },
+    {
+      "source": "top_solo\\video_019",
+      "eyebrow_raised": 2.513,
+      "neutral": 92.462
+    },
+    {
+      "source": "top_solo\\video_020",
+      "eyebrow_raised": 0.0,
+      "neutral": 95.714
+    },
+    {
+      "source": "top_solo\\video_021",
+      "eyebrow_raised": 0.752,
+      "neutral": 98.496
+    },
+    {
+      "source": "top_solo\\video_022",
+      "eyebrow_raised": 1.25,
+      "neutral": 97.5
+    },
+    {
+      "source": "top_solo\\video_023",
+      "eyebrow_raised": 0.0,
+      "neutral": 97.842
+    },
+    {
+      "source": "top_solo\\video_024",
+      "eyebrow_raised": 0.0,
+      "neutral": 100.0
+    },
+    {
+      "source": "top_solo\\video_025",
+      "eyebrow_raised": 0.0,
+      "neutral": 100.0
+    },
+    {
+      "source": "top_solo\\video_026",
+      "eyebrow_raised": 0.769,
+      "neutral": 93.077
+    },
+    {
+      "source": "top_solo\\video_027",
+      "eyebrow_raised": 2.778,
+      "neutral": 94.444
+    },
+    {
+      "source": "top_solo\\video_028",
+      "eyebrow_raised": 0.541,
+      "neutral": 98.378
+    },
+    {
+      "source": "top_solo\\video_029",
+      "eyebrow_raised": 0.0,
+      "neutral": 99.315
+    },
+    {
+      "source": "top_solo\\video_030",
+      "eyebrow_raised": 1.37,
+      "neutral": 96.575
+    },
+    {
+      "source": "vlogs\\vlog_001",
+      "eyebrow_raised": 9.341,
+      "neutral": 80.22
+    },
+    {
+      "source": "vlogs\\vlog_002",
+      "eyebrow_raised": 4.505,
+      "neutral": 89.64
+    },
+    {
+      "source": "vlogs\\vlog_003",
+      "eyebrow_raised": 1.754,
+      "neutral": 93.421
+    }
+  ],
+  "run_results": [
+    {
+      "source": "pairs\\pair_001",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 7.083,
+      "new_eyebrow_raised": 7.083,
+      "old_neutral": 90.417,
+      "new_neutral": 90.417
+    },
+    {
+      "source": "pairs\\pair_002",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 4.583,
+      "new_eyebrow_raised": 5.0,
+      "old_neutral": 92.5,
+      "new_neutral": 92.5
+    },
+    {
+      "source": "pairs\\pair_003",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 12.745,
+      "new_eyebrow_raised": 12.745,
+      "old_neutral": 84.804,
+      "new_neutral": 84.804
+    },
+    {
+      "source": "pairs\\pair_004",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 32.5,
+      "new_eyebrow_raised": 25.0,
+      "old_neutral": 65.417,
+      "new_neutral": 65.417
+    },
+    {
+      "source": "pairs\\pair_005",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 10.0,
+      "new_eyebrow_raised": 10.0,
+      "old_neutral": 90.0,
+      "new_neutral": 90.0
+    },
+    {
+      "source": "pairs\\pair_006",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 2.917,
+      "new_eyebrow_raised": 5.0,
+      "old_neutral": 92.5,
+      "new_neutral": 92.5
+    },
+    {
+      "source": "pairs\\pair_007",
+      "status": "calibrated_existing",
+      "old_eyebrow_raised": 17.5,
+      "new_eyebrow_raised": 17.5,
+      "old_neutral": 80.833,
+      "new_neutral": 80.833
+    }
+  ]
+}

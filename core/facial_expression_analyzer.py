@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import statistics
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -36,6 +37,13 @@ class FacialExpressionPoint:
 
 class FacialExpressionAnalyzer:
     def analyze_landmarks(self, landmarks: FaceLandmarks) -> list[FacialExpression]:
+        return self._analyze_landmarks(landmarks, baseline=None)
+
+    def _analyze_landmarks(
+        self,
+        landmarks: FaceLandmarks,
+        baseline: dict[str, float] | None,
+    ) -> list[FacialExpression]:
         metrics = self._metrics(landmarks)
         expressions: list[FacialExpression] = []
 
@@ -45,7 +53,7 @@ class FacialExpressionAnalyzer:
         if metrics["hand_on_mouth_score"] >= 0.25:
             expressions.append(FacialExpression.HAND_ON_MOUTH)
 
-        if metrics["eyebrow_raise_score"] >= 0.68:
+        if self._is_eyebrow_raised(metrics, baseline):
             expressions.append(FacialExpression.EYEBROW_RAISED)
 
         if metrics["surprise_score"] >= 0.25:
@@ -57,7 +65,12 @@ class FacialExpressionAnalyzer:
         if metrics["mouth_open_yell_score"] >= 0.30:
             expressions.append(FacialExpression.MOUTH_OPEN_YELL)
 
-        if not expressions:
+        expressive = [
+            expression
+            for expression in expressions
+            if expression is not FacialExpression.DIRECT_GAZE
+        ]
+        if not expressive:
             expressions.append(FacialExpression.NEUTRAL)
 
         return expressions
@@ -67,6 +80,7 @@ class FacialExpressionAnalyzer:
         face_detection_points: list[FaceDetectionPoint],
     ) -> list[FacialExpressionPoint]:
         points: list[FacialExpressionPoint] = []
+        baseline = self.calibrate_baseline(face_detection_points)
         for point in face_detection_points:
             if not point.detected or point.landmarks is None:
                 points.append(
@@ -79,7 +93,7 @@ class FacialExpressionAnalyzer:
                 continue
 
             metrics = self._metrics(point.landmarks)
-            expressions = self.analyze_landmarks(point.landmarks)
+            expressions = self._analyze_landmarks(point.landmarks, baseline)
             confidence = self._confidence_map(expressions, metrics)
             points.append(
                 FacialExpressionPoint(
@@ -90,6 +104,31 @@ class FacialExpressionAnalyzer:
             )
 
         return points
+
+    def calibrate_baseline(
+        self,
+        face_detection_points: list[FaceDetectionPoint],
+        *,
+        max_points: int = 30,
+    ) -> dict[str, float]:
+        brow_gaps: list[float] = []
+        mouth_open_values: list[float] = []
+        for point in face_detection_points:
+            if not point.detected or point.landmarks is None:
+                continue
+            metrics = self._metrics(point.landmarks)
+            brow_gaps.append(metrics["brow_gap"])
+            mouth_open_values.append(metrics["mouth_open"])
+            if len(brow_gaps) >= max_points:
+                break
+
+        if not brow_gaps:
+            return {}
+
+        return {
+            "brow_gap_median": statistics.median(brow_gaps),
+            "mouth_open_median": statistics.median(mouth_open_values),
+        }
 
     def distribution(
         self,
@@ -174,6 +213,24 @@ class FacialExpressionAnalyzer:
             "frustration_score": frustration_score,
             "mouth_open_yell_score": mouth_open_yell_score,
         }
+
+    def _is_eyebrow_raised(
+        self,
+        metrics: dict[str, float],
+        baseline: dict[str, float] | None,
+    ) -> bool:
+        if metrics["eyebrow_raise_score"] < 0.68:
+            return False
+        if not baseline or "brow_gap_median" not in baseline:
+            return True
+
+        baseline_gap = max(float(baseline.get("brow_gap_median", 0.0)), 1e-6)
+        absolute_margin = 0.006
+        relative_margin = 1.08
+        return metrics["brow_gap"] >= max(
+            baseline_gap * relative_margin,
+            baseline_gap + absolute_margin,
+        )
 
     def _direct_gaze_score(self, points: list[tuple[float, float]], face_width: float) -> float:
         if len(points) < 478:

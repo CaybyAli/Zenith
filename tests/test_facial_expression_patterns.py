@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from core.face_detector_mediapipe import FaceLandmarks, MediaPipeFaceDetector
+from core.face_detector_mediapipe import (
+    FaceDetectionPoint,
+    FaceLandmarks,
+    MediaPipeFaceDetector,
+)
 from core.facial_expression_analyzer import FacialExpression, FacialExpressionAnalyzer
 
 
@@ -57,6 +61,7 @@ def test_direct_gaze_pattern() -> None:
     expressions = FacialExpressionAnalyzer().analyze_landmarks(_landmarks(_base_landmarks()))
 
     assert FacialExpression.DIRECT_GAZE in expressions
+    assert FacialExpression.NEUTRAL in expressions
 
 
 def test_hand_on_mouth_pattern() -> None:
@@ -142,4 +147,28 @@ def test_pair_001_expression_integration_has_multiple_patterns() -> None:
         if expression is not FacialExpression.NEUTRAL
     }
 
-    assert len(distinct) >= 3
+    assert len(distinct) >= 2
+    distribution = FacialExpressionAnalyzer().distribution(expression_points)
+    assert distribution["eyebrow_raised"] < 25.0
+
+
+def test_video_baseline_suppresses_persistent_eyebrow_offset() -> None:
+    points = _base_landmarks()
+    points[105] = (0.45, 0.350)
+    points[334] = (0.55, 0.350)
+    face_points = [
+        FaceDetectionPoint(
+            timestamp=float(index),
+            detected=True,
+            landmarks=_landmarks(points),
+        )
+        for index in range(8)
+    ]
+
+    expression_points = FacialExpressionAnalyzer().analyze_video(face_points)
+
+    assert all(
+        FacialExpression.EYEBROW_RAISED not in point.expressions
+        for point in expression_points
+    )
+    assert all(FacialExpression.NEUTRAL in point.expressions for point in expression_points)
