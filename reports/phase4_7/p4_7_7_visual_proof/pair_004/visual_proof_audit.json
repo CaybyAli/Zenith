@@ -1,0 +1,92 @@
+{
+  "raw_video": "learning_corpus\\pairs\\pair_004\\raw.mp4",
+  "final_video": "exports\\gaming_main\\job_c70e71263bbb\\job_c70e71263bbb_v1_final.mp4",
+  "decision_log": "data\\jobs\\job_c70e71263bbb_focus_decision_log.json",
+  "render_log": "reports\\phase4_7\\p4_7_7_renders\\fullrender_pair004.log",
+  "render_segments": 20,
+  "decision_count": 2671,
+  "proof_count": 4,
+  "visible_difference_count": 4,
+  "visible_difference_ratio": 1.0,
+  "render_consumption": {
+    "layout_counts": {
+      "balanced_split": 20
+    },
+    "reactive_zoom_mentions": 2,
+    "low_intensity_zoom_mentions": 2,
+    "audio_peak_zoom_mentions": 0,
+    "gameplay_pip_mentions": 20,
+    "explicit_focus_layout_seen": false
+  },
+  "proofs": [
+    {
+      "name": "voice_bruellen",
+      "source_timestamp": 246.0,
+      "output_timestamp": 57.1,
+      "path": "reports\\phase4_7\\p4_7_7_visual_proof\\pair_004\\voice_bruellen_compare_source_246.0s_output_57.1s.png",
+      "mean_abs_diff": 59.859,
+      "visible_difference": true,
+      "decision": {
+        "timestamp": 246.0,
+        "focus_target": "facecam",
+        "facecam_zoom": 1.8,
+        "gameplay_zoom": 1.0,
+        "facecam_opacity": 1.0,
+        "reasoning": "ali_voice_intensity_bruellen",
+        "confidence": 0.95
+      }
+    },
+    {
+      "name": "facial_hand_on_mouth",
+      "source_timestamp": 415.0,
+      "output_timestamp": 82.6,
+      "path": "reports\\phase4_7\\p4_7_7_visual_proof\\pair_004\\facial_hand_on_mouth_compare_source_415.0s_output_82.6s.png",
+      "mean_abs_diff": 72.259,
+      "visible_difference": true,
+      "decision": {
+        "timestamp": 415.0,
+        "focus_target": "facecam",
+        "facecam_zoom": 2.0,
+        "gameplay_zoom": 1.0,
+        "facecam_opacity": 1.0,
+        "reasoning": "ali_expression_hand_on_mouth",
+        "confidence": 0.7
+      }
+    },
+    {
+      "name": "friend_reaction",
+      "source_timestamp": 2134.0,
+      "output_timestamp": 377.9,
+      "path": "reports\\phase4_7\\p4_7_7_visual_proof\\pair_004\\friend_reaction_compare_source_2134.0s_output_377.9s.png",
+      "mean_abs_diff": 63.481,
+      "visible_difference": true,
+      "decision": {
+        "timestamp": 2134.0,
+        "focus_target": "gameplay",
+        "facecam_zoom": 1.0,
+        "gameplay_zoom": 1.3,
+        "facecam_opacity": 0.3,
+        "reasoning": "friend_keyword_ja",
+        "confidence": 0.75
+      }
+    },
+    {
+      "name": "smooth_zoom_start",
+      "source_timestamp": 79.0,
+      "output_timestamp": 0.2,
+      "path": "reports\\phase4_7\\p4_7_7_visual_proof\\pair_004\\smooth_zoom_start_compare_source_79.0s_output_0.2s.png",
+      "mean_abs_diff": 67.119,
+      "visible_difference": true,
+      "decision": {
+        "timestamp": 79.0,
+        "focus_target": "facecam",
+        "facecam_zoom": 1.5,
+        "gameplay_zoom": 1.0,
+        "facecam_opacity": 1.0,
+        "reasoning": "ali_voice_intensity_schreien",
+        "confidence": 0.9
+      }
+    }
+  ],
+  "note": "Visible difference compares raw composite frames to mapped final-output frames. Focus-specific render consumption is inferred separately from render log layout and zoom mentions."
+}

@@ -1,0 +1,210 @@
+{
+  "method_note": "Timestamped dmon rows are correlated with timestamp-prefixed pipeline logs. If timestamps are missing, utilization-based fallback segmentation is used.",
+  "renders": {
+    "pair_001": {
+      "label": "pair_001",
+      "dmon_path": "reports\\phase4_7\\p4_7_7_renders\\dmon_pair001.txt",
+      "log_path": "reports\\phase4_7\\p4_7_7_renders\\fullrender_pair001.log",
+      "method": "utilization_fallback_due_buffered_log",
+      "total": {
+        "sample_count": 1822,
+        "duration_seconds": 1822.0,
+        "gpu_sm_avg": 3.608,
+        "gpu_enc_avg": 4.978,
+        "gpu_dec_avg": 21.549,
+        "gpu_mem_avg": 9.152,
+        "gpu_sm_max": 46.0,
+        "gpu_enc_max": 99.0,
+        "gpu_dec_max": 100.0
+      },
+      "stages": {
+        "transcript": {
+          "sample_count": 21,
+          "duration_seconds": 21.0,
+          "gpu_sm_avg": 17.429,
+          "gpu_enc_avg": 0.0,
+          "gpu_dec_avg": 0.0,
+          "gpu_mem_avg": 13.333,
+          "gpu_sm_max": 30.0,
+          "gpu_enc_max": 0.0,
+          "gpu_dec_max": 0.0
+        },
+        "analysis": {
+          "sample_count": 1354,
+          "duration_seconds": 1354.0,
+          "gpu_sm_avg": 0.942,
+          "gpu_enc_avg": 0.0,
+          "gpu_dec_avg": 0.0,
+          "gpu_mem_avg": 11.253,
+          "gpu_sm_max": 9.0,
+          "gpu_enc_max": 0.0,
+          "gpu_dec_max": 0.0
+        },
+        "scene_detection_and_timeline": {
+          "sample_count": 21,
+          "duration_seconds": 21.0,
+          "gpu_sm_avg": 18.905,
+          "gpu_enc_avg": 0.0,
+          "gpu_dec_avg": 0.0,
+          "gpu_mem_avg": 13.048,
+          "gpu_sm_max": 30.0,
+          "gpu_enc_max": 0.0,
+          "gpu_dec_max": 0.0
+        },
+        "longform_render": {
+          "sample_count": 213,
+          "duration_seconds": 213.0,
+          "gpu_sm_avg": 2.052,
+          "gpu_enc_avg": 0.249,
+          "gpu_dec_avg": 99.878,
+          "gpu_mem_avg": 1.113,
+          "gpu_sm_max": 5.0,
+          "gpu_enc_max": 1.0,
+          "gpu_dec_max": 100.0
+        },
+        "shorts_render_and_export": {
+          "sample_count": 213,
+          "duration_seconds": 213.0,
+          "gpu_sm_avg": 19.239,
+          "gpu_enc_avg": 42.333,
+          "gpu_dec_avg": 84.455,
+          "gpu_mem_avg": 3.042,
+          "gpu_sm_max": 46.0,
+          "gpu_enc_max": 99.0,
+          "gpu_dec_max": 100.0
+        }
+      }
+    },
+    "pair_004": {
+      "label": "pair_004",
+      "dmon_path": "reports\\phase4_7\\p4_7_7_renders\\dmon_pair004.txt",
+      "log_path": "reports\\phase4_7\\p4_7_7_renders\\fullrender_pair004.log",
+      "method": "timestamped_log_windows",
+      "total": {
+        "sample_count": 2133,
+        "duration_seconds": 2133.0,
+        "gpu_sm_avg": 3.516,
+        "gpu_enc_avg": 3.93,
+        "gpu_dec_avg": 20.419,
+        "gpu_mem_avg": 9.217,
+        "gpu_sm_max": 48.0,
+        "gpu_enc_max": 97.0,
+        "gpu_dec_max": 100.0
+      },
+      "stages": {
+        "transcript": {
+          "sample_count": 1090,
+          "duration_seconds": 1167.511,
+          "gpu_sm_avg": 2.168,
+          "gpu_enc_avg": 0.113,
+          "gpu_dec_avg": 31.468,
+          "gpu_mem_avg": 8.726,
+          "gpu_sm_max": 28.0,
+          "gpu_enc_max": 1.0,
+          "gpu_dec_max": 100.0
+        },
+        "analysis": {
+          "sample_count": 507,
+          "duration_seconds": 542.304,
+          "gpu_sm_avg": 1.051,
+          "gpu_enc_avg": 0.0,
+          "gpu_dec_avg": 0.0,
+          "gpu_mem_avg": 10.996,
+          "gpu_sm_max": 5.0,
+          "gpu_enc_max": 0.0,
+          "gpu_dec_max": 0.0
+        },
+        "scene_detection_and_timeline": {
+          "sample_count": 45,
+          "duration_seconds": 48.853,
+          "gpu_sm_avg": 1.044,
+          "gpu_enc_avg": 0.0,
+          "gpu_dec_avg": 0.0,
+          "gpu_mem_avg": 10.733,
+          "gpu_sm_max": 4.0,
+          "gpu_enc_max": 0.0,
+          "gpu_dec_max": 0.0
+        },
+        "longform_render": {
+          "sample_count": 399,
+          "duration_seconds": 427.512,
+          "gpu_sm_avg": 8.038,
+          "gpu_enc_avg": 14.892,
+          "gpu_dec_avg": 17.599,
+          "gpu_mem_avg": 9.218,
+          "gpu_sm_max": 48.0,
+          "gpu_enc_max": 97.0,
+          "gpu_dec_max": 100.0
+        },
+        "shorts_render_and_export": {
+          "sample_count": 88,
+          "duration_seconds": 122.054,
+          "gpu_sm_avg": 15.284,
+          "gpu_enc_avg": 26.341,
+          "gpu_dec_avg": 25.216,
+          "gpu_mem_avg": 4.227,
+          "gpu_sm_max": 37.0,
+          "gpu_enc_max": 51.0,
+          "gpu_dec_max": 100.0
+        }
+      }
+    }
+  },
+  "stages": {
+    "transcript": {
+      "sample_count": 21,
+      "duration_seconds": 21.0,
+      "gpu_sm_avg": 17.429,
+      "gpu_enc_avg": 0.0,
+      "gpu_dec_avg": 0.0,
+      "gpu_mem_avg": 13.333,
+      "gpu_sm_max": 30.0,
+      "gpu_enc_max": 0.0,
+      "gpu_dec_max": 0.0
+    },
+    "analysis": {
+      "sample_count": 1354,
+      "duration_seconds": 1354.0,
+      "gpu_sm_avg": 0.942,
+      "gpu_enc_avg": 0.0,
+      "gpu_dec_avg": 0.0,
+      "gpu_mem_avg": 11.253,
+      "gpu_sm_max": 9.0,
+      "gpu_enc_max": 0.0,
+      "gpu_dec_max": 0.0
+    },
+    "scene_detection_and_timeline": {
+      "sample_count": 21,
+      "duration_seconds": 21.0,
+      "gpu_sm_avg": 18.905,
+      "gpu_enc_avg": 0.0,
+      "gpu_dec_avg": 0.0,
+      "gpu_mem_avg": 13.048,
+      "gpu_sm_max": 30.0,
+      "gpu_enc_max": 0.0,
+      "gpu_dec_max": 0.0
+    },
+    "longform_render": {
+      "sample_count": 213,
+      "duration_seconds": 213.0,
+      "gpu_sm_avg": 2.052,
+      "gpu_enc_avg": 0.249,
+      "gpu_dec_avg": 99.878,
+      "gpu_mem_avg": 1.113,
+      "gpu_sm_max": 5.0,
+      "gpu_enc_max": 1.0,
+      "gpu_dec_max": 100.0
+    },
+    "shorts_render_and_export": {
+      "sample_count": 213,
+      "duration_seconds": 213.0,
+      "gpu_sm_avg": 19.239,
+      "gpu_enc_avg": 42.333,
+      "gpu_dec_avg": 84.455,
+      "gpu_mem_avg": 3.042,
+      "gpu_sm_max": 46.0,
+      "gpu_enc_max": 99.0,
+      "gpu_dec_max": 100.0
+    }
+  }
+}
