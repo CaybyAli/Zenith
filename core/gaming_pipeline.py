@@ -36,6 +36,7 @@ from core.voice_intensity_analyzer import VoiceIntensityAnalyzer
 from core.face_detector_mediapipe import MediaPipeFaceDetector
 from core.facial_expression_analyzer import FacialExpressionAnalyzer
 from core.gameplay_menu_detector import GameplayMenuDetector
+from core.smooth_zoom_engine import SmoothZoomEngine
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9127,6 +9128,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     facial_expression_distribution = {}
     gameplay_detection_points = []
     gameplay_detection_distribution = {}
+    smooth_zoom_curve = None
+    smooth_zoom_summary = {}
     if job.channel_type == ChannelType.GAMING_MAIN:
         ensure_ffmpeg_on_path()
         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
@@ -9314,6 +9317,35 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
                 f"skipped reason={gameplay_menu_exc}"
+            )
+
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        try:
+            smooth_zoom_engine = services.get("smooth_zoom_engine") or SmoothZoomEngine()
+            speaker_segments = list(getattr(transcript_result, "segments", []) or [])
+            smooth_zoom_curve = smooth_zoom_engine.build_curve_from_triggers(
+                voice_intensity=voice_intensity_points,
+                facial_expressions=facial_expression_points,
+                speaker_segments=speaker_segments,
+                gameplay_points=gameplay_detection_points,
+                clip_duration=0.0,
+            )
+            smooth_zoom_summary = smooth_zoom_engine.summarize(smooth_zoom_curve)
+            if hasattr(job, "smooth_zoom_summary"):
+                job.smooth_zoom_summary = dict(smooth_zoom_summary)
+            print(
+                f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+                f"keyframes={smooth_zoom_summary.get('keyframe_count', 0)} "
+                f"max_zoom={smooth_zoom_summary.get('max_zoom', 1.0)} "
+                f"targets={','.join(smooth_zoom_summary.get('targets', []))} "
+                f"hard_jumps={smooth_zoom_summary.get('hard_jump_count', 0)}"
+            )
+        except Exception as smooth_zoom_exc:
+            smooth_zoom_curve = None
+            smooth_zoom_summary = {}
+            print(
+                f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+                f"skipped reason={smooth_zoom_exc}"
             )
 
     hook_keyword_result = None
@@ -10955,6 +10987,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             for point in (gameplay_detection_points or [])
         ],
         "gameplay_detection_distribution": dict(gameplay_detection_distribution or {}),
+        "smooth_zoom_curve": (
+            smooth_zoom_curve.to_dict()
+            if smooth_zoom_curve is not None
+            and callable(getattr(smooth_zoom_curve, "to_dict", None))
+            else None
+        ),
+        "smooth_zoom_summary": dict(smooth_zoom_summary or {}),
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -11088,6 +11127,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "facial_expression_distribution": facial_expression_distribution,
         "gameplay_detection_points": gameplay_detection_points,
         "gameplay_detection_distribution": gameplay_detection_distribution,
+        "smooth_zoom_curve": smooth_zoom_curve,
+        "smooth_zoom_summary": smooth_zoom_summary,
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,

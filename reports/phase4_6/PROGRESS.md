@@ -34,3 +34,11 @@
 - Visual-Check: reports/phase4_6/p4_6_5/probe_clip/still_010s.png
 - Next: P4.6-6 Gameplay-vs-Menu Detection
 
+## 2026-05-27 03:17:18 +02:00
+- Sub-Phase: P4.6-6 Gameplay-vs-Menu Detection
+- Commit-Hash: 1c6ba3cb9264184c16dd95154fb8691414192e08
+- Tests: 3797 passed, 2 skipped, 24 deselected (python -m pytest -x -q)
+- Modul-Tests: 11 passed targeted; synthetic menu/gameplay tests; pair_001 timeline smoke
+- Mini-Render: 30s probe Exitcode 0, duration 00:00:09.3247534
+- Visual-Check: reports/phase4_6/p4_6_6/probe_clip/still_010s.png
+- Next: P4.6-7 Smooth-Zoom-Engine
