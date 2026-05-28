@@ -1,0 +1,10 @@
+STATUS=PASS
+SOURCE=D:\Zenith\tests\Rocket League Neuer Test58.mp4
+OUTPUT=reports\phase4_8\b5_manual\real_sample_render\output\p4_8_b5_real_sample_final.mp4
+CONTEXT=reports\phase4_8\b5_manual\real_sample_render\output\p4_8_b5_real_sample_final_render_driver_context.json
+OUTPUT_DURATION_SECONDS=9.021
+OUTPUT_VIDEO=1920x1080
+OUTPUT_HAS_AUDIO=True
+LAYOUT_COUNTS={'balanced_split': 1, 'facecam_emphasis': 1, 'gameplay_crop': 1}
+FOCUS_DECISIONS_USED=True
+SMOOTH_ZOOM_USED=True

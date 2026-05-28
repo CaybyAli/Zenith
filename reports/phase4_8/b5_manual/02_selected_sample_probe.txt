@@ -1,0 +1,43 @@
+STATUS=PASS
+SAMPLE=D:\Zenith\tests\Rocket League Neuer Test58.mp4
+EXISTS=True
+SIZE_MB=291.61
+VIDEO_PROBE_STDOUT={
+    "programs": [
+
+    ],
+    "stream_groups": [
+
+    ],
+    "streams": [
+        {
+            "width": 3840,
+            "height": 1080,
+            "r_frame_rate": "60/1",
+            "duration": "30.000000"
+        }
+    ]
+}
+AUDIO_PROBE_STDOUT={
+    "programs": [
+
+    ],
+    "stream_groups": [
+
+    ],
+    "streams": [
+        {
+            "index": 1,
+            "codec_type": "audio",
+            "channels": 2,
+            "duration": "30.016000"
+        }
+    ]
+}
+FORMAT_PROBE_STDOUT={
+    "format": {
+        "duration": "30.016000",
+        "size": "305778694",
+        "bit_rate": "81497519"
+    }
+}

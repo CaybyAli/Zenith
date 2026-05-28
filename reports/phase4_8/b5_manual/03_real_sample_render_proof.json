@@ -1,0 +1,119 @@
+{
+  "status": "PASS",
+  "source": "D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4",
+  "final_output": "reports\\phase4_8\\b5_manual\\real_sample_render\\output\\p4_8_b5_real_sample_final.mp4",
+  "context_path": "reports\\phase4_8\\b5_manual\\real_sample_render\\output\\p4_8_b5_real_sample_final_render_driver_context.json",
+  "frames": {
+    "gameplay_focus_output_t1": "reports\\phase4_8\\b5_manual\\real_sample_render\\frame_01_gameplay_focus_output_t1.png",
+    "facecam_focus_output_t4": "reports\\phase4_8\\b5_manual\\real_sample_render\\frame_02_facecam_focus_output_t4.png",
+    "balanced_pip_output_t7": "reports\\phase4_8\\b5_manual\\real_sample_render\\frame_03_balanced_pip_output_t7.png"
+  },
+  "checks": {
+    "source_exists": true,
+    "output_exists": true,
+    "context_exists": true,
+    "output_is_1920x1080": true,
+    "output_duration_near_9s": true,
+    "output_has_audio": true,
+    "focus_decisions_used": true,
+    "smooth_zoom_used": true,
+    "layout_counts_ok": true
+  },
+  "output_probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "60/1",
+        "duration": "9.000000"
+      },
+      {
+        "index": 1,
+        "codec_type": "audio",
+        "channels": 2,
+        "r_frame_rate": "0/0",
+        "duration": "9.021333"
+      }
+    ],
+    "format": {
+      "duration": "9.021333",
+      "size": "26967337",
+      "bit_rate": "23914281"
+    }
+  },
+  "render_layout_counts": {
+    "balanced_split": 1,
+    "facecam_emphasis": 1,
+    "gameplay_crop": 1
+  },
+  "focus_decisions_used": true,
+  "smooth_zoom_used": true,
+  "smooth_zoom_records": [
+    {
+      "segment_id": "seg_gameplay_focus",
+      "smooth_zoom_used": true,
+      "timestamp": 1.5,
+      "zoom_factor": 1.35,
+      "target": "gameplay",
+      "reason": "smooth_zoom_curve_interpolated"
+    },
+    {
+      "segment_id": "seg_facecam_focus",
+      "smooth_zoom_used": true,
+      "timestamp": 11.5,
+      "zoom_factor": 1.6,
+      "target": "facecam",
+      "reason": "smooth_zoom_curve_interpolated"
+    },
+    {
+      "segment_id": "seg_balanced_pip",
+      "smooth_zoom_used": false,
+      "timestamp": 21.5,
+      "zoom_factor": 1.0,
+      "target": "balanced",
+      "reason": "smooth_zoom_curve_interpolated"
+    }
+  ],
+  "resolved_render_layouts": [
+    {
+      "segment_id": "seg_gameplay_focus",
+      "policy_source": "focus_decision",
+      "focus_target": "gameplay",
+      "layout_kind": "gameplay_crop",
+      "confidence": 0.95,
+      "timestamp": 1.5,
+      "reasoning": "b5_real_gameplay",
+      "facecam_zoom": 1.0,
+      "gameplay_zoom": 1.0,
+      "facecam_opacity": 1.0
+    },
+    {
+      "segment_id": "seg_facecam_focus",
+      "policy_source": "focus_decision",
+      "focus_target": "facecam",
+      "layout_kind": "facecam_emphasis",
+      "confidence": 0.95,
+      "timestamp": 11.5,
+      "reasoning": "b5_real_facecam",
+      "facecam_zoom": 1.0,
+      "gameplay_zoom": 1.0,
+      "facecam_opacity": 1.0
+    },
+    {
+      "segment_id": "seg_balanced_pip",
+      "policy_source": "focus_decision",
+      "focus_target": "balanced",
+      "layout_kind": "balanced_split",
+      "confidence": 0.95,
+      "timestamp": 21.5,
+      "reasoning": "b5_real_balanced",
+      "facecam_zoom": 1.0,
+      "gameplay_zoom": 1.0,
+      "facecam_opacity": 1.0
+    }
+  ]
+}

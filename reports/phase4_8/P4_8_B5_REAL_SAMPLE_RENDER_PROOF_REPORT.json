@@ -1,0 +1,27 @@
+{
+  "phase": "P4.8-B5",
+  "status": "B5_REAL_SAMPLE_RENDER_PROOF_PASS",
+  "proof_type": "real_32x9_sample_render",
+  "sample": "D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4",
+  "checks": {
+    "output_exists": true,
+    "context_exists": true,
+    "output_is_1920x1080": true,
+    "output_duration_near_9s": true,
+    "output_has_audio": true,
+    "focus_decisions_used": true,
+    "smooth_zoom_used": true,
+    "layout_counts_ok": true
+  },
+  "confirmed_layouts": {
+    "gameplay_crop": 1,
+    "facecam_emphasis": 1,
+    "balanced_split": 1
+  },
+  "output": {
+    "duration_seconds": 9.021,
+    "video": "1920x1080",
+    "audio_present": true
+  },
+  "next_phase": "P4.8-B6 Pipeline-Level Final Report / Master GO-NO-GO package"
+}

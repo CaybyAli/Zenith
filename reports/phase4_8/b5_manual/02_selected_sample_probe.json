@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "sample_path": "D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4",
+  "exists": true,
+  "size_mb": 291.61,
+  "video_probe": {
+    "returncode": 0,
+    "stdout": "{\n    \"programs\": [\n\n    ],\n    \"stream_groups\": [\n\n    ],\n    \"streams\": [\n        {\n            \"width\": 3840,\n            \"height\": 1080,\n            \"r_frame_rate\": \"60/1\",\n            \"duration\": \"30.000000\"\n        }\n    ]\n}",
+    "stderr": ""
+  },
+  "audio_probe": {
+    "returncode": 0,
+    "stdout": "{\n    \"programs\": [\n\n    ],\n    \"stream_groups\": [\n\n    ],\n    \"streams\": [\n        {\n            \"index\": 1,\n            \"codec_type\": \"audio\",\n            \"channels\": 2,\n            \"duration\": \"30.016000\"\n        }\n    ]\n}",
+    "stderr": ""
+  },
+  "format_probe": {
+    "returncode": 0,
+    "stdout": "{\n    \"format\": {\n        \"duration\": \"30.016000\",\n        \"size\": \"305778694\",\n        \"bit_rate\": \"81497519\"\n    }\n}",
+    "stderr": ""
+  }
+}

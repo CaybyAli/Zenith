@@ -1,0 +1,5 @@
+4dd7a4f test(P4-8-B4): add mini render visual proof
+65a1871 fix(P4-8-B4): accept smooth zoom curve in render signature
+48de6d5 fix(P4-8-B3): apply smooth zoom curve in final render policy
+582d7f3 fix(P4-8-B2): consume focus decisions in final render policy
+ccd4384 docs(P4-8-B1): diagnose render decision consumption gap
