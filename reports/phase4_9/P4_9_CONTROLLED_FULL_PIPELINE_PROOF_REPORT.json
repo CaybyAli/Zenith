@@ -1,0 +1,47 @@
+{
+  "phase": "P4.9",
+  "status": "P4_9_CONTROLLED_FULL_PIPELINE_RENDER_DECISION_GO",
+  "decision": "GO_IN_SCOPE",
+  "job_id": "job_444776e720e7",
+  "input_video": "D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4",
+  "normal_pipeline_command": "python pipeline_runner.py \"D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4\" --power-profile eco",
+  "proof": {
+    "pipeline_generated_smooth_zoom": true,
+    "smooth_zoom_keyframes": 14,
+    "smooth_zoom_max_zoom": 1.5,
+    "smooth_zoom_targets": ["balanced", "facecam", "gameplay"],
+    "pipeline_generated_focus_decisions": true,
+    "focus_decision_count": 31,
+    "focus_decision_counts": {
+      "facecam": 18,
+      "gameplay": 13
+    },
+    "final_render_driver_consumed_focus_decisions": true,
+    "final_render_driver_consumed_smooth_zoom": true,
+    "render_context_focus_decisions_available": true,
+    "render_context_focus_decisions_used": true,
+    "render_context_smooth_zoom_available": true,
+    "render_context_smooth_zoom_used": true,
+    "render_layout_counts": {
+      "facecam_emphasis": 1
+    },
+    "exported_video_exists": true,
+    "exported_video_width": 1920,
+    "exported_video_height": 1080,
+    "exported_video_duration_seconds": 30.0,
+    "exported_video_has_audio": true
+  },
+  "warnings": [
+    "job status is validation_failed",
+    "runner ended with failed=1",
+    "phase_2b_stabilization_not_ready",
+    "job.json final_video_path/exported_video_path persistence was not populated even though exported video exists"
+  ],
+  "not_claimed": [
+    "full production pipeline readiness",
+    "corpus-scale render proof",
+    "phase_2b_stabilization readiness",
+    "full green end-to-end production run"
+  ],
+  "next_recommended_phase": "Phase 5 Style-Learning with warning carried forward, or first fix/define Phase 2B stabilization gate"
+}

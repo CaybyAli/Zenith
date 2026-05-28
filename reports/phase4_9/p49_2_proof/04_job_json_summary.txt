@@ -1,0 +1,9 @@
+뿯붿JOB_JSON_EXISTS= True
+job_id='job_444776e720e7'
+status='validation_failed'
+raw_video_path='D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4'
+final_video_path=None
+exported_video_path=None
+focus_decisions=LIST len=31
+smooth_zoom_curve=None
+phase_2b_stabilization_status=None

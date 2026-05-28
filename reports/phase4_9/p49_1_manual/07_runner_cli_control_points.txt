@@ -1,0 +1,35 @@
+뿯붿18:Or import run_pending_jobs() for programmatic use (e.g. from tests).
+113:    output_dir = Path("output")
+114:    src_file = output_dir / f"{job_id}_final.mp4"
+136:    output_dir = Path("output")
+144:        for file_path in output_dir.glob(pattern):
+245:def run_pending_jobs(
+247:    input_video_path: str | None = None,
+257:    if input_video_path and approved_job_id:
+258:        raise ValueError("input_video_path and approved_job_id are mutually exclusive")
+296:    elif input_video_path:
+297:        cli_video_path = Path(input_video_path)
+299:            raise FileNotFoundError(f"Input video not found: {input_video_path}")
+580:def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+585:        "input_video_path",
+609:        dest="output_dir",
+615:        dest="start_sec",
+621:        "--duration",
+622:        dest="duration",
+625:        help="Duration in seconds for probe-clip render.",
+632:            args.input_video_path,
+642:        for value in (args.output_dir, args.start_sec, args.duration)
+646:    if probe_args_present and not args.input_video_path:
+648:    if (args.start_sec is not None or args.duration is not None) and args.output_dir is None:
+649:        parser.error("--start-sec and --duration require --output-dir")
+650:    if args.duration is not None and args.duration <= 0:
+651:        parser.error("--duration must be greater than 0")
+657:    args = _parse_args(argv)
+660:    if args.input_video_path and args.output_dir is not None:
+664:            video_path=args.input_video_path,
+665:            output_dir=args.output_dir,
+666:            start_sec=args.start_sec or 0.0,
+667:            duration=args.duration or 10.0,
+674:    results = run_pending_jobs(
+675:        input_video_path=args.input_video_path,
+683:if __name__ == "__main__":

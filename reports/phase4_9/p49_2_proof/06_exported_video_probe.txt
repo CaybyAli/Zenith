@@ -1,0 +1,7 @@
+뿯붿VIDEO_EXISTS= True
+VIDEO_PATH= exports\gaming_main\job_444776e720e7\job_444776e720e7_v1_final.mp4
+FFPROBE= D:\Tools\ffmpeg\bin\ffprobe.exe
+FORMAT_DURATION= 30.000000
+FORMAT_SIZE= 46582399
+STREAM video h264 1920 1080 None 30.000000
+STREAM audio aac None None 2 30.000000

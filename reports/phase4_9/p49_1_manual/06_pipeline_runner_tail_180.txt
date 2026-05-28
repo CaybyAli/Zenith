@@ -1,0 +1,180 @@
+뿯붿
+            try:
+                _write_export_job_json(job, export_dir)
+            except Exception as job_json_exc:
+                print(
+                    f"[pipeline_runner] JOB_JSON_AFTER_ERROR_WARN "
+                    f"job={job.job_id} error={job_json_exc}"
+                )
+
+            results.append({
+                "job_id":   job.job_id,
+                "channel":  channel,
+                "status":   "error",
+                "pipeline": channel,
+                "error":    str(exc),
+            })
+
+    return results
+
+
+# ------------------------------------------------------------------ #
+#  CLI entry point                                                     #
+# ------------------------------------------------------------------ #
+
+def _print_results(results: list[dict]) -> int:
+    ok = sum(1 for r in results if r["status"] == "ok")
+    skipped = sum(1 for r in results if r["status"] == "skip")
+    failed = sum(1 for r in results if r["status"] == "error")
+
+    if results:
+        print(
+            f"\n[pipeline_runner] Done ? ok={ok}  "
+            f"skipped={skipped}  failed={failed}"
+        )
+        for r in results:
+            icon = {"ok": "?", "skip": "?", "error": "?"}.get(r["status"], "?")
+            print(
+                f"  {icon}  {r['job_id']}  "
+                f"({r.get('pipeline', r.get('reason', ''))})"
+            )
+            if r["status"] == "error":
+                print(f"       {r['error']}")
+
+    return failed
+
+
+def _list_blocked_jobs(db_path: str = "data/jobs.json") -> list[dict]:
+    job_store = JobStore(db_path=db_path)
+    blocked = [
+        job for job in job_store.list_jobs()
+        if str(getattr(job.status, "value", job.status)) == JobStatus.RENDER_BLOCKED.value
+    ]
+
+    if not blocked:
+        print("[pipeline_runner] BLOCKED  none")
+        return []
+
+    results: list[dict] = []
+    for job in blocked:
+        channel = str(getattr(job.channel_type, "value", job.channel_type))
+        print(
+            f"[pipeline_runner] BLOCKED  {job.job_id}  "
+            f"channel={channel}  video={job.raw_video_path!r}"
+        )
+        results.append(
+            {
+                "job_id": job.job_id,
+                "channel": channel,
+                "status": "skip",
+                "reason": "render_blocked",
+            }
+        )
+    return results
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run Zenith pending jobs or approve one blocked job."
+    )
+    parser.add_argument(
+        "input_video_path",
+        nargs="?",
+        help="Optional raw video path for CLI job mode.",
+    )
+    parser.add_argument(
+        "--approve",
+        dest="approve_job_id",
+        metavar="JOB_ID",
+        help="Persist explicit approval for one job and rerun it.",
+    )
+    parser.add_argument(
+        "--list-blocked",
+        action="store_true",
+        help="List jobs currently in render_blocked status.",
+    )
+    parser.add_argument(
+        "--power-profile",
+        dest="power_profile",
+        choices=PowerProfile.ALL,
+        default=PowerProfile.DEFAULT,
+        help="Pipeline power profile: off|eco|balanced|performance|full_power (default: balanced)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        default=None,
+        help="Output directory for probe-clip mode.",
+    )
+    parser.add_argument(
+        "--start-sec",
+        dest="start_sec",
+        type=float,
+        default=None,
+        help="Start offset in seconds for probe-clip render.",
+    )
+    parser.add_argument(
+        "--duration",
+        dest="duration",
+        type=float,
+        default=None,
+        help="Duration in seconds for probe-clip render.",
+    )
+    args = parser.parse_args(argv)
+
+    selected_modes = sum(
+        bool(item)
+        for item in (
+            args.input_video_path,
+            args.approve_job_id,
+            args.list_blocked,
+        )
+    )
+    if selected_modes > 1:
+        parser.error("Use only one mode: <video>, --approve <job_id>, or --list-blocked")
+
+    probe_args_present = any(
+        value is not None
+        for value in (args.output_dir, args.start_sec, args.duration)
+    )
+    if probe_args_present and (args.approve_job_id or args.list_blocked):
+        parser.error("Probe-clip arguments cannot be combined with --approve or --list-blocked")
+    if probe_args_present and not args.input_video_path:
+        parser.error("Probe-clip arguments require <video>")
+    if (args.start_sec is not None or args.duration is not None) and args.output_dir is None:
+        parser.error("--start-sec and --duration require --output-dir")
+    if args.duration is not None and args.duration <= 0:
+        parser.error("--duration must be greater than 0")
+
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+
+    # ---- Probe-Clip Mode -------------------------------------------
+    if args.input_video_path and args.output_dir is not None:
+        from core.probe_clip_runner import run_probe_clip
+
+        return run_probe_clip(
+            video_path=args.input_video_path,
+            output_dir=args.output_dir,
+            start_sec=args.start_sec or 0.0,
+            duration=args.duration or 10.0,
+        )
+
+    if args.list_blocked:
+        _list_blocked_jobs()
+        return 0
+
+    results = run_pending_jobs(
+        input_video_path=args.input_video_path,
+        approved_job_id=args.approve_job_id,
+        power_profile=args.power_profile,
+    )
+    failed = _print_results(results)
+    return 0 if failed == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

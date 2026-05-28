@@ -1,0 +1,260 @@
+뿯붿"""
+pipeline_runner.py 뿯½뿯₽“ Zenith batch dispatch loop.
+
+Reads data/jobs.json, picks up every CREATED or STORED job and routes
+it to the correct pipeline module:
+
+  gaming_main    뿯½†’  core/gaming_pipeline.py
+  gaming_uncut   뿯½†’  core/uncut_pipeline.py   (Phase 4 stub)
+  vlog_main      뿯½†’  core/vlog_pipeline.py    (Phase 2.B stub)
+  faceless_trend 뿯½†’  core/faceless_pipeline.py (Phase 8 stub)
+
+Run directly:
+  python pipeline_runner.py
+  python pipeline_runner.py <video>
+  python pipeline_runner.py --approve <job_id>
+  python pipeline_runner.py --list-blocked
+
+Or import run_pending_jobs() for programmatic use (e.g. from tests).
+"""
+from __future__ import annotations
+import argparse
+import json
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+import shutil
+import sys
+from pathlib import Path
+
+from core.intake_manager import IntakeManager
+from core.job_store import JobStore, compact_job_dict_for_persistence
+from core.job_state_transitions import transition_job_state
+from core.job_state_persistence import persist_job_state_checkpoint
+from core.job_recovery import (
+    apply_recovery_report_to_job,
+    build_recovery_report,
+)
+from core.error_logger import log_error
+from core.job_log_index import update_job_log_index
+from core.power_profile import PowerProfile
+from core.render_versioning import next_render_version, versioned_final_path
+from core.approval_store import write_job_approval
+from shared.enums import (
+    ChannelType,
+    JobStatus,
+    Mode,
+    TargetFormat,
+    classify_job_status_for_runner,
+)
+
+from core.gaming_pipeline import (
+    run_gaming_pipeline_for_job,
+    _build_gaming_services,
+)
+from core.vlog_pipeline import run_vlog_pipeline_for_job
+from core.uncut_pipeline import run_uncut_pipeline_for_job
+from core.faceless_pipeline import run_faceless_pipeline_for_job
+
+EXPORTS_BASE = Path("exports")
+
+
+def _safe_log_error(
+    job,
+    export_dir: Path,
+    module: str,
+    phase: str,
+    error: BaseException,
+    details: dict | None = None,
+):
+    try:
+        return log_error(
+            job=job,
+            export_dir=export_dir,
+            module=module,
+            phase=phase,
+            error=error,
+            details=details,
+        )
+    except Exception as log_exc:
+        print(
+            f"[pipeline_runner] ERROR_LOG_WARN "
+            f"job={getattr(job, 'job_id', '-')} error={log_exc}"
+        )
+        return None
+
+
+
+
+def _safe_update_job_log_index(job, export_dir: Path):
+    try:
+        return update_job_log_index(job, export_dir)
+    except Exception as exc:
+        print(
+            f"[pipeline_runner] LOG_INDEX_WARN "
+            f"job={getattr(job, 'job_id', '-')} error={exc}"
+        )
+        return None
+
+
+def _make_export_dir(channel: str, job_id: str) -> Path:
+    export_dir = EXPORTS_BASE / channel / job_id
+    export_dir.mkdir(parents=True, exist_ok=True)
+    return export_dir
+
+
+def _copy_gaming_outputs_to_export(job_id: str, export_dir: Path) -> dict | None:
+    """Copy gaming pipeline output to a versioned final MP4 in export folder."""
+    output_dir = Path("output")
+    src_file = output_dir / f"{job_id}_final.mp4"
+
+    if not src_file.exists():
+        return None
+
+    render_version = next_render_version(export_dir, job_id)
+    dest_file = versioned_final_path(export_dir, job_id, render_version)
+    shutil.copy2(src_file, dest_file)
+    print(
+        f"[pipeline_runner] EXPORT_VERSION {job_id} "
+        f"version={render_version} file={dest_file.name}"
+    )
+    print("[pipeline_runner] COPIED   1 file(s) to export")
+    return {
+        "render_version": render_version,
+        "exported_video_path": str(dest_file),
+        "exported_video_name": dest_file.name,
+    }
+
+
+def _cleanup_output_files(job_id: str) -> None:
+    """L뿯½뿯½sche Output-Files nach erfolgreichem Export."""
+    output_dir = Path("output")
+
+    patterns = [
+        f"{job_id}_final.mp4",
+    ]
+
+    deleted_count = 0
+    for pattern in patterns:
+        for file_path in output_dir.glob(pattern):
+            if file_path.exists():
+                file_path.unlink()
+                deleted_count += 1
+
+    if deleted_count > 0:
+        print(
+            f"[pipeline_runner] CLEANUP  Deleted {deleted_count} "
+            f"temporary file(s) from output/"
+        )
+
+
+_INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
+    "gaming_main":  ChannelType.GAMING_MAIN,
+    "gaming_uncut": ChannelType.GAMING_UNCUT,
+    "vlog_main":    ChannelType.VLOG_MAIN,
+    "faceless":     ChannelType.FACELESS_TREND,
+}
+
+def _write_export_job_json(job, export_dir: Path) -> Path:
+    job_json_path = export_dir / "job.json"
+    slim_dict = compact_job_dict_for_persistence(job.to_dict())
+
+    with job_json_path.open("w", encoding="utf-8") as handle:
+        json.dump(slim_dict, handle, indent=4, ensure_ascii=False)
+
+    print(f"[pipeline_runner] JOB_JSON  {job.job_id}  path={job_json_path}")
+    return job_json_path
+
+
+
+# ------------------------------------------------------------------ #
+#  Inbox scanner                                                       #
+# ------------------------------------------------------------------ #
+
+def _scan_inbox_and_create_jobs(job_store: JobStore) -> None:
+    """Scan inbox folders and create a job for every new MP4."""
+    existing_paths = {
+        str(Path(job.raw_video_path).resolve())
+        for job in job_store.list_jobs()
+        if job.raw_video_path
+    }
+
+    intake = IntakeManager(job_store)
+
+    for folder_name, channel_type in _INBOX_CHANNEL_MAP.items():
+        inbox_dir = Path("inbox") / folder_name
+        if not inbox_dir.is_dir():
+            continue
+
+        for mp4 in sorted(inbox_dir.glob("*.mp4")):
+            normalized = str(mp4.resolve())
+            if normalized in existing_paths:
+                print(
+                    f"[pipeline_runner] INBOX SKIP  {mp4.name}  "
+                    f"(job already exists)"
+                )
+                continue
+
+            print(
+                f"[pipeline_runner] INBOX NEW   {mp4.name}  "
+                f"channel={channel_type.value}"
+            )
+            job = intake.create_gaming_job(
+                channel_type=channel_type,
+                raw_video_path=str(mp4),
+                target_format=TargetFormat.LONGFORM,
+                target_platforms=["youtube"],
+                mode=Mode.NORMAL,
+            )
+            existing_paths.add(normalized)
+            print(f"[pipeline_runner] INBOX JOB   {job.job_id}  created")
+
+
+# ------------------------------------------------------------------ #
+#  Dispatcher                                                          #
+# ------------------------------------------------------------------ #
+
+def _dispatch_pipeline(job, services: dict) -> dict:
+    """Route a job to its channel-specific pipeline module."""
+    channel = job.channel_type
+
+    if channel == ChannelType.GAMING_MAIN:
+        return run_gaming_pipeline_for_job(job, services)
+
+    if channel == ChannelType.VLOG_MAIN:
+        return run_vlog_pipeline_for_job(job, services)
+
+    if channel == ChannelType.GAMING_UNCUT:
+        return run_uncut_pipeline_for_job(job, services)
+
+    if channel == ChannelType.FACELESS_TREND:
+        return run_faceless_pipeline_for_job(job, services)
+
+    raise ValueError(f"Unbekannter Channel-Type: {channel}")
+
+
+# ------------------------------------------------------------------ #
+#  Batch dispatcher                                                    #
+# ------------------------------------------------------------------ #
+
+def run_pending_jobs(
+    db_path: str = "data/jobs.json",
+    input_video_path: str | None = None,
+    approved_job_id: str | None = None,
+    power_profile: str | None = None,
+) -> list[dict]:
+    """
+    Scan the job store and process every CREATED / STORED job.
+
+    Returns a list of result dicts, one per processed job:
+      {"job_id": ..., "status": "ok"|"skip"|"error", ...}
+    """
+    if input_video_path and approved_job_id:
+        raise ValueError("input_video_path and approved_job_id are mutually exclusive")
+
+    job_store = JobStore(db_path=db_path)

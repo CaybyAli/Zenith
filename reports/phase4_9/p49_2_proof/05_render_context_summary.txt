@@ -1,0 +1,9 @@
+뿯붿CONTEXT_CANDIDATES= 1
+CONTEXT_PATH= output\job_444776e720e7_final_render_driver_context.json
+focus_decisions_available=True
+focus_decisions_used=True
+smooth_zoom_available=True
+smooth_zoom_used=True
+render_layout_counts={'facecam_emphasis': 1}
+resolved_render_layouts=LIST len=1
+smooth_zoom_records=LIST len=1

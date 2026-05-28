@@ -1,0 +1,1680 @@
+뿯붿D:\Zenith\pipeline_runner.py:2:pipeline_runner.py – Zenith batch dispatch loop.
+D:\Zenith\pipeline_runner.py:7:  gaming_main    뿯↽  core/gaming_pipeline.py
+D:\Zenith\pipeline_runner.py:13:  python pipeline_runner.py
+D:\Zenith\pipeline_runner.py:14:  python pipeline_runner.py <video>
+D:\Zenith\pipeline_runner.py:15:  python pipeline_runner.py --approve <job_id>
+D:\Zenith\pipeline_runner.py:16:  python pipeline_runner.py --list-blocked
+D:\Zenith\pipeline_runner.py:86:            f"[pipeline_runner] ERROR_LOG_WARN "
+D:\Zenith\pipeline_runner.py:99:            f"[pipeline_runner] LOG_INDEX_WARN "
+D:\Zenith\pipeline_runner.py:123:        f"[pipeline_runner] EXPORT_VERSION {job_id} "
+D:\Zenith\pipeline_runner.py:126:    print("[pipeline_runner] COPIED   1 file(s) to export")
+D:\Zenith\pipeline_runner.py:151:            f"[pipeline_runner] CLEANUP  Deleted {deleted_count} "
+D:\Zenith\pipeline_runner.py:156:_INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
+D:\Zenith\pipeline_runner.py:157:    "gaming_main":  ChannelType.GAMING_MAIN,
+D:\Zenith\pipeline_runner.py:170:    print(f"[pipeline_runner] JOB_JSON  {job.job_id}  path={job_json_path}")
+D:\Zenith\pipeline_runner.py:176:#  Inbox scanner                                                       #
+D:\Zenith\pipeline_runner.py:179:def _scan_inbox_and_create_jobs(job_store: JobStore) -> None:
+D:\Zenith\pipeline_runner.py:180:    """Scan inbox folders and create a job for every new MP4."""
+D:\Zenith\pipeline_runner.py:189:    for folder_name, channel_type in _INBOX_CHANNEL_MAP.items():
+D:\Zenith\pipeline_runner.py:190:        inbox_dir = Path("inbox") / folder_name
+D:\Zenith\pipeline_runner.py:191:        if not inbox_dir.is_dir():
+D:\Zenith\pipeline_runner.py:194:        for mp4 in sorted(inbox_dir.glob("*.mp4")):
+D:\Zenith\pipeline_runner.py:198:                    f"[pipeline_runner] INBOX SKIP  {mp4.name}  "
+D:\Zenith\pipeline_runner.py:204:                f"[pipeline_runner] INBOX NEW   {mp4.name}  "
+D:\Zenith\pipeline_runner.py:215:            print(f"[pipeline_runner] INBOX JOB   {job.job_id}  created")
+D:\Zenith\pipeline_runner.py:226:    if channel == ChannelType.GAMING_MAIN:
+D:\Zenith\pipeline_runner.py:245:def run_pending_jobs(
+D:\Zenith\pipeline_runner.py:280:            f"[pipeline_runner] APPROVE  {approved_job.job_id}  "
+D:\Zenith\pipeline_runner.py:284:            f"[pipeline_runner] APPROVE RERUN  {approved_job.job_id}  "
+D:\Zenith\pipeline_runner.py:316:                f"[pipeline_runner] CLI SKIP   {cli_video_path.name}  "
+D:\Zenith\pipeline_runner.py:321:                f"[pipeline_runner] CLI NEW    {cli_video_path.name}  "
+D:\Zenith\pipeline_runner.py:322:                f"channel={ChannelType.GAMING_MAIN.value}"
+D:\Zenith\pipeline_runner.py:325:                channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\pipeline_runner.py:335:            print(f"[pipeline_runner] CLI JOB    {job.job_id}  created")
+D:\Zenith\pipeline_runner.py:337:        _scan_inbox_and_create_jobs(job_store)
+D:\Zenith\pipeline_runner.py:358:        print("[pipeline_runner] Keine aktuellen Rohdateien.")
+D:\Zenith\pipeline_runner.py:371:                f"[pipeline_runner] SKIP {job.job_id}  "
+D:\Zenith\pipeline_runner.py:389:            f"[pipeline_runner] {channel_label}  {job.job_id}  "
+D:\Zenith\pipeline_runner.py:399:            print(f"[pipeline_runner] EXPORT    {job.job_id}  뿯↽ {export_dir}")
+D:\Zenith\pipeline_runner.py:413:                    module="pipeline_runner",
+D:\Zenith\pipeline_runner.py:461:                f"[pipeline_runner] AWAITING_PIPELINE  {job.job_id}  "
+D:\Zenith\pipeline_runner.py:485:                module="pipeline_runner",
+D:\Zenith\pipeline_runner.py:499:                    f"[pipeline_runner] RECOVERY_AFTER_ERROR_WARN "
+D:\Zenith\pipeline_runner.py:510:                    f"[pipeline_runner] JOB_JSON_AFTER_ERROR_WARN "
+D:\Zenith\pipeline_runner.py:536:            f"\n[pipeline_runner] Done ? ok={ok}  "
+D:\Zenith\pipeline_runner.py:559:        print("[pipeline_runner] BLOCKED  none")
+D:\Zenith\pipeline_runner.py:566:            f"[pipeline_runner] BLOCKED  {job.job_id}  "
+D:\Zenith\core\audio_extraction_executor.py:55:    source_path: str
+D:\Zenith\core\audio_extraction_executor.py:69:            "source_path": self.source_path,
+D:\Zenith\core\audio_extraction_executor.py:101:def _build_command(ffmpeg_path: str, target: AudioExtractionTarget, source_path: str) -> list[str]:
+D:\Zenith\core\audio_extraction_executor.py:108:        "-i", source_path,
+D:\Zenith\core\audio_extraction_executor.py:129:    source_path: str,
+D:\Zenith\core\audio_extraction_executor.py:139:        source_path,
+D:\Zenith\core\audio_extraction_executor.py:181:    source_path: str,
+D:\Zenith\core\audio_extraction_executor.py:198:    if not source_path or not Path(source_path).exists():
+D:\Zenith\core\audio_extraction_executor.py:228:    source_path: str,
+D:\Zenith\core\audio_extraction_executor.py:235:        source_path=source_path,
+D:\Zenith\core\audio_extraction_executor.py:255:    if not source_path or not Path(source_path).exists():
+D:\Zenith\core\audio_extraction_executor.py:281:    command = apply_ffmpeg_thread_cap(_build_command(ffmpeg_path, target, source_path))
+D:\Zenith\core\audio_extraction_executor.py:338:    source_path: str,
+D:\Zenith\core\audio_extraction_executor.py:349:    command = apply_ffmpeg_thread_cap(_build_batch_command(ffmpeg_path, targets, source_path))
+D:\Zenith\core\audio_extraction_executor.py:419:    source_path: str,
+D:\Zenith\core\audio_extraction_executor.py:471:        source_path=source_path,
+D:\Zenith\core\audio_extraction_executor.py:497:            source_path=plan.source_path,
+D:\Zenith\core\audio_extraction_executor.py:510:            source_path=plan.source_path,
+D:\Zenith\core\audio_extraction_executor.py:533:                source_path=plan.source_path,
+D:\Zenith\core\audio_extraction_executor.py:542:        source_path=plan.source_path,
+D:\Zenith\core\audio_extraction_planner.py:10:    source_path: str,
+D:\Zenith\core\audio_extraction_planner.py:16:    command = ["ffmpeg", "-i", source_path, "-vn"]
+D:\Zenith\core\audio_extraction_planner.py:44:                manifest.source_path,
+D:\Zenith\core\audio_extraction_planner.py:59:                manifest.source_path,
+D:\Zenith\core\audio_extraction_planner.py:74:                manifest.source_path,
+D:\Zenith\core\audio_extraction_planner.py:104:        source_path=manifest.source_path,
+D:\Zenith\core\audio_normalization_runner.py:41:    original_source_path: str | None = None,
+D:\Zenith\core\audio_normalization_runner.py:57:                original_source_path=original_source_path,
+D:\Zenith\core\audio_normalization_runner.py:203:def run_audio_normalization_for_job(
+D:\Zenith\core\audio_normalization_source_selector.py:30:    "source_path",
+D:\Zenith\core\audio_normalization_source_selector.py:33:    "original_source_path",
+D:\Zenith\core\audio_normalization_source_selector.py:157:    original_source_path: str | None = None,
+D:\Zenith\core\audio_normalization_source_selector.py:193:            original_source_path=original_source_path,
+D:\Zenith\core\audio_normalization_source_selector.py:338:    # 4. original_source_path fallback
+D:\Zenith\core\audio_normalization_source_selector.py:339:    if allow_original_wav_fallback and original_source_path:
+D:\Zenith\core\audio_normalization_source_selector.py:340:        is_wav = is_wav_path(original_source_path)
+D:\Zenith\core\audio_normalization_source_selector.py:341:        exists = path_exists(original_source_path)
+D:\Zenith\core\audio_normalization_source_selector.py:345:                "path": original_source_path,
+D:\Zenith\core\audio_normalization_source_selector.py:354:                selected_path=original_source_path,
+D:\Zenith\core\audio_normalization_source_selector.py:363:                "path": original_source_path,
+D:\Zenith\core\audio_normalization_source_selector.py:371:                selected_path=original_source_path,
+D:\Zenith\core\audio_normalization_source_selector.py:382:                "path": original_source_path,
+D:\Zenith\core\audio_normalization_source_selector.py:463:                for key in ("raw_video_path", "source_path"):
+D:\Zenith\core\audio_normalization_source_selector.py:473:        original_source_path=original_source,
+D:\Zenith\core\audio_role_indicator_builder.py:346:        channel_type: object = "gaming_main",
+D:\Zenith\core\beat_detection_runner.py:130:    original_source_path: str | None = None,
+D:\Zenith\core\beat_detection_runner.py:146:                original_source_path=original_source_path,
+D:\Zenith\core\beat_detection_runner.py:293:def run_beat_detection_for_job(
+D:\Zenith\core\beat_detection_source_selector.py:29:    "source_path",
+D:\Zenith\core\beat_detection_source_selector.py:32:    "original_source_path",
+D:\Zenith\core\beat_detection_source_selector.py:201:    source_path: str | None,
+D:\Zenith\core\beat_detection_source_selector.py:209:        "path": source_path,
+D:\Zenith\core\beat_detection_source_selector.py:223:    original_source_path: str | None,
+D:\Zenith\core\beat_detection_source_selector.py:241:        original_source_path=original_source_path,
+D:\Zenith\core\beat_detection_source_selector.py:252:    original_source_path: str | None = None,
+D:\Zenith\core\beat_detection_source_selector.py:262:    original_path = _safe_text(original_source_path)
+D:\Zenith\core\beat_detection_source_selector.py:271:                    source_path=None,
+D:\Zenith\core\beat_detection_source_selector.py:288:                    source_path=candidate_path,
+D:\Zenith\core\beat_detection_source_selector.py:303:                    original_source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:315:                original_source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:326:                    source_path=candidate_path,
+D:\Zenith\core\beat_detection_source_selector.py:338:                source_path=candidate_path,
+D:\Zenith\core\beat_detection_source_selector.py:358:            original_source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:375:                    source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:389:                original_source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:400:                    source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:414:                original_source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:424:                source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:435:                source_path=None,
+D:\Zenith\core\beat_detection_source_selector.py:449:        original_source_path=original_path,
+D:\Zenith\core\beat_detection_source_selector.py:508:    original_source_path = _first_text_from_keys(job, ORIGINAL_SOURCE_FIELDS)
+D:\Zenith\core\beat_detection_source_selector.py:510:    if not original_source_path:
+D:\Zenith\core\beat_detection_source_selector.py:511:        original_source_path = _first_text_from_keys(
+D:\Zenith\core\beat_detection_source_selector.py:513:            ["raw_video_path", "source_path"],
+D:\Zenith\core\beat_detection_source_selector.py:518:        original_source_path=original_source_path,
+D:\Zenith\core\but_therefore_story_runner.py:26:def run_but_therefore_story_for_job(
+D:\Zenith\core\channel_cut_profile_provider.py:19:    def _make_gaming_main(self) -> CutScoringProfile:
+D:\Zenith\core\channel_cut_profile_provider.py:21:            profile_name="gaming_main",
+D:\Zenith\core\channel_cut_profile_provider.py:22:            channel_type="gaming_main",
+D:\Zenith\core\channel_cut_profile_provider.py:308:        "gaming_main":    "_make_gaming_main",
+D:\Zenith\core\clip_duration_runner.py:133:def run_clip_duration_optimization_for_job(
+D:\Zenith\core\content_value_runner.py:26:def run_content_value_for_job(
+D:\Zenith\core\continuity_checker.py:1076:def run_continuity_check(
+D:\Zenith\core\continuity_check_runner.py:222:def run_continuity_check_for_job(
+D:\Zenith\core\controlled_ffmpeg_execution_runner.py:35:def run_controlled_ffmpeg_execution_for_job(
+D:\Zenith\core\controlled_ffmpeg_execution_runner.py:76:def run_controlled_ffmpeg_execution_dry_run_for_job(
+D:\Zenith\core\controlled_render_executor_runner.py:20:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\controlled_render_executor_runner.py:87:def run_controlled_render_executor_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\cut_indicator_builder.py:460:        channel_type: object = "gaming_main",
+D:\Zenith\core\cut_indicator_builder.py:462:        channel_scope = str(getattr(channel_type, "value", channel_type) or "gaming_main")
+D:\Zenith\core\cut_list_finalizer_runner.py:216:def run_cut_list_finalization_for_job(
+D:\Zenith\core\cut_list_runner.py:191:def run_cut_list_generation_for_job(
+D:\Zenith\core\dead_content_runner.py:26:def run_dead_content_detection_for_job(
+D:\Zenith\core\dynamic_pacing_runner.py:26:def run_dynamic_pacing_for_job(
+D:\Zenith\core\editing_profile_registry.py:16:DEFAULT_CHANNEL_PROFILE = ChannelProfile.GAMING_MAIN
+D:\Zenith\core\editing_profile_registry.py:38:    Unbekannte oder inaktive Werte fallen auf GAMING_MAIN zur뿯½ck.
+D:\Zenith\core\edit_signal_extractor.py:715:        source_path = Path(job.raw_video_path)
+D:\Zenith\core\edit_signal_extractor.py:716:        if not source_path.exists() or not source_path.is_file():
+D:\Zenith\core\edit_signal_extractor.py:757:                    audio_path=str(source_path),
+D:\Zenith\core\edit_signal_extractor.py:772:                    video_path=str(source_path),
+D:\Zenith\core\emotional_arc_runner.py:26:def run_emotional_arc_builder_for_job(
+D:\Zenith\core\energy_peak_runner.py:183:def run_energy_peak_detection_for_job(
+D:\Zenith\core\existing_longform_shorts_stage.py:132:def run_shorts_from_existing_longform_output(
+D:\Zenith\core\existing_longform_shorts_stage.py:141:    source_path = Path(source_video_path)
+D:\Zenith\core\existing_longform_shorts_stage.py:142:    duration_seconds = _probe_duration_seconds(source_path)
+D:\Zenith\core\existing_longform_shorts_stage.py:152:        source_video_path=str(source_path),
+D:\Zenith\core\existing_longform_shorts_stage.py:162:        "final_video_path": str(source_path),
+D:\Zenith\core\facecam_emotion_indicator_builder.py:231:        channel_type: object = "gaming_main",
+D:\Zenith\core\faceless_pipeline.py:8:def run_faceless_pipeline_for_job(job, services):
+D:\Zenith\core\faceless_pipeline.py:11:        "Aktuell unterst뿯½tzt: gaming_main."
+D:\Zenith\core\face_reaction_runner.py:115:def run_face_reaction_for_job(
+D:\Zenith\core\face_reaction_source_selector.py:9:    FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\face_reaction_source_selector.py:71:def _get_preprocessing_source_path(job: Any) -> str | None:
+D:\Zenith\core\face_reaction_source_selector.py:77:    return _as_clean_path(preprocessing_manifest.get("source_path"))
+D:\Zenith\core\face_reaction_source_selector.py:122:        preprocessing_source_path = _get_preprocessing_source_path(job)
+D:\Zenith\core\face_reaction_source_selector.py:123:        preprocessing_exists = _path_exists(preprocessing_source_path)
+D:\Zenith\core\face_reaction_source_selector.py:125:        if preprocessing_source_path:
+D:\Zenith\core\face_reaction_source_selector.py:128:                    source_type=FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\face_reaction_source_selector.py:129:                    path=preprocessing_source_path,
+D:\Zenith\core\face_reaction_source_selector.py:138:                    selected_path=preprocessing_source_path,
+D:\Zenith\core\face_reaction_source_selector.py:139:                    selected_type=FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\face_reaction_source_selector.py:143:                    warnings=["used_preprocessing_manifest_source_path_fallback"],
+D:\Zenith\core\feedback_intake_runner.py:35:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\feedback_intake_runner.py:87:def run_feedback_intake_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\ffmpeg_capability_resolver_runner.py:73:def run_ffmpeg_capability_resolver(
+D:\Zenith\core\ffmpeg_command_assembly_runner.py:76:def run_ffmpeg_command_assembly_for_job(job: Any) -> FFmpegCommandAssemblyReport:
+D:\Zenith\core\file_handler.py:126:def run_file_handler_for_job(
+D:\Zenith\core\file_readability.py:51:def run_ffmpeg_readability_check(
+D:\Zenith\core\filler_word_runner.py:195:def run_filler_word_detection_for_job(
+D:\Zenith\core\final_quality_validator_runner.py:20:    def run(self, job: Any) -> Dict[str, Any]:
+D:\Zenith\core\final_quality_validator_runner.py:58:def run_final_quality_validator(job: Any) -> Dict[str, Any]:
+D:\Zenith\core\final_render_driver.py:1276:        source_path: str | Path,
+D:\Zenith\core\final_render_driver.py:1293:        source = Path(source_path)
+D:\Zenith\core\final_render_driver.py:1342:                        video_path=source_path,
+D:\Zenith\core\final_render_driver.py:1540:        source_path: str | Path,
+D:\Zenith\core\final_render_driver.py:1567:            source_path=source_path,
+D:\Zenith\core\frame_extraction_planner.py:26:    source_path: str,
+D:\Zenith\core\frame_extraction_planner.py:42:    command = ["ffmpeg", "-i", source_path]
+D:\Zenith\core\frame_extraction_planner.py:65:                manifest.source_path,
+D:\Zenith\core\frame_extraction_planner.py:80:                manifest.source_path,
+D:\Zenith\core\frame_extraction_planner.py:97:                manifest.source_path,
+D:\Zenith\core\frame_extraction_planner.py:121:        source_path=manifest.source_path,
+D:\Zenith\core\gameplay_event_indicator_builder.py:407:        channel_type: object = "gaming_main",
+D:\Zenith\core\gaming_pipeline.py:5:Isoliertes Pipeline-Modul f뿯½뿯½r gaming_main und gaming_uncut.
+D:\Zenith\core\gaming_pipeline.py:677:    profile_id = getattr(channel_type, "value", channel_type) or "gaming_main"
+D:\Zenith\core\gaming_pipeline.py:703:    channel_value = getattr(channel_type, "value", channel_type) or "gaming_main"
+D:\Zenith\core\gaming_pipeline.py:1134:    Wird einmal in pipeline_runner.py aufgerufen und an
+D:\Zenith\core\gaming_pipeline.py:1140:        "renderer":          RenderProcessor(),  # DEPRECATED - Phase 2 legacy service; not used for gaming_main render.
+D:\Zenith\core\gaming_pipeline.py:1154:def run_gaming_pipeline_for_job(job, services: dict) -> dict:
+D:\Zenith\core\gaming_pipeline.py:1182:    _legacy_renderer  = services.get("renderer")  # DEPRECATED - Phase 2 legacy service; not used for gaming_main render.
+D:\Zenith\core\gaming_pipeline.py:1227:        "gaming_main",
+D:\Zenith\core\gaming_pipeline.py:1451:        source_path=input_path,
+D:\Zenith\core\gaming_pipeline.py:2598:        job.silence_detection_source_path = silence_report.source_path
+D:\Zenith\core\gaming_pipeline.py:2616:                "source_path": silence_report.source_path,
+D:\Zenith\core\gaming_pipeline.py:2844:            "source_path": transcript_run_report.source_path,
+D:\Zenith\core\gaming_pipeline.py:9033:        getattr(job, "channel", "gaming_main"),
+D:\Zenith\core\gaming_pipeline.py:9036:        channel_str=str(_channel_str or "gaming_main"),
+D:\Zenith\core\gaming_pipeline.py:9070:            str(getattr(getattr(job, "channel_type", None), "value", "gaming_main")),
+D:\Zenith\core\gaming_pipeline.py:9137:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9200:    if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+D:\Zenith\core\gaming_pipeline.py:9230:    if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+D:\Zenith\core\gaming_pipeline.py:9298:    if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+D:\Zenith\core\gaming_pipeline.py:9326:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9355:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9394:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9409:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9602:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9606:            gameplay_vision_source_path = (
+D:\Zenith\core\gaming_pipeline.py:9611:                video_path=gameplay_vision_source_path,
+D:\Zenith\core\gaming_pipeline.py:9660:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9664:            facecam_reaction_source_path = (
+D:\Zenith\core\gaming_pipeline.py:9669:                video_path=facecam_reaction_source_path,
+D:\Zenith\core\gaming_pipeline.py:9701:        channel_type="gaming_main",
+D:\Zenith\core\gaming_pipeline.py:9722:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:9748:    if job.channel_type == ChannelType.GAMING_MAIN:
+D:\Zenith\core\gaming_pipeline.py:10660:        source_path=job.raw_video_path,
+D:\Zenith\core\gaming_pipeline.py:11007:    # pipeline_runner 뿯½뿯½bergibt export_path nach R뿯½뿯½ckkehr.
+D:\Zenith\core\gaming_pipeline.py:11150:        pass  # pipeline_runner k뿯½뿯½mmert sich ums finale Speichern
+D:\Zenith\core\gaming_pipeline.py:11237:        # Repo-Daten (f뿯½뿯½r pipeline_runner zum Speichern)
+D:\Zenith\core\hook_identification_runner.py:26:def run_hook_identification_for_job(
+D:\Zenith\core\inbox_scanner.py:6:class InboxScanner:
+D:\Zenith\core\inbox_scanner.py:11:            channel_folder = Path("inbox") / channel_type
+D:\Zenith\core\intake_manager.py:35:            ChannelType.GAMING_MAIN,
+D:\Zenith\core\intake_manager.py:125:            ChannelType.GAMING_MAIN, ChannelType.VLOG_MAIN
+D:\Zenith\core\interaction_classification_runner.py:18:def run_interaction_classification_for_job(
+D:\Zenith\core\keyword_emotion_runner.py:18:def run_keyword_emotion_for_job(
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:13:_ALLOWED_VIDEO_TYPES = {"gaming_main", "vlog_main"}
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:214:    top_main is a solo gaming-main corpus bucket, so it maps to gaming_main.
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:219:        "gaming": "gaming_main",
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:220:        "gaming_main": "gaming_main",
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:221:        "top_main": "gaming_main",
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:222:        "top_solo": "gaming_main",
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:223:        "pair": "gaming_main",
+D:\Zenith\core\learning_corpus_fingerprint_writer.py:224:        "pairs": "gaming_main",
+D:\Zenith\core\learning_corpus_ingestor.py:25:    source_path: Path
+D:\Zenith\core\learning_corpus_ingestor.py:149:        scene_source = choose_scene_source(folder, audio_preparation.source_path)
+D:\Zenith\core\learning_corpus_ingestor.py:196:            source_video_path=audio_preparation.source_path,
+D:\Zenith\core\learning_corpus_ingestor.py:205:        source_path = Path(pair_path) / "raw.mp4"
+D:\Zenith\core\learning_corpus_ingestor.py:206:        expected_output = source_path.with_name("raw_mixed_audio.mp4")
+D:\Zenith\core\learning_corpus_ingestor.py:213:        audio_count = probe_audio_stream_count(source_path, ffprobe_path=self.ffprobe_path())
+D:\Zenith\core\learning_corpus_ingestor.py:215:            source_path=source_path,
+D:\Zenith\core\learning_corpus_ingestor.py:224:        source_path = Path(video_path)
+D:\Zenith\core\learning_corpus_ingestor.py:225:        expected_output = source_path.with_name("final_mixed_audio.mp4")
+D:\Zenith\core\learning_corpus_ingestor.py:228:            source_path,
+D:\Zenith\core\learning_corpus_ingestor.py:234:        audio_count = probe_audio_stream_count(source_path, ffprobe_path=self.ffprobe_path())
+D:\Zenith\core\learning_corpus_ingestor.py:236:            source_path=source_path,
+D:\Zenith\core\learning_corpus_ingestor.py:266:                source_path=raw_path,
+D:\Zenith\core\learning_pattern_recognition_runner.py:9:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\learning_pattern_recognition_runner.py:87:def run_learning_pattern_recognition_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\longform_timeline_builder.py:730:        if "gaming_main" not in channel_type or "short" in target_format:
+D:\Zenith\core\motion_analysis_runner.py:114:def run_motion_analysis_for_job(
+D:\Zenith\core\motion_analysis_source_selector.py:9:    MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\motion_analysis_source_selector.py:74:def _get_preprocessing_source_path(job: Any) -> str | None:
+D:\Zenith\core\motion_analysis_source_selector.py:80:    return _as_clean_path(preprocessing_manifest.get("source_path"))
+D:\Zenith\core\motion_analysis_source_selector.py:125:        preprocessing_source_path = _get_preprocessing_source_path(job)
+D:\Zenith\core\motion_analysis_source_selector.py:126:        preprocessing_exists = _path_exists(preprocessing_source_path)
+D:\Zenith\core\motion_analysis_source_selector.py:128:        if preprocessing_source_path:
+D:\Zenith\core\motion_analysis_source_selector.py:131:                    source_type=MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\motion_analysis_source_selector.py:132:                    path=preprocessing_source_path,
+D:\Zenith\core\motion_analysis_source_selector.py:141:                    selected_path=preprocessing_source_path,
+D:\Zenith\core\motion_analysis_source_selector.py:142:                    selected_type=MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\motion_analysis_source_selector.py:146:                    warnings=["used_preprocessing_manifest_source_path_fallback"],
+D:\Zenith\core\murch_scoring_runner.py:184:def run_murch_scoring_for_job(
+D:\Zenith\core\output_format_handler.py:21:DEFAULT_PROFILE = "gaming_main"
+D:\Zenith\core\output_format_handler.py:185:    presets["gaming_main_youtube_1080p60"] = OutputFormatPreset(
+D:\Zenith\core\output_format_handler.py:186:        preset_id="gaming_main_youtube_1080p60",
+D:\Zenith\core\output_format_handler.py:187:        profile="gaming_main",
+D:\Zenith\core\output_format_handler.py:345:    if profile == "gaming_main" and platform == "youtube":
+D:\Zenith\core\output_format_handler.py:346:        return presets["gaming_main_youtube_1080p60"]
+D:\Zenith\core\output_format_handler.py:413:        warnings.append("profile_missing_defaulting_to_gaming_main")
+D:\Zenith\core\output_format_handler.py:416:    allowed = {"gaming_main", "gaming_uncut", "faceless_trend"}
+D:\Zenith\core\output_format_handler.py:418:        warnings.append("profile_unknown_defaulting_to_gaming_main")
+D:\Zenith\core\output_format_handler_runner.py:36:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\output_format_handler_runner.py:75:def run_output_format_handler(job: Any) -> dict[str, Any]:
+D:\Zenith\core\pattern_interrupt_runner.py:26:def run_pattern_interrupt_for_job(
+D:\Zenith\core\preprocessing_cache_validator.py:138:        source_path=manifest.source_path if manifest else None,
+D:\Zenith\core\preprocessing_cache_validator.py:172:    source_fingerprint = build_source_fingerprint(manifest.source_path)
+D:\Zenith\core\preprocessing_manager.py:16:def build_source_fingerprint(source_path: str | Path) -> dict[str, Any]:
+D:\Zenith\core\preprocessing_manager.py:17:    path = Path(source_path)
+D:\Zenith\core\preprocessing_manager.py:63:    source_path: str | Path,
+D:\Zenith\core\preprocessing_manager.py:69:    fingerprint = build_source_fingerprint(source_path)
+D:\Zenith\core\preprocessing_manager.py:83:        source_path=str(source_path),
+D:\Zenith\core\preprocessing_manager.py:150:    source_path: str | Path,
+D:\Zenith\core\preprocessing_manager.py:154:    fingerprint = build_source_fingerprint(source_path)
+D:\Zenith\core\preprocessing_manager.py:169:        source_path=source_path,
+D:\Zenith\core\preprocessing_pipeline.py:42:    source_path: str | Path,
+D:\Zenith\core\preprocessing_pipeline.py:50:        source_path=source_path,
+D:\Zenith\core\preprocessing_pipeline.py:152:                source_path=audio_plan.source_path,
+D:\Zenith\core\preprocessing_pipeline.py:208:def run_preprocessing_pipeline_for_job(
+D:\Zenith\core\preprocessing_pipeline.py:210:    source_path: str | Path,
+D:\Zenith\core\preprocessing_pipeline.py:218:        source_path=source_path,
+D:\Zenith\core\probe_clip_runner.py:36:def run_probe_clip(
+D:\Zenith\core\profanity_censor_runner.py:18:def run_profanity_censor_for_job(
+D:\Zenith\core\reaction_shot_placement_engine.py:1346:    def run(self, job: Any) -> ReactionShotPlacementReport:
+D:\Zenith\core\reaction_shot_placement_runner.py:26:def run_reaction_shot_placement_for_job(
+D:\Zenith\core\render_asset_manifest_builder.py:198:                    warnings=[] if fallback_path else ["render_source_path_hint_missing"],
+D:\Zenith\core\render_asset_manifest_builder.py:212:                    source.get("source_path"),
+D:\Zenith\core\render_asset_manifest_builder.py:225:                        warnings=[] if path_hint else ["render_source_path_hint_missing"],
+D:\Zenith\core\render_asset_manifest_runner.py:18:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_asset_manifest_runner.py:58:def run_render_asset_manifest_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_command_blueprint_runner.py:18:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_command_blueprint_runner.py:96:def run_render_command_blueprint_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_dashboard_delivery_package_runner.py:44:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_dashboard_delivery_package_runner.py:112:def run_render_dashboard_delivery_package(job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_execution_permission_gate_runner.py:18:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_execution_permission_gate_runner.py:100:def run_render_execution_permission_gate_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_plan_builder.py:181:            source_warnings.append("source_path_hint_missing")
+D:\Zenith\core\render_plan_builder.py:520:                warnings.append("render_plan_required_source_path_hint_missing")
+D:\Zenith\core\render_plan_runner.py:18:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_plan_runner.py:65:def run_render_plan_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_processor.py:44:# DEPRECATED - Phase 2: superseded by FinalRenderDriver for gaming_main longform rendering.
+D:\Zenith\core\render_readiness_guard_runner.py:18:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_readiness_guard_runner.py:60:def run_render_readiness_guard(job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_verification_contract_runner.py:34:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\render_verification_contract_runner.py:94:def run_render_verification_contract(job: Any) -> dict[str, Any]:
+D:\Zenith\core\review_timeline_dashboard_package_runner.py:30:def run_review_timeline_dashboard_package_for_job(
+D:\Zenith\core\review_timeline_plan_runner.py:146:def run_review_timeline_plan_for_job(
+D:\Zenith\core\rms_energy_analyzer.py:57:    source_path: str | None = None,
+D:\Zenith\core\rms_energy_analyzer.py:66:            source_path=source_path,
+D:\Zenith\core\rms_energy_analyzer.py:77:            source_path=source_path,
+D:\Zenith\core\rms_energy_analyzer.py:145:        source_path=source_path,
+D:\Zenith\core\rms_energy_analyzer.py:175:            source_path=wav_path,
+D:\Zenith\core\rms_energy_analyzer.py:191:            source_path=wav_path,
+D:\Zenith\core\rms_energy_analyzer.py:204:                source_path=wav_path,
+D:\Zenith\core\rms_energy_analyzer.py:233:            source_path=wav_path,
+D:\Zenith\core\rms_energy_analyzer.py:247:        source_path=wav_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:93:    fallback_source_path: str | None = None,
+D:\Zenith\core\rms_energy_audio_source_selector.py:109:    if fallback_source_path and allow_original_wav_fallback:
+D:\Zenith\core\rms_energy_audio_source_selector.py:177:        if fallback_source_path and allow_original_wav_fallback:
+D:\Zenith\core\rms_energy_audio_source_selector.py:178:            is_wav = _is_wav_path(fallback_source_path)
+D:\Zenith\core\rms_energy_audio_source_selector.py:179:            exists = _path_exists(fallback_source_path)
+D:\Zenith\core\rms_energy_audio_source_selector.py:180:            is_video = _is_video_path(fallback_source_path)
+D:\Zenith\core\rms_energy_audio_source_selector.py:184:                    "path": fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:206:                "path": fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:214:                selected_path=fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:302:    if fallback_source_path and allow_original_wav_fallback:
+D:\Zenith\core\rms_energy_audio_source_selector.py:303:        is_wav = _is_wav_path(fallback_source_path)
+D:\Zenith\core\rms_energy_audio_source_selector.py:304:        exists = _path_exists(fallback_source_path)
+D:\Zenith\core\rms_energy_audio_source_selector.py:305:        is_video = _is_video_path(fallback_source_path)
+D:\Zenith\core\rms_energy_audio_source_selector.py:310:                "path": fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:320:                "path": fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:328:                selected_path=fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:343:                "path": fallback_source_path,
+D:\Zenith\core\rms_energy_audio_source_selector.py:436:    if fallback_source_path and not allow_original_wav_fallback:
+D:\Zenith\core\rms_energy_audio_source_selector.py:438:    elif fallback_source_path and _is_video_path(fallback_source_path):
+D:\Zenith\core\rms_energy_audio_source_selector.py:495:        fallback_source_path=fallback,
+D:\Zenith\core\rms_energy_runner.py:23:    fallback_source_path: str | None = None,
+D:\Zenith\core\rms_energy_runner.py:35:            fallback_source_path=fallback_source_path,
+D:\Zenith\core\rms_energy_runner.py:177:def run_rms_energy_for_job(
+D:\Zenith\core\rms_energy_runner.py:206:        fallback_source_path=fallback,
+D:\Zenith\core\routing_engine.py:25:                ChannelType.GAMING_MAIN, ChannelType.GAMING_UNCUT
+D:\Zenith\core\scene_change_runner.py:248:def run_scene_change_for_job(
+D:\Zenith\core\scene_change_source_selector.py:64:    source_path: str | None,
+D:\Zenith\core\scene_change_source_selector.py:71:        "path": source_path,
+D:\Zenith\core\scene_change_source_selector.py:121:                    source_path=candidate,
+D:\Zenith\core\scene_change_source_selector.py:139:                source_path=candidate,
+D:\Zenith\core\scene_change_source_selector.py:158:            source_path=None,
+D:\Zenith\core\scene_change_source_selector.py:165:    # Priority 2: preprocessing_manifest["source_path"]
+D:\Zenith\core\scene_change_source_selector.py:168:        manifest_source = _safe_text(_get_value(preprocessing_manifest, "source_path"))
+D:\Zenith\core\scene_change_source_selector.py:177:                    source_type="preprocessing_source_path",
+D:\Zenith\core\scene_change_source_selector.py:178:                    source_path=manifest_source,
+D:\Zenith\core\scene_change_source_selector.py:187:                selected_type="preprocessing_source_path",
+D:\Zenith\core\scene_change_source_selector.py:190:                warnings=["used_preprocessing_manifest_source_path"],
+D:\Zenith\core\scene_change_source_selector.py:196:                source_type="preprocessing_source_path",
+D:\Zenith\core\scene_change_source_selector.py:197:                source_path=manifest_source,
+D:\Zenith\core\scene_change_source_selector.py:200:                reason="preprocessing_source_path_missing",
+D:\Zenith\core\scene_change_source_selector.py:206:            selected_type="preprocessing_source_path",
+D:\Zenith\core\scene_change_source_selector.py:208:            recommendation="fix_preprocessing_source_path",
+D:\Zenith\core\scene_change_source_selector.py:209:            errors=["preprocessing_source_path_file_missing"],
+D:\Zenith\core\scene_change_source_selector.py:215:            source_type="preprocessing_source_path",
+D:\Zenith\core\scene_change_source_selector.py:216:            source_path=None,
+D:\Zenith\core\scene_change_source_selector.py:219:            reason="preprocessing_source_path_not_declared",
+D:\Zenith\core\scene_change_source_selector.py:231:                        source_path=None,
+D:\Zenith\core\scene_change_source_selector.py:246:                        source_path=candidate,
+D:\Zenith\core\scene_change_source_selector.py:265:                    source_path=candidate,
+D:\Zenith\core\screen_content_runner.py:121:def run_screen_content_classification_for_job(
+D:\Zenith\core\screen_content_source_selector.py:9:    SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\screen_content_source_selector.py:71:def _get_preprocessing_source_path(job: Any) -> str | None:
+D:\Zenith\core\screen_content_source_selector.py:77:    return _as_clean_path(preprocessing_manifest.get("source_path"))
+D:\Zenith\core\screen_content_source_selector.py:122:        preprocessing_source_path = _get_preprocessing_source_path(job)
+D:\Zenith\core\screen_content_source_selector.py:123:        preprocessing_exists = _path_exists(preprocessing_source_path)
+D:\Zenith\core\screen_content_source_selector.py:125:        if preprocessing_source_path:
+D:\Zenith\core\screen_content_source_selector.py:128:                    source_type=SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\screen_content_source_selector.py:129:                    path=preprocessing_source_path,
+D:\Zenith\core\screen_content_source_selector.py:138:                    selected_path=preprocessing_source_path,
+D:\Zenith\core\screen_content_source_selector.py:139:                    selected_type=SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\screen_content_source_selector.py:143:                    warnings=["used_preprocessing_manifest_source_path_fallback"],
+D:\Zenith\core\segment_classification_runner.py:133:def run_segment_classification_for_job(
+D:\Zenith\core\sentence_boundary_runner.py:18:def run_sentence_boundary_for_job(
+D:\Zenith\core\shorts_generation_stage.py:30:    def run(
+D:\Zenith\core\shorts_render_driver.py:88:    def run_ffmpeg(self, cmd: list[str]) -> None:
+D:\Zenith\core\silence_audio_source_selector.py:25:    fallback_source_path: str | None = None,
+D:\Zenith\core\silence_audio_source_selector.py:40:    if fallback_source_path:
+D:\Zenith\core\silence_audio_source_selector.py:56:        if fallback_source_path:
+D:\Zenith\core\silence_audio_source_selector.py:57:            exists = os.path.exists(fallback_source_path)
+D:\Zenith\core\silence_audio_source_selector.py:59:                selected_path=fallback_source_path if exists else None,
+D:\Zenith\core\silence_audio_source_selector.py:63:                checked_paths=[fallback_source_path],
+D:\Zenith\core\silence_audio_source_selector.py:104:    if fallback_source_path:
+D:\Zenith\core\silence_audio_source_selector.py:105:        checked_paths.append(fallback_source_path)
+D:\Zenith\core\silence_audio_source_selector.py:111:        if os.path.exists(fallback_source_path):
+D:\Zenith\core\silence_audio_source_selector.py:113:                selected_path=fallback_source_path,
+D:\Zenith\core\silence_audio_source_selector.py:167:        fallback_source_path=fallback,
+D:\Zenith\core\silence_classifier_runner.py:147:def run_silence_classifier_for_job(
+D:\Zenith\core\silence_detection_runner.py:32:    fallback_source_path: str | None = None,
+D:\Zenith\core\silence_detection_runner.py:46:            source_path=None,
+D:\Zenith\core\silence_detection_runner.py:64:            fallback_source_path=fallback_source_path,
+D:\Zenith\core\silence_detection_runner.py:70:            source_path=None,
+D:\Zenith\core\silence_detection_runner.py:91:            source_path=selection.selected_path,
+D:\Zenith\core\silence_detection_runner.py:109:            source_path=selection.selected_path,
+D:\Zenith\core\silence_detection_runner.py:126:            source_path=selection.selected_path,
+D:\Zenith\core\silence_detection_runner.py:133:            source_path=selection.selected_path,
+D:\Zenith\core\silence_detection_runner.py:158:            source_path=selection.selected_path,
+D:\Zenith\core\silence_detection_runner.py:175:        source_path=selection.selected_path,
+D:\Zenith\core\silence_detection_runner.py:191:def run_silence_detection_for_job(
+D:\Zenith\core\silence_detection_runner.py:213:        fallback_source_path=fallback,
+D:\Zenith\core\silence_detector.py:15:    source_path: str,
+D:\Zenith\core\silence_detector.py:31:        "-i", source_path,
+D:\Zenith\core\silence_detector.py:39:    source_path: str,
+D:\Zenith\core\silence_detector.py:89:        source_path=source_path,
+D:\Zenith\core\silence_detector.py:104:    source_path: str,
+D:\Zenith\core\silence_detector.py:112:            source_path=source_path,
+D:\Zenith\core\silence_detector.py:130:                source_path=source_path,
+D:\Zenith\core\silence_detector.py:140:            source_path=source_path,
+D:\Zenith\core\silence_detector.py:149:            source_path=source_path,
+D:\Zenith\core\speaker_identifier.py:137:            source_path=first_result.source_path,
+D:\Zenith\core\stutter_detection_runner.py:113:def run_stutter_detection_for_job(
+D:\Zenith\core\stutter_detection_source_selector.py:9:    STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\stutter_detection_source_selector.py:71:def _get_preprocessing_source_path(job: Any) -> str | None:
+D:\Zenith\core\stutter_detection_source_selector.py:77:    return _as_clean_path(preprocessing_manifest.get("source_path"))
+D:\Zenith\core\stutter_detection_source_selector.py:122:        preprocessing_source_path = _get_preprocessing_source_path(job)
+D:\Zenith\core\stutter_detection_source_selector.py:123:        preprocessing_exists = _path_exists(preprocessing_source_path)
+D:\Zenith\core\stutter_detection_source_selector.py:125:        if preprocessing_source_path:
+D:\Zenith\core\stutter_detection_source_selector.py:128:                    source_type=STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\stutter_detection_source_selector.py:129:                    path=preprocessing_source_path,
+D:\Zenith\core\stutter_detection_source_selector.py:138:                    selected_path=preprocessing_source_path,
+D:\Zenith\core\stutter_detection_source_selector.py:139:                    selected_type=STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\core\stutter_detection_source_selector.py:143:                    warnings=["used_preprocessing_manifest_source_path_fallback"],
+D:\Zenith\core\style_dna_apply_plan_runner.py:9:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_apply_plan_runner.py:68:def run_style_dna_apply_plan_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_feedback_updater.py:500:        or "gaming_main"
+D:\Zenith\core\style_dna_feedback_updater_runner.py:31:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_feedback_updater_runner.py:78:def run_style_dna_feedback_updater_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_persistence_gate_runner.py:9:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_persistence_gate_runner.py:80:def run_style_dna_persistence_gate_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_review_gate_runner.py:36:    def run(self, job: Any) -> dict[str, Any]:
+D:\Zenith\core\style_dna_review_gate_runner.py:98:def run_style_dna_review_gate_for_job(job: Any) -> dict[str, Any]:
+D:\Zenith\core\timeline_approval_gate_runner.py:90:def run_timeline_approval_gate_for_job(
+D:\Zenith\core\timeline_safety_validator_runner.py:28:def run_timeline_safety_validator_for_job(
+D:\Zenith\core\transcript_processor.py:36:        source_path = str(video_path)
+D:\Zenith\core\transcript_processor.py:37:        source = Path(source_path)
+D:\Zenith\core\transcript_processor.py:40:            return self._test_fallback(source_path)
+D:\Zenith\core\transcript_processor.py:43:            raise FileNotFoundError(f"Transcript source not found: {source_path}")
+D:\Zenith\core\transcript_processor.py:47:        with self._selected_audio_source(source_path, audio_stream_index) as selected:
+D:\Zenith\core\transcript_processor.py:50:                    selected.source_path,
+D:\Zenith\core\transcript_processor.py:51:                    result_source_path=source_path,
+D:\Zenith\core\transcript_processor.py:61:                    selected.source_path,
+D:\Zenith\core\transcript_processor.py:62:                    result_source_path=source_path,
+D:\Zenith\core\transcript_processor.py:73:        source_path = str(video_path)
+D:\Zenith\core\transcript_processor.py:74:        source = Path(source_path)
+D:\Zenith\core\transcript_processor.py:77:            raise FileNotFoundError(f"Transcript source not found: {source_path}")
+D:\Zenith\core\transcript_processor.py:80:            inventory = self.audio_stream_inspector.inspect(source_path)
+D:\Zenith\core\transcript_processor.py:84:            return {"mic": self._test_fallback(source_path, audio_track="mic")}
+D:\Zenith\core\transcript_processor.py:93:                results[label] = self._test_fallback(source_path, audio_track=label)
+D:\Zenith\core\transcript_processor.py:96:            result = self.transcribe(source_path, audio_stream_index=stream.index)
+D:\Zenith\core\transcript_processor.py:104:        source_path: str,
+D:\Zenith\core\transcript_processor.py:106:        result_source_path: str | None = None,
+D:\Zenith\core\transcript_processor.py:121:                    source_path,
+D:\Zenith\core\transcript_processor.py:146:                    source_path=result_source_path or source_path,
+D:\Zenith\core\transcript_processor.py:200:        source_path: str,
+D:\Zenith\core\transcript_processor.py:202:        result_source_path: str | None = None,
+D:\Zenith\core\transcript_processor.py:208:        result = model.transcribe(source_path)
+D:\Zenith\core\transcript_processor.py:219:            source_path=result_source_path or source_path,
+D:\Zenith\core\transcript_processor.py:226:    def _test_fallback(self, source_path: str, audio_track: str = "mic") -> TranscriptResult:
+D:\Zenith\core\transcript_processor.py:247:            source_path=source_path,
+D:\Zenith\core\transcript_processor.py:361:        source_path: str,
+D:\Zenith\core\transcript_processor.py:365:            inventory = self.audio_stream_inspector.inspect(source_path)
+D:\Zenith\core\transcript_processor.py:367:            yield _SelectedAudioSource(source_path=source_path, audio_track="mic")
+D:\Zenith\core\transcript_processor.py:379:            yield _SelectedAudioSource(source_path=source_path, audio_track="mic")
+D:\Zenith\core\transcript_processor.py:386:                source_path=source_path,
+D:\Zenith\core\transcript_processor.py:391:                source_path=extracted_path,
+D:\Zenith\core\transcript_processor.py:419:        source_path: str,
+D:\Zenith\core\transcript_processor.py:429:            source_path,
+D:\Zenith\core\transcript_processor.py:487:    def __init__(self, source_path: str, audio_track: str) -> None:
+D:\Zenith\core\transcript_processor.py:488:        self.source_path = source_path
+D:\Zenith\core\transcript_runner.py:90:        source_path=selection.selected_path,
+D:\Zenith\core\transcript_runner.py:102:    source_path: str,
+D:\Zenith\core\transcript_runner.py:105:        result = transcribe_fn(source_path)
+D:\Zenith\core\transcript_runner.py:130:        source_path=selection.selected_path,
+D:\Zenith\core\transcript_runner.py:140:                source_path=selection.selected_path,
+D:\Zenith\core\transcript_runner.py:152:                source_path=selection.selected_path,
+D:\Zenith\core\transcript_runner.py:163:            source_path=selection.selected_path,
+D:\Zenith\core\transcript_runner.py:179:            "source_path": selection.selected_path,
+D:\Zenith\core\transcript_runner.py:211:        source_path=selection.selected_path,
+D:\Zenith\core\transcript_runner.py:236:def run_transcript_for_job(
+D:\Zenith\core\transcript_runner.py:271:    job.transcript_source_path = report.source_path
+D:\Zenith\core\transcript_source_selector.py:331:            "source_path",
+D:\Zenith\core\transition_decision_runner.py:191:def run_transition_decision_for_job(
+D:\Zenith\core\uncut_pipeline.py:3:Geplant: Stream-Aufnahmen aus inbox/gaming_uncut/.
+D:\Zenith\core\uncut_pipeline.py:8:def run_uncut_pipeline_for_job(job, services):
+D:\Zenith\core\uncut_pipeline.py:11:        "Aktuell unterst뿯½tzt: gaming_main."
+D:\Zenith\core\unified_edit_signal_registry.py:2107:def run_unified_edit_signal_registry_for_job(
+D:\Zenith\core\visual_analysis_proxy.py:57:def _source_is_large_enough(source_path: Path) -> bool:
+D:\Zenith\core\visual_analysis_proxy.py:63:        return source_path.stat().st_size >= max(0, min_bytes)
+D:\Zenith\core\visual_analysis_proxy.py:76:def resolve_visual_analysis_proxy_path(job: Any, source_path: str | Path | None) -> Path | None:
+D:\Zenith\core\visual_analysis_proxy.py:92:    if not temp_dir and source_path:
+D:\Zenith\core\visual_analysis_proxy.py:93:        temp_dir = Path(source_path).resolve().parent
+D:\Zenith\core\visual_analysis_proxy.py:111:    source_path: Path,
+D:\Zenith\core\visual_analysis_proxy.py:130:    command.extend(["-i", str(source_path), "-an"])
+D:\Zenith\core\visual_analysis_proxy.py:183:    source_path: str | Path | None,
+D:\Zenith\core\visual_analysis_proxy.py:185:    if _proxy_disabled() or not source_path:
+D:\Zenith\core\visual_analysis_proxy.py:188:    source = Path(str(source_path))
+D:\Zenith\core\visual_analysis_proxy.py:222:            source_path=source,
+D:\Zenith\core\visual_energy_runner.py:66:def run_visual_energy_for_job(job: Any) -> VisualEnergyRunReport:
+D:\Zenith\core\vlog_pipeline.py:10:def run_vlog_pipeline_for_job(job, services):
+D:\Zenith\core\vlog_pipeline.py:13:        "Aktuell unterst뿯½tzt: gaming_main."
+D:\Zenith\core\voice_intensity_analyzer.py:78:                source_path=source,
+D:\Zenith\core\voice_intensity_analyzer.py:150:        source_path: Path,
+D:\Zenith\core\voice_intensity_analyzer.py:160:            str(source_path),
+D:\Zenith\scripts\demo_benchmark_b.py:18:    channel="gaming_main",
+D:\Zenith\scripts\extend_p4_6_fingerprints.py:50:            source_path = raw_path if bucket == "pairs" and raw_path.exists() else final_path
+D:\Zenith\scripts\extend_p4_6_fingerprints.py:51:            if not source_path.exists():
+D:\Zenith\scripts\extend_p4_6_fingerprints.py:59:                    source_video_path=source_path,
+D:\Zenith\scripts\p4_7_7_gpu_stage_breakdown.py:140:    done = _first_timestamp(lines, "[pipeline_runner] Done") or end
+D:\Zenith\scripts\p4_7_7_side_by_side_proof.py:264:    export_dir = Path("exports") / "gaming_main" / job_id
+D:\Zenith\scripts\p4_8_a2_create_raw_mixed.py:21:def run_ffmpeg(pair_name: str, raw: Path, mixed: Path, audio_tracks: int) -> tuple[bool, str]:
+D:\Zenith\scripts\p4_8_a3_extract_ali_voice_reference.py:61:        "source_path": str(raw),
+D:\Zenith\scripts\p4_8_a4b_apply_speaker_track_mapping.py:179:        "raw_source_path": str(raw_path),
+D:\Zenith\scripts\p4_8_a4b_apply_speaker_track_mapping.py:202:    data["speaker_distribution_source_path"] = str(raw_path)
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:267:def run_stage(
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:509:        "source_path": str(final_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:657:        "source_path": str(final_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:719:        "source_path": "",
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:731:def run_bounded_transcript(
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:765:            "source_path": str(media_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:775:def run_transcript_helper_subprocess(
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:831:                "source_path": str(media_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:847:        "source_path": str(media_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:882:    transcript["source_path"] = str(media_path)
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1109:            "source_path": str(final_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1239:            "source_path": str(final_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1289:            "source_path": transcript.get("source_path", final_source),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1318:            "source_path": final_source,
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1325:            "source_path": final_source,
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1332:            "source_path": final_source,
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1375:            "source_path": str(source),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1388:            "source_path": str(source),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1398:    style_capture["source_path"] = str(source)
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1404:            "source_path": str(source),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1452:        "transcript_source_path_final": str(transcript.get("source_path", "")).replace("\\", "/").endswith("/final.mp4"),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1464:        "transcript_no_raw_mixed_source_path": "raw_mixed_audio" not in str(
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1465:            transcript.get("source_path", "")
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1476:        "hook_source_path_final": str(hook.get("source_path", "")).replace("\\", "/").endswith("/final.mp4"),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1650:                "source_path": str(preparation.source_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1828:            data["voice_intensity_distribution_source_path"] = str(raw_path)
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1830:            data["facial_expression_distribution_source_path"] = str(raw_path)
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1836:            data["gameplay_ratio_source_path"] = str(raw_path)
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1881:                        "source_path": str(scene_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1893:                        "source_path": str(scene_path),
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:1943:def run_pair_subprocess(
+D:\Zenith\scripts\p4_8_a4_reingest_pairs.py:2028:def run_all_pairs(args: argparse.Namespace) -> int:
+D:\Zenith\scripts\p4_8_b4_mini_render_visual_proof.py:33:def run(cmd: list[str]) -> subprocess.CompletedProcess:
+D:\Zenith\scripts\p4_8_b4_mini_render_visual_proof.py:191:        source_path=SOURCE,
+D:\Zenith\scripts\p4_8_b5_real_sample_render_proof.py:33:def run(cmd: list[str]) -> subprocess.CompletedProcess:
+D:\Zenith\scripts\p4_8_b5_real_sample_render_proof.py:153:        source_path=SOURCE,
+D:\Zenith\scripts\phase3a_real_pipeline_proof.py:61:    source_path = _build_test_video(SOURCE_DIR / "sample.mp4")
+D:\Zenith\scripts\phase3a_real_pipeline_proof.py:66:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\scripts\phase3a_real_pipeline_proof.py:74:        raw_video_path=str(source_path),
+D:\Zenith\scripts\phase3a_real_pipeline_proof.py:79:        source_path=source_path,
+D:\Zenith\scripts\phase3a_real_pipeline_proof.py:99:        "input": str(source_path),
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:108:        source_path = _build_speech_like_test_video(
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:112:        source_path = _build_speech_like_test_video(SOURCE_DIR / "sample.mp4")
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:119:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:127:        raw_video_path=str(source_path),
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:132:        source_path=source_path,
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:160:        "input": str(source_path),
+D:\Zenith\scripts\phase3b_real_transcript_proof.py:169:        "transcript_source_path": transcript_report.source_path,
+D:\Zenith\scripts\phase3c_real_registry_proof.py:33:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_adaptive_silence_classifier_final_audit_smoke.py:35:        source_path="fake.mp4",
+D:\Zenith\tests\test_adaptive_silence_classifier_final_audit_smoke.py:217:        "source_path": "/fake/audio.wav",
+D:\Zenith\tests\test_adaptive_silence_classifier_final_audit_smoke.py:258:    empty = {"status": "ok", "source_path": "/fake/audio.wav", "segments": []}
+D:\Zenith\tests\test_adaptive_silence_classifier_final_audit_smoke.py:297:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_adaptive_silence_classifier_foundation_smoke.py:175:        source_path="fake.mp4",
+D:\Zenith\tests\test_adaptive_silence_classifier_foundation_smoke.py:189:        "source_path": "fake.mp4",
+D:\Zenith\tests\test_adaptive_silence_classifier_foundation_smoke.py:202:        source_path="fake.mp4",
+D:\Zenith\tests\test_analysis_scoring_integration_smoke.py:35:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_analysis_scoring_integration_smoke.py:43:        raw_video_path="inbox/gaming_main/analysis_scoring_smoke.mp4",
+D:\Zenith\tests\test_approval_workflow.py:16:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_approval_workflow.py:63:        channel="gaming_main",
+D:\Zenith\tests\test_approval_workflow.py:70:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_approval_workflow.py:76:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_approval_workflow.py:97:        channel="gaming_main",
+D:\Zenith\tests\test_approval_workflow.py:104:    assert payload["channel"] == "gaming_main"
+D:\Zenith\tests\test_approval_workflow.py:109:def test_pipeline_runner_source_contains_approval_cli_hooks() -> None:
+D:\Zenith\tests\test_approval_workflow.py:110:    source = (PROJECT_ROOT / "pipeline_runner.py").read_text(encoding="utf-8")
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:28:        source_path="input.mp4",
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:61:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:129:        source_path="input.mp4",
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:135:        metadata={"channel": "gaming_main"},
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:141:    assert restored.source_path == plan.source_path
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:193:    manifest.source_path = str(tmp_path / "input.mp4")
+D:\Zenith\tests\test_audio_extraction_planner_smoke.py:201:    assert manifest.source_path in speech_target.command_preview
+D:\Zenith\tests\test_audio_normalization_final_audit_smoke.py:133:        "channel_type": ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_audio_normalization_final_audit_smoke.py:142:        "profile_id": "gaming_main",
+D:\Zenith\tests\test_audio_normalization_final_audit_smoke.py:302:        original_source_path=str(original_mp4),
+D:\Zenith\tests\test_audio_normalization_final_audit_smoke.py:329:        original_source_path=str(original_wav),
+D:\Zenith\tests\test_audio_normalization_final_audit_smoke.py:336:        original_source_path=str(original_mp4),
+D:\Zenith\tests\test_audio_normalization_final_audit_smoke.py:568:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_audio_normalization_pipeline_integration_smoke.py:57:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_audio_normalization_pipeline_integration_smoke.py:66:        profile_id="gaming_main",
+D:\Zenith\tests\test_audio_normalization_pipeline_integration_smoke.py:75:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_audio_normalization_runner_smoke.py:140:    result = build_audio_normalization_run_report(original_source_path=str(mp4))
+D:\Zenith\tests\test_audio_normalization_runner_smoke.py:152:    result = build_audio_normalization_run_report(original_source_path=str(wav))
+D:\Zenith\tests\test_audio_normalization_runner_smoke.py:293:    build_audio_normalization_run_report(original_source_path=str(mp4))
+D:\Zenith\tests\test_audio_normalization_source_selector_smoke.py:42:        original_source_path="/tmp/original.mp4",
+D:\Zenith\tests\test_audio_normalization_source_selector_smoke.py:58:    assert restored.original_source_path == "/tmp/original.mp4"
+D:\Zenith\tests\test_audio_normalization_source_selector_smoke.py:157:    result = select_audio_normalization_source(original_source_path=str(wav))
+D:\Zenith\tests\test_audio_normalization_source_selector_smoke.py:170:    result = select_audio_normalization_source(original_source_path=str(mp4))
+D:\Zenith\tests\test_audio_role_indicator_smoke.py:35:        source_path="audio_role_smoke.mp4",
+D:\Zenith\tests\test_audio_role_indicator_smoke.py:111:        channel_type="gaming_main",
+D:\Zenith\tests\test_audio_role_indicator_smoke.py:133:        channel_type="gaming_main",
+D:\Zenith\tests\test_beat_detection_final_audit_smoke.py:112:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_beat_detection_final_audit_smoke.py:341:    original = select_beat_detection_source(original_source_path=str(original_wav))
+D:\Zenith\tests\test_beat_detection_final_audit_smoke.py:345:    unsupported = select_beat_detection_source(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_beat_detection_final_audit_smoke.py:389:    mp4_report = build_beat_detection_run_report(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_beat_detection_final_audit_smoke.py:393:    original_report = build_beat_detection_run_report(original_source_path=str(original_wav))
+D:\Zenith\tests\test_beat_detection_final_audit_smoke.py:432:    build_beat_detection_run_report(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_beat_detection_pipeline_integration_smoke.py:23:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_beat_detection_pipeline_integration_smoke.py:40:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_beat_detection_runner_smoke.py:158:    report = build_beat_detection_run_report(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_beat_detection_runner_smoke.py:169:    report = build_beat_detection_run_report(original_source_path=str(original_wav))
+D:\Zenith\tests\test_beat_detection_runner_smoke.py:317:    report = build_beat_detection_run_report(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_beat_detection_signal_adapter_smoke.py:276:        metadata={"channel": "gaming_main"},
+D:\Zenith\tests\test_beat_detection_signal_adapter_smoke.py:290:    assert signal["metadata"]["channel"] == "gaming_main"
+D:\Zenith\tests\test_beat_detection_source_selector_smoke.py:42:        original_source_path="original.mp4",
+D:\Zenith\tests\test_beat_detection_source_selector_smoke.py:164:    selection = select_beat_detection_source(original_source_path=str(original_wav))
+D:\Zenith\tests\test_beat_detection_source_selector_smoke.py:175:    selection = select_beat_detection_source(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_beat_detection_source_selector_smoke.py:271:    selection = select_beat_detection_source(original_source_path=str(original_mp4))
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:14:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:32:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:61:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:73:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:106:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:117:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:131:        channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:149:            channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:176:                channel="gaming_main",
+D:\Zenith\tests\test_benchmark_feedback_schema_smoke.py:190:            channel="gaming_main",
+D:\Zenith\tests\test_block5_cutting_decision_static_audit_smoke.py:149:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_block5_cutting_decision_unified_signal_audit_smoke.py:96:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_block7_story_pacing_job_fields_audit_smoke.py:11:    "channel_type": "gaming_main",
+D:\Zenith\tests\test_block8_pre_execution_job_fields_audit_smoke.py:99:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_block8_render_export_final_audit_smoke.py:155:    assert "source_path" not in text
+D:\Zenith\tests\test_block8_render_export_job_fields_audit_smoke.py:69:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_block8_render_export_job_fields_audit_smoke.py:100:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_block8_render_export_pipeline_order_audit_smoke.py:12:def test_block8_pipeline_runner_order_is_final_and_safe() -> None:
+D:\Zenith\tests\test_block8_render_export_pipeline_order_audit_smoke.py:96:def test_2b51_has_no_pipeline_runner_between_block8_runtime_stages() -> None:
+D:\Zenith\tests\test_block8_render_export_registry_audit_smoke.py:80:            "preset": {"preset_id": "gaming_main_youtube_1080p60"},
+D:\Zenith\tests\test_block8_render_export_safety_contract_audit_smoke.py:98:        "profile": "gaming_main",
+D:\Zenith\tests\test_block9_learning_feedback_job_fields_audit_smoke.py:100:        "source_path": "sample-input.mp4",
+D:\Zenith\tests\test_block9_learning_feedback_job_fields_audit_smoke.py:102:        "channel": "gaming_main",
+D:\Zenith\tests\test_block9_learning_feedback_job_fields_audit_smoke.py:103:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_block9_learning_feedback_pipeline_order_audit_smoke.py:32:def test_block9_pipeline_runner_order_is_correct():
+D:\Zenith\tests\test_block9_learning_feedback_pipeline_order_audit_smoke.py:53:def test_2b65_does_not_add_a_pipeline_runner():
+D:\Zenith\tests\test_block9_learning_feedback_safety_contract_audit_smoke.py:54:        "source_path": "sample-input.mp4",
+D:\Zenith\tests\test_block9_learning_feedback_safety_contract_audit_smoke.py:56:        "channel": "gaming_main",
+D:\Zenith\tests\test_block9_learning_feedback_safety_contract_audit_smoke.py:57:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_boundary_evidence_drilldown_smoke.py:42:        source_path="test.mp4",
+D:\Zenith\tests\test_but_therefore_story_registry_integration_smoke.py:19:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_but_therefore_story_runner_smoke.py:23:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:13:def test_gaming_main_profile_exists() -> None:
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:14:    profile = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:16:    assert profile.profile_name == "gaming_main"
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:19:def test_gaming_main_weights() -> None:
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:20:    profile = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:25:def test_gaming_main_pacing() -> None:
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:26:    profile = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:32:def test_gaming_uncut_min_seg_greater_than_gaming_main() -> None:
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:33:    gaming_main = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:35:    assert gaming_uncut.min_segment_duration_seconds > gaming_main.min_segment_duration_seconds
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:62:    profile = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:67:    profile = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:102:    test_gaming_main_profile_exists()
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:103:    test_gaming_main_weights()
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:104:    test_gaming_main_pacing()
+D:\Zenith\tests\test_channel_cut_profile_smoke.py:105:    test_gaming_uncut_min_seg_greater_than_gaming_main()
+D:\Zenith\tests\test_channel_enum_unification.py:11:        ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_clip_duration_final_audit_smoke.py:92:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_clip_duration_registry_integration_smoke.py:38:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_clip_duration_runner_smoke.py:26:    "channel_type": "gaming_main",
+D:\Zenith\tests\test_content_value_runner_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_content_value_runner_smoke.py:198:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_continuity_check_final_audit_smoke.py:97:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_continuity_check_registry_integration_smoke.py:42:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_continuity_check_runner_smoke.py:23:    "channel_type": "gaming_main",
+D:\Zenith\tests\test_controlled_render_executor_runner_smoke.py:103:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_cut_indicator_builder_smoke.py:44:        source_path="smoke.mp4",
+D:\Zenith\tests\test_cut_indicator_builder_smoke.py:304:        channel_type="gaming_main",
+D:\Zenith\tests\test_cut_list_finalizer_final_audit_smoke.py:111:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_cut_list_finalizer_runner_smoke.py:30:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_cut_list_final_audit_smoke.py:70:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_cut_list_registry_integration_smoke.py:15:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_cut_list_runner_smoke.py:26:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_dead_content_runner_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_dead_content_runner_smoke.py:115:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_debug_mode_smoke.py:80:        "profile_id": "gaming_main",
+D:\Zenith\tests\test_debug_mode_smoke.py:92:    assert context["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_debug_mode_smoke.py:100:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_decision_logger_smoke.py:16:        profile_id="gaming_main",
+D:\Zenith\tests\test_decision_logger_smoke.py:54:    assert event["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_dynamic_pacing_registry_integration_smoke.py:17:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_dynamic_pacing_runner_smoke.py:16:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:55:def test_unknown_channel_falls_back_to_gaming_main():
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:57:    assert channel == ChannelProfile.GAMING_MAIN
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:73:def test_gaming_main_aggressive_cut():
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:74:    p = CHANNEL_EDITING_PROFILES[ChannelProfile.GAMING_MAIN]
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:92:    profile, mode_config = resolve("gaming_main", "pro")
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:93:    assert profile.channel == ChannelProfile.GAMING_MAIN
+D:\Zenith\tests\test_editing_profiles_quality_modes_smoke.py:99:    assert profile.channel == ChannelProfile.GAMING_MAIN
+D:\Zenith\tests\test_edit_signal_extractor_smoke.py:25:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_emotional_arc_registry_integration_smoke.py:17:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_emotional_arc_runner_smoke.py:16:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_energy_peak_final_audit_smoke.py:485:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_energy_peak_pipeline_integration_smoke.py:30:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_energy_peak_pipeline_integration_smoke.py:106:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_error_logger_smoke.py:16:        profile_id="gaming_main",
+D:\Zenith\tests\test_error_logger_smoke.py:70:    assert event["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_error_logger_smoke.py:83:        module="pipeline_runner",
+D:\Zenith\tests\test_error_logger_smoke.py:86:        details={"channel": "gaming_main"},
+D:\Zenith\tests\test_error_logger_smoke.py:110:    assert loaded_event["details"]["channel"] == "gaming_main"
+D:\Zenith\tests\test_existing_longform_shorts_stage.py:23:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_existing_longform_shorts_stage.py:80:        def run(
+D:\Zenith\tests\test_export_manager_storage_provider_smoke.py:12:        self.channel_type = ChannelType.GAMING_MAIN
+D:\Zenith\tests\test_export_manager_storage_provider_smoke.py:22:    export_dir = Path("exports/gaming_main/job_export_storage_smoke_001")
+D:\Zenith\tests\test_facecam_emotion_indicator_smoke.py:154:        channel_type="gaming_main",
+D:\Zenith\tests\test_facecam_emotion_indicator_smoke.py:180:        channel_type="gaming_main",
+D:\Zenith\tests\test_face_reaction_runner_smoke.py:26:    FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_face_reaction_runner_smoke.py:169:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_face_reaction_runner_smoke.py:176:    assert report.selected_type == FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_face_reaction_runner_smoke.py:309:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_face_reaction_runner_smoke.py:327:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_face_reaction_source_selector_smoke.py:10:    FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_face_reaction_source_selector_smoke.py:32:        preprocessing_manifest={"source_path": str(fallback_video)},
+D:\Zenith\tests\test_face_reaction_source_selector_smoke.py:44:def test_preprocessing_manifest_source_path_is_used_as_fallback(tmp_path):
+D:\Zenith\tests\test_face_reaction_source_selector_smoke.py:50:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_face_reaction_source_selector_smoke.py:57:    assert selection.selected_type == FACE_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_ffmpeg_capability_resolver_registry_integration_smoke.py:21:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_ffmpeg_capability_resolver_runner_smoke.py:20:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_ffmpeg_command_assembly_registry_integration_smoke.py:21:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_ffmpeg_command_assembly_runner_smoke.py:20:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_file_acceptance_smoke.py:44:        profile_id="gaming_main",
+D:\Zenith\tests\test_file_acceptance_smoke.py:60:    assert restored.profile_id == "gaming_main"
+D:\Zenith\tests\test_file_acceptance_smoke.py:152:    profile = {"profile_id": "gaming_main", "require_audio": True}
+D:\Zenith\tests\test_file_acceptance_smoke.py:157:    assert result.profile_id == "gaming_main"
+D:\Zenith\tests\test_file_handler_final_audit_smoke.py:33:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_file_handler_final_audit_smoke.py:207:        profile={"profile_id": "gaming_main", "require_audio": True},
+D:\Zenith\tests\test_file_handler_pipeline_integration_smoke.py:74:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_filler_word_final_audit_smoke.py:450:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_filler_word_final_audit_smoke.py:458:        raw_video_path="inbox/gaming_main/test.mp4",
+D:\Zenith\tests\test_filler_word_pipeline_integration_smoke.py:30:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_filler_word_pipeline_integration_smoke.py:99:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_final_cut_safety_smoke.py:35:        source_path="final_cut_safety_smoke.mp4",
+D:\Zenith\tests\test_final_cut_seam_guard_smoke.py:89:        source_path="test", language=None,
+D:\Zenith\tests\test_final_cut_seam_guard_smoke.py:107:        source_path="test", language=None,
+D:\Zenith\tests\test_final_cut_seam_guard_smoke.py:256:        source_path="test", language=None,
+D:\Zenith\tests\test_final_cut_seam_guard_smoke.py:359:        source_path="test",
+D:\Zenith\tests\test_final_cut_seam_guard_smoke.py:387:        source_path="test",
+D:\Zenith\tests\test_final_cut_seam_guard_smoke.py:403:        source_path="test",
+D:\Zenith\tests\test_final_quality_validator_runner_smoke.py:119:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_final_render_driver_smoke.py:50:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_final_render_driver_smoke.py:365:    source_path = os.path.join(test_dir, "source.mp4")
+D:\Zenith\tests\test_final_render_driver_smoke.py:366:    _make_source_video(source_path, duration=30)
+D:\Zenith\tests\test_final_render_driver_smoke.py:368:    job = _make_job("job_frd_basic_001", source_path)
+D:\Zenith\tests\test_final_render_driver_smoke.py:375:        source_path=source_path,
+D:\Zenith\tests\test_final_render_driver_smoke.py:424:    source_path = os.path.join(test_dir, "source.mp4")
+D:\Zenith\tests\test_final_render_driver_smoke.py:425:    _make_source_video(source_path, duration=30)
+D:\Zenith\tests\test_final_render_driver_smoke.py:427:    job = _make_job("job_frd_layers_001", source_path)
+D:\Zenith\tests\test_final_render_driver_smoke.py:436:        source_path=source_path,
+D:\Zenith\tests\test_final_render_driver_smoke.py:482:    source_path = os.path.join(test_dir, "source.mp4")
+D:\Zenith\tests\test_final_render_driver_smoke.py:483:    _make_source_video(source_path, duration=20)
+D:\Zenith\tests\test_final_render_driver_smoke.py:485:    job = _make_job("job_frd_single_001", source_path)
+D:\Zenith\tests\test_final_render_driver_smoke.py:508:        source_path=source_path,
+D:\Zenith\tests\test_final_timeline_quality_guard_smoke.py:64:        source_path="quality_guard_smoke.mp4",
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:28:        source_path="input.mp4",
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:61:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:125:        source_path="input.mp4",
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:132:        metadata={"channel": "gaming_main"},
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:138:    assert restored.source_path == plan.source_path
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:201:    manifest.source_path = str(tmp_path / "input.mp4")
+D:\Zenith\tests\test_frame_extraction_planner_smoke.py:209:    assert manifest.source_path in analysis_target.command_preview
+D:\Zenith\tests\test_gameplay_event_indicator_smoke.py:108:        channel_type="gaming_main",
+D:\Zenith\tests\test_gameplay_state_guard_fusion_smoke.py:222:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_hard_speech_lock_guard_smoke.py:36:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_highlight_candidate_repository_smoke.py:27:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_highlight_selector_smoke.py:26:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_highlight_selector_weak_zone_smoke.py:26:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_hook_identification_registry_integration_smoke.py:19:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_hook_identification_runner_smoke.py:16:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_hook_keyword_smoke.py:74:        source_path="test.mp4",
+D:\Zenith\tests\test_interaction_classification_runner_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_interaction_classification_runner_smoke.py:135:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_job_loader_storage_provider_smoke.py:10:    channel_path = base_path / "gaming_main"
+D:\Zenith\tests\test_job_loader_storage_provider_smoke.py:24:    "channel_type": "gaming_main",
+D:\Zenith\tests\test_job_loader_storage_provider_smoke.py:32:    "raw_video_path": "inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\test_job_loader_storage_provider_smoke.py:50:    assert jobs[0].channel_type.value == "gaming_main"
+D:\Zenith\tests\test_job_log_index_smoke.py:131:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_job_log_index_smoke.py:139:        "decision_log_path": "exports/gaming_main/job/logs/decisions.log",
+D:\Zenith\tests\test_job_log_index_smoke.py:140:        "decision_jsonl_path": "exports/gaming_main/job/logs/decisions.jsonl",
+D:\Zenith\tests\test_job_log_index_smoke.py:141:        "error_log_path": "exports/gaming_main/job/logs/errors.log",
+D:\Zenith\tests\test_job_log_index_smoke.py:142:        "error_jsonl_path": "exports/gaming_main/job/logs/errors.jsonl",
+D:\Zenith\tests\test_job_persistence_slimming.py:10:from pipeline_runner import _write_export_job_json
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:36:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:44:        raw_video_path="inbox/gaming_main/test.mp4",
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:49:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:53:        profile_snapshot_path="exports/gaming_main/job_x/profile_snapshot.json",
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:57:    assert metadata["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:60:    assert metadata["profile_snapshot_path"] == "exports/gaming_main/job_x/profile_snapshot.json"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:71:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:77:        profile_snapshot_path="exports/gaming_main/job_x/profile_snapshot.json",
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:80:    assert job.profile_id == "gaming_main"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:83:    assert job.profile_snapshot_path == "exports/gaming_main/job_x/profile_snapshot.json"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:89:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:95:        profile_snapshot_path="exports/gaming_main/job_profile_metadata_smoke/profile_snapshot.json",
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:100:    assert data["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:103:    assert data["profile_snapshot_path"] == "exports/gaming_main/job_profile_metadata_smoke/profile_snapshot.json"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:109:    assert loaded.profile_id == "gaming_main"
+D:\Zenith\tests\test_job_profile_metadata_smoke.py:112:    assert loaded.profile_snapshot_path == "exports/gaming_main/job_profile_metadata_smoke/profile_snapshot.json"
+D:\Zenith\tests\test_job_publish_target_channel.py:9:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_job_publish_target_channel.py:25:    assert job.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\test_job_publish_target_channel.py:27:    assert job.effective_publish_channel == ChannelType.GAMING_MAIN
+D:\Zenith\tests\test_job_publish_target_channel.py:37:            channel_type="gaming_main",
+D:\Zenith\tests\test_job_publish_target_channel.py:42:    assert job.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\test_job_recovery_smoke.py:27:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_recovery_smoke.py:35:        raw_video_path="inbox/gaming_main/test.mp4",
+D:\Zenith\tests\test_job_recovery_smoke.py:45:        module="pipeline_runner",
+D:\Zenith\tests\test_job_recovery_smoke.py:150:        module="pipeline_runner",
+D:\Zenith\tests\test_job_recovery_smoke.py:174:        module="pipeline_runner",
+D:\Zenith\tests\test_job_repository_storage_provider_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_repository_storage_provider_smoke.py:37:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\test_job_state_persistence_smoke.py:35:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_state_persistence_smoke.py:43:        raw_video_path="inbox/gaming_main/test.mp4",
+D:\Zenith\tests\test_job_state_persistence_smoke.py:46:    job.profile_id = "gaming_main"
+D:\Zenith\tests\test_job_state_persistence_smoke.py:49:    job.profile_snapshot_path = "exports/gaming_main/job_state_persistence_smoke/profile_snapshot.json"
+D:\Zenith\tests\test_job_state_persistence_smoke.py:77:    assert checkpoint["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_job_state_transitions_smoke.py:27:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_state_transitions_smoke.py:35:        raw_video_path="inbox/gaming_main/test.mp4",
+D:\Zenith\tests\test_job_state_transitions_smoke.py:124:    transition_job_state(job, JobStatus.ASSEMBLED, module="pipeline_runner", reason="export_finished")
+D:\Zenith\tests\test_job_store_storage_provider_smoke.py:21:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_store_storage_provider_smoke.py:29:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\test_job_store_storage_provider_smoke.py:50:    assert loaded_job.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:42:        raw_video_path="inbox/gaming_main/test.mp4",
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:48:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:54:            "exports/gaming_main/job_system_final_audit_smoke/profile_snapshot.json"
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:78:    assert data["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:91:    assert loaded.profile_id == "gaming_main"
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:104:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_job_system_final_audit_smoke.py:151:        module="pipeline_runner",
+D:\Zenith\tests\test_keyword_emotion_runner_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_keyword_emotion_runner_smoke.py:120:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_learning_corpus_modules_smoke.py:49:                "type": "gaming_main",
+D:\Zenith\tests\test_learning_corpus_modules_smoke.py:156:    not_applicable = extract_reaction_timing(video_type="gaming_main", meta={"game": "test"})
+D:\Zenith\tests\test_learning_corpus_real_marker.py:72:    assert payload["type"] in {"gaming_main", "vlog_main"}
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:23:        profile_id="gaming_main",
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:55:    assert decision_event["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:106:    assert loaded_decision["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:129:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:137:        "decision_log_path": "exports/gaming_main/job/logs/decisions.log",
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:138:        "decision_jsonl_path": "exports/gaming_main/job/logs/decisions.jsonl",
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:139:        "error_log_path": "exports/gaming_main/job/logs/errors.log",
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:140:        "error_jsonl_path": "exports/gaming_main/job/logs/errors.jsonl",
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:198:        profile={"profile_id": "gaming_main", "quality_mode": "pro", "debug_mode": "trace"},
+D:\Zenith\tests\test_logging_system_final_audit_smoke.py:206:    assert context["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_longform_indicator_fusion_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_longform_indicator_fusion_smoke.py:42:        raw_video_path="inbox/gaming_main/fusion_smoke.mp4",
+D:\Zenith\tests\test_longform_indicator_fusion_smoke.py:98:        channel_scope="gaming_main",
+D:\Zenith\tests\test_longform_indicator_fusion_smoke.py:110:    profile = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_longform_timeline_builder_smoke.py:30:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\test_menu_speech_removal_qa6q_smoke.py:97:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_motion_analysis_runner_smoke.py:31:    MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_motion_analysis_runner_smoke.py:164:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_motion_analysis_runner_smoke.py:171:    assert report.selected_type == MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_motion_analysis_runner_smoke.py:302:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_motion_analysis_runner_smoke.py:320:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_motion_analysis_source_selector_smoke.py:10:    MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_motion_analysis_source_selector_smoke.py:32:        preprocessing_manifest={"source_path": str(fallback_video)},
+D:\Zenith\tests\test_motion_analysis_source_selector_smoke.py:44:def test_preprocessing_manifest_source_path_is_used_as_fallback(tmp_path):
+D:\Zenith\tests\test_motion_analysis_source_selector_smoke.py:50:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_motion_analysis_source_selector_smoke.py:57:    assert selection.selected_type == MOTION_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_multi_indicator_score_fusion_smoke.py:17:_PROFILE = ChannelCutProfileProvider().get_profile("gaming_main")
+D:\Zenith\tests\test_multi_indicator_score_fusion_smoke.py:38:        channel_scope="gaming_main",
+D:\Zenith\tests\test_murch_scoring_registry_integration_smoke.py:36:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_murch_scoring_runner_smoke.py:46:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_music_application_models_smoke.py:11:        channel_type="gaming_main",
+D:\Zenith\tests\test_music_application_models_smoke.py:14:        source_file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\test_music_application_models_smoke.py:28:        channel_type="gaming_main",
+D:\Zenith\tests\test_music_apply_timeline_models_smoke.py:13:        source_file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\test_music_apply_timeline_models_smoke.py:29:        channel_type="gaming_main",
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:30:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:42:        "output_format_selected_preset": "gaming_main_youtube_1080p60",
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:44:            "gaming_main_youtube_1080p60",
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:47:        "output_format_selected_profile": "gaming_main",
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:66:        "output_preset_requested": "gaming_main_youtube_1080p60",
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:81:    assert job.output_format_selected_preset == "gaming_main_youtube_1080p60"
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:83:    assert job.output_format_selected_profile == "gaming_main"
+D:\Zenith\tests\test_output_format_handler_pipeline_integration_smoke.py:100:    assert job.output_preset_requested == "gaming_main_youtube_1080p60"
+D:\Zenith\tests\test_output_format_handler_registry_integration_smoke.py:12:        "profile": "gaming_main",
+D:\Zenith\tests\test_output_format_handler_runner_smoke.py:11:        "profile": "gaming_main",
+D:\Zenith\tests\test_output_format_handler_runner_smoke.py:41:    profile: str = "gaming_main"
+D:\Zenith\tests\test_output_format_handler_runner_smoke.py:82:    assert job["output_format_selected_preset"] == "gaming_main_youtube_1080p60"
+D:\Zenith\tests\test_output_format_handler_runner_smoke.py:83:    assert "gaming_main_youtube_1080p60" in job["output_format_available_presets"]
+D:\Zenith\tests\test_output_format_handler_runner_smoke.py:106:    assert job.output_format_selected_preset == "gaming_main_youtube_1080p60"
+D:\Zenith\tests\test_output_format_handler_smoke.py:11:        "profile": "gaming_main",
+D:\Zenith\tests\test_output_format_handler_smoke.py:106:    assert "gaming_main_youtube_1080p60" in report["available_presets"]
+D:\Zenith\tests\test_p3_4_llm_brain_smoke.py:52:            job_context={"channel": "gaming_main"},
+D:\Zenith\tests\test_p3_4_llm_brain_smoke.py:93:            job_context={"channel": "gaming_main", "target": "longform"},
+D:\Zenith\tests\test_p3_4_llm_brain_smoke.py:131:            job_context={"channel": "gaming_main"},
+D:\Zenith\tests\test_p3_4_llm_brain_smoke.py:220:                job_context={"channel": "gaming_main"},
+D:\Zenith\tests\test_p3_4_llm_brain_smoke.py:261:            job_context={"channel": "gaming_main"},
+D:\Zenith\tests\test_p4_0d_llm_brain_fallback_evidence.py:42:        job_context={"channel": "gaming_main", "target": "longform"},
+D:\Zenith\tests\test_p4_6_fingerprint_extension.py:15:def _base_fingerprint(video_id: str, video_type: str = "gaming_main") -> dict:
+D:\Zenith\tests\test_p4_6_fingerprint_extension.py:86:def _write_fingerprint(folder: Path, video_id: str, video_type: str = "gaming_main") -> None:
+D:\Zenith\tests\test_pattern_interrupt_registry_integration_smoke.py:19:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_pattern_interrupt_runner_smoke.py:16:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_phase2_p2_3_single_render_path_smoke.py:13:def test_p2_3_gaming_main_uses_final_render_driver_single_path() -> None:
+D:\Zenith\tests\test_phase2_p2_3_single_render_path_smoke.py:28:    assert "source_path=job.raw_video_path" in block
+D:\Zenith\tests\test_phase2_p2_4_censor_sfx_overlay_smoke.py:161:    source_path = tmp_path / "silent_source.mp4"
+D:\Zenith\tests\test_phase2_p2_4_censor_sfx_overlay_smoke.py:162:    _make_silent_source(source_path)
+D:\Zenith\tests\test_phase2_p2_4_censor_sfx_overlay_smoke.py:166:        raw_video_path=str(source_path),
+D:\Zenith\tests\test_phase2_p2_4_censor_sfx_overlay_smoke.py:195:            source_path=source_path,
+D:\Zenith\tests\test_phase2_p2_5_encoder_fallback_smoke.py:92:    source_path = tmp_path / "p2_5_cpu_source.mp4"
+D:\Zenith\tests\test_phase2_p2_5_encoder_fallback_smoke.py:93:    _make_p2_5_source(source_path)
+D:\Zenith\tests\test_phase2_p2_5_encoder_fallback_smoke.py:114:        raw_video_path=str(source_path),
+D:\Zenith\tests\test_phase2_p2_5_encoder_fallback_smoke.py:142:            source_path=source_path,
+D:\Zenith\tests\test_phase2_p2_6_speech_e2e_artifact_smoke.py:13:PIPELINE_RUNNER = REPO_ROOT / "pipeline_runner.py"
+D:\Zenith\tests\test_phase2_p2_6_speech_e2e_artifact_smoke.py:28:        "pipeline_runner.py",
+D:\Zenith\tests\test_phase2_p2_6_speech_e2e_artifact_smoke.py:90:        [sys.executable, str(workdir / "pipeline_runner.py"), str(video_path)],
+D:\Zenith\tests\test_phase2_p2_fix3b_duration_floor_smoke.py:48:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase2_p2_fix3b_duration_floor_smoke.py:56:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:73:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:107:        source_path="src.wav",
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:158:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:162:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:186:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:190:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:217:        source_path=str(tmp_path / "missing.mp4"),
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:242:    source_path = tmp_path / "fake.txt"
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:243:    source_path.write_text("nope", encoding="utf-8")
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:247:        source_path=str(source_path),
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:276:        source_path=str(bad_source),
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:301:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:304:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:323:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:326:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:332:    job = _make_job(raw_video_path=str(source_path))
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:351:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_phase3a_audio_extraction_executor_smoke.py:375:        "source_path": "src.mp4",
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:65:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:79:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:83:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:106:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:110:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:126:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:130:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:146:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:147:    job = _make_job(raw_video_path=str(source_path))
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:151:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:172:    source_path = _make_test_source(tmp_path / "source.wav", duration_seconds=1.0)
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:176:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:184:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:202:    source_path = tmp_path / "broken.mp4"
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:203:    source_path.write_text("not-a-real-video", encoding="utf-8")
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:207:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:218:    source_path = tmp_path / "does_not_exist.mp4"
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:222:        source_path=source_path,
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:236:    source_path = tmp_path / "source.mp4"
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:237:    source_path.write_text("placeholder", encoding="utf-8")
+D:\Zenith\tests\test_phase3a_preprocessing_audio_lifeline_smoke.py:241:        source_path=source_path,
+D:\Zenith\tests\test_phase3b_transcript_pipeline_integration_smoke.py:36:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3b_transcript_pipeline_integration_smoke.py:57:    def transcribe(self, source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_phase3b_transcript_pipeline_integration_smoke.py:74:                source_path=source_path,
+D:\Zenith\tests\test_phase3b_transcript_pipeline_integration_smoke.py:181:    assert job.transcript_source_path == str(speech)
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:37:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:54:def _ok_result(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:65:        source_path=source_path,
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:78:    def transcribe(self, source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:79:        self.calls.append(source_path)
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:82:            return _ok_result(source_path)
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:88:            raise FileNotFoundError(f"missing: {source_path}")
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:92:                source_path=source_path,
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:120:    assert report.source_path == str(speech)
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:237:    assert job.transcript_source_path == str(speech)
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:247:    assert restored.transcript_source_path == job.transcript_source_path
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:259:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_phase3b_transcript_runner_smoke.py:273:    assert restored.transcript_source_path is None
+D:\Zenith\tests\test_phase3b_transcript_source_selector_smoke.py:32:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3c_unified_edit_signal_registry_smoke.py:33:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3c_unified_edit_signal_registry_smoke.py:337:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_phase3_p3_2_timeline_duration_ok_log_smoke.py:24:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_phase3_p3_2_timeline_duration_ok_log_smoke.py:32:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:51:    cmd = [sys.executable, str(REPO_ROOT / "pipeline_runner.py")]
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:238:    assert "[pipeline_runner] CLI JOB" in combined_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:239:    assert "[pipeline_runner] GAMING MAIN" in combined_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:278:    assert "[pipeline_runner] CLI JOB" in combined_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:279:    assert "[pipeline_runner] GAMING MAIN" in combined_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:332:def test_s6_inbox_rerun_skips_existing_job(tmp_path: Path) -> None:
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:334:    inbox_video = workdir / "inbox" / "gaming_main" / "s6_rerun_existing.mp4"
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:335:    _write_motion_tone_clip(inbox_video)
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:340:    assert "[pipeline_runner] INBOX NEW" in first_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:341:    assert "[pipeline_runner] INBOX JOB" in first_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:342:    assert "[pipeline_runner] GAMING MAIN" in first_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:348:    assert "[pipeline_runner] INBOX SKIP" in second_output
+D:\Zenith\tests\test_pipeline_e2e_scenarios.py:350:    assert "[pipeline_runner] Keine aktuellen Rohdateien." in second_output
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:59:def test_pipeline_runner_e2e_smoke_does_not_raise_export_dir_unbound(
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:65:    video_path = workdir / "tmp" / "pipeline_runner_e2e_smoke.mp4"
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:74:        [sys.executable, str(REPO_ROOT / "pipeline_runner.py"), str(video_path)],
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:83:    assert "[pipeline_runner] CLI JOB" in combined_output
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:84:    assert "[pipeline_runner] GAMING MAIN" in combined_output
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:100:def test_pipeline_runner_e2e_smoke_blocks_render_without_auto_approve(
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:106:    video_path = workdir / "tmp" / "pipeline_runner_e2e_noapprove_smoke.mp4"
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:115:        [sys.executable, str(REPO_ROOT / "pipeline_runner.py"), str(video_path)],
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:124:    assert "[pipeline_runner] CLI JOB" in combined_output
+D:\Zenith\tests\test_pipeline_runner_end_to_end_smoke.py:125:    assert "[pipeline_runner] GAMING MAIN" in combined_output
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:49:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:52:        source_path.write_text("video-data", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:54:    fingerprint = build_source_fingerprint(source_path)
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:99:        source_path=str(source_path),
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:135:        source_path="input.mp4",
+D:\Zenith\tests\test_preprocessing_cache_validator_smoke.py:154:    assert restored.source_path == result.source_path
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:28:        source_path="input.mp4",
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:61:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:80:    assert restored.source_path == manifest.source_path
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:132:        source_path=source,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:134:        metadata={"channel": "gaming_main"},
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:145:    assert manifest.metadata["channel"] == "gaming_main"
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:154:        source_path=source,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:173:        source_path=source,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:178:        source_path=source,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:194:        source_path=source,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:202:        source_path=source,
+D:\Zenith\tests\test_preprocessing_manager_smoke.py:260:        source_path=source,
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:63:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:78:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:79:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:81:    fingerprint = build_source_fingerprint(source_path)
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:90:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:140:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:141:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:145:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:178:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:179:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:183:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:205:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:206:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:210:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_final_audit_smoke.py:215:    job = _make_job(raw_video_path=str(source_path))
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:27:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:40:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:41:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:45:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:61:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:62:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:66:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:83:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:84:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:88:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:92:    job = _make_job(raw_video_path=str(source_path))
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:109:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:110:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:111:    job = _make_job(raw_video_path=str(source_path))
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:115:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:131:    source_path = tmp_path / "input.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:132:    source_path.write_text("fake-video", encoding="utf-8")
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:133:    job = _make_job(raw_video_path=str(source_path))
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:137:        source_path=source_path,
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:159:    source_path = tmp_path / "missing.mp4"
+D:\Zenith\tests\test_preprocessing_pipeline_integration_smoke.py:163:        source_path=source_path,
+D:\Zenith\tests\test_private_menu_speech_guard_smoke.py:97:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_probe_clip_runner.py:6:    import pipeline_runner
+D:\Zenith\tests\test_probe_clip_runner.py:11:    args = pipeline_runner._parse_args(
+D:\Zenith\tests\test_probe_clip_runner.py:30:    import pipeline_runner
+D:\Zenith\tests\test_probe_clip_runner.py:36:        pipeline_runner._parse_args(
+D:\Zenith\tests\test_profanity_censor_runner_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_profanity_censor_runner_smoke.py:106:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:18:    "gaming_main",
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:37:def _fake_job(job_id="job_profile_architecture_final_audit", channel_type="gaming_main"):
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:73:def test_gaming_main_profile_has_expected_core_values():
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:74:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:91:def test_legacy_registry_aligns_with_json_gaming_main():
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:92:    json_profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:94:        channel_str="gaming_main",
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:103:def test_pipeline_helper_loads_gaming_main_json_profile():
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:104:    profile = _load_json_profile_for_job(_fake_job(channel_type="gaming_main"))
+D:\Zenith\tests\test_profile_architecture_final_audit_smoke.py:106:    assert profile["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_inheritance_smoke.py:40:def test_gaming_main_overrides_default_values():
+D:\Zenith\tests\test_profile_manager_inheritance_smoke.py:43:    profile = manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_manager_inheritance_smoke.py:45:    assert profile["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_inheritance_smoke.py:46:    assert profile["channel_type"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_inheritance_smoke.py:100:        manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:31:def _fake_job(job_id="job_profile_pipeline_smoke", channel_type="gaming_main"):
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:38:def test_pipeline_loads_gaming_main_json_profile():
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:39:    job = _fake_job(channel_type="gaming_main")
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:43:    assert profile["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:49:def test_pipeline_profile_has_gaming_main_format_values():
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:50:    job = _fake_job(channel_type="gaming_main")
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:66:        channel_type="gaming_main",
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:79:    assert payload["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_pipeline_integration_smoke.py:80:    assert payload["channel_type"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_schema_guard_smoke.py:42:def test_valid_gaming_main_profile_loads():
+D:\Zenith\tests\test_profile_manager_schema_guard_smoke.py:45:    profile = manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_manager_schema_guard_smoke.py:47:    assert profile["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_profile_manager_smoke.py:14:    "gaming_main",
+D:\Zenith\tests\test_profile_manager_smoke.py:75:    profile = manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_manager_smoke.py:124:def test_gaming_main_quality_is_pro(manager):
+D:\Zenith\tests\test_profile_manager_smoke.py:125:    profile = manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_manager_smoke.py:129:def test_gaming_main_music_enabled(manager):
+D:\Zenith\tests\test_profile_manager_smoke.py:130:    profile = manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_manager_smoke.py:153:def test_gaming_main_reframing_intelligent_crop(manager):
+D:\Zenith\tests\test_profile_manager_smoke.py:154:    profile = manager.load_profile("gaming_main")
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:7:Beide duerfen sich bei wichtigen gaming_main Werten nicht widersprechen.
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:20:def _fake_job(job_id="job_profile_alignment_smoke", channel_type="gaming_main"):
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:27:def test_profile_manager_loads_gaming_main_source_of_truth():
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:28:    profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:30:    assert profile["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:37:def test_legacy_registry_resolve_still_works_for_gaming_main_pro():
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:39:        channel_str="gaming_main",
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:43:    assert legacy_profile.channel.value == "gaming_main"
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:49:    json_profile = ProfileManager(profiles_dir=PROFILES_DIR).load_profile("gaming_main")
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:51:        channel_str="gaming_main",
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:60:def test_pipeline_helper_loads_json_gaming_main_profile():
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:61:    job = _fake_job(channel_type="gaming_main")
+D:\Zenith\tests\test_profile_registry_alignment_smoke.py:65:    assert profile["profile_id"] == "gaming_main"
+D:\Zenith\tests\test_reaction_moment_detector_smoke.py:33:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\test_reaction_shot_placement_registry_integration_smoke.py:19:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_reaction_shot_placement_runner_smoke.py:16:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_reframing_core_smoke.py:31:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\test_render_asset_manifest_builder_smoke.py:40:                "directory_hint": "exports/gaming_main/job_render_asset_manifest_smoke",
+D:\Zenith\tests\test_render_asset_manifest_builder_smoke.py:41:                "output_path_hint": "exports/gaming_main/job_render_asset_manifest_smoke/My Unsafe Video & Final.mp4",
+D:\Zenith\tests\test_render_asset_manifest_builder_smoke.py:64:                    "directory_hint": "exports/gaming_main/job_render_asset_manifest_smoke",
+D:\Zenith\tests\test_render_asset_manifest_builder_smoke.py:65:                    "output_path_hint": "exports/gaming_main/job_render_asset_manifest_smoke/My Unsafe Video & Final.mp4",
+D:\Zenith\tests\test_render_asset_manifest_runner_smoke.py:30:                "directory_hint": "exports/gaming_main/job_render_asset_runner_smoke",
+D:\Zenith\tests\test_render_asset_manifest_runner_smoke.py:131:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_render_command_blueprint_runner_smoke.py:37:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_render_execution_permission_gate_runner_smoke.py:63:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_render_execution_permission_gate_runner_smoke.py:149:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_render_plan_builder_smoke.py:188:    assert "render_plan_required_source_path_hint_missing" in report["warnings"]
+D:\Zenith\tests\test_render_processor_music_application_context_smoke.py:53:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_render_processor_music_application_context_smoke.py:112:        channel_type="gaming_main",
+D:\Zenith\tests\test_render_processor_music_application_context_smoke.py:117:                channel_type="gaming_main",
+D:\Zenith\tests\test_render_processor_music_application_context_smoke.py:120:                source_file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\test_render_processor_music_application_context_smoke.py:133:                channel_type="gaming_main",
+D:\Zenith\tests\test_render_processor_music_application_context_smoke.py:136:                source_file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\test_render_readiness_guard_runner_smoke.py:110:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_dashboard_package_pipeline_integration_smoke.py:18:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_dashboard_package_pipeline_integration_smoke.py:67:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_dashboard_package_registry_integration_smoke.py:27:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_plan_final_audit_smoke.py:76:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_plan_pipeline_integration_smoke.py:25:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_plan_registry_integration_smoke.py:21:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_review_timeline_plan_runner_smoke.py:21:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_rms_energy_audio_source_selector_smoke.py:125:        fallback_source_path=str(orig),
+D:\Zenith\tests\test_rms_energy_audio_source_selector_smoke.py:139:        fallback_source_path=str(vid),
+D:\Zenith\tests\test_rms_energy_final_audit_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_rms_energy_final_audit_smoke.py:66:        status="ok", source_path="/tmp/a.wav", sample_rate=16000, channels=1,
+D:\Zenith\tests\test_rms_energy_final_audit_smoke.py:248:        fallback_source_path=str(orig_wav),
+D:\Zenith\tests\test_rms_energy_final_audit_smoke.py:258:        fallback_source_path=str(tmp_path / "video.mp4"),
+D:\Zenith\tests\test_rms_energy_final_audit_smoke.py:308:        fallback_source_path=str(tmp_path / "video.mp4"),
+D:\Zenith\tests\test_rms_energy_pipeline_integration_smoke.py:28:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_rms_energy_pipeline_integration_smoke.py:118:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_rms_energy_runner_smoke.py:139:        fallback_source_path=str(vid),
+D:\Zenith\tests\test_rms_energy_runner_smoke.py:153:        fallback_source_path=str(orig),
+D:\Zenith\tests\test_rms_energy_runner_smoke.py:227:        return RmsEnergyTimelineResult(status="ok", source_path=path)
+D:\Zenith\tests\test_rms_energy_runner_smoke.py:234:        fallback_source_path=str(vid),
+D:\Zenith\tests\test_rms_energy_runner_smoke.py:251:            source_path=path,
+D:\Zenith\tests\test_rms_energy_timeline_foundation_smoke.py:70:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_rms_energy_timeline_foundation_smoke.py:98:    assert restored.source_path == "/fake/audio.wav"
+D:\Zenith\tests\test_round_phase_detector_smoke.py:35:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_round_phase_detector_smoke.py:43:        raw_video_path="inbox/gaming_main/round_phase_detector_smoke.mp4",
+D:\Zenith\tests\test_round_phase_detector_smoke.py:94:        source_path="round_phase_detector_smoke.mp4",
+D:\Zenith\tests\test_scene_change_registry_integration_smoke.py:30:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_scene_change_runner_smoke.py:29:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_scene_change_runner_smoke.py:136:        preprocessing_manifest={"source_path": str(fallback_video)},
+D:\Zenith\tests\test_scene_change_runner_smoke.py:150:def test_run_scene_change_for_job_uses_preprocessing_manifest_source_path_fallback(
+D:\Zenith\tests\test_scene_change_runner_smoke.py:169:        preprocessing_manifest={"source_path": str(fallback_video)},
+D:\Zenith\tests\test_scene_change_runner_smoke.py:176:    assert report.selected_type == "preprocessing_source_path"
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:21:    manifest = {"source_path": str(manifest_source)}
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:35:    source_path = _make_video_stub(tmp_path / "source.mp4")
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:36:    manifest = {"source_path": str(source_path)}
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:44:    assert selection.selected_type == "preprocessing_source_path"
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:45:    assert selection.selected_path == str(source_path)
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:47:    assert "used_preprocessing_manifest_source_path" in selection.warnings
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:149:        preprocessing_manifest={"source_path": str(other)},
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:160:    source_path = _make_video_stub(tmp_path / "source.mp4")
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:163:        preprocessing_manifest={"source_path": str(source_path)},
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:169:    assert selection.selected_type == "preprocessing_source_path"
+D:\Zenith\tests\test_scene_change_source_selector_smoke.py:170:    assert selection.selected_path == str(source_path)
+D:\Zenith\tests\test_screen_content_runner_smoke.py:29:    SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_screen_content_runner_smoke.py:178:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_screen_content_runner_smoke.py:185:    assert report.selected_type == SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_screen_content_runner_smoke.py:330:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_screen_content_runner_smoke.py:348:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_screen_content_source_selector_smoke.py:10:    SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_screen_content_source_selector_smoke.py:56:        preprocessing_manifest={"source_path": str(preprocessing_video)},
+D:\Zenith\tests\test_screen_content_source_selector_smoke.py:73:        preprocessing_manifest={"source_path": str(preprocessing_video)},
+D:\Zenith\tests\test_screen_content_source_selector_smoke.py:80:    assert selection.selected_type == SCREEN_CONTENT_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_segment_classification_registry_integration_smoke.py:15:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_segment_classification_runner_smoke.py:32:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_segment_scoring_smoke.py:32:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_sentence_atomicity_guard_r2_smoke.py:63:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_sentence_atomicity_guard_smoke.py:54:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_sentence_boundary_runner_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_sentence_boundary_runner_smoke.py:118:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_sentence_timeline_builder_smoke.py:16:        source_path="sentence_smoke.mp4",
+D:\Zenith\tests\test_shorts_caption_style.py:30:    def run_ffmpeg(self, cmd: list[str]) -> None:
+D:\Zenith\tests\test_shorts_clip_model.py:49:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_shorts_generation_stage.py:323:    source_path = tmp_path / "source_30s.mp4"
+D:\Zenith\tests\test_shorts_generation_stage.py:338:        str(source_path),
+D:\Zenith\tests\test_shorts_generation_stage.py:354:        source_video_path=str(source_path),
+D:\Zenith\tests\test_shorts_render_driver.py:40:    def run_ffmpeg(self, cmd: list[str]) -> None:
+D:\Zenith\tests\test_shorts_render_driver.py:284:    source_path = tmp_path / "source_with_audio.mp4"
+D:\Zenith\tests\test_shorts_render_driver.py:301:        str(source_path),
+D:\Zenith\tests\test_shorts_render_driver.py:320:            source_video_path=str(source_path),
+D:\Zenith\tests\test_shorts_render_driver_transcript_captions_smoke.py:31:    def run_ffmpeg(self, cmd: list[str]) -> None:
+D:\Zenith\tests\test_shorts_render_driver_transcript_captions_smoke.py:124:        source_path="unit.mp4",
+D:\Zenith\tests\test_shorts_render_driver_transcript_captions_smoke.py:146:        source_path="unit.mp4",
+D:\Zenith\tests\test_shorts_render_driver_transcript_captions_smoke.py:253:        source_path="unit.mp4",
+D:\Zenith\tests\test_shorts_transcript_caption_builder.py:9:        source_path="unit.mp4",
+D:\Zenith\tests\test_silence_audio_source_selector_smoke.py:104:        fallback_source_path=str(original),
+D:\Zenith\tests\test_silence_audio_source_selector_smoke.py:135:        fallback_source_path=None,
+D:\Zenith\tests\test_silence_classifier_context_wiring_smoke.py:24:    return {"status": "ok", "source_path": "/fake/audio.wav", "segments": segments}
+D:\Zenith\tests\test_silence_classifier_context_wiring_smoke.py:96:        source_path="fake.mp4", status="ok", segments=[], segment_count=0
+D:\Zenith\tests\test_silence_classifier_pipeline_integration_smoke.py:37:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_silence_classifier_runner_smoke.py:36:        "source_path": "/fake/audio.wav",
+D:\Zenith\tests\test_silence_classifier_runner_smoke.py:87:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_classifier_runner_smoke.py:112:    detection = {"status": "ok", "source_path": "/fake/audio.wav", "segments": []}
+D:\Zenith\tests\test_silence_context_builder_smoke.py:145:        source_path="fake.mp4",
+D:\Zenith\tests\test_silence_context_builder_smoke.py:157:        "source_path": "fake.mp4",
+D:\Zenith\tests\test_silence_context_builder_smoke.py:170:        source_path="fake.mp4",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:38:    "silence_detection_source_path",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:51:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:65:    source_path: str,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:77:        source_path=source_path,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:88:    source_path: str,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:94:        source_path=source_path,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:125:        source_path="/test.wav",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:162:        profile_id="gaming_main",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:172:    assert params2.profile_id == "gaming_main"
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:176:        source_path="/audio/analysis.wav",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:204:        source_path="/audio/test.wav",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:219:        source_path="/audio/test.wav",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:232:        source_path="/audio/test.wav",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:245:        source_path="/audio/test.wav",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:274:        "profile_id": "gaming_main",
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:285:        source_path: str,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:290:        captured["source_path"] = source_path
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:293:        return _fake_ok_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:304:    assert report.source_path == str(analysis)
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:308:    assert captured["source_path"] == str(analysis)
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:346:        fallback_source_path=None,
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:360:    def failing_detect(source_path: str, threshold_db: float, min_duration_seconds: float, **_: Any) -> SilenceDetectionResult:
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:361:        return _fake_failed_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detection_final_audit_smoke.py:381:    job.silence_detection_source_path = "/audio/analysis.wav"
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:24:    "silence_detection_source_path",
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:47:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:67:    job.silence_detection_source_path = "/audio/analysis.wav"
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:86:    assert restored.silence_detection_source_path == "/audio/analysis.wav"
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:100:    assert job.silence_detection_source_path is None
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:127:        source_path="/audio/analysis.wav",
+D:\Zenith\tests\test_silence_detection_pipeline_integration_smoke.py:146:    job.silence_detection_source_path = report.source_path
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:23:    source_path: str,
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:37:        source_path=source_path,
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:48:    source_path: str,
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:53:        source_path=source_path,
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:68:        source_path="/audio/analysis.wav",
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:87:    assert restored.source_path == "/audio/analysis.wav"
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:123:        "profile_id": "gaming_main",
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:132:    def fake_detect(source_path: str, threshold_db: float, min_duration_seconds: float, **kwargs: Any) -> SilenceDetectionResult:
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:133:        captured["source_path"] = source_path
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:136:        return _make_ok_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:147:    assert report.source_path == str(analysis)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:151:    assert captured["source_path"] == str(analysis)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:169:    def fake_detect(source_path: str, threshold_db: float, min_duration_seconds: float, **kwargs: Any) -> SilenceDetectionResult:
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:170:        return _make_ok_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:176:        fallback_source_path=str(original),
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:181:    assert report.source_path == str(original)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:227:        fallback_source_path=None,
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:250:    def fake_detect(source_path: str, threshold_db: float, min_duration_seconds: float, **kwargs: Any) -> SilenceDetectionResult:
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:251:        return _make_failed_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:297:    def fake_detect(source_path: str, threshold_db: float, min_duration_seconds: float, **kwargs: Any) -> SilenceDetectionResult:
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:298:        captured["source_path"] = source_path
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:301:        return _make_ok_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:349:    def fake_detect(source_path: str, threshold_db: float, min_duration_seconds: float, **kwargs: Any) -> SilenceDetectionResult:
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:350:        captured["source_path"] = source_path
+D:\Zenith\tests\test_silence_detection_runner_smoke.py:353:        return _make_ok_detection(source_path, threshold_db, min_duration_seconds)
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:48:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:60:    assert restored.source_path == result.source_path
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:78:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:107:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:126:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:141:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:169:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:184:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_detector_foundation_smoke.py:198:        source_path="/fake/audio.wav",
+D:\Zenith\tests\test_silence_parameter_resolver_smoke.py:38:            profile_id="gaming_main",
+D:\Zenith\tests\test_silence_parameter_resolver_smoke.py:52:        assert restored.profile_id == "gaming_main"
+D:\Zenith\tests\test_silence_parameter_resolver_smoke.py:76:            "profile_id": "gaming_main",
+D:\Zenith\tests\test_silence_parameter_resolver_smoke.py:87:        assert result.profile_id == "gaming_main"
+D:\Zenith\tests\test_speech_safe_pacing_guard_smoke.py:96:        source_path="synthetic.mp4",
+D:\Zenith\tests\test_speech_to_text_final_audit_smoke.py:86:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_speech_to_text_final_audit_smoke.py:153:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_speech_to_text_lifeline_audit_smoke.py:64:        "transcript_source_path",
+D:\Zenith\tests\test_speech_to_text_lifeline_audit_smoke.py:103:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_speech_to_text_lifeline_audit_smoke.py:105:            source_path=source_path,
+D:\Zenith\tests\test_speech_to_text_lifeline_audit_smoke.py:160:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_speech_to_text_lifeline_audit_smoke.py:162:            source_path=source_path,
+D:\Zenith\tests\test_speech_to_text_lifeline_audit_smoke.py:187:    assert job.transcript_source_path == "speech.wav"
+D:\Zenith\tests\test_stutter_detection_runner_smoke.py:28:    STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_stutter_detection_runner_smoke.py:169:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_stutter_detection_runner_smoke.py:176:    assert report.selected_type == STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_stutter_detection_runner_smoke.py:309:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_stutter_detection_runner_smoke.py:327:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_stutter_detection_source_selector_smoke.py:10:    STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH,
+D:\Zenith\tests\test_stutter_detection_source_selector_smoke.py:32:        preprocessing_manifest={"source_path": str(fallback_video)},
+D:\Zenith\tests\test_stutter_detection_source_selector_smoke.py:44:def test_preprocessing_manifest_source_path_is_used_as_fallback(tmp_path):
+D:\Zenith\tests\test_stutter_detection_source_selector_smoke.py:50:        preprocessing_manifest={"source_path": str(source_video)},
+D:\Zenith\tests\test_stutter_detection_source_selector_smoke.py:57:    assert selection.selected_type == STUTTER_SELECTED_TYPE_PREPROCESSING_SOURCE_PATH
+D:\Zenith\tests\test_style_dna_apply_plan_builder_smoke.py:9:        "style_dna_profile_name": "gaming_main",
+D:\Zenith\tests\test_style_dna_apply_plan_registry_integration_smoke.py:13:    job.style_dna_profile_name = "gaming_main"
+D:\Zenith\tests\test_style_dna_apply_plan_runner_smoke.py:9:    job.style_dna_profile_name = "gaming_main"
+D:\Zenith\tests\test_style_dna_feedback_updater_registry_integration_smoke.py:12:        profile="gaming_main",
+D:\Zenith\tests\test_style_dna_feedback_updater_runner_smoke.py:11:        profile="gaming_main",
+D:\Zenith\tests\test_style_dna_feedback_updater_runner_smoke.py:110:            "style_dna_profile_name": "gaming_main",
+D:\Zenith\tests\test_style_dna_feedback_updater_smoke.py:11:        "profile": "gaming_main",
+D:\Zenith\tests\test_style_dna_persistence_gate_registry_integration_smoke.py:13:            "profile": "gaming_main",
+D:\Zenith\tests\test_style_dna_persistence_gate_runner_smoke.py:11:            "style_dna_profile_name": "gaming_main",
+D:\Zenith\tests\test_style_dna_persistence_gate_runner_smoke.py:15:                "profile": "gaming_main",
+D:\Zenith\tests\test_style_dna_persistence_gate_smoke.py:9:        "style_dna_profile_name": "gaming_main",
+D:\Zenith\tests\test_style_dna_persistence_gate_smoke.py:13:            "profile": "gaming_main",
+D:\Zenith\tests\test_target_duration_smoke.py:50:        "channel": ["gaming_main", "gaming"],
+D:\Zenith\tests\test_target_duration_smoke.py:86:        return "inbox/gaming_main/target_duration_smoke.mp4"
+D:\Zenith\tests\test_target_duration_smoke.py:126:        return Path("inbox/gaming_main/target_duration_smoke.mp4")
+D:\Zenith\tests\test_timeline_approval_gate_final_audit_smoke.py:82:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_approval_gate_pipeline_integration_smoke.py:25:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_approval_gate_registry_integration_smoke.py:31:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_approval_gate_runner_smoke.py:21:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_safety_validator_final_audit_smoke.py:93:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_safety_validator_pipeline_integration_smoke.py:25:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_safety_validator_registry_integration_smoke.py:34:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_timeline_safety_validator_runner_smoke.py:18:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_transcript_boundary_calibration_smoke.py:41:        source_path="test.mp4",
+D:\Zenith\tests\test_transcript_boundary_guard_smoke.py:33:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_transcript_boundary_guard_smoke.py:41:        raw_video_path="inbox/gaming_main/transcript_boundary_guard_smoke.mp4",
+D:\Zenith\tests\test_transcript_boundary_guard_smoke.py:78:        source_path="boundary_smoke.mp4",
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:70:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:98:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:100:            source_path=source_path,
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:140:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:142:            source_path=source_path,
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:174:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:176:            source_path=source_path,
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:211:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:213:            source_path=source_path,
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:241:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:243:            source_path=source_path,
+D:\Zenith\tests\test_transcript_runner_normalizer_integration_smoke.py:294:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_transcript_word_count_cache_safety_smoke.py:64:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\test_transcript_word_count_cache_safety_smoke.py:138:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_word_count_cache_safety_smoke.py:140:            source_path=source_path,
+D:\Zenith\tests\test_transcript_word_count_cache_safety_smoke.py:172:    def fake_transcribe(source_path: str) -> TranscriptResult:
+D:\Zenith\tests\test_transcript_word_count_cache_safety_smoke.py:174:            source_path=source_path,
+D:\Zenith\tests\test_transcript_word_count_cache_safety_smoke.py:218:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_transition_decision_final_audit_smoke.py:110:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_transition_decision_registry_integration_smoke.py:42:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_transition_decision_runner_smoke.py:23:    "channel_type": "gaming_main",
+D:\Zenith\tests\test_visual_energy_final_audit_smoke.py:59:    assert "def run_visual_energy_for_job(" in runner_text
+D:\Zenith\tests\test_visual_energy_runner_smoke.py:208:        "channel_type": "gaming_main",
+D:\Zenith\tests\test_visual_energy_runner_smoke.py:233:            "channel_type": "gaming_main",
+D:\Zenith\tests\test_zoom_pacing_engine_smoke.py:33:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_content_variant_builder_repository_smoke.py:25:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_content_variant_builder_repository_smoke.py:33:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_content_variant_builder_repository_smoke.py:72:        source_export_path="exports/gaming_main/job_variant_smoke",
+D:\Zenith\tests\_archive_deleted_subsystems\test_cross_platform_publish_guard_smoke.py:90:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_cross_platform_publish_orchestrator_smoke.py:50:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_feedback_surface_render_smoke.py:19:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_kpi_surface_render_smoke.py:19:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_kpi_surface_render_smoke.py:88:                    "channel": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_kpi_surface_render_smoke.py:112:        assert "gaming_main" in html
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_storage_provider_mutation_smoke.py:12:    exports_dir = Path("exports") / "gaming_main" / job_id
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_storage_provider_mutation_smoke.py:32:                "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_storage_provider_mutation_smoke.py:52:                        "path": "exports/gaming_main/job_dashboard_mutation_smoke_001/short_1.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_storage_provider_mutation_smoke.py:69:                        "path": "exports/gaming_main/job_dashboard_mutation_smoke_001/short_2.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_storage_provider_smoke.py:12:    exports_dir = Path("exports") / "gaming_main" / job_id
+D:\Zenith\tests\_archive_deleted_subsystems\test_dashboard_storage_provider_smoke.py:34:                "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:7:  3. pipeline_runner.run_pending_jobs() — dispatcher routes faceless jobs
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:8:  4. pipeline_runner skips gaming jobs without raw_video_path
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:9:  5. pipeline_runner.run_faceless_pipeline_for_job() — public helper
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:198:#  Test 4 — pipeline_runner dispatches faceless jobs                   #
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:201:def test_pipeline_runner_routes_faceless_job() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:217:        from pipeline_runner import run_pending_jobs
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:235:        print(f"\n[PASS] test_pipeline_runner_routes_faceless_job")
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:242:#  Test 5 — pipeline_runner skips gaming job without video path        #
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:245:def test_pipeline_runner_skips_gaming_without_video() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:256:            channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:272:        from pipeline_runner import run_pending_jobs
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:280:        print(f"\n[PASS] test_pipeline_runner_skips_gaming_without_video")
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:288:    """The public helper in pipeline_runner must work standalone."""
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:297:        from pipeline_runner import run_faceless_pipeline_for_job
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:321:    test_pipeline_runner_routes_faceless_job()
+D:\Zenith\tests\_archive_deleted_subsystems\test_faceless_pipeline_smoke.py:322:    test_pipeline_runner_skips_gaming_without_video()
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_context_bridge_smoke.py:15:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_context_bridge_smoke.py:32:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_context_bridge_smoke.py:86:    assert stored.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_dashboard_service_smoke.py:12:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_dashboard_service_smoke.py:18:    (test_dir / "gaming_main" / "job_feedback_dash_001").mkdir(
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_dashboard_service_smoke.py:30:    export_path_1 = str(test_dir / "gaming_main" / "job_feedback_dash_001")
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_dashboard_service_smoke.py:39:                channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_learning_backbone_smoke.py:12:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_learning_backbone_smoke.py:27:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_learning_backbone_smoke.py:69:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_feedback_learning_backbone_smoke.py:100:    assert "gaming_main" in subtitle_negative.channels
+D:\Zenith\tests\_archive_deleted_subsystems\test_finalize_pipeline_result_variants_smoke.py:59:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_finalize_pipeline_result_variants_smoke.py:67:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_integrity_scanner_smoke.py:12:    exports_dir = base_dir / "exports" / "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_integrity_scanner_smoke.py:59:                {"job_id": "job_dup_001", "channel_type": "gaming_main", "video_path": "x", "title": "a", "description": "a"},
+D:\Zenith\tests\_archive_deleted_subsystems\test_integrity_scanner_smoke.py:60:                {"job_id": "job_dup_001", "channel_type": "gaming_main", "video_path": "x", "title": "b", "description": "b"},
+D:\Zenith\tests\_archive_deleted_subsystems\test_jarvis_queue_maintenance_smoke.py:50:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_dashboard_service_smoke.py:14:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_dashboard_service_smoke.py:20:    (test_dir / "gaming_main" / "job_dash_001").mkdir(parents=True, exist_ok=True)
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_dashboard_service_smoke.py:27:    export_path_1 = str(test_dir / "gaming_main" / "job_dash_001")
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_dashboard_service_smoke.py:38:                channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_dashboard_service_smoke.py:87:                channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_dashboard_service_smoke.py:143:    assert "gaming_main" in channel_names
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_insight_surface_smoke.py:11:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_insight_surface_smoke.py:18:            channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_kpi_insight_surface_smoke.py:76:            channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_catalog_repository_smoke.py:12:    catalog_path = os.path.join(test_dir, "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_catalog_repository_smoke.py:21:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_catalog_repository_smoke.py:23:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_catalog_repository_smoke.py:32:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_catalog_repository_smoke.py:34:            file_path="assets/audio/gaming_main/music/main_peak_hit.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_catalog_repository_smoke.py:49:    assert loaded_assets[0].channel_type == "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selection_repository_smoke.py:22:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selection_repository_smoke.py:33:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_channel_guard_smoke.py:31:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_channel_guard_smoke.py:64:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_channel_guard_smoke.py:66:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_reuse_guard_smoke.py:23:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_reuse_guard_smoke.py:31:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_reuse_guard_smoke.py:76:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_reuse_guard_smoke.py:78:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_reuse_guard_smoke.py:87:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_reuse_guard_smoke.py:89:            file_path="assets/audio/gaming_main/music/main_peak_hit.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:23:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:31:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:76:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:78:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:87:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:89:            file_path="assets/audio/gaming_main/music/main_peak_hit.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:98:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_local_music_selector_smoke.py:100:            file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_maintenance_report_builder_smoke.py:12:    exports_dir = base_dir / "exports" / "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_maintenance_report_builder_smoke.py:66:                {"job_id": "job_dup_001", "channel_type": "gaming_main", "video_path": "x", "title": "a", "description": "a"},
+D:\Zenith\tests\_archive_deleted_subsystems\test_maintenance_report_builder_smoke.py:67:                {"job_id": "job_dup_001", "channel_type": "gaming_main", "video_path": "x", "title": "b", "description": "b"},
+D:\Zenith\tests\_archive_deleted_subsystems\test_maintenance_runner_smoke.py:12:    exports_dir = base_dir / "exports" / "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_maintenance_runner_smoke.py:50:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_maintenance_runner_smoke.py:58:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_metrics_to_attribution_chain_smoke.py:17:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_metrics_to_attribution_chain_smoke.py:53:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_metrics_to_attribution_chain_smoke.py:71:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_metrics_to_attribution_chain_smoke.py:74:        video_path="exports/gaming_main/job_chain_001/video.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_metrics_to_attribution_chain_smoke.py:75:        thumbnail_or_cover_path="exports/gaming_main/job_chain_001/thumbnail.jpg",
+D:\Zenith\tests\_archive_deleted_subsystems\test_metrics_to_attribution_chain_smoke.py:76:        subtitle_path="exports/gaming_main/job_chain_001/subtitles.srt",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_channel_guard_smoke.py:33:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_channel_guard_smoke.py:89:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_channel_guard_smoke.py:91:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:25:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:33:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:96:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:107:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:120:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:122:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:131:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_builder_smoke.py:133:            file_path="assets/audio/gaming_main/music/main_peak_hit.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_plan_repository_smoke.py:22:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_plan_repository_smoke.py:25:        source_file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_application_plan_repository_smoke.py:39:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_processor_partial_apply_smoke.py:70:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_processor_partial_apply_smoke.py:114:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_processor_smoke.py:71:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_processor_smoke.py:115:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_repository_smoke.py:22:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_repository_smoke.py:29:                source_file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_repository_smoke.py:46:                source_file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:22:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:30:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:40:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:45:                channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:48:                source_file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:61:                channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_apply_timeline_resolver_smoke.py:64:                source_file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_channel_policy_smoke.py:8:    assert is_music_intelligence_enabled_for_channel(ChannelType.GAMING_MAIN) is True
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_channel_policy_smoke.py:15:            "gaming_main": is_music_intelligence_enabled_for_channel(ChannelType.GAMING_MAIN),
+D:\Zenith\tests\_archive_deleted_subsystems\test_music_cue_engine_smoke.py:32:        raw_video_path="inbox/gaming_uncut/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_operations_dashboard_service_smoke.py:46:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:16:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:32:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:35:        video_path="exports/gaming_main/job_attr_001/video.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:36:        thumbnail_or_cover_path="exports/gaming_main/job_attr_001/thumbnail.jpg",
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:37:        subtitle_path="exports/gaming_main/job_attr_001/subtitles.srt",
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:57:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_performance_attribution_smoke.py:117:    assert latest_snapshot.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\_archive_deleted_subsystems\test_platform_policy_resolver_smoke.py:18:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_platform_policy_resolver_smoke.py:26:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_highlight_export_smoke.py:204:        ChannelType.GAMING_MAIN.value,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_highlight_export_smoke.py:225:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:243:        ChannelType.GAMING_MAIN.value,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:246:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:266:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:268:        file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:277:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:279:        file_path="assets/audio/gaming_main/music/main_tension_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:288:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:290:        file_path="assets/audio/gaming_main/music/main_peak_hit.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:299:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:301:        file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:313:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_local_music_export_smoke.py:349:    assert all(selection.channel_type == "gaming_main" for selection in loaded)
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:243:        ChannelType.GAMING_MAIN.value,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:246:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:266:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:268:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:277:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:279:            file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:291:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_application_export_smoke.py:323:    assert all(instruction.channel_type == "gaming_main" for instruction in loaded_plan.instructions)
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_partial_export_smoke.py:258:        ChannelType.GAMING_MAIN.value,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_partial_export_smoke.py:261:    catalog_music_dir = os.path.join("assets", "audio", "gaming_main", "music")
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_partial_export_smoke.py:262:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_partial_export_smoke.py:287:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_partial_export_smoke.py:298:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_partial_export_smoke.py:312:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_timeline_export_smoke.py:258:        ChannelType.GAMING_MAIN.value,
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_timeline_export_smoke.py:261:    catalog_music_dir = os.path.join("assets", "audio", "gaming_main", "music")
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_timeline_export_smoke.py:262:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_timeline_export_smoke.py:288:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_timeline_export_smoke.py:299:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_process_gaming_channel_music_apply_timeline_export_smoke.py:313:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_platform_policy_smoke.py:21:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_guard_flow_smoke.py:98:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_guard_flow_smoke.py:106:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_main_results_file_smoke.py:56:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_main_results_file_smoke.py:64:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_orchestrator_variant_smoke.py:56:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_orchestrator_variant_smoke.py:64:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_platform_flow_smoke.py:13:        "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_platform_flow_smoke.py:21:        "raw_video_path": "inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_short_results_file_smoke.py:43:        "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_short_results_file_smoke.py:51:        "raw_video_path": "inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_storage_provider_smoke.py:13:    job_path = base_path / "gaming_main" / "job_publisher_storage_smoke_001"
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_storage_provider_smoke.py:25:            "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publisher_worker_storage_provider_smoke.py:26:            "video_path": "exports/gaming_main/job_publisher_storage_smoke_001/video.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_guard_real_smoke.py:17:    return os.path.join(TEST_EXPORTS_BASE, "gaming_main", job_id)
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_guard_real_smoke.py:33:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_guard_real_smoke.py:91:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_package_builder_platform_smoke.py:20:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_package_builder_platform_smoke.py:28:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_package_builder_source_video_smoke.py:12:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_package_builder_source_video_smoke.py:16:        source_video_path="inbox/gaming_main/real_main_test_001.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_package_builder_source_video_smoke.py:38:    assert package.source_video_path == "inbox/gaming_main/real_main_test_001.mp4"
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_result_metrics_bridge_smoke.py:14:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_result_metrics_bridge_smoke.py:61:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_result_metrics_bridge_smoke.py:108:    assert youtube_snapshot.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\_archive_deleted_subsystems\test_publish_result_variant_binding_smoke.py:53:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_detector_smoke.py:45:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_detector_smoke.py:52:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_detector_smoke.py:59:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_detector_smoke.py:73:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_resolver_smoke.py:52:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_resolver_smoke.py:64:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_resolver_smoke.py:76:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_snapshot_builder_smoke.py:45:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_snapshot_builder_smoke.py:52:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_collision_snapshot_builder_smoke.py:59:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_priority_explainer_smoke.py:18:            "dedupe_key": f"{queue_entry_id}:gaming_main:longform",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_priority_explainer_smoke.py:24:            "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_priority_smoke.py:19:            "dedupe_key": f"{queue_entry_id}:gaming_main:longform",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_priority_smoke.py:25:            "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_priority_snapshot_builder_smoke.py:19:            "dedupe_key": f"{queue_entry_id}:gaming_main:longform",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_priority_snapshot_builder_smoke.py:25:            "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_smoke.py:58:            primary_channel="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_smoke.py:65:            primary_channel="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_smoke.py:93:            primary_channel="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_queue_smoke.py:106:        assert queued_entry.channel_type == "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_recovery_executor_smoke.py:28:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_recovery_executor_smoke.py:35:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_recovery_executor_smoke.py:42:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_recovery_executor_smoke.py:49:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_recovery_planner_smoke.py:16:        reference_id="gaming_main/job_orphan_001",
+D:\Zenith\tests\_archive_deleted_subsystems\test_recovery_planner_smoke.py:37:        reference_id="gaming_main/job_broken_001",
+D:\Zenith\tests\_archive_deleted_subsystems\test_rerender_worker_storage_provider_smoke.py:43:                    "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_rerender_worker_storage_provider_smoke.py:44:                    "video_path": "exports/gaming_main/job_rerender_storage_smoke_001/video.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_highlight_smoke.py:29:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:162:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:179:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:181:        file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:190:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:192:        file_path="assets/audio/gaming_main/music/main_tension_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:201:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:203:        file_path="assets/audio/gaming_main/music/main_peak_hit.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:212:        channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:214:        file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_local_music_main_smoke.py:242:    assert all(selection.channel_type == "gaming_main" for selection in result["local_music_selections"])
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:162:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:179:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:181:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:190:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:192:            file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_main_smoke.py:223:        instruction.channel_type == "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:175:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:192:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:194:            file_path="assets/audio/gaming_main/music/main_intro_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:203:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:205:            file_path="assets/audio/gaming_main/music/main_calm_bed.mp3",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_application_render_consumption_smoke.py:237:        instruction.channel_type == "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_main_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_main_smoke.py:177:    catalog_music_dir = os.path.join("assets", "audio", "gaming_main", "music")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_main_smoke.py:178:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_main_smoke.py:201:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_main_smoke.py:212:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_partial_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_partial_smoke.py:177:    catalog_music_dir = os.path.join("assets", "audio", "gaming_main", "music")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_partial_smoke.py:178:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_partial_smoke.py:200:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_partial_smoke.py:211:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_timeline_smoke.py:34:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_timeline_smoke.py:177:    catalog_music_dir = os.path.join("assets", "audio", "gaming_main", "music")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_timeline_smoke.py:178:    catalog_path = os.path.join("data", "music_catalogs", "gaming_main_music_catalog.json")
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_timeline_smoke.py:201:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_run_gaming_pipeline_music_apply_timeline_smoke.py:212:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_save_pipeline_result_variants_smoke.py:30:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_save_pipeline_result_variants_smoke.py:38:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_evaluator_smoke.py:55:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_evaluator_smoke.py:65:            channel_type="gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_evaluator_smoke.py:74:            "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:24:        gaming_main = policy_manager.get_policy("gaming_main")
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:25:        assert gaming_main.channel_type == "gaming_main"
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:26:        assert gaming_main.is_enabled is True
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:27:        assert gaming_main.allows_longform is True
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:28:        assert gaming_main.allows_shorts is True
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:29:        assert gaming_main.publish_days == [0, 1, 2, 3, 4, 5, 6]
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:30:        assert gaming_main.publish_hour == 17
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:31:        assert gaming_main.publish_minute == 0
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:32:        assert gaming_main.min_gap_hours == 24
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:47:            "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_policy_smoke.py:58:        reloaded_main = policy_manager.get_policy("gaming_main")
+D:\Zenith\tests\_archive_deleted_subsystems\test_scheduling_time_resolver_smoke.py:16:            "channel_type": "gaming_main",
+D:\Zenith\tests\_archive_deleted_subsystems\test_shorts_generator_uses_raw_source_smoke.py:37:    export_root = os.path.join("exports", "gaming_main", "job_shorts_raw_source_smoke")
+D:\Zenith\tests\_archive_deleted_subsystems\test_shorts_generator_uses_raw_source_smoke.py:61:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_trend_smoke.py:33:        "channel_targets": [" gaming_main ", "FACELESS_TREND"],
+D:\Zenith\tests\_archive_deleted_subsystems\test_unified_metrics_layer_smoke.py:13:def run() -> None:
+D:\Zenith\tests\_archive_deleted_subsystems\test_unified_metrics_layer_smoke.py:66:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_unified_metrics_layer_smoke.py:130:    assert youtube_snapshot.channel_type == ChannelType.GAMING_MAIN
+D:\Zenith\tests\_archive_deleted_subsystems\test_variant_to_publish_package_smoke.py:22:        channel_type=ChannelType.GAMING_MAIN,
+D:\Zenith\tests\_archive_deleted_subsystems\test_variant_to_publish_package_smoke.py:30:        raw_video_path="inbox/gaming_main/sample.mp4",
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:77:        source_path=source,
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:113:            source_path=source,
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:140:        source_path=source,
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:171:        source_path=source,
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:203:        source_path=source,
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:231:        source_path=source,
+D:\Zenith\tests\_archive_deleted_subsystems\test_vertical_reframe_engine_smoke.py:264:        source_path=source,

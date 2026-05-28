@@ -1,0 +1,51 @@
+뿯붿D:\Zenith\core\edit_signal_extractor.py:26:    current FinalRenderDriver path.
+D:\Zenith\core\final_render_driver.py:216:class FinalRenderDriver:
+D:\Zenith\core\final_render_driver.py:324:        raw_decisions = getattr(job, "focus_decisions", None) if job is not None else None
+D:\Zenith\core\final_render_driver.py:396:        smooth_zoom_curve: object | None = None,
+D:\Zenith\core\final_render_driver.py:398:        if smooth_zoom_curve is None:
+D:\Zenith\core\final_render_driver.py:402:                "reason": "missing_smooth_zoom_curve",
+D:\Zenith\core\final_render_driver.py:405:        interpolate = getattr(smooth_zoom_curve, "interpolate", None)
+D:\Zenith\core\final_render_driver.py:410:                "reason": "smooth_zoom_curve_has_no_interpolate",
+D:\Zenith\core\final_render_driver.py:438:            "reason": "smooth_zoom_curve_interpolated",
+D:\Zenith\core\final_render_driver.py:1038:        """Resolve FinalRenderDriver video encoder with NVENC -> libx264 fallback."""
+D:\Zenith\core\final_render_driver.py:1280:        smooth_zoom_curve: object | None = None,
+D:\Zenith\core\final_render_driver.py:1374:                    smooth_zoom_curve=smooth_zoom_curve,
+D:\Zenith\core\final_render_driver.py:1463:            "render_driver": "FinalRenderDriver",
+D:\Zenith\core\final_render_driver.py:1484:            "focus_decisions_available": bool(getattr(job, "focus_decisions", None)),
+D:\Zenith\core\final_render_driver.py:1485:            "focus_decisions_used": any(
+D:\Zenith\core\final_render_driver.py:1491:            "smooth_zoom_available": smooth_zoom_curve is not None,
+D:\Zenith\core\focus_switch_engine.py:39:class FocusSwitchEngine:
+D:\Zenith\core\focus_switch_engine.py:144:            "focus_decisions": [decision.to_dict() for decision in decisions],
+D:\Zenith\core\gaming_pipeline.py:39:from core.smooth_zoom_engine import SmoothZoomEngine
+D:\Zenith\core\gaming_pipeline.py:40:from core.focus_switch_engine import FocusSwitchEngine, focus_decision_log_path
+D:\Zenith\core\gaming_pipeline.py:72:from core.final_render_driver import FinalRenderDriver
+D:\Zenith\core\gaming_pipeline.py:1074:    """Build a minimal FinalRenderDriver-compatible timeline without using RenderProcessor."""
+D:\Zenith\core\gaming_pipeline.py:1165:      7) FinalRenderDriver / RenderProcessor 뿯½†’ final_video_path
+D:\Zenith\core\gaming_pipeline.py:9132:    smooth_zoom_curve = None
+D:\Zenith\core\gaming_pipeline.py:9134:    focus_decisions = []
+D:\Zenith\core\gaming_pipeline.py:9328:            smooth_zoom_engine = services.get("smooth_zoom_engine") or SmoothZoomEngine()
+D:\Zenith\core\gaming_pipeline.py:9330:            smooth_zoom_curve = smooth_zoom_engine.build_curve_from_triggers(
+D:\Zenith\core\gaming_pipeline.py:9337:            smooth_zoom_summary = smooth_zoom_engine.summarize(smooth_zoom_curve)
+D:\Zenith\core\gaming_pipeline.py:9348:            smooth_zoom_curve = None
+D:\Zenith\core\gaming_pipeline.py:9358:                services.get("focus_switch_engine") or FocusSwitchEngine()
+D:\Zenith\core\gaming_pipeline.py:9361:            focus_decisions = focus_switch_engine.decide(
+D:\Zenith\core\gaming_pipeline.py:9367:            focus_decision_summary = focus_switch_engine.summarize(focus_decisions)
+D:\Zenith\core\gaming_pipeline.py:9369:                focus_decisions,
+D:\Zenith\core\gaming_pipeline.py:9372:            job.focus_decisions = [
+D:\Zenith\core\gaming_pipeline.py:9374:                for decision in focus_decisions
+D:\Zenith\core\gaming_pipeline.py:9385:            focus_decisions = []
+D:\Zenith\core\gaming_pipeline.py:10576:    # 7) Render - Phase 2 single path: FinalRenderDriver only
+D:\Zenith\core\gaming_pipeline.py:10613:                "renderer_type": "FinalRenderDriver",
+D:\Zenith\core\gaming_pipeline.py:10632:    active_renderer = FinalRenderDriver()
+D:\Zenith\core\gaming_pipeline.py:10658:    final_video_path = active_renderer.render(
+D:\Zenith\core\gaming_pipeline.py:10664:        smooth_zoom_curve=smooth_zoom_curve,
+D:\Zenith\core\gaming_pipeline.py:11033:        "smooth_zoom_curve": (
+D:\Zenith\core\gaming_pipeline.py:11034:            smooth_zoom_curve.to_dict()
+D:\Zenith\core\gaming_pipeline.py:11035:            if smooth_zoom_curve is not None
+D:\Zenith\core\gaming_pipeline.py:11036:            and callable(getattr(smooth_zoom_curve, "to_dict", None))
+D:\Zenith\core\gaming_pipeline.py:11040:        "focus_decisions": [
+D:\Zenith\core\gaming_pipeline.py:11042:            for decision in (focus_decisions or [])
+D:\Zenith\core\gaming_pipeline.py:11179:        "smooth_zoom_curve": smooth_zoom_curve,
+D:\Zenith\core\gaming_pipeline.py:11181:        "focus_decisions": focus_decisions,
+D:\Zenith\core\render_processor.py:44:# DEPRECATED - Phase 2: superseded by FinalRenderDriver for gaming_main longform rendering.
+D:\Zenith\core\smooth_zoom_engine.py:106:class SmoothZoomEngine:

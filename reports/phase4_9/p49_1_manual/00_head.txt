@@ -1,0 +1,8 @@
+뿯붿ecfce3c docs(P4-8-B6): add final GO NO-GO package
+f92b573 test(P4-8-B5): add real sample render proof
+4dd7a4f test(P4-8-B4): add mini render visual proof
+65a1871 fix(P4-8-B4): accept smooth zoom curve in render signature
+48de6d5 fix(P4-8-B3): apply smooth zoom curve in final render policy
+582d7f3 fix(P4-8-B2): consume focus decisions in final render policy
+ccd4384 docs(P4-8-B1): diagnose render decision consumption gap
+fefc4c1 chore(P4-8-A5): audit top solo and vlog fingerprints

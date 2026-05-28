@@ -1,0 +1,24 @@
+뿯붿usage: pipeline_runner.py [-h] [--approve JOB_ID] [--list-blocked]
+                          [--power-profile {off,eco,balanced,performance,full_power}]
+                          [--output-dir OUTPUT_DIR] [--start-sec START_SEC]
+                          [--duration DURATION]
+                          [input_video_path]
+
+Run Zenith pending jobs or approve one blocked job.
+
+positional arguments:
+  input_video_path      Optional raw video path for CLI job mode.
+
+options:
+  -h, --help            show this help message and exit
+  --approve JOB_ID      Persist explicit approval for one job and rerun it.
+  --list-blocked        List jobs currently in render_blocked status.
+  --power-profile {off,eco,balanced,performance,full_power}
+                        Pipeline power profile:
+                        off|eco|balanced|performance|full_power (default:
+                        balanced)
+  --output-dir OUTPUT_DIR
+                        Output directory for probe-clip mode.
+  --start-sec START_SEC
+                        Start offset in seconds for probe-clip render.
+  --duration DURATION   Duration in seconds for probe-clip render.

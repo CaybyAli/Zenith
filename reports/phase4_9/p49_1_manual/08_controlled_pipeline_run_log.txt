@@ -1,0 +1,94 @@
+뿯붿[pipeline_runner] CLI NEW    Rocket League Neuer Test58.mp4  channel=gaming_main
+[pipeline_runner] CLI JOB    job_444776e720e7  created
+[pipeline_runner] GAMING MAIN  job_444776e720e7  video='D:\\Zenith\\tests\\Rocket League Neuer Test58.mp4'
+[gaming_pipeline] JSON_PROFILE job=job_444776e720e7 profile=gaming_main quality_mode=pro cut_aggressiveness=0.85 source=profiles/gaming_main.json
+[gaming_pipeline] PROFILE_SNAPSHOT job=job_444776e720e7 path=exports\gaming_main\job_444776e720e7\profile_snapshot.json
+[gaming_pipeline] EDITING_PROFILE job=job_444776e720e7 channel=gaming_main profile=gaming_main content_family=gaming output_style=main quality_mode=pro analysis_depth=deep cut_aggressiveness=0.85
+Loaded the voice encoder model on cuda in 0.19 seconds.
+[gaming_pipeline] TRANSCRIPT job_444776e720e7 segments=9 engine=faster-whisper
+[gaming_pipeline] SPEAKERS  job_444776e720e7 strategy=single_track_embedding ali=5 friend=0 unknown=4
+[gaming_pipeline] VOICE_INTENSITY job_444776e720e7 points=31 normal=80.645 leise=16.129 schreien=3.226 bruellen=0.0
+[gaming_pipeline] FACE_DETECTION job_444776e720e7 points=30 detected=30 rate=1.000 engine=mediapipe_face_mesh
+[gaming_pipeline] FACIAL_EXPRESSIONS job_444776e720e7 points=30 active=3 patterns=2
+[gaming_pipeline] GAMEPLAY_MENU job_444776e720e7 points=30 gameplay=96.667 menu=3.333
+[gaming_pipeline] SMOOTH_ZOOM job_444776e720e7 keyframes=14 max_zoom=1.5 targets=balanced,facecam,gameplay hard_jumps=0
+[gaming_pipeline] FOCUS_SWITCH job_444776e720e7 decisions=31 counts={'facecam': 18, 'gameplay': 13} log=data\jobs\job_444776e720e7_focus_decision_log.json
+[gaming_pipeline] HOOKS     job_444776e720e7 hooks=5 keywords=8 engine=rule-based-hook-keyword-v1
+[gaming_pipeline] SENTENCES job_444776e720e7 total=9 hooks=0 fillers=2 incomplete=0 avg=0.42 max=0.5 engine=sentence-timeline-builder-v1
+[gaming_pipeline] CUT_PROFILE job_444776e720e7 channel=gaming_main profile=gaming_main target_pacing=aggressive min_seg=2.5 max_seg=18.0
+[gaming_pipeline] CUT_PROFILE_TOP job_444776e720e7 goal_or_save_like_flash=1.3 silence_or_dead_air=-1.3 high_action_burst=1.2 round_end_dead_time=-1.2 hook_sentence=1.0 menu_or_idle=-1.0 facecam_reaction_spike=0.9 shock_like=0.8
+[gaming_pipeline] ANALYZE   job_444776e720e7  done
+[gaming_pipeline] CUT       job_444776e720e7  done
+[POSTCUT-TIMING] job_444776e720e7 edit_signals=0.013s
+[gaming_pipeline] SIGNALS   job_444776e720e7  signals=34
+[gaming_pipeline] SILENCE   job_444776e720e7  silence_zones=1 low_motion_zones=2
+[POSTCUT-TIMING] job_444776e720e7 energy_curve=0.000s
+[gaming_pipeline] ENERGY   job_444776e720e7 points=7 peaks=2 avg=0.483 max=1.0 engine=energy-curve-builder-v1
+[POSTCUT-TIMING] job_444776e720e7 audio_roles=0.000s
+[gaming_pipeline] AUDIO_ROLES job_444776e720e7 total=33 speech=9 secondary=2 group=3 laugh=0 shout=0 game_peak=0 silence=1 risk=18 engine=audio-role-indicator-builder-v1
+[GAMEPLAY-VISION] threshold=0.120 scene_threshold=0.180 sample_seconds=0.500 resolution=64x36 windows=59 action_windows=24 avg=0.12 max=0.208
+[POSTCUT-TIMING] job_444776e720e7 gameplay_vision=2.853s
+[gaming_pipeline] VISION   job_444776e720e7 windows=59 action_windows=24 avg=0.12 max=0.208 engine=gameplay-vision-analyzer-v1
+[POSTCUT-TIMING] job_444776e720e7 gameplay_events=0.001s
+[gaming_pipeline] GAMEPLAY_EVENTS job_444776e720e7 total=49 high_action=24 sustained=3 flash=18 round_dead=1 replay=0 kickoff=3 idle=0 engine=gameplay-event-indicator-builder-v1
+[POSTCUT-TIMING] job_444776e720e7 facecam_reaction=2.803s
+[gaming_pipeline] FACECAM  job_444776e720e7 windows=29 reactions=0 avg=0.012 max=0.032 engine=facecam-reaction-analyzer-v1
+[POSTCUT-TIMING] job_444776e720e7 facecam_emotions=0.001s
+[gaming_pipeline] FACECAM_EMOTIONS job_444776e720e7 total=3 reaction=0 motion=0 expression=0 mouth=0 smile=0 shock=0 laugh=0 head=0 thumbnail=0 low=3 engine=facecam-emotion-indicator-builder-v1
+[ROUND-PHASE] count=9 active=2 goals=0 round_end=3 menu_wait=2 queue_wait=0 countdown=1
+[POSTCUT-TIMING] job_444776e720e7 round_phase=0.002s
+[gaming_pipeline] PHASES job_444776e720e7 count=9 active=2 goals=0 round_end=3 menu_wait=2 queue_wait=0 countdown=1 engine=round-phase-detector-v1
+[POSTCUT-TIMING] job_444776e720e7 gameplay_state=0.003s
+[gaming_pipeline] GAMEPLAY_STATE job_444776e720e7 total=181 active=30 menu_wait=2 round_end=4 replay=0 low_wait=4 high_action=37 pre_context=56 dead_after_goal=23 engine=gameplay-state-analyzer-v1
+[POSTCUT-TIMING] job_444776e720e7 highlight_select=0.000s
+[gaming_pipeline] HIGHLIGHTS job_444776e720e7  candidates=4
+[POSTCUT-TIMING] job_444776e720e7 cut_indicators=0.001s
+[gaming_pipeline] INDICATORS job_444776e720e7 total=167 positive=104 negative=28 neutral=35 avg=0.469 max=1.0 engine=cut-indicator-builder-v1
+[gaming_pipeline] INDICATOR_TOP job_444776e720e7 high_action_burst=24 gameplay_action=21 audio_activity=18 goal_or_save_like_flash=18 speech_cut_risk_audio=18 audio_peak=12 speech_active=9 speech_segment=9
+[UNIVERSAL-MOMENT-BRAIN] windows=121 keep=78 remove=7 cut_risk=43 zoom_risk=18 avg=0.356 max=0.636
+[UNIVERSAL-MOMENT-BRAIN] top_types active=10 peak=36 menu=0 private=34 boring=5 tension=14
+[POSTCUT-TIMING] job_444776e720e7 universal_moments=0.027s
+[gaming_pipeline] UNIVERSAL_MOMENTS job_444776e720e7 windows=121 keep=78 remove=7 cut_risk=43 zoom_risk=18 avg=0.356 max=0.636 engine=universal-moment-brain-v1
+[POSTCUT-TIMING] job_444776e720e7 phase_filter=0.000s
+[PHASE-FILTER] dropped 0 highlights in menu_wait/queue_wait, kept 1 with hook/peak override
+[gaming_pipeline] PHASE_FILTER job_444776e720e7 dropped=0 kept_override=1 remaining=4
+[POSTCUT-TIMING] job_444776e720e7 render_gate_eval=0.000s
+[gaming_pipeline] RENDER_GATE OVERRIDE job_444776e720e7 reason=auto_approve_override would_block=readiness_not_ready (ZENITH_RENDER_GATE_AUTO_APPROVE=1, rendering anyway)
+[gaming_pipeline] RENDER FALLBACK_TIMELINE job_444776e720e7 segments=1 duration=30.000s
+
+============================================================
+[CUT] RENDERING GESTARTET: 1 Segmente
+[CUT] SEGMENT_WORKERS: 1
+============================================================
+
+[DEBUG] [AUDIO] Skipped peak detection (no reactive zooms)
+[DEBUG] [MUTE] No audio peaks detected (segment too quiet)
+[SEG] SEGMENT 1/1 (100%) - HOOK
+   [TIME] 0.0s -> 30.0s (30.0s)
+[DEBUG] Segment phase2_f (hook): layout_kind='facecam_emphasis' policy_source='focus_decision'
+[DEBUG] -> Rendering FACECAM ONLY (left half)
+   [OK] Segment 1/1 fertig!
+
+============================================================
+[DONE] ALLE SEGMENTE GERENDERT - Jetzt zusammenfuegen...
+============================================================
+
+[gaming_pipeline] RENDER    job_444776e720e7  ├뿯½뿯½뿯½뿯½뿯½뿯½뿯½ output\job_444776e720e7_final.mp4
+[gaming_pipeline] AUDIO_LEVEL job_444776e720e7 skipped=True filter=0
+[gaming_pipeline] SUBTITLES job_444776e720e7  segments=9 filters=1
+[gaming_pipeline] META      job_444776e720e7  title='Unfassbarer Gaming Moment 뿯½뿯ƽ뿯½뿯▽뿯½뿯ƽ뿯½뿯½'
+[gaming_pipeline] VALIDATE  job_444776e720e7  status=passed
+[gaming_pipeline] VALIDATE_DETAIL job_444776e720e7 status=passed reason=all blocking checks passed
+[PHASE-2B-STABILIZATION] status=failed ready=false artifacts=1/8 timeline_segments=1 final_review_segments=0 warnings=0
+[gaming_pipeline] PHASE_2B_STABILIZATION job_444776e720e7 status=failed ready=false timeline=1 review=0 warnings=0
+[gaming_pipeline] PHASE_2B_STABILIZATION_FILE job_444776e720e7 path=exports\gaming_main\job_444776e720e7\phase_2b_stabilization_result.json
+[gaming_pipeline] DONE      job_444776e720e7  status=validation_failed
+[pipeline_runner] EXPORT_VERSION job_444776e720e7 version=1 file=job_444776e720e7_v1_final.mp4
+[pipeline_runner] COPIED   1 file(s) to export
+[pipeline_runner] CLEANUP  Deleted 1 temporary file(s) from output/
+[pipeline_runner] EXPORT    job_444776e720e7  뿯½뿯½뿯½ exports\gaming_main\job_444776e720e7
+[pipeline_runner] JOB_JSON  job_444776e720e7  path=exports\gaming_main\job_444776e720e7\job.json
+
+[pipeline_runner] Done ? ok=0  skipped=0  failed=1
+  ?  job_444776e720e7  (gaming_main)
+       phase_2b_stabilization_not_ready
