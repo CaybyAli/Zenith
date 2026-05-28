@@ -278,6 +278,111 @@ class FinalRenderDriver:
             if z.segment_id == segment.segment_id
         ]
 
+
+    def _normalise_focus_target(self, focus_target: object) -> str:
+        target = str(focus_target or "").strip().lower()
+        if target in {"facecam", "facecam_focus", "facecam_emphasis"}:
+            return "facecam"
+        if target in {"gameplay", "gameplay_focus", "gameplay_crop"}:
+            return "gameplay"
+        if target in {"balanced", "balanced_split"}:
+            return "balanced"
+        if target == "drop":
+            return "drop"
+        return "unknown"
+
+    def _layout_kind_for_focus_target(self, focus_target: object) -> str:
+        target = self._normalise_focus_target(focus_target)
+        if target == "facecam":
+            return "facecam_emphasis"
+        if target in {"gameplay", "drop"}:
+            return "gameplay_crop"
+        if target == "balanced":
+            return "balanced_split"
+        return "full_gameplay"
+
+    def _resolve_focus_render_policy(
+        self,
+        segment: TimelineSegment,
+        job: Job | None = None,
+        reframe_plan: ReframePlan | None = None,
+    ) -> dict:
+        instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
+        fallback_layout = instr.layout_kind if instr else "full_gameplay"
+        fallback_focus = getattr(instr, "focus_kind", None) if instr else None
+
+        base_policy = {
+            "segment_id": str(segment.segment_id),
+            "policy_source": "reframe_plan" if instr else "default",
+            "focus_target": self._normalise_focus_target(fallback_focus),
+            "layout_kind": str(fallback_layout),
+            "confidence": 0.0,
+            "timestamp": None,
+            "reasoning": "fallback_reframe_plan" if instr else "fallback_default",
+        }
+
+        raw_decisions = getattr(job, "focus_decisions", None) if job is not None else None
+        if not isinstance(raw_decisions, list) or not raw_decisions:
+            return base_policy
+
+        midpoint = (float(segment.start_time) + float(segment.end_time)) / 2.0
+        candidates: list[dict] = []
+
+        for raw in raw_decisions:
+            if hasattr(raw, "to_dict") and callable(raw.to_dict):
+                raw = raw.to_dict()
+            if not isinstance(raw, dict):
+                continue
+
+            try:
+                timestamp = float(raw.get("timestamp"))
+            except (TypeError, ValueError):
+                continue
+
+            if not (float(segment.start_time) <= timestamp < float(segment.end_time)):
+                continue
+
+            focus_target = self._normalise_focus_target(raw.get("focus_target"))
+            if focus_target == "unknown":
+                continue
+
+            try:
+                confidence = float(raw.get("confidence", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                confidence = 0.0
+
+            candidates.append(
+                {
+                    "raw": raw,
+                    "timestamp": timestamp,
+                    "focus_target": focus_target,
+                    "confidence": confidence,
+                    "distance": abs(timestamp - midpoint),
+                }
+            )
+
+        if not candidates:
+            return base_policy
+
+        candidates.sort(key=lambda item: (-item["confidence"], item["distance"]))
+        selected = candidates[0]
+        raw = selected["raw"]
+        focus_target = selected["focus_target"]
+
+        return {
+            "segment_id": str(segment.segment_id),
+            "policy_source": "focus_decision",
+            "focus_target": focus_target,
+            "layout_kind": self._layout_kind_for_focus_target(focus_target),
+            "confidence": round(float(selected["confidence"]), 3),
+            "timestamp": round(float(selected["timestamp"]), 3),
+            "reasoning": str(raw.get("reasoning") or "focus_decision"),
+            "facecam_zoom": float(raw.get("facecam_zoom", 1.0) or 1.0),
+            "gameplay_zoom": float(raw.get("gameplay_zoom", 1.0) or 1.0),
+            "facecam_opacity": float(raw.get("facecam_opacity", 1.0) or 1.0),
+        }
+
+
     # ------------------------------------------------------------------ #
     #  Filter chain builder                                                #
     # ------------------------------------------------------------------ #
@@ -290,6 +395,7 @@ class FinalRenderDriver:
         audio_peaks: list[dict],
         src_w: int,
         src_h: int,
+        focus_policy: dict | None = None,
     ) -> tuple[str, str]:
 
         """
@@ -300,8 +406,16 @@ class FinalRenderDriver:
         """
         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
         layout_kind = instr.layout_kind if instr else "full_gameplay"
+        policy_source = "reframe_plan" if instr else "default"
 
-        print(f"[DEBUG] Segment {segment.segment_id[:8]} ({segment.segment_role}): layout_kind='{layout_kind}'")
+        if isinstance(focus_policy, dict) and focus_policy.get("layout_kind"):
+            layout_kind = str(focus_policy.get("layout_kind"))
+            policy_source = str(focus_policy.get("policy_source") or "focus_policy")
+
+        print(
+            f"[DEBUG] Segment {segment.segment_id[:8]} ({segment.segment_role}): "
+            f"layout_kind='{layout_kind}' policy_source='{policy_source}'"
+        )
 
         if src_w >= 3000:  # 32:9 Format
             if layout_kind == "facecam_emphasis":
@@ -309,6 +423,15 @@ class FinalRenderDriver:
                 fc = (
                     f"[0:v]hwdownload,format=nv12,format=yuv420p,"
                     f"crop={src_w//2}:1080:0:0,"
+                    f"{_cuda_scale_filter(1920, 1080)}[out]"
+                )
+                return fc, "[out]"
+
+            if layout_kind in {"gameplay_crop", "gameplay_focus"}:
+                print(f"[DEBUG] -> Rendering GAMEPLAY FOCUS ONLY (right half)")
+                fc = (
+                    f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+                    f"crop={src_w//2}:1080:{src_w//2}:0,"
                     f"{_cuda_scale_filter(1920, 1080)}[out]"
                 )
                 return fc, "[out]"
@@ -1092,6 +1215,9 @@ class FinalRenderDriver:
         tmp_dir = out_dir / f"tmp_{job.job_id}"
         tmp_dir.mkdir(exist_ok=True)
 
+        render_layout_records: list[dict] = []
+        render_layout_counts: dict[str, int] = {}
+
         try:
             src_w, src_h = self._get_video_dimensions(source)
             video_encoder = self._resolve_video_encoder(job)
@@ -1143,8 +1269,25 @@ class FinalRenderDriver:
                 print(f"[SEG] SEGMENT {current_segment}/{total_segments} ({progress_percent}%) - {seg.segment_role.upper()}")
                 print(f"   [TIME] {seg.start_time:.1f}s -> {seg.end_time:.1f}s ({seg.duration:.1f}s)")
                 
+                focus_policy = self._resolve_focus_render_policy(
+                    segment=seg,
+                    job=job,
+                    reframe_plan=reframe_plan,
+                )
+                render_layout_records.append(dict(focus_policy))
+                layout_for_count = str(focus_policy.get("layout_kind") or "unknown")
+                render_layout_counts[layout_for_count] = (
+                    render_layout_counts.get(layout_for_count, 0) + 1
+                )
+
                 fc, label = self._build_filter_complex(
-                    seg, reframe_plan, dynamic_edit_plan, audio_peaks, src_w, src_h
+                    seg,
+                    reframe_plan,
+                    dynamic_edit_plan,
+                    audio_peaks,
+                    src_w,
+                    src_h,
+                    focus_policy=focus_policy,
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
                 render_tasks.append(
@@ -1237,6 +1380,13 @@ class FinalRenderDriver:
                 len(reframe_plan.instructions) if reframe_plan is not None else 0
             ),
             "dynamic_edit_plan_used": dynamic_edit_plan is not None,
+            "focus_decisions_available": bool(getattr(job, "focus_decisions", None)),
+            "focus_decisions_used": any(
+                str(item.get("policy_source")) == "focus_decision"
+                for item in render_layout_records
+            ),
+            "render_layout_counts": dict(sorted(render_layout_counts.items())),
+            "resolved_render_layouts": render_layout_records,
             "segment_render_workers": render_workers,
             "zoom_instructions_count": (
                 len(dynamic_edit_plan.zoom_instructions)
