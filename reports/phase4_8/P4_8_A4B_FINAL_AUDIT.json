@@ -1,0 +1,328 @@
+{
+  "status": "ok",
+  "track_based_or_non_unknown": 20,
+  "unknown_or_bad": 0,
+  "bad": [],
+  "ok": [
+    {
+      "pair": "pair_001",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_001\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 62.976,
+      "friend": 37.024,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_002",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_002\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 68.344,
+      "friend": 31.656,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_003",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_003\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 99.995,
+      "friend": 0.005,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_004",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_004\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 58.131,
+      "friend": 41.869,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_005",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_005\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 52.374,
+      "friend": 47.626,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_006",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_006\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 56.77,
+      "friend": 43.23,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_007",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_007\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 54.091,
+      "friend": 45.909,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_008",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_008\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 60.507,
+      "friend": 39.493,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_009",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_009\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 74.064,
+      "friend": 25.936,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_010",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_010\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 67.782,
+      "friend": 32.218,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_011",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_011\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 76.679,
+      "friend": 23.321,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_012",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_012\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 67.188,
+      "friend": 32.812,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_013",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_013\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 61.902,
+      "friend": 38.098,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_014",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_014\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 79.175,
+      "friend": 20.825,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_015",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_015\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 70.086,
+      "friend": 29.914,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_016",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_016\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 70.967,
+      "friend": 29.033,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_017",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_017\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 69.806,
+      "friend": 30.194,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_018",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_018\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 59.823,
+      "friend": 40.177,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_019",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_019\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 71.665,
+      "friend": 28.335,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    },
+    {
+      "pair": "pair_020",
+      "source": "track_mapping",
+      "source_path": "learning_corpus\\pairs\\pair_020\\raw.mp4",
+      "version": "p4_8_a4b_v1",
+      "ali": 70.458,
+      "friend": 29.542,
+      "unknown": 0.0,
+      "status": "verified",
+      "method": "p4_8_a4b_raw_multitrack_silencedetect_v1",
+      "track_mapping": {
+        "a0": "ali",
+        "a1": "friend",
+        "a2": "game"
+      }
+    }
+  ]
+}

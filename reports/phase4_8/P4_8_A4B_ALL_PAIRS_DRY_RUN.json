@@ -1,0 +1,166 @@
+{
+  "status": "ok",
+  "results": [
+    {
+      "pair": "pair_001",
+      "audio_stream_count": 4,
+      "ali": 62.976,
+      "friend": 37.024,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_002",
+      "audio_stream_count": 4,
+      "ali": 68.344,
+      "friend": 31.656,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_003",
+      "audio_stream_count": 4,
+      "ali": 99.995,
+      "friend": 0.005,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_004",
+      "audio_stream_count": 4,
+      "ali": 58.131,
+      "friend": 41.869,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_005",
+      "audio_stream_count": 4,
+      "ali": 52.374,
+      "friend": 47.626,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_006",
+      "audio_stream_count": 3,
+      "ali": 56.77,
+      "friend": 43.23,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_007",
+      "audio_stream_count": 3,
+      "ali": 54.091,
+      "friend": 45.909,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_008",
+      "audio_stream_count": 4,
+      "ali": 60.507,
+      "friend": 39.493,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_009",
+      "audio_stream_count": 4,
+      "ali": 74.064,
+      "friend": 25.936,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_010",
+      "audio_stream_count": 4,
+      "ali": 67.782,
+      "friend": 32.218,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_011",
+      "audio_stream_count": 4,
+      "ali": 76.679,
+      "friend": 23.321,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_012",
+      "audio_stream_count": 4,
+      "ali": 67.188,
+      "friend": 32.812,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_013",
+      "audio_stream_count": 4,
+      "ali": 61.902,
+      "friend": 38.098,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_014",
+      "audio_stream_count": 4,
+      "ali": 79.175,
+      "friend": 20.825,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_015",
+      "audio_stream_count": 4,
+      "ali": 70.086,
+      "friend": 29.914,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_016",
+      "audio_stream_count": 4,
+      "ali": 70.967,
+      "friend": 29.033,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_017",
+      "audio_stream_count": 4,
+      "ali": 69.806,
+      "friend": 30.194,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_018",
+      "audio_stream_count": 4,
+      "ali": 59.823,
+      "friend": 40.177,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_019",
+      "audio_stream_count": 4,
+      "ali": 71.665,
+      "friend": 28.335,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    },
+    {
+      "pair": "pair_020",
+      "audio_stream_count": 4,
+      "ali": 70.458,
+      "friend": 29.542,
+      "unknown": 0.0,
+      "source": "track_mapping"
+    }
+  ],
+  "failed": []
+}
