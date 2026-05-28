@@ -1,0 +1,1694 @@
+{
+  "phase": "P4.8-A5",
+  "name": "top_solo_vlogs_audit_only",
+  "status": "ok",
+  "timestamp_utc": "2026-05-28T10:23:03Z",
+  "mutation_check": {
+    "ok": true,
+    "mutated_files": []
+  },
+  "summary": {
+    "top_solo_count": 30,
+    "vlogs_count": 3,
+    "hard_bad_count": 0,
+    "warning_entry_count": 33
+  },
+  "buckets": {
+    "top_solo": {
+      "expected_count": 30,
+      "actual_count": 30,
+      "count_ok": true,
+      "ok_count": 30,
+      "bad_count": 0,
+      "warning_count": 30,
+      "entries": [
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_001\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_002\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_003\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_004\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_005\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_006\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_007\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_008\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_009\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_010\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_011\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_012\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_013\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_014\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_015\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_016\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_017\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 29,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_018\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_019\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_020\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_021\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_022\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_023\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_024\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_025\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_026\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_027\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_028\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_029\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_030\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        }
+      ],
+      "bad": [],
+      "warnings": [
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_001\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_002\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_003\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_004\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_005\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_006\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_007\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_008\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_009\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_010\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_011\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_012\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_013\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_014\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_015\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_016\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_017\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 29,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_018\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_019\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_020\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_021\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_022\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_023\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_024\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_025\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_026\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_027\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_028\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_029\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "top_solo",
+          "path": "learning_corpus\\top_solo\\video_030\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        }
+      ]
+    },
+    "vlogs": {
+      "expected_count": 3,
+      "actual_count": 3,
+      "count_ok": true,
+      "ok_count": 3,
+      "bad_count": 0,
+      "warning_count": 3,
+      "entries": [
+        {
+          "bucket": "vlogs",
+          "path": "learning_corpus\\vlogs\\vlog_001\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "vlogs",
+          "path": "learning_corpus\\vlogs\\vlog_002\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "vlogs",
+          "path": "learning_corpus\\vlogs\\vlog_003\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        }
+      ],
+      "bad": [],
+      "warnings": [
+        {
+          "bucket": "vlogs",
+          "path": "learning_corpus\\vlogs\\vlog_001\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "vlogs",
+          "path": "learning_corpus\\vlogs\\vlog_002\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 27,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        },
+        {
+          "bucket": "vlogs",
+          "path": "learning_corpus\\vlogs\\vlog_003\\style_fingerprint.json",
+          "ok": true,
+          "failed": [],
+          "warnings": [
+            "missing_p4_6_recommended_speaker_distribution",
+            "legacy_transcript_first_10s_text_present"
+          ],
+          "bad_source_hits": [],
+          "raw_warning_hits": [],
+          "top_key_count": 28,
+          "missing_critical": [],
+          "missing_p4_6_recommended": [
+            "speaker_distribution"
+          ],
+          "missing_style_capture": [],
+          "transcript_source": null,
+          "transcript_scope": null,
+          "hook_source": null,
+          "audio_source": null,
+          "style_capture_source": null,
+          "speaker_distribution_source": null,
+          "speaker_distribution_status": null
+        }
+      ]
+    }
+  }
+}
