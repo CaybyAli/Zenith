@@ -1,0 +1,724 @@
+
+====================================================================================================
+core/gaming_pipeline.py:9120-9395
+====================================================================================================
+9120:         )
+9121:         return _existing_shorts_result
+9122: 
+9123:     transcript_result = None
+9124:     voice_intensity_points = []
+9125:     voice_intensity_distribution = {}
+9126:     face_detection_points = []
+9127:     face_detection_rate = 0.0
+9128:     facial_expression_points = []
+9129:     facial_expression_distribution = {}
+9130:     gameplay_detection_points = []
+9131:     gameplay_detection_distribution = {}
+9132:     smooth_zoom_curve = None
+9133:     smooth_zoom_summary = {}
+9134:     focus_decisions = []
+9135:     focus_decision_summary = {}
+9136:     focus_decision_log = None
+9137:     if job.channel_type == ChannelType.GAMING_MAIN:
+9138:         ensure_ffmpeg_on_path()
+9139:         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
+9140:         if os.environ.get("ZENITH_SKIP_TRANSCRIPT") == "1":
+9141:             print(
+9142:                 f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+9143:                 "skipped reason=env skip (ZENITH_SKIP_TRANSCRIPT test-only bypass)"
+9144:             )
+9145:         elif job.raw_video_path:
+9146:             try:
+9147:                 transcript_stream_results = transcript_processor.transcribe_all_streams(
+9148:                     str(job.raw_video_path)
+9149:                 )
+9150:                 speaker_identifier = (
+9151:                     services.get("speaker_identifier") or SpeakerIdentifier()
+9152:                 )
+9153:                 transcript_result = speaker_identifier.identify_transcript_results(
+9154:                     transcript_stream_results,
+9155:                     source_media_path=str(job.raw_video_path),
+9156:                 )
+9157:                 speaker_summary = getattr(speaker_identifier, "last_summary", None)
+9158:                 speaker_summary_data = (
+9159:                     speaker_summary.to_dict()
+9160:                     if speaker_summary is not None
+9161:                     and callable(getattr(speaker_summary, "to_dict", None))
+9162:                     else {}
+9163:                 )
+9164:                 if hasattr(job, "speaker_identification_summary"):
+9165:                     job.speaker_identification_summary = speaker_summary_data
+9166:                 print(
+9167:                     f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+9168:                     f"segments={len(transcript_result.segments)} "
+9169:                     f"engine={transcript_result.engine}"
+9170:                 )
+9171:                 print(
+9172:                     f"[gaming_pipeline] SPEAKERS  {job.job_id} "
+9173:                     f"strategy={speaker_summary_data.get('strategy', '-')} "
+9174:                     f"ali={speaker_summary_data.get('ali_segments', 0)} "
+9175:                     f"friend={speaker_summary_data.get('friend_segments', 0)} "
+9176:                     f"unknown={speaker_summary_data.get('unknown_segments', 0)}"
+9177:                 )
+9178:             except (TranscriptUnavailableError, ImportError, FileNotFoundError, RuntimeError) as exc:
+9179:                 try:
+9180:                     transcript_result = transcript_processor.transcribe(str(job.raw_video_path))
+9181:                     print(
+9182:                         f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+9183:                         f"segments={len(transcript_result.segments)} "
+9184:                         f"engine={transcript_result.engine} "
+9185:                         f"speaker_fallback=legacy reason={exc}"
+9186:                     )
+9187:                 except (
+9188:                     TranscriptUnavailableError,
+9189:                     ImportError,
+9190:                     FileNotFoundError,
+9191:                     RuntimeError,
+9192:                 ) as fallback_exc:
+9193:                     print(
+9194:                         f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped "
+9195:                         f"reason={fallback_exc}"
+9196:                     )
+9197:         else:
+9198:             print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=no raw_video_path")
+9199: 
+9200:     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+9201:         try:
+9202:             voice_intensity_analyzer = (
+9203:                 services.get("voice_intensity_analyzer") or VoiceIntensityAnalyzer()
+9204:             )
+9205:             voice_intensity_points = voice_intensity_analyzer.analyze(
+9206:                 str(job.raw_video_path),
+9207:                 speaker="ali",
+9208:             )
+9209:             voice_intensity_distribution = voice_intensity_analyzer.distribution(
+9210:                 voice_intensity_points
+9211:             )
+9212:             if hasattr(job, "voice_intensity_distribution"):
+9213:                 job.voice_intensity_distribution = dict(voice_intensity_distribution)
+9214:             print(
+9215:                 f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
+9216:                 f"points={len(voice_intensity_points)} "
+9217:                 f"normal={voice_intensity_distribution.get('normal', 0.0)} "
+9218:                 f"leise={voice_intensity_distribution.get('leise_erhoeht', 0.0)} "
+9219:                 f"schreien={voice_intensity_distribution.get('schreien', 0.0)} "
+9220:                 f"bruellen={voice_intensity_distribution.get('bruellen', 0.0)}"
+9221:             )
+9222:         except Exception as voice_intensity_exc:
+9223:             voice_intensity_points = []
+9224:             voice_intensity_distribution = {}
+9225:             print(
+9226:                 f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
+9227:                 f"skipped reason={voice_intensity_exc}"
+9228:             )
+9229: 
+9230:     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+9231:         face_detector = None
+9232:         try:
+9233:             face_detector = services.get("face_detector") or MediaPipeFaceDetector()
+9234:             face_detection_points = face_detector.detect_in_video(
+9235:                 str(job.raw_video_path),
+9236:                 sample_rate_fps=1.0,
+9237:             )
+9238:             detected_count = sum(1 for point in face_detection_points if point.detected)
+9239:             face_detection_rate = (
+9240:                 detected_count / len(face_detection_points)
+9241:                 if face_detection_points
+9242:                 else 0.0
+9243:             )
+9244:             if hasattr(job, "face_detection_rate"):
+9245:                 job.face_detection_rate = float(face_detection_rate)
+9246:             print(
+9247:                 f"[gaming_pipeline] FACE_DETECTION {job.job_id} "
+9248:                 f"points={len(face_detection_points)} "
+9249:                 f"detected={detected_count} "
+9250:                 f"rate={face_detection_rate:.3f} "
+9251:                 "engine=mediapipe_face_mesh"
+9252:             )
+9253:         except Exception as face_detection_exc:
+9254:             face_detection_points = []
+9255:             face_detection_rate = 0.0
+9256:             print(
+9257:                 f"[gaming_pipeline] FACE_DETECTION {job.job_id} "
+9258:                 f"skipped reason={face_detection_exc}"
+9259:             )
+9260:         finally:
+9261:             close = getattr(face_detector, "close", None)
+9262:             if callable(close):
+9263:                 close()
+9264: 
+9265:     if face_detection_points:
+9266:         try:
+9267:             facial_expression_analyzer = (
+9268:                 services.get("facial_expression_analyzer")
+9269:                 or FacialExpressionAnalyzer()
+9270:             )
+9271:             facial_expression_points = facial_expression_analyzer.analyze_video(
+9272:                 face_detection_points
+9273:             )
+9274:             facial_expression_distribution = facial_expression_analyzer.distribution(
+9275:                 facial_expression_points
+9276:             )
+9277:             if hasattr(job, "facial_expression_distribution"):
+9278:                 job.facial_expression_distribution = dict(facial_expression_distribution)
+9279:             active_expression_count = sum(
+9280:                 1
+9281:                 for point in facial_expression_points
+9282:                 if any(expression.value != "neutral" for expression in point.expressions)
+9283:             )
+9284:             print(
+9285:                 f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
+9286:                 f"points={len(facial_expression_points)} "
+9287:                 f"active={active_expression_count} "
+9288:                 f"patterns={len([v for v in facial_expression_distribution.values() if v > 0.0])}"
+9289:             )
+9290:         except Exception as facial_expression_exc:
+9291:             facial_expression_points = []
+9292:             facial_expression_distribution = {}
+9293:             print(
+9294:                 f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
+9295:                 f"skipped reason={facial_expression_exc}"
+9296:             )
+9297: 
+9298:     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+9299:         try:
+9300:             gameplay_menu_detector = (
+9301:                 services.get("gameplay_menu_detector") or GameplayMenuDetector()
+9302:             )
+9303:             gameplay_detection_points = gameplay_menu_detector.detect(
+9304:                 str(job.raw_video_path),
+9305:                 sample_rate_fps=1.0,
+9306:             )
+9307:             gameplay_detection_distribution = gameplay_menu_detector.distribution(
+9308:                 gameplay_detection_points
+9309:             )
+9310:             if hasattr(job, "gameplay_detection_distribution"):
+9311:                 job.gameplay_detection_distribution = dict(gameplay_detection_distribution)
+9312:             print(
+9313:                 f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
+9314:                 f"points={len(gameplay_detection_points)} "
+9315:                 f"gameplay={gameplay_detection_distribution.get('gameplay', 0.0)} "
+9316:                 f"menu={gameplay_detection_distribution.get('menu', 0.0)}"
+9317:             )
+9318:         except Exception as gameplay_menu_exc:
+9319:             gameplay_detection_points = []
+9320:             gameplay_detection_distribution = {}
+9321:             print(
+9322:                 f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
+9323:                 f"skipped reason={gameplay_menu_exc}"
+9324:             )
+9325: 
+9326:     if job.channel_type == ChannelType.GAMING_MAIN:
+9327:         try:
+9328:             smooth_zoom_engine = services.get("smooth_zoom_engine") or SmoothZoomEngine()
+9329:             speaker_segments = list(getattr(transcript_result, "segments", []) or [])
+9330:             smooth_zoom_curve = smooth_zoom_engine.build_curve_from_triggers(
+9331:                 voice_intensity=voice_intensity_points,
+9332:                 facial_expressions=facial_expression_points,
+9333:                 speaker_segments=speaker_segments,
+9334:                 gameplay_points=gameplay_detection_points,
+9335:                 clip_duration=0.0,
+9336:             )
+9337:             smooth_zoom_summary = smooth_zoom_engine.summarize(smooth_zoom_curve)
+9338:             if hasattr(job, "smooth_zoom_summary"):
+9339:                 job.smooth_zoom_summary = dict(smooth_zoom_summary)
+9340:             print(
+9341:                 f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+9342:                 f"keyframes={smooth_zoom_summary.get('keyframe_count', 0)} "
+9343:                 f"max_zoom={smooth_zoom_summary.get('max_zoom', 1.0)} "
+9344:                 f"targets={','.join(smooth_zoom_summary.get('targets', []))} "
+9345:                 f"hard_jumps={smooth_zoom_summary.get('hard_jump_count', 0)}"
+9346:             )
+9347:         except Exception as smooth_zoom_exc:
+9348:             smooth_zoom_curve = None
+9349:             smooth_zoom_summary = {}
+9350:             print(
+9351:                 f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+9352:                 f"skipped reason={smooth_zoom_exc}"
+9353:             )
+9354: 
+9355:     if job.channel_type == ChannelType.GAMING_MAIN:
+9356:         try:
+9357:             focus_switch_engine = (
+9358:                 services.get("focus_switch_engine") or FocusSwitchEngine()
+9359:             )
+9360:             speaker_segments = list(getattr(transcript_result, "segments", []) or [])
+9361:             focus_decisions = focus_switch_engine.decide(
+9362:                 voice_intensity=voice_intensity_points,
+9363:                 facial_expressions=facial_expression_points,
+9364:                 speaker_segments=speaker_segments,
+9365:                 gameplay_points=gameplay_detection_points,
+9366:             )
+9367:             focus_decision_summary = focus_switch_engine.summarize(focus_decisions)
+9368:             focus_decision_log = focus_switch_engine.write_decision_log(
+9369:                 focus_decisions,
+9370:                 focus_decision_log_path(str(job.job_id)),
+9371:             )
+9372:             job.focus_decisions = [
+9373:                 decision.to_dict() if callable(getattr(decision, "to_dict", None)) else decision
+9374:                 for decision in focus_decisions
+9375:             ]
+9376:             job.focus_decision_summary = dict(focus_decision_summary)
+9377:             job.focus_decision_log_path = str(focus_decision_log)
+9378:             print(
+9379:                 f"[gaming_pipeline] FOCUS_SWITCH {job.job_id} "
+9380:                 f"decisions={focus_decision_summary.get('decision_count', 0)} "
+9381:                 f"counts={focus_decision_summary.get('focus_counts', {})} "
+9382:                 f"log={focus_decision_log}"
+9383:             )
+9384:         except Exception as focus_switch_exc:
+9385:             focus_decisions = []
+9386:             focus_decision_summary = {}
+9387:             focus_decision_log = None
+9388:             print(
+9389:                 f"[gaming_pipeline] FOCUS_SWITCH {job.job_id} "
+9390:                 f"skipped reason={focus_switch_exc}"
+9391:             )
+9392: 
+9393:     hook_keyword_result = None
+9394:     if job.channel_type == ChannelType.GAMING_MAIN:
+9395:         hook_keyword_extractor = services.get("hook_keyword_extractor") or HookKeywordExtractor()
+
+====================================================================================================
+core/gaming_pipeline.py:10360-10420
+====================================================================================================
+10360:             edit_timeline.selected_segments,
+10361:             universal_moment_result=universal_moment_result,
+10362:             soft_decision_report=universal_moment_soft_decision_report,
+10363:         )
+10364:         edit_timeline.selected_segments = _safe_trim_segments
+10365:         _postcut_timer = _log_postcut_timing(job, "post_report_safe_trim", _postcut_timer)
+10366:         print(
+10367:             f"[gaming_pipeline] UNIVERSAL_SAFE_TRIM {job.job_id} "
+10368:             f"candidates={_safe_trim_summary.trim_candidates_seen} "
+10369:             f"start={_safe_trim_summary.start_trimmed} "
+10370:             f"end={_safe_trim_summary.end_trimmed} "
+10371:             f"trimmed_seconds={_safe_trim_summary.total_trimmed_seconds:.3f}"
+10372:         )
+10373: 
+10374:     # ------------------------------------------------------------------
+10375:     # 5) Reframe-Plan
+10376:     # ------------------------------------------------------------------
+10377:     reframe_plan = None
+10378:     if edit_timeline is not None:
+10379:         reframe_plan = ReframingCore().build_plan(
+10380:             job=job,
+10381:             timeline=edit_timeline,
+10382:             highlight_candidates=highlight_result["highlight_candidates"],
+10383:             source_aspect_ratio="32:9",
+10384:             primary_target_aspect_ratio="16:9",
+10385:             secondary_target_aspect_ratio="9:16",
+10386:         )
+10387:         # P3-3E: Reaction Shot Placement ? ReframePlan
+10388:         from core.reaction_shot_reframe_applier import apply_reaction_shots_to_reframe_plan
+10389:         reframe_plan = apply_reaction_shots_to_reframe_plan(reframe_plan, job)
+10390: 
+10391:         # P3-6: B-Roll layout variation hints
+10392:         try:
+10393:             from core.broll_layout_variator import BrollLayoutVariator
+10394: 
+10395:             if isinstance(reframe_plan, dict):
+10396:                 _p3_6_reframe_instructions = reframe_plan.get("instructions")
+10397:                 if _p3_6_reframe_instructions:
+10398:                     reframe_plan["instructions"] = (
+10399:                         BrollLayoutVariator.apply_variation(
+10400:                             _p3_6_reframe_instructions
+10401:                         )
+10402:                     )
+10403:             else:
+10404:                 _p3_6_reframe_instructions = getattr(
+10405:                     reframe_plan,
+10406:                     "instructions",
+10407:                     None,
+10408:                 )
+10409:                 if (
+10410:                     isinstance(_p3_6_reframe_instructions, list)
+10411:                     and _p3_6_reframe_instructions
+10412:                     and isinstance(_p3_6_reframe_instructions[0], dict)
+10413:                 ):
+10414:                     reframe_plan.instructions = (
+10415:                         BrollLayoutVariator.apply_variation(
+10416:                             _p3_6_reframe_instructions
+10417:                         )
+10418:                     )
+10419:         except Exception:
+10420:             pass
+
+====================================================================================================
+core/gaming_pipeline.py:10560-10670
+====================================================================================================
+10560:             reason=render_gate_result.reason,
+10561:             details=render_gate_payload,
+10562:         )
+10563:         print(
+10564:             f"[gaming_pipeline] RENDER_GATE OVERRIDE {job.job_id} "
+10565:             f"reason={render_gate_result.reason} "
+10566:             f"would_block={render_gate_result.detail.get('would_block_reason')} "
+10567:             f"(ZENITH_RENDER_GATE_AUTO_APPROVE=1, rendering anyway)"
+10568:         )
+10569:     else:
+10570:         print(
+10571:             f"[gaming_pipeline] RENDER_GATE PASS {job.job_id} "
+10572:             f"reason={render_gate_result.reason}"
+10573:         )
+10574: 
+10575:     # ------------------------------------------------------------------
+10576:     # 7) Render - Phase 2 single path: FinalRenderDriver only
+10577:     # ------------------------------------------------------------------
+10578:     if edit_timeline is None:
+10579:         edit_timeline = _build_phase2_fallback_edit_timeline_from_edit_decision(
+10580:             job=job,
+10581:             edit_decision=edit_decision,
+10582:             analysis_result=analysis_result,
+10583:         )
+10584:         if edit_timeline is not None:
+10585:             print(
+10586:                 f"[gaming_pipeline] RENDER FALLBACK_TIMELINE {job.job_id} "
+10587:                 f"segments={len(edit_timeline.selected_segments)} "
+10588:                 f"duration={edit_timeline.total_selected_duration:.3f}s"
+10589:             )
+10590: 
+10591:     if edit_timeline is None or not job.raw_video_path:
+10592:         render_block_reason = "final_render_driver_requires_edit_timeline_and_raw_video_path"
+10593:         job.status = JobStatus.RENDER_BLOCKED
+10594:         job.error_message = render_block_reason
+10595:         job.touch()
+10596: 
+10597:         persist_job_state_checkpoint(
+10598:             job=job,
+10599:             job_store=job_state_store,
+10600:             export_dir=job_state_export_dir,
+10601:             step_name="render_blocked",
+10602:             reason=render_block_reason,
+10603:         )
+10604:         _safe_log_decision(
+10605:             job=job,
+10606:             export_dir=job_state_export_dir,
+10607:             phase="render",
+10608:             event_type="RENDER_BLOCKED",
+10609:             action="final_render_driver_precondition",
+10610:             status="blocked",
+10611:             reason=render_block_reason,
+10612:             details={
+10613:                 "renderer_type": "FinalRenderDriver",
+10614:                 "edit_timeline_present": edit_timeline is not None,
+10615:                 "raw_video_path_present": bool(job.raw_video_path),
+10616:                 "render_gate": render_gate_payload,
+10617:             },
+10618:         )
+10619: 
+10620:         print(
+10621:             f"[gaming_pipeline] RENDER BLOCKED {job.job_id} "
+10622:             f"reason={render_block_reason}"
+10623:         )
+10624:         return {
+10625:             "job": job,
+10626:             "final_job_status": JobStatus.RENDER_BLOCKED.value,
+10627:             "final_video_path": None,
+10628:             "render_gate": render_gate_payload,
+10629:             "render_block_reason": render_block_reason,
+10630:         }
+10631: 
+10632:     active_renderer = FinalRenderDriver()
+10633: 
+10634:     transition_job_state(
+10635:         job,
+10636:         JobStatus.RENDERING,
+10637:         module="gaming_pipeline",
+10638:         reason="rendering_started",
+10639:     )
+10640:     persist_job_state_checkpoint(
+10641:         job=job,
+10642:         job_store=job_state_store,
+10643:         export_dir=job_state_export_dir,
+10644:         step_name="rendering",
+10645:         reason="rendering_started",
+10646:     )
+10647:     _safe_log_decision(
+10648:         job=job,
+10649:         export_dir=job_state_export_dir,
+10650:         phase="render",
+10651:         event_type="RENDERING_STARTED",
+10652:         action="renderer_started",
+10653:         reason="rendering_started",
+10654:         details={
+10655:             "renderer_type": type(active_renderer).__name__,
+10656:         },
+10657:     )
+10658:     final_video_path = active_renderer.render(
+10659:         job=job,
+10660:         source_path=job.raw_video_path,
+10661:         edit_timeline=edit_timeline,
+10662:         reframe_plan=reframe_plan,
+10663:         dynamic_edit_plan=dynamic_edit_plan,
+10664:     )
+10665:     transition_job_state(
+10666:         job,
+10667:         JobStatus.RENDERED,
+10668:         module="gaming_pipeline",
+10669:         reason="rendering_finished",
+10670:     )
+
+====================================================================================================
+core/facecam_intro_guard.py:40-145
+====================================================================================================
+40:         timeline_position = 0.0
+41:         for segment in sorted(
+42:             timeline.selected_segments,
+43:             key=lambda item: (item.start_time, item.end_time),
+44:         ):
+45:             instruction = self._instruction_for_segment(reframe_plan, segment.segment_id)
+46:             if instruction is None:
+47:                 timeline_position += segment.duration
+48:                 continue
+49: 
+50:             if instruction.layout_kind != "facecam_emphasis":
+51:                 timeline_position += segment.duration
+52:                 continue
+53: 
+54:             in_intro_window = timeline_position < INTRO_WINDOW_SECONDS
+55:             has_short_reaction = self._has_allowed_short_reaction(
+56:                 segment,
+57:                 facecam_reaction_result,
+58:                 max_duration=(
+59:                     INTRO_MAX_FACECAM_ONLY_SECONDS
+60:                     if in_intro_window
+61:                     else MAX_FACECAM_ONLY_SECONDS
+62:                 ),
+63:             )
+64: 
+65:             if has_short_reaction and segment.duration <= (
+66:                 INTRO_MAX_FACECAM_ONLY_SECONDS
+67:                 if in_intro_window
+68:                 else MAX_FACECAM_ONLY_SECONDS
+69:             ):
+70:                 instruction.notes.append("facecam_intro_guard_allowed_short_reaction")
+71:                 summary.allowed_short_reactions += 1
+72:                 timeline_position += segment.duration
+73:                 continue
+74: 
+75:             reasons: list[str] = []
+76:             if in_intro_window:
+77:                 reasons.append("intro_facecam_only_blocked")
+78:                 summary.intro_blocked += 1
+79:             if segment.duration > MAX_FACECAM_ONLY_SECONDS:
+80:                 reasons.append("facecam_only_limited")
+81:                 summary.limited += 1
+82:             if not self._has_any_reaction_overlap(segment, facecam_reaction_result):
+83:                 reasons.append("facecam_only_blocked_no_reaction")
+84:                 summary.no_reaction_blocked += 1
+85: 
+86:             self._convert_to_balanced(instruction, segment, reasons)
+87:             summary.converted += 1
+88:             self._add_example(
+89:                 summary,
+90:                 f"{segment.segment_id} {segment.start_time:.2f}-{segment.end_time:.2f} "
+91:                 f"facecam_emphasis->balanced_split",
+92:             )
+93:             timeline_position += segment.duration
+94: 
+95:         reframe_plan.plan_notes.append(
+96:             "Facecam intro guard: "
+97:             f"converted={summary.converted} "
+98:             f"intro_blocked={summary.intro_blocked} "
+99:             f"limited={summary.limited} "
+100:             f"no_reaction_blocked={summary.no_reaction_blocked} "
+101:             f"allowed_short_reactions={summary.allowed_short_reactions}"
+102:         )
+103:         reframe_plan.touch()
+104: 
+105:         for segment in segment_lookup.values():
+106:             segment.touch()
+107: 
+108:         return summary
+109: 
+110:     def _instruction_for_segment(
+111:         self,
+112:         reframe_plan: ReframePlan,
+113:         segment_id: str,
+114:     ) -> FramingInstruction | None:
+115:         for instruction in reframe_plan.instructions:
+116:             if instruction.segment_id == segment_id:
+117:                 return instruction
+118:         return None
+119: 
+120:     def _convert_to_balanced(
+121:         self,
+122:         instruction: FramingInstruction,
+123:         segment: TimelineSegment,
+124:         reasons: list[str],
+125:     ) -> None:
+126:         instruction.focus_kind = "balanced"
+127:         instruction.layout_kind = "balanced_split"
+128:         instruction.crop_window = {"x": 0.5, "y": 0.0, "width": 0.5, "height": 1.0}
+129:         instruction.notes.extend(reasons or ["facecam_only_guarded"])
+130:         instruction.notes.append(
+131:             f"facecam_guard_segment_duration={segment.duration:.3f}"
+132:         )
+133:         instruction.metadata["facecam_intro_guard"] = {
+134:             "converted_to": "balanced_split",
+135:             "reasons": list(reasons),
+136:             "segment_duration": segment.duration,
+137:         }
+138:         instruction.touch()
+139: 
+140:     def _has_allowed_short_reaction(
+141:         self,
+142:         segment: TimelineSegment,
+143:         facecam_reaction_result: FacecamReactionResult | None,
+144:         *,
+145:         max_duration: float,
+
+====================================================================================================
+core/facecam_zoom_smoothness_guard.py:485-520
+====================================================================================================
+485:             summary.add_example(
+486:                 f"{weaker.segment_id} removed smooth_buffer {weaker.start_time:.2f}-{weaker.end_time:.2f}"
+487:             )
+488:         return kept
+489: 
+490:     def _stabilize_facecam_layouts(
+491:         self,
+492:         timeline: EditTimeline,
+493:         reframe_plan: ReframePlan,
+494:         facecam_reaction_result: FacecamReactionResult | None,
+495:         summary: FacecamZoomSmoothnessSummary,
+496:     ) -> None:
+497:         segment_by_id = {segment.segment_id: segment for segment in timeline.selected_segments}
+498:         for instruction in reframe_plan.instructions:
+499:             if instruction.layout_kind != "facecam_emphasis":
+500:                 continue
+501:             segment = segment_by_id.get(instruction.segment_id)
+502:             if segment is None:
+503:                 continue
+504:             if self._segment_has_strong_facecam_reaction(segment, facecam_reaction_result):
+505:                 continue
+506:             instruction.focus_kind = "balanced"
+507:             instruction.layout_kind = "balanced_split"
+508:             instruction.crop_window = {"x": 0.5, "y": 0.0, "width": 0.5, "height": 1.0}
+509:             instruction.notes.append("facecam_zoom_smooth_layout_stabilized")
+510:             instruction.metadata["facecam_zoom_smoothness"] = {
+511:                 "converted_to": "balanced_split",
+512:                 "reason": "no_strong_facecam_reaction",
+513:             }
+514:             instruction.touch()
+515:             summary.layout_converted += 1
+516: 
+517:     def _segment_has_strong_facecam_reaction(
+518:         self,
+519:         segment: TimelineSegment,
+520:         facecam_reaction_result: FacecamReactionResult | None,
+
+====================================================================================================
+core/final_render_driver.py:288-330
+====================================================================================================
+288:         reframe_plan: ReframePlan | None,
+289:         dynamic_edit_plan: DynamicEditPlan | None,
+290:         audio_peaks: list[dict],
+291:         src_w: int,
+292:         src_h: int,
+293:     ) -> tuple[str, str]:
+294: 
+295:         """
+296:         Baut den filter_complex fuer 32:9 Source -> 16:9 Output.
+297:         Layout: Gameplay als Hauptbild, Facecam als PiP oben links.
+298:         ZOOM: PiP vergroessert sich bei lustigen Momenten (3 Stufen)!
+299:         Returns: (filter_complex_string, output_label)
+300:         """
+301:         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
+302:         layout_kind = instr.layout_kind if instr else "full_gameplay"
+303: 
+304:         print(f"[DEBUG] Segment {segment.segment_id[:8]} ({segment.segment_role}): layout_kind='{layout_kind}'")
+305: 
+306:         if src_w >= 3000:  # 32:9 Format
+307:             if layout_kind == "facecam_emphasis":
+308:                 print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
+309:                 fc = (
+310:                     f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+311:                     f"crop={src_w//2}:1080:0:0,"
+312:                     f"{_cuda_scale_filter(1920, 1080)}[out]"
+313:                 )
+314:                 return fc, "[out]"
+315:             
+316: # ZOOM-FEATURE: Finde Zoom-Momente fuer dieses Segment
+317:             zoom_instructions = self._find_zoom_instructions(segment, dynamic_edit_plan)
+318:             
+319:             # Basis-Groessen - 4 STUFEN fuer feinere Kontrolle (ANGEPASST: groesser)
+320:             PIP_TINY_W, PIP_TINY_H = 480, 270       # Sehr klein
+321:             PIP_SMALL_W, PIP_SMALL_H = 540, 304     # Normal
+322:             PIP_MEDIUM_W, PIP_MEDIUM_H = 600, 338   # Laut reden (kleiner)
+323:             PIP_LARGE_W, PIP_LARGE_H = 720, 405     # Schreien (kleiner)
+324: 
+325:             PIP_X, PIP_Y = 20, 100
+326:             crop_offset = int((src_w / 1920) * 28)
+327:             
+328:             if not zoom_instructions:
+329:                 # Keine Zooms -> immer kleine Groesse
+330:                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
+
+====================================================================================================
+core/final_render_driver.py:1188-1250
+====================================================================================================
+1188:                             f"fertig ({task['segment'].segment_role})\n"
+1189:                         )
+1190: 
+1191:             ordered_seg_paths = [path for path in seg_paths if path is not None]
+1192:             if len(ordered_seg_paths) != total_segments:
+1193:                 raise ValidationError("Segment render did not produce all expected outputs")
+1194: 
+1195:             print(f"{'='*60}")
+1196:             print(f"[DONE] ALLE SEGMENTE GERENDERT - Jetzt zusammenfuegen...")
+1197:             print(f"{'='*60}\n")
+1198: 
+1199:             concat_path = out_dir / f"{job.job_id}_final.mp4"
+1200:             self._concat_segments(ordered_seg_paths, concat_path)
+1201:             
+1202:         finally:
+1203:             shutil.rmtree(tmp_dir, ignore_errors=True)
+1204: 
+1205:         total_duration = round(sum(self._segment_duration_seconds(s) for s in segments), 3)
+1206: 
+1207:         censor_sfx_events = self._build_censor_sfx_events(
+1208:             job=job,
+1209:             segments=segments,
+1210:         )
+1211:         censor_sfx_overlay_report = self._apply_censor_sfx_overlay(
+1212:             video_path=concat_path,
+1213:             events=censor_sfx_events,
+1214:             expected_duration_seconds=total_duration,
+1215:         )
+1216: 
+1217:         context = {
+1218:             "job_id": job.job_id,
+1219:             "render_driver": "FinalRenderDriver",
+1220:             "source_video": str(source),
+1221:             "timeline_id": edit_timeline.timeline_id,
+1222:             "timeline_score": edit_timeline.timeline_score,
+1223:             "segments_count": len(segments),
+1224:             "segments": [
+1225:                 {
+1226:                     "segment_id": s.segment_id,
+1227:                     "role": s.segment_role,
+1228:                     "start_time": s.start_time,
+1229:                     "end_time": s.end_time,
+1230:                     "duration": s.duration,
+1231:                 }
+1232:                 for s in segments
+1233:             ],
+1234:             "total_duration_seconds": total_duration,
+1235:             "reframe_plan_used": reframe_plan is not None,
+1236:             "reframe_instructions_count": (
+1237:                 len(reframe_plan.instructions) if reframe_plan is not None else 0
+1238:             ),
+1239:             "dynamic_edit_plan_used": dynamic_edit_plan is not None,
+1240:             "segment_render_workers": render_workers,
+1241:             "zoom_instructions_count": (
+1242:                 len(dynamic_edit_plan.zoom_instructions)
+1243:                 if dynamic_edit_plan is not None
+1244:                 else 0
+1245:             ),
+1246:             "censor_sfx_applied": bool(censor_sfx_overlay_report.get("applied")),
+1247:             "censor_sfx_events_count": int(censor_sfx_overlay_report.get("applied_count") or 0),
+1248:             "censor_sfx_candidate_count": int(censor_sfx_overlay_report.get("candidate_count") or 0),
+1249:             "censor_sfx_warnings": list(censor_sfx_overlay_report.get("warnings") or []),
+1250:             "censor_sfx_events": [

@@ -1,0 +1,214 @@
+
+====================================================================================================
+1_focus_decision_created | core/gaming_pipeline.py:9350-9382
+====================================================================================================
+9350:             print(
+9351:                 f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+9352:                 f"skipped reason={smooth_zoom_exc}"
+9353:             )
+9354: 
+9355:     if job.channel_type == ChannelType.GAMING_MAIN:
+9356:         try:
+9357:             focus_switch_engine = (
+9358:                 services.get("focus_switch_engine") or FocusSwitchEngine()
+9359:             )
+9360:             speaker_segments = list(getattr(transcript_result, "segments", []) or [])
+9361:             focus_decisions = focus_switch_engine.decide(
+9362:                 voice_intensity=voice_intensity_points,
+9363:                 facial_expressions=facial_expression_points,
+9364:                 speaker_segments=speaker_segments,
+9365:                 gameplay_points=gameplay_detection_points,
+9366:             )
+9367:             focus_decision_summary = focus_switch_engine.summarize(focus_decisions)
+9368:             focus_decision_log = focus_switch_engine.write_decision_log(
+9369:                 focus_decisions,
+9370:                 focus_decision_log_path(str(job.job_id)),
+9371:             )
+9372:             job.focus_decisions = [
+9373:                 decision.to_dict() if callable(getattr(decision, "to_dict", None)) else decision
+9374:                 for decision in focus_decisions
+9375:             ]
+9376:             job.focus_decision_summary = dict(focus_decision_summary)
+9377:             job.focus_decision_log_path = str(focus_decision_log)
+9378:             print(
+9379:                 f"[gaming_pipeline] FOCUS_SWITCH {job.job_id} "
+9380:                 f"decisions={focus_decision_summary.get('decision_count', 0)} "
+9381:                 f"counts={focus_decision_summary.get('focus_counts', {})} "
+9382:                 f"log={focus_decision_log}"
+
+====================================================================================================
+2_reframe_plan_built | core/gaming_pipeline.py:10370-10405
+====================================================================================================
+10370:             f"end={_safe_trim_summary.end_trimmed} "
+10371:             f"trimmed_seconds={_safe_trim_summary.total_trimmed_seconds:.3f}"
+10372:         )
+10373: 
+10374:     # ------------------------------------------------------------------
+10375:     # 5) Reframe-Plan
+10376:     # ------------------------------------------------------------------
+10377:     reframe_plan = None
+10378:     if edit_timeline is not None:
+10379:         reframe_plan = ReframingCore().build_plan(
+10380:             job=job,
+10381:             timeline=edit_timeline,
+10382:             highlight_candidates=highlight_result["highlight_candidates"],
+10383:             source_aspect_ratio="32:9",
+10384:             primary_target_aspect_ratio="16:9",
+10385:             secondary_target_aspect_ratio="9:16",
+10386:         )
+10387:         # P3-3E: Reaction Shot Placement ? ReframePlan
+10388:         from core.reaction_shot_reframe_applier import apply_reaction_shots_to_reframe_plan
+10389:         reframe_plan = apply_reaction_shots_to_reframe_plan(reframe_plan, job)
+10390: 
+10391:         # P3-6: B-Roll layout variation hints
+10392:         try:
+10393:             from core.broll_layout_variator import BrollLayoutVariator
+10394: 
+10395:             if isinstance(reframe_plan, dict):
+10396:                 _p3_6_reframe_instructions = reframe_plan.get("instructions")
+10397:                 if _p3_6_reframe_instructions:
+10398:                     reframe_plan["instructions"] = (
+10399:                         BrollLayoutVariator.apply_variation(
+10400:                             _p3_6_reframe_instructions
+10401:                         )
+10402:                     )
+10403:             else:
+10404:                 _p3_6_reframe_instructions = getattr(
+10405:                     reframe_plan,
+
+====================================================================================================
+3_render_call | core/gaming_pipeline.py:10625-10670
+====================================================================================================
+10625:             "job": job,
+10626:             "final_job_status": JobStatus.RENDER_BLOCKED.value,
+10627:             "final_video_path": None,
+10628:             "render_gate": render_gate_payload,
+10629:             "render_block_reason": render_block_reason,
+10630:         }
+10631: 
+10632:     active_renderer = FinalRenderDriver()
+10633: 
+10634:     transition_job_state(
+10635:         job,
+10636:         JobStatus.RENDERING,
+10637:         module="gaming_pipeline",
+10638:         reason="rendering_started",
+10639:     )
+10640:     persist_job_state_checkpoint(
+10641:         job=job,
+10642:         job_store=job_state_store,
+10643:         export_dir=job_state_export_dir,
+10644:         step_name="rendering",
+10645:         reason="rendering_started",
+10646:     )
+10647:     _safe_log_decision(
+10648:         job=job,
+10649:         export_dir=job_state_export_dir,
+10650:         phase="render",
+10651:         event_type="RENDERING_STARTED",
+10652:         action="renderer_started",
+10653:         reason="rendering_started",
+10654:         details={
+10655:             "renderer_type": type(active_renderer).__name__,
+10656:         },
+10657:     )
+10658:     final_video_path = active_renderer.render(
+10659:         job=job,
+10660:         source_path=job.raw_video_path,
+10661:         edit_timeline=edit_timeline,
+10662:         reframe_plan=reframe_plan,
+10663:         dynamic_edit_plan=dynamic_edit_plan,
+10664:     )
+10665:     transition_job_state(
+10666:         job,
+10667:         JobStatus.RENDERED,
+10668:         module="gaming_pipeline",
+10669:         reason="rendering_finished",
+10670:     )
+
+====================================================================================================
+4_intro_guard_converts | core/facecam_intro_guard.py:118-138
+====================================================================================================
+118:         return None
+119: 
+120:     def _convert_to_balanced(
+121:         self,
+122:         instruction: FramingInstruction,
+123:         segment: TimelineSegment,
+124:         reasons: list[str],
+125:     ) -> None:
+126:         instruction.focus_kind = "balanced"
+127:         instruction.layout_kind = "balanced_split"
+128:         instruction.crop_window = {"x": 0.5, "y": 0.0, "width": 0.5, "height": 1.0}
+129:         instruction.notes.extend(reasons or ["facecam_only_guarded"])
+130:         instruction.notes.append(
+131:             f"facecam_guard_segment_duration={segment.duration:.3f}"
+132:         )
+133:         instruction.metadata["facecam_intro_guard"] = {
+134:             "converted_to": "balanced_split",
+135:             "reasons": list(reasons),
+136:             "segment_duration": segment.duration,
+137:         }
+138:         instruction.touch()
+
+====================================================================================================
+5_zoom_guard_converts | core/facecam_zoom_smoothness_guard.py:495-515
+====================================================================================================
+495:         summary: FacecamZoomSmoothnessSummary,
+496:     ) -> None:
+497:         segment_by_id = {segment.segment_id: segment for segment in timeline.selected_segments}
+498:         for instruction in reframe_plan.instructions:
+499:             if instruction.layout_kind != "facecam_emphasis":
+500:                 continue
+501:             segment = segment_by_id.get(instruction.segment_id)
+502:             if segment is None:
+503:                 continue
+504:             if self._segment_has_strong_facecam_reaction(segment, facecam_reaction_result):
+505:                 continue
+506:             instruction.focus_kind = "balanced"
+507:             instruction.layout_kind = "balanced_split"
+508:             instruction.crop_window = {"x": 0.5, "y": 0.0, "width": 0.5, "height": 1.0}
+509:             instruction.notes.append("facecam_zoom_smooth_layout_stabilized")
+510:             instruction.metadata["facecam_zoom_smoothness"] = {
+511:                 "converted_to": "balanced_split",
+512:                 "reason": "no_strong_facecam_reaction",
+513:             }
+514:             instruction.touch()
+515:             summary.layout_converted += 1
+
+====================================================================================================
+6_final_render_layout_branch | core/final_render_driver.py:298-330
+====================================================================================================
+298:         ZOOM: PiP vergroessert sich bei lustigen Momenten (3 Stufen)!
+299:         Returns: (filter_complex_string, output_label)
+300:         """
+301:         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
+302:         layout_kind = instr.layout_kind if instr else "full_gameplay"
+303: 
+304:         print(f"[DEBUG] Segment {segment.segment_id[:8]} ({segment.segment_role}): layout_kind='{layout_kind}'")
+305: 
+306:         if src_w >= 3000:  # 32:9 Format
+307:             if layout_kind == "facecam_emphasis":
+308:                 print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
+309:                 fc = (
+310:                     f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+311:                     f"crop={src_w//2}:1080:0:0,"
+312:                     f"{_cuda_scale_filter(1920, 1080)}[out]"
+313:                 )
+314:                 return fc, "[out]"
+315:             
+316: # ZOOM-FEATURE: Finde Zoom-Momente fuer dieses Segment
+317:             zoom_instructions = self._find_zoom_instructions(segment, dynamic_edit_plan)
+318:             
+319:             # Basis-Groessen - 4 STUFEN fuer feinere Kontrolle (ANGEPASST: groesser)
+320:             PIP_TINY_W, PIP_TINY_H = 480, 270       # Sehr klein
+321:             PIP_SMALL_W, PIP_SMALL_H = 540, 304     # Normal
+322:             PIP_MEDIUM_W, PIP_MEDIUM_H = 600, 338   # Laut reden (kleiner)
+323:             PIP_LARGE_W, PIP_LARGE_H = 720, 405     # Schreien (kleiner)
+324: 
+325:             PIP_X, PIP_Y = 20, 100
+326:             crop_offset = int((src_w / 1920) * 28)
+327:             
+328:             if not zoom_instructions:
+329:                 # Keine Zooms -> immer kleine Groesse
+330:                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")

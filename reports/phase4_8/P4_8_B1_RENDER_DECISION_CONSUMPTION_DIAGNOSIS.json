@@ -1,0 +1,45 @@
+{
+  "phase": "P4.8-B1",
+  "status": "B1_DIAGNOSIS_COMPLETE",
+  "head": "fefc4c1 chore(P4-8-A5): audit top solo and vlog fingerprints",
+  "scope": {
+    "code_changes": false,
+    "commit": false,
+    "diagnosis_only": true
+  },
+  "root_cause": {
+    "summary": "FocusDecision exists but is not consumed as authoritative visible render policy.",
+    "loss_points": [
+      {
+        "name": "decision_loss_before_render",
+        "detail": "ReframingCore builds ReframePlan separately and does not receive focus_decisions."
+      },
+      {
+        "name": "render_layout_loss",
+        "detail": "FinalRenderDriver render call receives reframe_plan and dynamic_edit_plan, but no focus_decisions argument."
+      },
+      {
+        "name": "guard_conversion",
+        "detail": "facecam_intro_guard and facecam_zoom_smoothness_guard can convert facecam_emphasis to balanced_split."
+      },
+      {
+        "name": "missing_explicit_layout_branches",
+        "detail": "FinalRenderDriver 32:9 branch only explicitly handles facecam_emphasis; gameplay_crop and balanced_split are not clearly separate visible render modes."
+      }
+    ]
+  },
+  "evidence_files": [
+    "reports/phase4_8/b1_manual/01_focus_render_grep.txt",
+    "reports/phase4_8/b1_manual/02_call_chain_blocks.txt",
+    "reports/phase4_8/b1_manual/03_exact_loss_chain.txt"
+  ],
+  "b2_recommendation": [
+    "Add FocusDecision-to-render-policy bridge.",
+    "Resolve nearest or strongest FocusDecision per TimelineSegment.",
+    "Feed resolved policy into FinalRenderDriver or apply it to ReframePlan before render.",
+    "Add explicit 32:9 render handling for facecam_focus, gameplay_focus, balanced_split, and drop.",
+    "Write render context layout counts and per-segment resolved focus/layout evidence.",
+    "Add smoke tests for visible layout policy consumption."
+  ],
+  "decision": "B2_GO_AFTER_B1_REPORT_REVIEW"
+}
