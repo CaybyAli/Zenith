@@ -1,0 +1,94 @@
+{
+  "status": "PASS",
+  "source": "reports\\phase4_8\\b4_manual\\mini_render\\synthetic_32x9_red_facecam_blue_gameplay.mp4",
+  "final_output": "reports\\phase4_8\\b4_manual\\mini_render\\output\\p4_8_b4_mini_render_final.mp4",
+  "context_path": "reports\\phase4_8\\b4_manual\\mini_render\\output\\p4_8_b4_mini_render_final_render_driver_context.json",
+  "frames": {
+    "gameplay_focus": "reports\\phase4_8\\b4_manual\\mini_render\\frame_01_gameplay_focus.png",
+    "facecam_focus": "reports\\phase4_8\\b4_manual\\mini_render\\frame_02_facecam_focus.png",
+    "balanced_pip": "reports\\phase4_8\\b4_manual\\mini_render\\frame_03_balanced_pip.png"
+  },
+  "checks": {
+    "output_exists": true,
+    "context_exists": true,
+    "focus_decisions_used": true,
+    "smooth_zoom_used": true,
+    "layout_counts_ok": true,
+    "all_color_samples_passed": true
+  },
+  "render_layout_counts": {
+    "balanced_split": 1,
+    "facecam_emphasis": 1,
+    "gameplay_crop": 1
+  },
+  "focus_decisions_used": true,
+  "smooth_zoom_used": true,
+  "smooth_zoom_records": [
+    {
+      "segment_id": "seg_gameplay_focus",
+      "smooth_zoom_used": true,
+      "timestamp": 1.0,
+      "zoom_factor": 1.5,
+      "target": "gameplay",
+      "reason": "smooth_zoom_curve_interpolated"
+    },
+    {
+      "segment_id": "seg_facecam_focus",
+      "smooth_zoom_used": true,
+      "timestamp": 3.0,
+      "zoom_factor": 2.0,
+      "target": "facecam",
+      "reason": "smooth_zoom_curve_interpolated"
+    },
+    {
+      "segment_id": "seg_balanced_pip",
+      "smooth_zoom_used": false,
+      "timestamp": 5.0,
+      "zoom_factor": 1.0,
+      "target": "balanced",
+      "reason": "smooth_zoom_curve_interpolated"
+    }
+  ],
+  "samples": {
+    "gameplay_focus_center_t1": {
+      "rgb": [
+        0,
+        0,
+        254
+      ],
+      "expected": "blue",
+      "actual": "blue",
+      "passed": true
+    },
+    "facecam_focus_center_t3": {
+      "rgb": [
+        253,
+        0,
+        0
+      ],
+      "expected": "red",
+      "actual": "red",
+      "passed": true
+    },
+    "balanced_center_t5": {
+      "rgb": [
+        0,
+        0,
+        254
+      ],
+      "expected": "blue",
+      "actual": "blue",
+      "passed": true
+    },
+    "balanced_pip_t5": {
+      "rgb": [
+        253,
+        0,
+        0
+      ],
+      "expected": "red",
+      "actual": "red",
+      "passed": true
+    }
+  }
+}

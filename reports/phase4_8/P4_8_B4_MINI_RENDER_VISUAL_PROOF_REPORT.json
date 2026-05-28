@@ -1,0 +1,31 @@
+{
+  "phase": "P4.8-B4",
+  "status": "B4_MINI_RENDER_PROOF_PASS",
+  "proof_type": "synthetic_32x9_real_render",
+  "checks": {
+    "focus_decisions_used": true,
+    "smooth_zoom_used": true,
+    "all_color_samples_passed": true,
+    "layout_counts_ok": true
+  },
+  "confirmed_layouts": {
+    "gameplay_crop": 1,
+    "facecam_emphasis": 1,
+    "balanced_split": 1
+  },
+  "committed_evidence": [
+    "scripts/p4_8_b4_mini_render_visual_proof.py",
+    "reports/phase4_8/b4_manual/00_head.txt",
+    "reports/phase4_8/b4_manual/01_preflight_tests.txt",
+    "reports/phase4_8/b4_manual/02_render_context_grep.txt",
+    "reports/phase4_8/b4_manual/03_mini_render_visual_proof.txt",
+    "reports/phase4_8/b4_manual/03_mini_render_visual_proof.json",
+    "reports/phase4_8/b4_manual/04_mini_render_run_log.txt",
+    "reports/phase4_8/P4_8_B4_MINI_RENDER_VISUAL_PROOF_REPORT.md",
+    "reports/phase4_8/P4_8_B4_MINI_RENDER_VISUAL_PROOF_REPORT.json"
+  ],
+  "not_committed_generated_media": [
+    "reports/phase4_8/b4_manual/mini_render/"
+  ],
+  "next_phase": "P4.8-B5 Real Sample Render Proof / Pipeline-Level Verification"
+}

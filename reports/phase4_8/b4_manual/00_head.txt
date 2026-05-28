@@ -1,0 +1,3 @@
+48de6d5 fix(P4-8-B3): apply smooth zoom curve in final render policy
+582d7f3 fix(P4-8-B2): consume focus decisions in final render policy
+ccd4384 docs(P4-8-B1): diagnose render decision consumption gap

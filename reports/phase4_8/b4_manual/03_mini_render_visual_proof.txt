@@ -1,0 +1,7 @@
+STATUS=PASS
+OUTPUT=reports\phase4_8\b4_manual\mini_render\output\p4_8_b4_mini_render_final.mp4
+CONTEXT=reports\phase4_8\b4_manual\mini_render\output\p4_8_b4_mini_render_final_render_driver_context.json
+LAYOUT_COUNTS={'balanced_split': 1, 'facecam_emphasis': 1, 'gameplay_crop': 1}
+FOCUS_DECISIONS_USED=True
+SMOOTH_ZOOM_USED=True
+ALL_COLOR_SAMPLES_PASSED=True

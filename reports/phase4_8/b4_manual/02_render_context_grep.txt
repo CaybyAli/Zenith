@@ -1,0 +1,34 @@
+D:\Zenith\core\final_render_driver.py:396: smooth_zoom_curve: object | None = None,
+D:\Zenith\core\final_render_driver.py:398: if smooth_zoom_curve is None:
+D:\Zenith\core\final_render_driver.py:401: "smooth_zoom_used": False,
+D:\Zenith\core\final_render_driver.py:402: "reason": "missing_smooth_zoom_curve",
+D:\Zenith\core\final_render_driver.py:405: interpolate = getattr(smooth_zoom_curve, "interpolate", None)
+D:\Zenith\core\final_render_driver.py:409: "smooth_zoom_used": False,
+D:\Zenith\core\final_render_driver.py:410: "reason": "smooth_zoom_curve_has_no_interpolate",
+D:\Zenith\core\final_render_driver.py:420: "smooth_zoom_used": False,
+D:\Zenith\core\final_render_driver.py:434: "smooth_zoom_used": zoom > 1.001,
+D:\Zenith\core\final_render_driver.py:438: "reason": "smooth_zoom_curve_interpolated",
+D:\Zenith\core\final_render_driver.py:1312: render_layout_counts: dict[str, int] = {}
+D:\Zenith\core\final_render_driver.py:1313: smooth_zoom_records: list[dict] = []
+D:\Zenith\core\final_render_driver.py:1373: smooth_zoom_curve=smooth_zoom_curve,
+D:\Zenith\core\final_render_driver.py:1376: smooth_zoom_records.append(dict(smooth_zoom_policy))
+D:\Zenith\core\final_render_driver.py:1378: render_layout_counts[layout_for_count] = (
+D:\Zenith\core\final_render_driver.py:1379: render_layout_counts.get(layout_for_count, 0) + 1
+D:\Zenith\core\final_render_driver.py:1484: "focus_decisions_used": any(
+D:\Zenith\core\final_render_driver.py:1488: "render_layout_counts": dict(sorted(render_layout_counts.items())),
+D:\Zenith\core\final_render_driver.py:1489: "resolved_render_layouts": render_layout_records,
+D:\Zenith\core\final_render_driver.py:1490: "smooth_zoom_available": smooth_zoom_curve is not None,
+D:\Zenith\core\final_render_driver.py:1491: "smooth_zoom_used": any(
+D:\Zenith\core\final_render_driver.py:1492: bool(item.get("smooth_zoom_used")) for item in smooth_zoom_records
+D:\Zenith\core\final_render_driver.py:1494: "smooth_zoom_records": smooth_zoom_records,
+D:\Zenith\core\gaming_pipeline.py:9132: smooth_zoom_curve = None
+D:\Zenith\core\gaming_pipeline.py:9330: smooth_zoom_curve = smooth_zoom_engine.build_curve_from_triggers(
+D:\Zenith\core\gaming_pipeline.py:9337: smooth_zoom_summary = smooth_zoom_engine.summarize(smooth_zoom_curve)
+D:\Zenith\core\gaming_pipeline.py:9348: smooth_zoom_curve = None
+D:\Zenith\core\gaming_pipeline.py:10658: final_video_path = active_renderer.render(
+D:\Zenith\core\gaming_pipeline.py:10664: smooth_zoom_curve=smooth_zoom_curve,
+D:\Zenith\core\gaming_pipeline.py:11033: "smooth_zoom_curve": (
+D:\Zenith\core\gaming_pipeline.py:11034: smooth_zoom_curve.to_dict()
+D:\Zenith\core\gaming_pipeline.py:11035: if smooth_zoom_curve is not None
+D:\Zenith\core\gaming_pipeline.py:11036: and callable(getattr(smooth_zoom_curve, "to_dict", None))
+D:\Zenith\core\gaming_pipeline.py:11179: "smooth_zoom_curve": smooth_zoom_curve,
