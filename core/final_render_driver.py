@@ -1277,6 +1277,7 @@ class FinalRenderDriver:
         edit_timeline: EditTimeline,
         reframe_plan: ReframePlan | None = None,
         dynamic_edit_plan: DynamicEditPlan | None = None,
+        smooth_zoom_curve: object | None = None,
         output_dir: str | Path = "output",
     ) -> str:
 
