@@ -10661,6 +10661,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         edit_timeline=edit_timeline,
         reframe_plan=reframe_plan,
         dynamic_edit_plan=dynamic_edit_plan,
+        smooth_zoom_curve=smooth_zoom_curve,
     )
     transition_job_state(
         job,

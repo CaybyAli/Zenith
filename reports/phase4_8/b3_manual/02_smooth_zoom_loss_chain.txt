@@ -1,0 +1,505 @@
+
+====================================================================================================
+1_smooth_zoom_created | core/gaming_pipeline.py:9125-9355
+====================================================================================================
+9125:     voice_intensity_distribution = {}
+9126:     face_detection_points = []
+9127:     face_detection_rate = 0.0
+9128:     facial_expression_points = []
+9129:     facial_expression_distribution = {}
+9130:     gameplay_detection_points = []
+9131:     gameplay_detection_distribution = {}
+9132:     smooth_zoom_curve = None
+9133:     smooth_zoom_summary = {}
+9134:     focus_decisions = []
+9135:     focus_decision_summary = {}
+9136:     focus_decision_log = None
+9137:     if job.channel_type == ChannelType.GAMING_MAIN:
+9138:         ensure_ffmpeg_on_path()
+9139:         # Test-only bypass; do not set ZENITH_SKIP_TRANSCRIPT in production runs.
+9140:         if os.environ.get("ZENITH_SKIP_TRANSCRIPT") == "1":
+9141:             print(
+9142:                 f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+9143:                 "skipped reason=env skip (ZENITH_SKIP_TRANSCRIPT test-only bypass)"
+9144:             )
+9145:         elif job.raw_video_path:
+9146:             try:
+9147:                 transcript_stream_results = transcript_processor.transcribe_all_streams(
+9148:                     str(job.raw_video_path)
+9149:                 )
+9150:                 speaker_identifier = (
+9151:                     services.get("speaker_identifier") or SpeakerIdentifier()
+9152:                 )
+9153:                 transcript_result = speaker_identifier.identify_transcript_results(
+9154:                     transcript_stream_results,
+9155:                     source_media_path=str(job.raw_video_path),
+9156:                 )
+9157:                 speaker_summary = getattr(speaker_identifier, "last_summary", None)
+9158:                 speaker_summary_data = (
+9159:                     speaker_summary.to_dict()
+9160:                     if speaker_summary is not None
+9161:                     and callable(getattr(speaker_summary, "to_dict", None))
+9162:                     else {}
+9163:                 )
+9164:                 if hasattr(job, "speaker_identification_summary"):
+9165:                     job.speaker_identification_summary = speaker_summary_data
+9166:                 print(
+9167:                     f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+9168:                     f"segments={len(transcript_result.segments)} "
+9169:                     f"engine={transcript_result.engine}"
+9170:                 )
+9171:                 print(
+9172:                     f"[gaming_pipeline] SPEAKERS  {job.job_id} "
+9173:                     f"strategy={speaker_summary_data.get('strategy', '-')} "
+9174:                     f"ali={speaker_summary_data.get('ali_segments', 0)} "
+9175:                     f"friend={speaker_summary_data.get('friend_segments', 0)} "
+9176:                     f"unknown={speaker_summary_data.get('unknown_segments', 0)}"
+9177:                 )
+9178:             except (TranscriptUnavailableError, ImportError, FileNotFoundError, RuntimeError) as exc:
+9179:                 try:
+9180:                     transcript_result = transcript_processor.transcribe(str(job.raw_video_path))
+9181:                     print(
+9182:                         f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
+9183:                         f"segments={len(transcript_result.segments)} "
+9184:                         f"engine={transcript_result.engine} "
+9185:                         f"speaker_fallback=legacy reason={exc}"
+9186:                     )
+9187:                 except (
+9188:                     TranscriptUnavailableError,
+9189:                     ImportError,
+9190:                     FileNotFoundError,
+9191:                     RuntimeError,
+9192:                 ) as fallback_exc:
+9193:                     print(
+9194:                         f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped "
+9195:                         f"reason={fallback_exc}"
+9196:                     )
+9197:         else:
+9198:             print(f"[gaming_pipeline] TRANSCRIPT {job.job_id} skipped reason=no raw_video_path")
+9199: 
+9200:     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+9201:         try:
+9202:             voice_intensity_analyzer = (
+9203:                 services.get("voice_intensity_analyzer") or VoiceIntensityAnalyzer()
+9204:             )
+9205:             voice_intensity_points = voice_intensity_analyzer.analyze(
+9206:                 str(job.raw_video_path),
+9207:                 speaker="ali",
+9208:             )
+9209:             voice_intensity_distribution = voice_intensity_analyzer.distribution(
+9210:                 voice_intensity_points
+9211:             )
+9212:             if hasattr(job, "voice_intensity_distribution"):
+9213:                 job.voice_intensity_distribution = dict(voice_intensity_distribution)
+9214:             print(
+9215:                 f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
+9216:                 f"points={len(voice_intensity_points)} "
+9217:                 f"normal={voice_intensity_distribution.get('normal', 0.0)} "
+9218:                 f"leise={voice_intensity_distribution.get('leise_erhoeht', 0.0)} "
+9219:                 f"schreien={voice_intensity_distribution.get('schreien', 0.0)} "
+9220:                 f"bruellen={voice_intensity_distribution.get('bruellen', 0.0)}"
+9221:             )
+9222:         except Exception as voice_intensity_exc:
+9223:             voice_intensity_points = []
+9224:             voice_intensity_distribution = {}
+9225:             print(
+9226:                 f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
+9227:                 f"skipped reason={voice_intensity_exc}"
+9228:             )
+9229: 
+9230:     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+9231:         face_detector = None
+9232:         try:
+9233:             face_detector = services.get("face_detector") or MediaPipeFaceDetector()
+9234:             face_detection_points = face_detector.detect_in_video(
+9235:                 str(job.raw_video_path),
+9236:                 sample_rate_fps=1.0,
+9237:             )
+9238:             detected_count = sum(1 for point in face_detection_points if point.detected)
+9239:             face_detection_rate = (
+9240:                 detected_count / len(face_detection_points)
+9241:                 if face_detection_points
+9242:                 else 0.0
+9243:             )
+9244:             if hasattr(job, "face_detection_rate"):
+9245:                 job.face_detection_rate = float(face_detection_rate)
+9246:             print(
+9247:                 f"[gaming_pipeline] FACE_DETECTION {job.job_id} "
+9248:                 f"points={len(face_detection_points)} "
+9249:                 f"detected={detected_count} "
+9250:                 f"rate={face_detection_rate:.3f} "
+9251:                 "engine=mediapipe_face_mesh"
+9252:             )
+9253:         except Exception as face_detection_exc:
+9254:             face_detection_points = []
+9255:             face_detection_rate = 0.0
+9256:             print(
+9257:                 f"[gaming_pipeline] FACE_DETECTION {job.job_id} "
+9258:                 f"skipped reason={face_detection_exc}"
+9259:             )
+9260:         finally:
+9261:             close = getattr(face_detector, "close", None)
+9262:             if callable(close):
+9263:                 close()
+9264: 
+9265:     if face_detection_points:
+9266:         try:
+9267:             facial_expression_analyzer = (
+9268:                 services.get("facial_expression_analyzer")
+9269:                 or FacialExpressionAnalyzer()
+9270:             )
+9271:             facial_expression_points = facial_expression_analyzer.analyze_video(
+9272:                 face_detection_points
+9273:             )
+9274:             facial_expression_distribution = facial_expression_analyzer.distribution(
+9275:                 facial_expression_points
+9276:             )
+9277:             if hasattr(job, "facial_expression_distribution"):
+9278:                 job.facial_expression_distribution = dict(facial_expression_distribution)
+9279:             active_expression_count = sum(
+9280:                 1
+9281:                 for point in facial_expression_points
+9282:                 if any(expression.value != "neutral" for expression in point.expressions)
+9283:             )
+9284:             print(
+9285:                 f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
+9286:                 f"points={len(facial_expression_points)} "
+9287:                 f"active={active_expression_count} "
+9288:                 f"patterns={len([v for v in facial_expression_distribution.values() if v > 0.0])}"
+9289:             )
+9290:         except Exception as facial_expression_exc:
+9291:             facial_expression_points = []
+9292:             facial_expression_distribution = {}
+9293:             print(
+9294:                 f"[gaming_pipeline] FACIAL_EXPRESSIONS {job.job_id} "
+9295:                 f"skipped reason={facial_expression_exc}"
+9296:             )
+9297: 
+9298:     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
+9299:         try:
+9300:             gameplay_menu_detector = (
+9301:                 services.get("gameplay_menu_detector") or GameplayMenuDetector()
+9302:             )
+9303:             gameplay_detection_points = gameplay_menu_detector.detect(
+9304:                 str(job.raw_video_path),
+9305:                 sample_rate_fps=1.0,
+9306:             )
+9307:             gameplay_detection_distribution = gameplay_menu_detector.distribution(
+9308:                 gameplay_detection_points
+9309:             )
+9310:             if hasattr(job, "gameplay_detection_distribution"):
+9311:                 job.gameplay_detection_distribution = dict(gameplay_detection_distribution)
+9312:             print(
+9313:                 f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
+9314:                 f"points={len(gameplay_detection_points)} "
+9315:                 f"gameplay={gameplay_detection_distribution.get('gameplay', 0.0)} "
+9316:                 f"menu={gameplay_detection_distribution.get('menu', 0.0)}"
+9317:             )
+9318:         except Exception as gameplay_menu_exc:
+9319:             gameplay_detection_points = []
+9320:             gameplay_detection_distribution = {}
+9321:             print(
+9322:                 f"[gaming_pipeline] GAMEPLAY_MENU {job.job_id} "
+9323:                 f"skipped reason={gameplay_menu_exc}"
+9324:             )
+9325: 
+9326:     if job.channel_type == ChannelType.GAMING_MAIN:
+9327:         try:
+9328:             smooth_zoom_engine = services.get("smooth_zoom_engine") or SmoothZoomEngine()
+9329:             speaker_segments = list(getattr(transcript_result, "segments", []) or [])
+9330:             smooth_zoom_curve = smooth_zoom_engine.build_curve_from_triggers(
+9331:                 voice_intensity=voice_intensity_points,
+9332:                 facial_expressions=facial_expression_points,
+9333:                 speaker_segments=speaker_segments,
+9334:                 gameplay_points=gameplay_detection_points,
+9335:                 clip_duration=0.0,
+9336:             )
+9337:             smooth_zoom_summary = smooth_zoom_engine.summarize(smooth_zoom_curve)
+9338:             if hasattr(job, "smooth_zoom_summary"):
+9339:                 job.smooth_zoom_summary = dict(smooth_zoom_summary)
+9340:             print(
+9341:                 f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+9342:                 f"keyframes={smooth_zoom_summary.get('keyframe_count', 0)} "
+9343:                 f"max_zoom={smooth_zoom_summary.get('max_zoom', 1.0)} "
+9344:                 f"targets={','.join(smooth_zoom_summary.get('targets', []))} "
+9345:                 f"hard_jumps={smooth_zoom_summary.get('hard_jump_count', 0)}"
+9346:             )
+9347:         except Exception as smooth_zoom_exc:
+9348:             smooth_zoom_curve = None
+9349:             smooth_zoom_summary = {}
+9350:             print(
+9351:                 f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+9352:                 f"skipped reason={smooth_zoom_exc}"
+9353:             )
+9354: 
+9355:     if job.channel_type == ChannelType.GAMING_MAIN:
+
+====================================================================================================
+2_render_call | core/gaming_pipeline.py:10645-10670
+====================================================================================================
+10645:         reason="rendering_started",
+10646:     )
+10647:     _safe_log_decision(
+10648:         job=job,
+10649:         export_dir=job_state_export_dir,
+10650:         phase="render",
+10651:         event_type="RENDERING_STARTED",
+10652:         action="renderer_started",
+10653:         reason="rendering_started",
+10654:         details={
+10655:             "renderer_type": type(active_renderer).__name__,
+10656:         },
+10657:     )
+10658:     final_video_path = active_renderer.render(
+10659:         job=job,
+10660:         source_path=job.raw_video_path,
+10661:         edit_timeline=edit_timeline,
+10662:         reframe_plan=reframe_plan,
+10663:         dynamic_edit_plan=dynamic_edit_plan,
+10664:     )
+10665:     transition_job_state(
+10666:         job,
+10667:         JobStatus.RENDERED,
+10668:         module="gaming_pipeline",
+10669:         reason="rendering_finished",
+10670:     )
+
+====================================================================================================
+3_pipeline_context_smooth_zoom | core/gaming_pipeline.py:11020-11045
+====================================================================================================
+11020:         ],
+11021:         "face_detection_rate": face_detection_rate,
+11022:         "facial_expression_points": [
+11023:             point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+11024:             for point in (facial_expression_points or [])
+11025:         ],
+11026:         "facial_expression_distribution": dict(facial_expression_distribution or {}),
+11027:         "gameplay_detection_points": [
+11028:             point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+11029:             for point in (gameplay_detection_points or [])
+11030:         ],
+11031:         "gameplay_detection_distribution": dict(gameplay_detection_distribution or {}),
+11032:         "smooth_zoom_curve": (
+11033:             smooth_zoom_curve.to_dict()
+11034:             if smooth_zoom_curve is not None
+11035:             and callable(getattr(smooth_zoom_curve, "to_dict", None))
+11036:             else None
+11037:         ),
+11038:         "smooth_zoom_summary": dict(smooth_zoom_summary or {}),
+11039:         "focus_decisions": [
+11040:             decision.to_dict() if callable(getattr(decision, "to_dict", None)) else decision
+11041:             for decision in (focus_decisions or [])
+11042:         ],
+11043:         "focus_decision_summary": dict(focus_decision_summary or {}),
+11044:         "focus_decision_log_path": str(focus_decision_log) if focus_decision_log else None,
+11045:         "audio_role_result":    audio_role_result,
+
+====================================================================================================
+4_pipeline_return_smooth_zoom | core/gaming_pipeline.py:11165-11185
+====================================================================================================
+11165:         "camera_zoom_enabled":   json_profile.get("camera_zoom_enabled"),
+11166:         "gameplay_zoom_enabled": json_profile.get("gameplay_zoom_enabled"),
+11167:         "profile_version":       json_profile.get("version"),
+11168:         # Analyse
+11169:         "transcript_result":     transcript_result,
+11170:         "voice_intensity_points": voice_intensity_points,
+11171:         "voice_intensity_distribution": voice_intensity_distribution,
+11172:         "face_detection_points": face_detection_points,
+11173:         "face_detection_rate": face_detection_rate,
+11174:         "facial_expression_points": facial_expression_points,
+11175:         "facial_expression_distribution": facial_expression_distribution,
+11176:         "gameplay_detection_points": gameplay_detection_points,
+11177:         "gameplay_detection_distribution": gameplay_detection_distribution,
+11178:         "smooth_zoom_curve": smooth_zoom_curve,
+11179:         "smooth_zoom_summary": smooth_zoom_summary,
+11180:         "focus_decisions": focus_decisions,
+11181:         "focus_decision_summary": focus_decision_summary,
+11182:         "focus_decision_log_path": str(focus_decision_log) if focus_decision_log else None,
+11183:         "hook_keyword_result":   hook_keyword_result,
+11184:         "sentence_timeline_result": sentence_timeline_result,
+11185:         "analysis_result":       analysis_result,
+
+====================================================================================================
+5_final_render_driver_focus_policy_area | core/final_render_driver.py:250-430
+====================================================================================================
+250:         ]
+251:         result = subprocess.run(cmd, capture_output=True, text=True)
+252:         if result.returncode == 0 and result.stdout.strip():
+253:             parts = result.stdout.strip().split(",")
+254:             if len(parts) >= 2:
+255:                 try:
+256:                     return int(parts[0]), int(parts[1])
+257:                 except ValueError:
+258:                     pass
+259:         return 1920, 1080
+260: 
+261:     def _find_reframe_instruction(self, segment_id: str, reframe_plan: ReframePlan | None):
+262:         if reframe_plan is None:
+263:             return None
+264:         for instr in reframe_plan.instructions:
+265:             if instr.segment_id == segment_id:
+266:                 return instr
+267:         return None
+268: 
+269:     def _find_zoom_instructions(
+270:         self,
+271:         segment: TimelineSegment,
+272:         dynamic_edit_plan: DynamicEditPlan | None,
+273:     ) -> list[ZoomInstruction]:
+274:         if dynamic_edit_plan is None:
+275:             return []
+276:         return [
+277:             z for z in dynamic_edit_plan.zoom_instructions
+278:             if z.segment_id == segment.segment_id
+279:         ]
+280: 
+281: 
+282:     def _normalise_focus_target(self, focus_target: object) -> str:
+283:         target = str(focus_target or "").strip().lower()
+284:         if target in {"facecam", "facecam_focus", "facecam_emphasis"}:
+285:             return "facecam"
+286:         if target in {"gameplay", "gameplay_focus", "gameplay_crop"}:
+287:             return "gameplay"
+288:         if target in {"balanced", "balanced_split"}:
+289:             return "balanced"
+290:         if target == "drop":
+291:             return "drop"
+292:         return "unknown"
+293: 
+294:     def _layout_kind_for_focus_target(self, focus_target: object) -> str:
+295:         target = self._normalise_focus_target(focus_target)
+296:         if target == "facecam":
+297:             return "facecam_emphasis"
+298:         if target in {"gameplay", "drop"}:
+299:             return "gameplay_crop"
+300:         if target == "balanced":
+301:             return "balanced_split"
+302:         return "full_gameplay"
+303: 
+304:     def _resolve_focus_render_policy(
+305:         self,
+306:         segment: TimelineSegment,
+307:         job: Job | None = None,
+308:         reframe_plan: ReframePlan | None = None,
+309:     ) -> dict:
+310:         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
+311:         fallback_layout = instr.layout_kind if instr else "full_gameplay"
+312:         fallback_focus = getattr(instr, "focus_kind", None) if instr else None
+313: 
+314:         base_policy = {
+315:             "segment_id": str(segment.segment_id),
+316:             "policy_source": "reframe_plan" if instr else "default",
+317:             "focus_target": self._normalise_focus_target(fallback_focus),
+318:             "layout_kind": str(fallback_layout),
+319:             "confidence": 0.0,
+320:             "timestamp": None,
+321:             "reasoning": "fallback_reframe_plan" if instr else "fallback_default",
+322:         }
+323: 
+324:         raw_decisions = getattr(job, "focus_decisions", None) if job is not None else None
+325:         if not isinstance(raw_decisions, list) or not raw_decisions:
+326:             return base_policy
+327: 
+328:         midpoint = (float(segment.start_time) + float(segment.end_time)) / 2.0
+329:         candidates: list[dict] = []
+330: 
+331:         for raw in raw_decisions:
+332:             if hasattr(raw, "to_dict") and callable(raw.to_dict):
+333:                 raw = raw.to_dict()
+334:             if not isinstance(raw, dict):
+335:                 continue
+336: 
+337:             try:
+338:                 timestamp = float(raw.get("timestamp"))
+339:             except (TypeError, ValueError):
+340:                 continue
+341: 
+342:             if not (float(segment.start_time) <= timestamp < float(segment.end_time)):
+343:                 continue
+344: 
+345:             focus_target = self._normalise_focus_target(raw.get("focus_target"))
+346:             if focus_target == "unknown":
+347:                 continue
+348: 
+349:             try:
+350:                 confidence = float(raw.get("confidence", 0.0) or 0.0)
+351:             except (TypeError, ValueError):
+352:                 confidence = 0.0
+353: 
+354:             candidates.append(
+355:                 {
+356:                     "raw": raw,
+357:                     "timestamp": timestamp,
+358:                     "focus_target": focus_target,
+359:                     "confidence": confidence,
+360:                     "distance": abs(timestamp - midpoint),
+361:                 }
+362:             )
+363: 
+364:         if not candidates:
+365:             return base_policy
+366: 
+367:         candidates.sort(key=lambda item: (-item["confidence"], item["distance"]))
+368:         selected = candidates[0]
+369:         raw = selected["raw"]
+370:         focus_target = selected["focus_target"]
+371: 
+372:         return {
+373:             "segment_id": str(segment.segment_id),
+374:             "policy_source": "focus_decision",
+375:             "focus_target": focus_target,
+376:             "layout_kind": self._layout_kind_for_focus_target(focus_target),
+377:             "confidence": round(float(selected["confidence"]), 3),
+378:             "timestamp": round(float(selected["timestamp"]), 3),
+379:             "reasoning": str(raw.get("reasoning") or "focus_decision"),
+380:             "facecam_zoom": float(raw.get("facecam_zoom", 1.0) or 1.0),
+381:             "gameplay_zoom": float(raw.get("gameplay_zoom", 1.0) or 1.0),
+382:             "facecam_opacity": float(raw.get("facecam_opacity", 1.0) or 1.0),
+383:         }
+384: 
+385: 
+386:     # ------------------------------------------------------------------ #
+387:     #  Filter chain builder                                                #
+388:     # ------------------------------------------------------------------ #
+389: 
+390:     def _build_filter_complex(
+391:         self,
+392:         segment: TimelineSegment,
+393:         reframe_plan: ReframePlan | None,
+394:         dynamic_edit_plan: DynamicEditPlan | None,
+395:         audio_peaks: list[dict],
+396:         src_w: int,
+397:         src_h: int,
+398:         focus_policy: dict | None = None,
+399:     ) -> tuple[str, str]:
+400: 
+401:         """
+402:         Baut den filter_complex fuer 32:9 Source -> 16:9 Output.
+403:         Layout: Gameplay als Hauptbild, Facecam als PiP oben links.
+404:         ZOOM: PiP vergroessert sich bei lustigen Momenten (3 Stufen)!
+405:         Returns: (filter_complex_string, output_label)
+406:         """
+407:         instr = self._find_reframe_instruction(segment.segment_id, reframe_plan)
+408:         layout_kind = instr.layout_kind if instr else "full_gameplay"
+409:         policy_source = "reframe_plan" if instr else "default"
+410: 
+411:         if isinstance(focus_policy, dict) and focus_policy.get("layout_kind"):
+412:             layout_kind = str(focus_policy.get("layout_kind"))
+413:             policy_source = str(focus_policy.get("policy_source") or "focus_policy")
+414: 
+415:         print(
+416:             f"[DEBUG] Segment {segment.segment_id[:8]} ({segment.segment_role}): "
+417:             f"layout_kind='{layout_kind}' policy_source='{policy_source}'"
+418:         )
+419: 
+420:         if src_w >= 3000:  # 32:9 Format
+421:             if layout_kind == "facecam_emphasis":
+422:                 print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
+423:                 fc = (
+424:                     f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+425:                     f"crop={src_w//2}:1080:0:0,"
+426:                     f"{_cuda_scale_filter(1920, 1080)}[out]"
+427:                 )
+428:                 return fc, "[out]"
+429: 
+430:             if layout_kind in {"gameplay_crop", "gameplay_focus"}:

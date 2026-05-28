@@ -1,0 +1,66 @@
+D:\Zenith\core\gaming_pipeline.py:39: from core.smooth_zoom_engine import SmoothZoomEngine
+D:\Zenith\core\gaming_pipeline.py:9132: smooth_zoom_curve = None
+D:\Zenith\core\gaming_pipeline.py:9133: smooth_zoom_summary = {}
+D:\Zenith\core\gaming_pipeline.py:9328: smooth_zoom_engine = services.get("smooth_zoom_engine") or SmoothZoomEngine()
+D:\Zenith\core\gaming_pipeline.py:9330: smooth_zoom_curve = smooth_zoom_engine.build_curve_from_triggers(
+D:\Zenith\core\gaming_pipeline.py:9337: smooth_zoom_summary = smooth_zoom_engine.summarize(smooth_zoom_curve)
+D:\Zenith\core\gaming_pipeline.py:9338: if hasattr(job, "smooth_zoom_summary"):
+D:\Zenith\core\gaming_pipeline.py:9339: job.smooth_zoom_summary = dict(smooth_zoom_summary)
+D:\Zenith\core\gaming_pipeline.py:9341: f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+D:\Zenith\core\gaming_pipeline.py:9342: f"keyframes={smooth_zoom_summary.get('keyframe_count', 0)} "
+D:\Zenith\core\gaming_pipeline.py:9343: f"max_zoom={smooth_zoom_summary.get('max_zoom', 1.0)} "
+D:\Zenith\core\gaming_pipeline.py:9344: f"targets={','.join(smooth_zoom_summary.get('targets', []))} "
+D:\Zenith\core\gaming_pipeline.py:9345: f"hard_jumps={smooth_zoom_summary.get('hard_jump_count', 0)}"
+D:\Zenith\core\gaming_pipeline.py:9347: except Exception as smooth_zoom_exc:
+D:\Zenith\core\gaming_pipeline.py:9348: smooth_zoom_curve = None
+D:\Zenith\core\gaming_pipeline.py:9349: smooth_zoom_summary = {}
+D:\Zenith\core\gaming_pipeline.py:9351: f"[gaming_pipeline] SMOOTH_ZOOM {job.job_id} "
+D:\Zenith\core\gaming_pipeline.py:9352: f"skipped reason={smooth_zoom_exc}"
+D:\Zenith\core\gaming_pipeline.py:11032: "smooth_zoom_curve": (
+D:\Zenith\core\gaming_pipeline.py:11033: smooth_zoom_curve.to_dict()
+D:\Zenith\core\gaming_pipeline.py:11034: if smooth_zoom_curve is not None
+D:\Zenith\core\gaming_pipeline.py:11035: and callable(getattr(smooth_zoom_curve, "to_dict", None))
+D:\Zenith\core\gaming_pipeline.py:11038: "smooth_zoom_summary": dict(smooth_zoom_summary or {}),
+D:\Zenith\core\gaming_pipeline.py:11178: "smooth_zoom_curve": smooth_zoom_curve,
+D:\Zenith\core\gaming_pipeline.py:11179: "smooth_zoom_summary": smooth_zoom_summary,
+D:\Zenith\core\smooth_zoom_engine.py:45: class ZoomKeyframe:
+D:\Zenith\core\smooth_zoom_engine.py:61: class ZoomCurve:
+D:\Zenith\core\smooth_zoom_engine.py:62: keyframes: list[ZoomKeyframe]
+D:\Zenith\core\smooth_zoom_engine.py:106: class SmoothZoomEngine:
+D:\Zenith\core\smooth_zoom_engine.py:143: def build_curve_from_triggers(
+D:\Zenith\core\smooth_zoom_engine.py:150: ) -> ZoomCurve:
+D:\Zenith\core\smooth_zoom_engine.py:158: return ZoomCurve([ZoomKeyframe(0.0, 1.0, TARGET_BALANCED, "linear")])
+D:\Zenith\core\smooth_zoom_engine.py:161: keyframes = [ZoomKeyframe(0.0, 1.0, TARGET_BALANCED, "linear")]
+D:\Zenith\core\smooth_zoom_engine.py:178: ZoomKeyframe(
+D:\Zenith\core\smooth_zoom_engine.py:188: ZoomKeyframe(
+D:\Zenith\core\smooth_zoom_engine.py:196: return ZoomCurve(self.enforce_no_hard_jumps(ZoomCurve(keyframes)).keyframes)
+D:\Zenith\core\smooth_zoom_engine.py:200: curve: ZoomCurve,
+D:\Zenith\core\smooth_zoom_engine.py:204: ) -> ZoomCurve:
+D:\Zenith\core\smooth_zoom_engine.py:208: adjusted: list[ZoomKeyframe] = [curve.keyframes[0]]
+D:\Zenith\core\smooth_zoom_engine.py:219: ZoomKeyframe(
+D:\Zenith\core\smooth_zoom_engine.py:227: return ZoomCurve(adjusted)
+D:\Zenith\core\smooth_zoom_engine.py:231: curve: ZoomCurve,
+D:\Zenith\core\smooth_zoom_engine.py:251: def summarize(self, curve: ZoomCurve) -> dict[str, Any]:
+D:\Zenith\core\smooth_zoom_engine.py:259: def to_ffmpeg_filter(self, curve: ZoomCurve, fps: int = 60) -> str:
+D:\Zenith\core\smooth_zoom_engine.py:388: def _zoom_expression(self, curve: ZoomCurve) -> str:
+D:\Zenith\core\smooth_zoom_engine.py:420: def _dedupe_keyframes(keyframes: Iterable[ZoomKeyframe]) -> list[ZoomKeyframe]:
+D:\Zenith\core\smooth_zoom_engine.py:421: by_timestamp: dict[float, ZoomKeyframe] = {}
+D:\Zenith\core\smooth_zoom_engine.py:424: by_timestamp[timestamp] = ZoomKeyframe(
+D:\Zenith\tests\test_smooth_zoom_easing.py:3: from core.smooth_zoom_engine import ease_in_out_cubic, ease_out_quad, easing_value
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:5: from core.smooth_zoom_engine import SmoothZoomEngine, ZoomCurve, ZoomKeyframe
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:42: curve = SmoothZoomEngine().build_curve_from_triggers(
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:61: curve = SmoothZoomEngine().build_curve_from_triggers(
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:74: curve = SmoothZoomEngine().build_curve_from_triggers(
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:95: def test_to_ffmpeg_filter_contains_dynamic_crop_expression() -> None:
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:96: curve = ZoomCurve(
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:98: ZoomKeyframe(0.0, 1.0, "balanced", "linear"),
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:99: ZoomKeyframe(1.0, 1.5, "facecam", "ease_in_out_cubic"),
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:100: ZoomKeyframe(2.0, 1.0, "balanced", "ease_out_quad"),
+D:\Zenith\tests\test_smooth_zoom_engine_curves.py:104: filter_text = SmoothZoomEngine().to_ffmpeg_filter(curve, fps=60)
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:3: from core.smooth_zoom_engine import SmoothZoomEngine, ZoomCurve, ZoomKeyframe
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:7: engine = SmoothZoomEngine()
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:8: curve = ZoomCurve(
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:10: ZoomKeyframe(0.0, 1.0, "balanced", "linear"),
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:11: ZoomKeyframe(0.2, 2.0, "facecam", "ease_out_quad"),
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:22: engine = SmoothZoomEngine()
+D:\Zenith\tests\test_smooth_zoom_no_hard_jumps.py:23: curve = engine.build_curve_from_triggers(

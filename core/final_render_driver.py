@@ -383,6 +383,98 @@ class FinalRenderDriver:
         }
 
 
+
+    def _safe_even_int(self, value: float, *, minimum: int = 2) -> int:
+        number = max(int(round(float(value))), minimum)
+        if number % 2:
+            number -= 1
+        return max(number, minimum)
+
+    def _resolve_smooth_zoom_policy(
+        self,
+        segment: TimelineSegment,
+        smooth_zoom_curve: object | None = None,
+    ) -> dict:
+        if smooth_zoom_curve is None:
+            return {
+                "segment_id": str(segment.segment_id),
+                "smooth_zoom_used": False,
+                "reason": "missing_smooth_zoom_curve",
+            }
+
+        interpolate = getattr(smooth_zoom_curve, "interpolate", None)
+        if not callable(interpolate):
+            return {
+                "segment_id": str(segment.segment_id),
+                "smooth_zoom_used": False,
+                "reason": "smooth_zoom_curve_has_no_interpolate",
+            }
+
+        timestamp = (float(segment.start_time) + float(segment.end_time)) / 2.0
+
+        try:
+            zoom_factor, target = interpolate(timestamp)
+        except Exception as exc:
+            return {
+                "segment_id": str(segment.segment_id),
+                "smooth_zoom_used": False,
+                "reason": f"smooth_zoom_interpolate_failed:{exc}",
+            }
+
+        try:
+            zoom = float(zoom_factor)
+        except (TypeError, ValueError):
+            zoom = 1.0
+
+        zoom = max(1.0, min(2.5, zoom))
+        target = self._normalise_focus_target(target)
+
+        return {
+            "segment_id": str(segment.segment_id),
+            "smooth_zoom_used": zoom > 1.001,
+            "timestamp": round(timestamp, 3),
+            "zoom_factor": round(zoom, 3),
+            "target": target,
+            "reason": "smooth_zoom_curve_interpolated",
+        }
+
+    def _build_32x9_focus_crop_filter(
+        self,
+        *,
+        src_w: int,
+        src_h: int,
+        side: str,
+        smooth_zoom_policy: dict | None = None,
+    ) -> tuple[str, str]:
+        base_w = src_w // 2
+        base_h = src_h
+
+        zoom = 1.0
+        if isinstance(smooth_zoom_policy, dict):
+            try:
+                zoom = float(smooth_zoom_policy.get("zoom_factor", 1.0) or 1.0)
+            except (TypeError, ValueError):
+                zoom = 1.0
+
+        zoom = max(1.0, min(2.5, zoom))
+
+        crop_w = self._safe_even_int(base_w / zoom)
+        crop_h = self._safe_even_int(base_h / zoom)
+
+        crop_x = self._safe_even_int((base_w - crop_w) / 2, minimum=0)
+        crop_y = self._safe_even_int((base_h - crop_h) / 2, minimum=0)
+
+        if side == "right":
+            crop_x += base_w
+
+        fc = (
+            f"[0:v]hwdownload,format=nv12,format=yuv420p,"
+            f"crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
+            f"{_cuda_scale_filter(1920, 1080)}[out]"
+        )
+        return fc, "[out]"
+
+
     # ------------------------------------------------------------------ #
     #  Filter chain builder                                                #
     # ------------------------------------------------------------------ #
@@ -396,6 +488,7 @@ class FinalRenderDriver:
         src_w: int,
         src_h: int,
         focus_policy: dict | None = None,
+        smooth_zoom_policy: dict | None = None,
     ) -> tuple[str, str]:
 
         """
@@ -420,21 +513,21 @@ class FinalRenderDriver:
         if src_w >= 3000:  # 32:9 Format
             if layout_kind == "facecam_emphasis":
                 print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
-                fc = (
-                    f"[0:v]hwdownload,format=nv12,format=yuv420p,"
-                    f"crop={src_w//2}:1080:0:0,"
-                    f"{_cuda_scale_filter(1920, 1080)}[out]"
+                return self._build_32x9_focus_crop_filter(
+                    src_w=src_w,
+                    src_h=src_h,
+                    side="left",
+                    smooth_zoom_policy=smooth_zoom_policy,
                 )
-                return fc, "[out]"
 
             if layout_kind in {"gameplay_crop", "gameplay_focus"}:
                 print(f"[DEBUG] -> Rendering GAMEPLAY FOCUS ONLY (right half)")
-                fc = (
-                    f"[0:v]hwdownload,format=nv12,format=yuv420p,"
-                    f"crop={src_w//2}:1080:{src_w//2}:0,"
-                    f"{_cuda_scale_filter(1920, 1080)}[out]"
+                return self._build_32x9_focus_crop_filter(
+                    src_w=src_w,
+                    src_h=src_h,
+                    side="right",
+                    smooth_zoom_policy=smooth_zoom_policy,
                 )
-                return fc, "[out]"
             
 # ZOOM-FEATURE: Finde Zoom-Momente fuer dieses Segment
             zoom_instructions = self._find_zoom_instructions(segment, dynamic_edit_plan)
@@ -1217,6 +1310,7 @@ class FinalRenderDriver:
 
         render_layout_records: list[dict] = []
         render_layout_counts: dict[str, int] = {}
+        smooth_zoom_records: list[dict] = []
 
         try:
             src_w, src_h = self._get_video_dimensions(source)
@@ -1274,7 +1368,12 @@ class FinalRenderDriver:
                     job=job,
                     reframe_plan=reframe_plan,
                 )
+                smooth_zoom_policy = self._resolve_smooth_zoom_policy(
+                    segment=seg,
+                    smooth_zoom_curve=smooth_zoom_curve,
+                )
                 render_layout_records.append(dict(focus_policy))
+                smooth_zoom_records.append(dict(smooth_zoom_policy))
                 layout_for_count = str(focus_policy.get("layout_kind") or "unknown")
                 render_layout_counts[layout_for_count] = (
                     render_layout_counts.get(layout_for_count, 0) + 1
@@ -1288,6 +1387,7 @@ class FinalRenderDriver:
                     src_w,
                     src_h,
                     focus_policy=focus_policy,
+                    smooth_zoom_policy=smooth_zoom_policy,
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
                 render_tasks.append(
@@ -1387,6 +1487,11 @@ class FinalRenderDriver:
             ),
             "render_layout_counts": dict(sorted(render_layout_counts.items())),
             "resolved_render_layouts": render_layout_records,
+            "smooth_zoom_available": smooth_zoom_curve is not None,
+            "smooth_zoom_used": any(
+                bool(item.get("smooth_zoom_used")) for item in smooth_zoom_records
+            ),
+            "smooth_zoom_records": smooth_zoom_records,
             "segment_render_workers": render_workers,
             "zoom_instructions_count": (
                 len(dynamic_edit_plan.zoom_instructions)
