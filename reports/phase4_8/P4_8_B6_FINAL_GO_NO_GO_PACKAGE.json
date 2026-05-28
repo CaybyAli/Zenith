@@ -1,0 +1,29 @@
+{
+  "phase": "P4.8-B6",
+  "status": "PHASE_4_8_RENDER_DECISION_CONSUMPTION_GO",
+  "decision": "GO",
+  "go_scope": [
+    "FinalRenderDriver consumes focus_decisions",
+    "FinalRenderDriver consumes smooth_zoom_curve",
+    "gameplay_crop render path proven",
+    "facecam_emphasis render path proven",
+    "balanced_split PiP render path proven",
+    "synthetic 32x9 visual render proof passed",
+    "real 32x9 sample render proof passed"
+  ],
+  "not_claimed": [
+    "full 20-30GB production pipeline proof",
+    "full long raw ingest-to-publish proof",
+    "full corpus-scale render proof",
+    "final automatic highlight/story quality production validation"
+  ],
+  "commits": [
+    "ccd4384 docs(P4-8-B1): diagnose render decision consumption gap",
+    "582d7f3 fix(P4-8-B2): consume focus decisions in final render policy",
+    "48de6d5 fix(P4-8-B3): apply smooth zoom curve in final render policy",
+    "65a1871 fix(P4-8-B4): accept smooth zoom curve in render signature",
+    "4dd7a4f test(P4-8-B4): add mini render visual proof",
+    "f92b573 test(P4-8-B5): add real sample render proof"
+  ],
+  "next_recommended_phase": "P4.9 / P5 controlled full-pipeline proof"
+}
