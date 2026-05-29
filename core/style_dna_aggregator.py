@@ -569,6 +569,19 @@ def _reference_check(kind: str, summary: dict[str, Any]) -> dict[str, Any]:
                 "explanation": "quality_signal_not_auto_error: content type may have different pacing",
             })
 
+    audio_mean = summary["numeric"]["audio_dynamic_range_db"]["mean"]
+    if audio_mean is not None:
+        ref = REFERENCE_40["audio_dynamic_range_db_mean"]
+        diff_pct = abs(audio_mean - ref) / ref * 100.0
+        if diff_pct > 15.0:
+            signals.append({
+                "field": "audio_dynamic_range_db.mean",
+                "value": audio_mean,
+                "reference": ref,
+                "deviation_percent": round(diff_pct, 2),
+                "explanation": "quality_signal_not_auto_error: content type may have different audio dynamics",
+            })
+
     voice_percent = summary["distributions"]["voice_intensity"]["percent"]
     for key, ref in REFERENCE_40["voice_distribution_percent"].items():
         value = float(voice_percent.get(key, 0.0))

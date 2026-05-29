@@ -19,6 +19,7 @@ def _fingerprint(
     transcript_key: str,
     transcript_text: str,
     speaker_distribution: dict | None = None,
+    voice_distribution: dict | None = None,
 ) -> dict:
     data = {
         "cuts_per_minute": cuts_per_minute,
@@ -33,6 +34,8 @@ def _fingerprint(
     }
     if speaker_distribution is not None:
         data["speaker_distribution"] = speaker_distribution
+    if voice_distribution is not None:
+        data["voice_intensity_distribution"] = voice_distribution
     return data
 
 
@@ -82,9 +85,9 @@ def test_style_dna_aggregator_handles_transcript_aliases_and_taxonomy(tmp_path: 
     _write(
         corpus / "top_solo" / "top_001",
         _fingerprint(
-            cuts_per_minute=8.0,
-            scene_length=3.5,
-            audio_db=29.0,
+            cuts_per_minute=6.6,
+            scene_length=4.1,
+            audio_db=18.0,
             voice="leise_erhoeht",
             hook="high_reaction",
             intensity="burst",
@@ -92,6 +95,12 @@ def test_style_dna_aggregator_handles_transcript_aliases_and_taxonomy(tmp_path: 
             opening="reaction",
             transcript_key="first_10s_text",
             transcript_text="solo transcript text",
+            voice_distribution={
+                "normal": 69.0,
+                "leise_erhoeht": 24.0,
+                "schreien": 6.0,
+                "bruellen": 1.0,
+            },
         ),
     )
     _write(
@@ -143,6 +152,16 @@ def test_style_dna_aggregator_handles_transcript_aliases_and_taxonomy(tmp_path: 
 
     assert pairs["distributions"]["intensity_clustering"]["counts"]["front_loaded"] == 1
     assert solo["distributions"]["intensity_clustering"]["counts"]["burst"] == 1
+
+    solo_signals = solo["reference_check"]["signals_requiring_explanation"]
+    solo_audio_signal = next(
+        signal for signal in solo_signals
+        if signal["field"] == "audio_dynamic_range_db.mean"
+    )
+    assert solo_audio_signal["value"] == 18.0
+    assert solo_audio_signal["reference"] == 27.0
+    assert solo_audio_signal["deviation_percent"] == 33.33
+
     assert "kmeans" not in json.dumps(result, ensure_ascii=False).lower()
 
     assert pairs["speaker_distribution"]["ali"]["median"] == 0.7

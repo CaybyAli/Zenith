@@ -1,6 +1,6 @@
 {
   "schema_version": "p5_g3_style_dna_v1",
-  "generated_at_utc": "2026-05-29T12:56:41.316952+00:00",
+  "generated_at_utc": "2026-05-29T13:06:05.976146+00:00",
   "content_type": "top_solo",
   "source_count": 30,
   "expected_source_count": 30,
@@ -238,8 +238,16 @@
         "back_loaded": 3
       }
     },
-    "signals_requiring_explanation": [],
-    "signal_count": 0,
+    "signals_requiring_explanation": [
+      {
+        "field": "audio_dynamic_range_db.mean",
+        "value": 18.716,
+        "reference": 27.0,
+        "deviation_percent": 30.68,
+        "explanation": "quality_signal_not_auto_error: content type may have different audio dynamics"
+      }
+    ],
+    "signal_count": 1,
     "note": "Deviations are explanatory quality signals, not automatic failures.",
     "vlog_note": null
   }
