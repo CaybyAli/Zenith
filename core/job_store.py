@@ -8,6 +8,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from core.transcription_engine import (
+    DEFAULT_TRANSCRIPTION_ENGINE,
+    normalize_transcription_engine_name,
+)
 from models.job import Job
 from shared.errors import NotFoundError, StorageError
 from storage.base_storage_provider import BaseStorageProvider
@@ -42,6 +46,7 @@ _PERSIST_STRIP_PATTERNS: tuple[str, ...] = (
 _PERSIST_STRIP_SIZE_THRESHOLD_BYTES = 100_000
 _PERSIST_STRIP_CONTAINER_TYPES = (dict, list, tuple, set)
 _PERSIST_STRIP_SCALAR_TYPES = (str, bytes, bytearray, int, float, bool, type(None), Enum)
+_TRANSCRIPTION_ENGINE_FIELD = "transcription_engine"
 
 
 def _serialized_size_bytes(value: Any) -> int:
@@ -112,6 +117,14 @@ def _serialized_size_exceeds_threshold(value: Any, threshold: int) -> bool:
     return _serialized_size_bytes(value) > threshold
 
 
+def _with_default_transcription_engine(job_dict: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(job_dict)
+    enriched[_TRANSCRIPTION_ENGINE_FIELD] = normalize_transcription_engine_name(
+        enriched.get(_TRANSCRIPTION_ENGINE_FIELD) or DEFAULT_TRANSCRIPTION_ENGINE
+    )
+    return enriched
+
+
 def should_strip_persisted_field(
     key: str,
     value: Any,
@@ -139,9 +152,10 @@ def compact_job_dict_for_persistence(
     *,
     explicit_exclude: frozenset[str] = _SLIM_EXCLUDE,
 ) -> dict[str, Any]:
+    enriched_job_dict = _with_default_transcription_engine(job_dict)
     return {
         key: value
-        for key, value in job_dict.items()
+        for key, value in enriched_job_dict.items()
         if not should_strip_persisted_field(
             key,
             value,
@@ -267,7 +281,7 @@ class JobStore:
                 try:
                     job_data = self.storage.read_json(str(job_file))
                     job_id = self._job_id_from_dict(job_data, fallback=job_file.stem)
-                    result[job_id] = job_data
+                    result[job_id] = _with_default_transcription_engine(job_data)
                     self._last_hash.setdefault(job_id, self._job_hash(job_data))
                 except Exception:
                     continue
@@ -289,9 +303,10 @@ class JobStore:
                             legacy_job_data,
                             fallback=str(legacy_id),
                         )
-                        result[job_id] = legacy_job_data
-                        self._write_job(job_id, legacy_job_data)
-                        self._last_hash[job_id] = self._job_hash(legacy_job_data)
+                        enriched_job_data = _with_default_transcription_engine(legacy_job_data)
+                        result[job_id] = enriched_job_data
+                        self._write_job(job_id, enriched_job_data)
+                        self._last_hash[job_id] = self._job_hash(enriched_job_data)
 
                     legacy_path = Path(self.db_path)
                     backup_path = Path(str(self.db_path) + ".bak")
