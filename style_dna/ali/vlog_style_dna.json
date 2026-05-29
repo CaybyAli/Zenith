@@ -1,0 +1,231 @@
+{
+  "schema_version": "p5_g3_style_dna_v1",
+  "generated_at_utc": "2026-05-29T12:56:41.317490+00:00",
+  "content_type": "vlog",
+  "source_count": 3,
+  "expected_source_count": 3,
+  "is_descriptive_only": true,
+  "read_only_input": true,
+  "notes": [
+    "Aggregated from existing style_fingerprint.json files.",
+    "No new clustering is invented.",
+    "intensity_clustering is counted as existing taxonomy frequency only.",
+    "Transcript aliases first_window_text and first_10s_text are normalized.",
+    "Voice intensity is aggregated from voice_intensity_distribution percentages."
+  ],
+  "numeric": {
+    "cuts_per_minute": {
+      "count": 3,
+      "median": 10.737,
+      "p10": 7.527,
+      "p90": 13.283,
+      "mean": 10.461,
+      "min": 6.725,
+      "max": 13.92
+    },
+    "scene_length_seconds": {
+      "count": 3,
+      "median": 3.28,
+      "p10": 2.448,
+      "p90": 3.664,
+      "mean": 3.093,
+      "min": 2.24,
+      "max": 3.76
+    },
+    "audio_dynamic_range_db": {
+      "count": 3,
+      "median": 21.2,
+      "p10": 12.522,
+      "p90": 35.937,
+      "mean": 23.724,
+      "min": 10.352,
+      "max": 39.621
+    }
+  },
+  "distributions": {
+    "voice_intensity": {
+      "total": 3,
+      "counts": {
+        "normal": 1,
+        "leise_erhoeht": 2,
+        "schreien": 0,
+        "bruellen": 0
+      },
+      "percent": {
+        "normal": 29.758,
+        "leise_erhoeht": 54.743,
+        "schreien": 14.476,
+        "bruellen": 1.023
+      },
+      "median_percent": {
+        "normal": 15.863,
+        "leise_erhoeht": 68.098,
+        "schreien": 15.477,
+        "bruellen": 0.0
+      },
+      "source_count_by_category": {
+        "normal": 3,
+        "leise_erhoeht": 3,
+        "schreien": 3,
+        "bruellen": 3
+      }
+    },
+    "hook": {
+      "total": 3,
+      "counts": {
+        "narrative": 3
+      },
+      "percent": {
+        "narrative": 100.0
+      }
+    },
+    "intensity_clustering": {
+      "total": 3,
+      "counts": {
+        "front_loaded": 1,
+        "burst": 1,
+        "even": 0,
+        "scattered": 0,
+        "back_loaded": 1
+      },
+      "percent": {
+        "front_loaded": 33.33,
+        "burst": 33.33,
+        "even": 0.0,
+        "scattered": 0.0,
+        "back_loaded": 33.33
+      }
+    }
+  },
+  "correlations": {
+    "voice_intensity_to_focus": {
+      "pair_count": 3,
+      "counts": {
+        "leise_erhoeht": {
+          "facecam": 1,
+          "gameplay": 1
+        },
+        "normal": {
+          "gameplay": 1
+        }
+      }
+    },
+    "hook_to_opening": {
+      "pair_count": 3,
+      "counts": {
+        "narrative": {
+          "action": 3
+        }
+      }
+    }
+  },
+  "transcript_key_resolution": {
+    "alias_keys": [
+      "first_window_text",
+      "first_10s_text"
+    ],
+    "key_counts": {
+      "first_10s_text": 3
+    },
+    "non_empty_count": 3,
+    "all_sources_non_empty": true,
+    "sample_previews": [
+      {
+        "source": "vlogs\\vlog_001\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "So meine Freunde, willkommen zu einem neuen Video hier auf diesem Kanal. Mal was ganz anderes, äh, wie seht, wir sind hier auf dem Weg gerade unterwegs, nämlich uns zwar gehen wir ",
+        "char_count": 188,
+        "word_count": 34
+      },
+      {
+        "source": "vlogs\\vlog_002\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "So meine Freude, Willkommen zu einem neuen Video auf diesem Kanal, aber keinen ganz normalen Video, sondern erstmals nichts dabei. Wir werden heute eigentlich ein kleines Koch-Chal",
+        "char_count": 299,
+        "word_count": 48
+      },
+      {
+        "source": "vlogs\\vlog_003\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "So, meine Freunde, willkommen mal wieder zu einem Special-Video hier auf diesem Kanal. Ihr kennt hier alle meinen Hintergrund. Kamera-Man, einmal bitte nach links für. Genau, was m",
+        "char_count": 216,
+        "word_count": 34
+      }
+    ]
+  },
+  "source_files": [
+    "vlogs\\vlog_001\\style_fingerprint.json",
+    "vlogs\\vlog_002\\style_fingerprint.json",
+    "vlogs\\vlog_003\\style_fingerprint.json"
+  ],
+  "reference_check": {
+    "reference_name": "40er_reference",
+    "reference": {
+      "cuts_per_minute_median": 6.6,
+      "cuts_per_minute_mean": 9.1,
+      "scene_length_seconds_median": 4.1,
+      "audio_dynamic_range_db_mean": 27.0,
+      "voice_distribution_percent": {
+        "normal": 69.0,
+        "leise_erhoeht": 24.0,
+        "schreien": 6.0,
+        "bruellen": 1.0
+      },
+      "hook_counts": {
+        "narrative": 31,
+        "high_reaction": 5,
+        "question": 4
+      },
+      "intensity_clustering_counts": {
+        "front_loaded": 15,
+        "burst": 14,
+        "even": 5,
+        "scattered": 3,
+        "back_loaded": 3
+      }
+    },
+    "signals_requiring_explanation": [
+      {
+        "field": "cuts_per_minute.median",
+        "value": 10.737,
+        "reference": 6.6,
+        "deviation_percent": 62.68,
+        "explanation": "quality_signal_not_auto_error: subset/style split can differ from 40er reference"
+      },
+      {
+        "field": "scene_length_seconds.median",
+        "value": 3.28,
+        "reference": 4.1,
+        "deviation_percent": 20.0,
+        "explanation": "quality_signal_not_auto_error: content type may have different pacing"
+      },
+      {
+        "field": "voice_intensity.normal",
+        "value_percent": 29.758,
+        "reference_percent": 69.0,
+        "deviation_pp": 39.24,
+        "explanation": "quality_signal_not_auto_error: source mix differs or voice taxonomy shifted"
+      },
+      {
+        "field": "voice_intensity.leise_erhoeht",
+        "value_percent": 54.743,
+        "reference_percent": 24.0,
+        "deviation_pp": 30.74,
+        "explanation": "quality_signal_not_auto_error: source mix differs or voice taxonomy shifted"
+      },
+      {
+        "field": "voice_intensity.schreien",
+        "value_percent": 14.476,
+        "reference_percent": 6.0,
+        "deviation_pp": 8.48,
+        "explanation": "quality_signal_not_auto_error: source mix differs or voice taxonomy shifted"
+      }
+    ],
+    "signal_count": 5,
+    "note": "Deviations are explanatory quality signals, not automatic failures.",
+    "vlog_note": "Vlog sample is descriptive only; n=3 is too small for clustering."
+  }
+}

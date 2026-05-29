@@ -1,0 +1,39 @@
+{
+  "schema_version": "p5_g3_style_dna_manifest_v1",
+  "generated_at_utc": "2026-05-29T12:56:41.317836+00:00",
+  "corpus_root": "learning_corpus",
+  "output_dir": "style_dna\\ali",
+  "discovered_source_count": 60,
+  "excluded_source_count": 7,
+  "excluded_source_files": [
+    "pairs_singletrack_backup\\pair_001\\style_fingerprint.json",
+    "pairs_singletrack_backup\\pair_002\\style_fingerprint.json",
+    "pairs_singletrack_backup\\pair_003\\style_fingerprint.json",
+    "pairs_singletrack_backup\\pair_004\\style_fingerprint.json",
+    "pairs_singletrack_backup\\pair_005\\style_fingerprint.json",
+    "pairs_singletrack_backup\\pair_006\\style_fingerprint.json",
+    "pairs_singletrack_backup\\pair_007\\style_fingerprint.json"
+  ],
+  "total_source_count": 53,
+  "expected_total_source_count": 53,
+  "source_counts": {
+    "gaming_pairs": 20,
+    "top_solo": 30,
+    "vlog": 3
+  },
+  "expected_source_counts": {
+    "gaming_pairs": 20,
+    "top_solo": 30,
+    "vlog": 3
+  },
+  "output_files": {
+    "gaming_pairs": "style_dna\\ali\\gaming_pairs_style_dna.json",
+    "top_solo": "style_dna\\ali\\top_solo_style_dna.json",
+    "vlog": "style_dna\\ali\\vlog_style_dna.json"
+  },
+  "transcript_non_empty_counts": {
+    "gaming_pairs": 20,
+    "top_solo": 30,
+    "vlog": 3
+  }
+}

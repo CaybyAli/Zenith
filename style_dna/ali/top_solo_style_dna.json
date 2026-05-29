@@ -1,0 +1,246 @@
+{
+  "schema_version": "p5_g3_style_dna_v1",
+  "generated_at_utc": "2026-05-29T12:56:41.316952+00:00",
+  "content_type": "top_solo",
+  "source_count": 30,
+  "expected_source_count": 30,
+  "is_descriptive_only": false,
+  "read_only_input": true,
+  "notes": [
+    "Aggregated from existing style_fingerprint.json files.",
+    "No new clustering is invented.",
+    "intensity_clustering is counted as existing taxonomy frequency only.",
+    "Transcript aliases first_window_text and first_10s_text are normalized.",
+    "Voice intensity is aggregated from voice_intensity_distribution percentages."
+  ],
+  "numeric": {
+    "cuts_per_minute": {
+      "count": 30,
+      "median": 6.012,
+      "p10": 0.762,
+      "p90": 26.753,
+      "mean": 9.174,
+      "min": 0.522,
+      "max": 39.572
+    },
+    "scene_length_seconds": {
+      "count": 30,
+      "median": 4.175,
+      "p10": 0.972,
+      "p90": 23.074,
+      "mean": 10.333,
+      "min": 0.85,
+      "max": 71.767
+    },
+    "audio_dynamic_range_db": {
+      "count": 30,
+      "median": 18.178,
+      "p10": 12.842,
+      "p90": 25.318,
+      "mean": 18.716,
+      "min": 6.683,
+      "max": 36.546
+    }
+  },
+  "distributions": {
+    "voice_intensity": {
+      "total": 30,
+      "counts": {
+        "normal": 30,
+        "leise_erhoeht": 0,
+        "schreien": 0,
+        "bruellen": 0
+      },
+      "percent": {
+        "normal": 73.018,
+        "leise_erhoeht": 21.321,
+        "schreien": 4.629,
+        "bruellen": 1.032
+      },
+      "median_percent": {
+        "normal": 74.523,
+        "leise_erhoeht": 24.043,
+        "schreien": 1.484,
+        "bruellen": 0.0
+      },
+      "source_count_by_category": {
+        "normal": 30,
+        "leise_erhoeht": 30,
+        "schreien": 30,
+        "bruellen": 30
+      }
+    },
+    "hook": {
+      "total": 30,
+      "counts": {
+        "high_reaction": 4,
+        "narrative": 22,
+        "question": 4
+      },
+      "percent": {
+        "high_reaction": 13.33,
+        "narrative": 73.33,
+        "question": 13.33
+      }
+    },
+    "intensity_clustering": {
+      "total": 30,
+      "counts": {
+        "front_loaded": 10,
+        "burst": 10,
+        "even": 5,
+        "scattered": 3,
+        "back_loaded": 2
+      },
+      "percent": {
+        "front_loaded": 33.33,
+        "burst": 33.33,
+        "even": 16.67,
+        "scattered": 10.0,
+        "back_loaded": 6.67
+      }
+    }
+  },
+  "correlations": {
+    "voice_intensity_to_focus": {
+      "pair_count": 30,
+      "counts": {
+        "normal": {
+          "gameplay": 30
+        }
+      }
+    },
+    "hook_to_opening": {
+      "pair_count": 30,
+      "counts": {
+        "high_reaction": {
+          "question": 3,
+          "action": 1
+        },
+        "narrative": {
+          "action": 17,
+          "question": 5
+        },
+        "question": {
+          "question": 4
+        }
+      }
+    }
+  },
+  "transcript_key_resolution": {
+    "alias_keys": [
+      "first_window_text",
+      "first_10s_text"
+    ],
+    "key_counts": {
+      "first_10s_text": 30
+    },
+    "non_empty_count": 30,
+    "all_sources_non_empty": true,
+    "sample_previews": [
+      {
+        "source": "top_solo\\video_001\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "Die heutige Challenge ist es, nur mit grünen Waffen zu gewinnen. Keine Lille, keine Golden, nur Grüne. Wenn wir damit gewinnen, schuld ich ihm ein Abo und ich sag es euch. Am Ende,",
+        "char_count": 245,
+        "word_count": 44
+      },
+      {
+        "source": "top_solo\\video_002\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "Ihr fragt euch bestimmt, was ist das für ein Skin? Ich zerstörer in dieser Folge die gesamte Top-Lin mit einem Bleistift. Wie gut wir sind. Echtest du?",
+        "char_count": 151,
+        "word_count": 27
+      },
+      {
+        "source": "top_solo\\video_003\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "Wir dürfen heute nur mit der Waffe spielen, die wir auch die ersten Kiste erhalten haben. Wie gut wir sind. Er sagt, ich hab nicht zu verlieren, da gefilmt. Ja, und du sagst ihm, h",
+        "char_count": 247,
+        "word_count": 46
+      },
+      {
+        "source": "top_solo\\video_004\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "Nach unserem letzten BadWos-Fail haben ich schon nils noch stetig für besser. Wie gut wir heute sind. Ich sag dir nicht, dass du bornstet. Eben ich auch. Oh mein Gott, hab ich scho",
+        "char_count": 212,
+        "word_count": 36
+      },
+      {
+        "source": "top_solo\\video_005\\style_fingerprint.json",
+        "resolved_key": "first_10s_text",
+        "is_non_empty": true,
+        "preview": "Mein letztes Bett, wo's wieder war, kann ab einem Jahr. Wie gut meine Pippo Pilskills noch sind. Äh, hier, mir, jetzt, wo bist du? Suck, er ist bei uns!",
+        "char_count": 152,
+        "word_count": 29
+      }
+    ]
+  },
+  "source_files": [
+    "top_solo\\video_001\\style_fingerprint.json",
+    "top_solo\\video_002\\style_fingerprint.json",
+    "top_solo\\video_003\\style_fingerprint.json",
+    "top_solo\\video_004\\style_fingerprint.json",
+    "top_solo\\video_005\\style_fingerprint.json",
+    "top_solo\\video_006\\style_fingerprint.json",
+    "top_solo\\video_007\\style_fingerprint.json",
+    "top_solo\\video_008\\style_fingerprint.json",
+    "top_solo\\video_009\\style_fingerprint.json",
+    "top_solo\\video_010\\style_fingerprint.json",
+    "top_solo\\video_011\\style_fingerprint.json",
+    "top_solo\\video_012\\style_fingerprint.json",
+    "top_solo\\video_013\\style_fingerprint.json",
+    "top_solo\\video_014\\style_fingerprint.json",
+    "top_solo\\video_015\\style_fingerprint.json",
+    "top_solo\\video_016\\style_fingerprint.json",
+    "top_solo\\video_017\\style_fingerprint.json",
+    "top_solo\\video_018\\style_fingerprint.json",
+    "top_solo\\video_019\\style_fingerprint.json",
+    "top_solo\\video_020\\style_fingerprint.json",
+    "top_solo\\video_021\\style_fingerprint.json",
+    "top_solo\\video_022\\style_fingerprint.json",
+    "top_solo\\video_023\\style_fingerprint.json",
+    "top_solo\\video_024\\style_fingerprint.json",
+    "top_solo\\video_025\\style_fingerprint.json",
+    "top_solo\\video_026\\style_fingerprint.json",
+    "top_solo\\video_027\\style_fingerprint.json",
+    "top_solo\\video_028\\style_fingerprint.json",
+    "top_solo\\video_029\\style_fingerprint.json",
+    "top_solo\\video_030\\style_fingerprint.json"
+  ],
+  "reference_check": {
+    "reference_name": "40er_reference",
+    "reference": {
+      "cuts_per_minute_median": 6.6,
+      "cuts_per_minute_mean": 9.1,
+      "scene_length_seconds_median": 4.1,
+      "audio_dynamic_range_db_mean": 27.0,
+      "voice_distribution_percent": {
+        "normal": 69.0,
+        "leise_erhoeht": 24.0,
+        "schreien": 6.0,
+        "bruellen": 1.0
+      },
+      "hook_counts": {
+        "narrative": 31,
+        "high_reaction": 5,
+        "question": 4
+      },
+      "intensity_clustering_counts": {
+        "front_loaded": 15,
+        "burst": 14,
+        "even": 5,
+        "scattered": 3,
+        "back_loaded": 3
+      }
+    },
+    "signals_requiring_explanation": [],
+    "signal_count": 0,
+    "note": "Deviations are explanatory quality signals, not automatic failures.",
+    "vlog_note": null
+  }
+}

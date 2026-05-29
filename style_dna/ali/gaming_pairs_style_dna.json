@@ -1,0 +1,278 @@
+{
+  "schema_version": "p5_g3_style_dna_v1",
+  "generated_at_utc": "2026-05-29T12:56:41.316268+00:00",
+  "content_type": "gaming_pairs",
+  "source_count": 20,
+  "expected_source_count": 20,
+  "is_descriptive_only": false,
+  "read_only_input": true,
+  "notes": [
+    "Aggregated from existing style_fingerprint.json files.",
+    "No new clustering is invented.",
+    "intensity_clustering is counted as existing taxonomy frequency only.",
+    "Transcript aliases first_window_text and first_10s_text are normalized.",
+    "Voice intensity is aggregated from voice_intensity_distribution percentages."
+  ],
+  "numeric": {
+    "cuts_per_minute": {
+      "count": 20,
+      "median": 5.829,
+      "p10": 1.226,
+      "p90": 11.014,
+      "mean": 6.139,
+      "min": 0.438,
+      "max": 17.907
+    },
+    "scene_length_seconds": {
+      "count": 20,
+      "median": 5.542,
+      "p10": 3.006,
+      "p90": 24.882,
+      "mean": 14.926,
+      "min": 1.692,
+      "max": 129.4
+    },
+    "audio_dynamic_range_db": {
+      "count": 20,
+      "median": 16.63,
+      "p10": 8.589,
+      "p90": 55.975,
+      "mean": 25.865,
+      "min": 6.833,
+      "max": 60.463
+    }
+  },
+  "distributions": {
+    "voice_intensity": {
+      "total": 20,
+      "counts": {
+        "normal": 20,
+        "leise_erhoeht": 0,
+        "schreien": 0,
+        "bruellen": 0
+      },
+      "percent": {
+        "normal": 79.193,
+        "leise_erhoeht": 13.976,
+        "schreien": 6.021,
+        "bruellen": 0.809
+      },
+      "median_percent": {
+        "normal": 81.834,
+        "leise_erhoeht": 12.383,
+        "schreien": 5.168,
+        "bruellen": 0.349
+      },
+      "source_count_by_category": {
+        "normal": 20,
+        "leise_erhoeht": 20,
+        "schreien": 20,
+        "bruellen": 20
+      }
+    },
+    "hook": {
+      "total": 20,
+      "counts": {
+        "high_reaction": 1,
+        "narrative": 18,
+        "question": 1
+      },
+      "percent": {
+        "high_reaction": 5.0,
+        "narrative": 90.0,
+        "question": 5.0
+      }
+    },
+    "intensity_clustering": {
+      "total": 20,
+      "counts": {
+        "front_loaded": 5,
+        "burst": 10,
+        "even": 1,
+        "scattered": 1,
+        "back_loaded": 3
+      },
+      "percent": {
+        "front_loaded": 25.0,
+        "burst": 50.0,
+        "even": 5.0,
+        "scattered": 5.0,
+        "back_loaded": 15.0
+      }
+    }
+  },
+  "correlations": {
+    "voice_intensity_to_focus": {
+      "pair_count": 20,
+      "counts": {
+        "normal": {
+          "gameplay": 17,
+          "facecam": 3
+        }
+      }
+    },
+    "hook_to_opening": {
+      "pair_count": 20,
+      "counts": {
+        "high_reaction": {
+          "action": 1
+        },
+        "narrative": {
+          "question": 14,
+          "action": 4
+        },
+        "question": {
+          "question": 1
+        }
+      }
+    }
+  },
+  "transcript_key_resolution": {
+    "alias_keys": [
+      "first_window_text",
+      "first_10s_text"
+    ],
+    "key_counts": {
+      "first_window_text": 20
+    },
+    "non_empty_count": 20,
+    "all_sources_non_empty": true,
+    "sample_previews": [
+      {
+        "source": "pairs\\pair_001\\style_fingerprint.json",
+        "resolved_key": "first_window_text",
+        "is_non_empty": true,
+        "preview": "Wir steigen heute wieder hinter das Lenkrad. Und versuchen, so viele Tore bemüglich zu schießen. Aber wir kommen heute wie stärkste Kama-Klatsche, die es ehemals gegeben hat. Ihr l",
+        "char_count": 1202,
+        "word_count": 226
+      },
+      {
+        "source": "pairs\\pair_002\\style_fingerprint.json",
+        "resolved_key": "first_window_text",
+        "is_non_empty": true,
+        "preview": "Wir springen heute wieder in die Welt vom Bett was, ob du heute unseren ersten Sieg holen werden, das werden wir sehen. Lass schon mal leidt aber mit gerne Kerr und schreibt eure d",
+        "char_count": 1432,
+        "word_count": 264
+      },
+      {
+        "source": "pairs\\pair_003\\style_fingerprint.json",
+        "resolved_key": "first_window_text",
+        "is_non_empty": true,
+        "preview": "Die neue Chivalen ist da, wir testen sie zuerst meinem Game aus. Ob wir mir die Spaß haben werden, dass sie den in der heutigen Folge last erlegt. Aber die Gänne kann und ich hab d",
+        "char_count": 1726,
+        "word_count": 313
+      },
+      {
+        "source": "pairs\\pair_004\\style_fingerprint.json",
+        "resolved_key": "first_window_text",
+        "is_non_empty": true,
+        "preview": "Die heutige Folge ist ohne wird's eider Spanzenbett was folgen, die ich hier erlebt habe. Schaffen heute wirkt schon unseren ersten Sieg, oder erinnert alles im absoluten Chaos, ih",
+        "char_count": 510,
+        "word_count": 87
+      },
+      {
+        "source": "pairs\\pair_005\\style_fingerprint.json",
+        "resolved_key": "first_window_text",
+        "is_non_empty": true,
+        "preview": "Die neue Fortnite-Sysens endlich da. Ich springe direkt rein und schauen wir alles einmal an. Was ist euer Heidate? Schreibt das schon in die Kommentare und lasst ein Weik, dann ha",
+        "char_count": 401,
+        "word_count": 72
+      }
+    ]
+  },
+  "source_files": [
+    "pairs\\pair_001\\style_fingerprint.json",
+    "pairs\\pair_002\\style_fingerprint.json",
+    "pairs\\pair_003\\style_fingerprint.json",
+    "pairs\\pair_004\\style_fingerprint.json",
+    "pairs\\pair_005\\style_fingerprint.json",
+    "pairs\\pair_006\\style_fingerprint.json",
+    "pairs\\pair_007\\style_fingerprint.json",
+    "pairs\\pair_008\\style_fingerprint.json",
+    "pairs\\pair_009\\style_fingerprint.json",
+    "pairs\\pair_010\\style_fingerprint.json",
+    "pairs\\pair_011\\style_fingerprint.json",
+    "pairs\\pair_012\\style_fingerprint.json",
+    "pairs\\pair_013\\style_fingerprint.json",
+    "pairs\\pair_014\\style_fingerprint.json",
+    "pairs\\pair_015\\style_fingerprint.json",
+    "pairs\\pair_016\\style_fingerprint.json",
+    "pairs\\pair_017\\style_fingerprint.json",
+    "pairs\\pair_018\\style_fingerprint.json",
+    "pairs\\pair_019\\style_fingerprint.json",
+    "pairs\\pair_020\\style_fingerprint.json"
+  ],
+  "speaker_distribution": {
+    "ali": {
+      "count": 20,
+      "median": 0.681,
+      "p10": 0.565,
+      "p90": 0.769,
+      "mean": 0.676,
+      "min": 0.524,
+      "max": 1.0
+    },
+    "friend": {
+      "count": 20,
+      "median": 0.319,
+      "p10": 0.231,
+      "p90": 0.435,
+      "mean": 0.324,
+      "min": 0.0,
+      "max": 0.476
+    }
+  },
+  "reference_check": {
+    "reference_name": "40er_reference",
+    "reference": {
+      "cuts_per_minute_median": 6.6,
+      "cuts_per_minute_mean": 9.1,
+      "scene_length_seconds_median": 4.1,
+      "audio_dynamic_range_db_mean": 27.0,
+      "voice_distribution_percent": {
+        "normal": 69.0,
+        "leise_erhoeht": 24.0,
+        "schreien": 6.0,
+        "bruellen": 1.0
+      },
+      "hook_counts": {
+        "narrative": 31,
+        "high_reaction": 5,
+        "question": 4
+      },
+      "intensity_clustering_counts": {
+        "front_loaded": 15,
+        "burst": 14,
+        "even": 5,
+        "scattered": 3,
+        "back_loaded": 3
+      }
+    },
+    "signals_requiring_explanation": [
+      {
+        "field": "scene_length_seconds.median",
+        "value": 5.542,
+        "reference": 4.1,
+        "deviation_percent": 35.17,
+        "explanation": "quality_signal_not_auto_error: content type may have different pacing"
+      },
+      {
+        "field": "voice_intensity.normal",
+        "value_percent": 79.193,
+        "reference_percent": 69.0,
+        "deviation_pp": 10.19,
+        "explanation": "quality_signal_not_auto_error: source mix differs or voice taxonomy shifted"
+      },
+      {
+        "field": "voice_intensity.leise_erhoeht",
+        "value_percent": 13.976,
+        "reference_percent": 24.0,
+        "deviation_pp": 10.02,
+        "explanation": "quality_signal_not_auto_error: source mix differs or voice taxonomy shifted"
+      }
+    ],
+    "signal_count": 3,
+    "note": "Deviations are explanatory quality signals, not automatic failures.",
+    "vlog_note": null
+  }
+}
