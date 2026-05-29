@@ -364,8 +364,47 @@ class FinalRenderDriver:
         if not candidates:
             return base_policy
 
-        candidates.sort(key=lambda item: (-item["confidence"], item["distance"]))
-        selected = candidates[0]
+        focus_counts = {
+            "facecam": 0,
+            "gameplay": 0,
+            "balanced": 0,
+            "drop": 0,
+        }
+        for candidate in candidates:
+            target = str(candidate.get("focus_target") or "unknown")
+            if target in focus_counts:
+                focus_counts[target] += 1
+
+        dominant_focus_target: str | None = None
+        selection_rule = "highest_confidence_nearest_midpoint"
+
+        if focus_counts["gameplay"] > focus_counts["facecam"]:
+            dominant_focus_target = "gameplay"
+            selection_rule = "segment_focus_majority_gameplay"
+        elif focus_counts["facecam"] > focus_counts["gameplay"]:
+            dominant_focus_target = "facecam"
+            selection_rule = "segment_focus_majority_facecam"
+        elif focus_counts["balanced"] > max(focus_counts["facecam"], focus_counts["gameplay"]):
+            dominant_focus_target = "balanced"
+            selection_rule = "segment_focus_majority_balanced"
+        elif focus_counts["drop"] > max(
+            focus_counts["facecam"],
+            focus_counts["gameplay"],
+            focus_counts["balanced"],
+        ):
+            dominant_focus_target = "drop"
+            selection_rule = "segment_focus_majority_drop"
+
+        selectable_candidates = candidates
+        if dominant_focus_target is not None:
+            selectable_candidates = [
+                item
+                for item in candidates
+                if item.get("focus_target") == dominant_focus_target
+            ] or candidates
+
+        selectable_candidates.sort(key=lambda item: (-item["confidence"], item["distance"]))
+        selected = selectable_candidates[0]
         raw = selected["raw"]
         focus_target = selected["focus_target"]
 
@@ -377,6 +416,8 @@ class FinalRenderDriver:
             "confidence": round(float(selected["confidence"]), 3),
             "timestamp": round(float(selected["timestamp"]), 3),
             "reasoning": str(raw.get("reasoning") or "focus_decision"),
+            "selection_rule": selection_rule,
+            "segment_focus_counts": dict(focus_counts),
             "facecam_zoom": float(raw.get("facecam_zoom", 1.0) or 1.0),
             "gameplay_zoom": float(raw.get("gameplay_zoom", 1.0) or 1.0),
             "facecam_opacity": float(raw.get("facecam_opacity", 1.0) or 1.0),

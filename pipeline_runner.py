@@ -402,6 +402,24 @@ def run_pending_jobs(
                 result["exported_video_path"] = export_info["exported_video_path"]
                 job.render_version = export_info["render_version"]
                 job.video_path = export_info["exported_video_path"]
+                job.exported_video_path = export_info["exported_video_path"]
+                job.final_video_path = export_info["exported_video_path"]
+            elif result.get("final_video_path"):
+                job.final_video_path = str(result.get("final_video_path"))
+
+            phase_2b_result = result.get("phase_2b_stabilization_result")
+            if phase_2b_result is not None:
+                if hasattr(phase_2b_result, "to_dict") and callable(phase_2b_result.to_dict):
+                    job.phase_2b_stabilization_result = phase_2b_result.to_dict()
+                elif isinstance(phase_2b_result, dict):
+                    job.phase_2b_stabilization_result = dict(phase_2b_result)
+
+            focus_decisions = result.get("focus_decisions") or getattr(job, "focus_decisions", []) or []
+            job.focus_decisions_count = len(focus_decisions)
+
+            style_dna_consumption = result.get("style_dna_consumption")
+            if isinstance(style_dna_consumption, dict):
+                job.style_dna_consumption = dict(style_dna_consumption)
 
             title_package = result.get("title_package")
             if title_package is not None:

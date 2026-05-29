@@ -37,6 +37,83 @@ class FocusDecision:
 
 
 class FocusSwitchEngine:
+    DEFAULT_STYLE_DNA_PATH = Path("style_dna/ali/gaming_pairs_style_dna.json")
+    DEFAULT_NORMAL_GAMEPLAY_CONFIDENCE = 0.55
+
+    def __init__(self, style_dna_path: str | Path | None = None) -> None:
+        self.style_dna_path = Path(style_dna_path) if style_dna_path else self.DEFAULT_STYLE_DNA_PATH
+        self._style_dna: dict[str, Any] = {}
+        self._style_dna_consumption: dict[str, Any] = self._load_style_dna_consumption()
+
+    def _load_style_dna_consumption(self) -> dict[str, Any]:
+        report: dict[str, Any] = {
+            "loaded": False,
+            "path": str(self.style_dna_path),
+            "content_type": None,
+            "normal_voice_gameplay_confidence_before": self.DEFAULT_NORMAL_GAMEPLAY_CONFIDENCE,
+            "normal_voice_gameplay_confidence_after": self.DEFAULT_NORMAL_GAMEPLAY_CONFIDENCE,
+            "normal_voice_gameplay_ratio": None,
+            "changed_decision": None,
+            "reason": "style_dna_missing",
+        }
+
+        try:
+            if not self.style_dna_path.exists():
+                return report
+
+            data = json.loads(self.style_dna_path.read_text(encoding="utf-8"))
+            self._style_dna = data if isinstance(data, dict) else {}
+
+            content_type = str(self._style_dna.get("content_type") or "")
+            report["content_type"] = content_type
+            if content_type != "gaming_pairs":
+                report["reason"] = f"unsupported_content_type:{content_type}"
+                return report
+
+            normal_counts = (
+                self._style_dna
+                .get("correlations", {})
+                .get("voice_intensity_to_focus", {})
+                .get("counts", {})
+                .get("normal", {})
+            )
+            gameplay_count = int(normal_counts.get("gameplay", 0) or 0)
+            facecam_count = int(normal_counts.get("facecam", 0) or 0)
+            total = gameplay_count + facecam_count
+            ratio = (gameplay_count / total) if total else 0.0
+
+            report["loaded"] = True
+            report["normal_voice_gameplay_ratio"] = round(ratio, 3)
+
+            if ratio >= 0.70:
+                report["normal_voice_gameplay_confidence_after"] = 0.65
+                report["changed_decision"] = (
+                    "no_speech_normal_voice_gameplay_focus confidence 0.55->0.65 "
+                    f"because style_dna normal voice maps to gameplay ratio={ratio:.3f}"
+                )
+                report["reason"] = "gaming_pairs_style_dna_normal_voice_gameplay_bias"
+            else:
+                report["reason"] = "gaming_pairs_style_dna_loaded_without_threshold_change"
+
+            return report
+        except Exception as exc:
+            report["reason"] = f"style_dna_load_error:{exc}"
+            return report
+
+    def style_dna_consumption_report(self) -> dict[str, Any]:
+        return dict(self._style_dna_consumption)
+
+    def _normal_voice_gameplay_confidence(self) -> float:
+        try:
+            return float(
+                self._style_dna_consumption.get(
+                    "normal_voice_gameplay_confidence_after",
+                    self.DEFAULT_NORMAL_GAMEPLAY_CONFIDENCE,
+                )
+            )
+        except (TypeError, ValueError):
+            return self.DEFAULT_NORMAL_GAMEPLAY_CONFIDENCE
+
     FRIEND_REACTION_KEYWORDS = frozenset(
         {
             "boah",
@@ -141,6 +218,7 @@ class FocusSwitchEngine:
         payload = {
             "engine": "focus-switch-engine-v1",
             "summary": self.summarize(decisions),
+            "style_dna_consumption": self.style_dna_consumption_report(),
             "focus_decisions": [decision.to_dict() for decision in decisions],
         }
         with path.open("w", encoding="utf-8") as handle:
@@ -240,14 +318,19 @@ class FocusSwitchEngine:
         if not active_segments and (
             voice is None or voice.intensity == VoiceIntensity.NORMAL
         ):
+            confidence = self._normal_voice_gameplay_confidence()
+            style_reason = self._style_dna_consumption.get("reason", "style_dna_not_loaded")
             return FocusDecision(
                 timestamp=timestamp,
                 focus_target="gameplay",
                 facecam_zoom=1.0,
                 gameplay_zoom=1.0,
                 facecam_opacity=0.7,
-                reasoning="no_speech_normal_voice_gameplay_focus",
-                confidence=0.55,
+                reasoning=(
+                    "no_speech_normal_voice_gameplay_focus "
+                    f"style_dna_reason={style_reason}"
+                ),
+                confidence=confidence,
             )
 
         return FocusDecision(

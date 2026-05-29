@@ -1235,8 +1235,13 @@ class Job:
     repost_status: str | None = None 
 
     thumbnail_path: str | None = None
-    video_path: str | None = None    
+    video_path: str | None = None
+    final_video_path: str | None = None
+    exported_video_path: str | None = None
     render_version: int | None = None
+    focus_decisions_count: int = 0
+    phase_2b_stabilization_result: dict[str, Any] = field(default_factory=dict)
+    style_dna_consumption: dict[str, Any] = field(default_factory=dict)
 
     quality_score: float | None = None
     hook_score: float | None = None
@@ -3186,13 +3191,6 @@ class Job:
             next_repost_at=data.get("next_repost_at"),
             repost_status=data.get("repost_status"),
 
-thumbnail_path=data.get("thumbnail_path"),
-video_path=data.get("video_path"),
-render_version=(
-    int(data["render_version"])
-    if data.get("render_version") is not None
-    else None
-),
 shorts=[
     {
         "short_id": (
@@ -3293,6 +3291,22 @@ shorts=[
             improvement_hint=data.get("improvement_hint"),
 
             recommended_action=data.get("recommended_action"),
+
+
+            thumbnail_path=data.get("thumbnail_path"),
+            video_path=data.get("video_path"),
+            final_video_path=data.get("final_video_path"),
+            exported_video_path=data.get("exported_video_path"),
+            render_version=(
+                int(data["render_version"])
+                if data.get("render_version") is not None
+                else None
+            ),
+            focus_decisions_count=int(data.get("focus_decisions_count", 0) or 0),
+            phase_2b_stabilization_result=dict(
+                data.get("phase_2b_stabilization_result") or {}
+            ),
+            style_dna_consumption=dict(data.get("style_dna_consumption") or {}),
 
             performance_tracking=data.get("performance_tracking", {
                 "enabled": True,

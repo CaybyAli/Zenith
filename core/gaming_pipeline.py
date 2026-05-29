@@ -9352,6 +9352,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"skipped reason={smooth_zoom_exc}"
             )
 
+    style_dna_consumption = {}
+
     if job.channel_type == ChannelType.GAMING_MAIN:
         try:
             focus_switch_engine = (
@@ -9365,6 +9367,14 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 gameplay_points=gameplay_detection_points,
             )
             focus_decision_summary = focus_switch_engine.summarize(focus_decisions)
+            style_dna_consumption = focus_switch_engine.style_dna_consumption_report()
+            job.style_dna_consumption = dict(style_dna_consumption)
+            print(
+                f"[gaming_pipeline] STYLE_DNA_CONSUMED {job.job_id} "
+                f"loaded={style_dna_consumption.get('loaded')} "
+                f"path={style_dna_consumption.get('path')} "
+                f"changed={style_dna_consumption.get('changed_decision')}"
+            )
             focus_decision_log = focus_switch_engine.write_decision_log(
                 focus_decisions,
                 focus_decision_log_path(str(job.job_id)),
@@ -11043,6 +11053,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         ],
         "focus_decision_summary": dict(focus_decision_summary or {}),
         "focus_decision_log_path": str(focus_decision_log) if focus_decision_log else None,
+        "style_dna_consumption": dict(style_dna_consumption or {}),
         "audio_role_result":    audio_role_result,
         "gameplay_event_result": gameplay_event_result,
         "gameplay_state_result": (
@@ -11181,6 +11192,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "focus_decisions": focus_decisions,
         "focus_decision_summary": focus_decision_summary,
         "focus_decision_log_path": str(focus_decision_log) if focus_decision_log else None,
+        "style_dna_consumption": dict(style_dna_consumption or {}),
         "hook_keyword_result":   hook_keyword_result,
         "sentence_timeline_result": sentence_timeline_result,
         "analysis_result":       analysis_result,
