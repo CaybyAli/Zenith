@@ -516,6 +516,34 @@ class FinalRenderDriver:
         return fc, "[out]"
 
 
+    def _build_32x9_gameplay_with_facecam_pip_filter(
+        self,
+        *,
+        src_w: int,
+        src_h: int,
+        pip_width: int = 720,
+        pip_height: int = 405,
+        pip_x: int = 20,
+        pip_y: int = 100,
+    ) -> tuple[str, str]:
+        """Gaming-main safe layout: gameplay stays visible, facecam is PiP."""
+        base_w = src_w // 2
+        crop_offset = int((src_w / 1920) * 28)
+        facecam_crop_w = self._safe_even_int(base_w - crop_offset)
+        facecam_crop_h = self._safe_even_int(max(2, src_h - 12))
+        facecam_crop_y = 2 if src_h >= 12 else 0
+
+        fc = (
+            "[0:v]hwdownload,format=nv12,format=yuv420p,split=2[gp_src][fc_src];"
+            f"[gp_src]crop={base_w}:{src_h}:{base_w}:0,"
+            f"{_cuda_scale_filter(1920, 1080)}[gp];"
+            f"[fc_src]crop={facecam_crop_w}:{facecam_crop_h}:0:{facecam_crop_y},"
+            f"{_cuda_scale_filter(pip_width, pip_height)}[fc];"
+            f"[gp][fc]overlay={pip_x}:{pip_y}[out]"
+        )
+        return fc, "[out]"
+
+
     # ------------------------------------------------------------------ #
     #  Filter chain builder                                                #
     # ------------------------------------------------------------------ #
@@ -553,12 +581,14 @@ class FinalRenderDriver:
 
         if src_w >= 3000:  # 32:9 Format
             if layout_kind == "facecam_emphasis":
-                print(f"[DEBUG] -> Rendering FACECAM ONLY (left half)")
-                return self._build_32x9_focus_crop_filter(
+                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (FACECAM EMPHASIS)")
+                return self._build_32x9_gameplay_with_facecam_pip_filter(
                     src_w=src_w,
                     src_h=src_h,
-                    side="left",
-                    smooth_zoom_policy=smooth_zoom_policy,
+                    pip_width=720,
+                    pip_height=405,
+                    pip_x=20,
+                    pip_y=100,
                 )
 
             if layout_kind in {"gameplay_crop", "gameplay_focus"}:
