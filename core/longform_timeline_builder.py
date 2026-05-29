@@ -336,6 +336,21 @@ class LongformTimelineBuilder:
             notes.append("energy_boost")
 
         vision_overlap = self._max_gameplay_action_overlap(candidate, gameplay_vision_result)
+        has_gameplay_vision = (
+            gameplay_vision_result is not None
+            and not bool(getattr(gameplay_vision_result, "is_empty", False))
+        )
+
+        if has_gameplay_vision and vision_overlap < 0.10:
+            # P5-G5 Owner-No-Go:
+            # Speech/facecam alone must not win over boring intro/menu/waiting gameplay.
+            if float(candidate.start_time) < 90.0:
+                score = min(score, 0.34)
+                notes.append("owner_no_go_intro_no_gameplay_action_cap")
+            elif str(candidate.candidate_kind) in {"speech_peak", "unknown"}:
+                score = min(score, 0.44)
+                notes.append("owner_no_go_menu_wait_no_gameplay_action_cap")
+
         if vision_overlap >= 0.30:
             score += 0.10
             notes.append("vision_boost")
