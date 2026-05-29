@@ -1017,6 +1017,8 @@ class FinalRenderDriver:
                 "-c:v", "copy",
                 "-c:a", "aac",
                 "-b:a", "192k",
+                "-ar", "48000",
+                "-ac", "2",
                 "-movflags", "+faststart",
                 str(tmp_path),
             ]
@@ -1237,6 +1239,19 @@ class FinalRenderDriver:
         safe_video_encoder = video_encoder or self._resolve_video_encoder(None)
         video_encoder_args = list(safe_video_encoder.get("ffmpeg_args") or [])
 
+        raw_mixed_audio_path = source.parent / "raw_mixed_audio.mp4"
+        use_mixed_audio = raw_mixed_audio_path.exists()
+        audio_input_args: list[str] = []
+        audio_map = "0:a:0?"
+
+        if use_mixed_audio:
+            audio_input_args = [
+                "-ss", str(round(segment.start_time, 3)),
+                "-t", str(duration),
+                "-i", str(raw_mixed_audio_path),
+            ]
+            audio_map = "1:a:0?"
+
         cmd = [
             self._ffmpeg(), "-y",
             "-ss", str(round(segment.start_time, 3)),
@@ -1246,13 +1261,16 @@ class FinalRenderDriver:
             "-hwaccel_output_format",
             "cuda",
             "-i", str(source),
+            *audio_input_args,
             "-filter_complex", filter_complex,
             "-map", out_label,
-            "-map", "0:a?",
+            "-map", audio_map,
             "-pix_fmt", "yuv420p",
             *video_encoder_args,
             "-c:a", "aac",
             "-b:a", "192k",
+            "-ar", "48000",
+            "-ac", "2",
             "-reset_timestamps", "1",
             str(temp_path),
         ]

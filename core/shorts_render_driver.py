@@ -627,6 +627,10 @@ class ShortsRenderDriver:
                 AAC_AUDIO_ENCODER,
                 "-b:a",
                 SHORTS_AUDIO_BITRATE,
+                "-ar",
+                "48000",
+                "-ac",
+                "2",
                 "-movflags",
                 SHORTS_MOVFLAGS,
                 str(output_path),
@@ -807,7 +811,11 @@ class ShortsRenderDriver:
     def _audio_filter(self) -> str:
         target_i = float(getattr(self.audio_normalizer, "target_i", DEFAULT_TARGET_I))
         target_tp = float(getattr(self.audio_normalizer, "target_tp", DEFAULT_TARGET_TP))
-        return f"loudnorm=I={target_i}:TP={target_tp}:LRA={DEFAULT_LRA}"
+        return (
+            "aresample=48000,"
+            "aformat=sample_fmts=fltp:channel_layouts=stereo,"
+            f"loudnorm=I={target_i}:TP={target_tp}:LRA={DEFAULT_LRA}"
+        )
 
     def _video_filter(self, reframe_filter: str, caption_filter: str = "") -> str:
         clean_filter = str(reframe_filter or "").strip()
