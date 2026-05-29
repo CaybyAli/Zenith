@@ -10,11 +10,15 @@ from core.audio_stream_inspector import (
     AudioStreamInspectionError,
     AudioStreamInspector,
 )
+from core.transcription_engine import (
+    DEFAULT_TRANSCRIPTION_ENGINE,
+    FasterWhisperEngine,
+    TranscriptUnavailableError,
+    TranscriptionEngine,
+    create_transcription_engine,
+    normalize_transcription_engine_name,
+)
 from models.transcript_result import TranscriptResult, TranscriptSegment, TranscriptWord
-
-
-class TranscriptUnavailableError(RuntimeError):
-    pass
 
 
 class TranscriptProcessor:
@@ -23,6 +27,7 @@ class TranscriptProcessor:
         model_name: Optional[str] = None,
         allow_test_fallback: Optional[bool] = None,
         audio_stream_inspector: AudioStreamInspector | None = None,
+        transcription_engine: str | TranscriptionEngine | None = None,
     ) -> None:
         self.model_name = model_name or os.getenv("ZENITH_WHISPER_MODEL", "base")
         self.allow_test_fallback = (
@@ -31,6 +36,21 @@ class TranscriptProcessor:
             else os.getenv("ZENITH_TRANSCRIPT_TEST_MODE") == "1"
         )
         self.audio_stream_inspector = audio_stream_inspector or AudioStreamInspector()
+
+        if isinstance(transcription_engine, TranscriptionEngine):
+            self.transcription_engine_name = transcription_engine.name
+            self.transcription_engine = transcription_engine
+        else:
+            configured_engine = (
+                transcription_engine
+                or os.getenv("ZENITH_TRANSCRIPTION_ENGINE")
+                or DEFAULT_TRANSCRIPTION_ENGINE
+            )
+            self.transcription_engine_name = normalize_transcription_engine_name(configured_engine)
+            self.transcription_engine = create_transcription_engine(
+                self.transcription_engine_name,
+                model_name=self.model_name,
+            )
 
     def transcribe(self, video_path: str, audio_stream_index: int = 1) -> TranscriptResult:
         source_path = str(video_path)
@@ -42,32 +62,13 @@ class TranscriptProcessor:
         if not source.exists():
             raise FileNotFoundError(f"Transcript source not found: {source_path}")
 
-        errors = []
-
         with self._selected_audio_source(source_path, audio_stream_index) as selected:
-            try:
-                return self._transcribe_with_faster_whisper(
-                    selected.source_path,
-                    result_source_path=source_path,
-                    audio_track=selected.audio_track,
-                )
-            except ImportError as exc:
-                errors.append(f"faster-whisper unavailable: {exc}")
-            except Exception as exc:
-                errors.append(f"faster-whisper failed: {exc}")
-
-            try:
-                return self._transcribe_with_openai_whisper(
-                    selected.source_path,
-                    result_source_path=source_path,
-                    audio_track=selected.audio_track,
-                )
-            except ImportError as exc:
-                errors.append(f"whisper unavailable: {exc}")
-            except Exception as exc:
-                errors.append(f"whisper failed: {exc}")
-
-        raise TranscriptUnavailableError("; ".join(errors) or "No transcript engine available")
+            return self.transcription_engine.transcribe(
+                selected.source_path,
+                result_source_path=source_path,
+                audio_track=selected.audio_track,
+                sanitize_segments=self._sanitize_segments,
+            )
 
     def transcribe_all_streams(self, video_path: str) -> dict[str, TranscriptResult]:
         source_path = str(video_path)
@@ -82,7 +83,6 @@ class TranscriptProcessor:
             if not self.allow_test_fallback:
                 raise
             return {"mic": self._test_fallback(source_path, audio_track="mic")}
-
         if not inventory.streams:
             raise TranscriptUnavailableError("No audio streams available for transcription")
 
@@ -106,54 +106,15 @@ class TranscriptProcessor:
         result_source_path: str | None = None,
         audio_track: str = "mic",
     ) -> TranscriptResult:
-        from faster_whisper import WhisperModel
-
-        errors: list[str] = []
-
-        for device, compute_type in self._faster_whisper_runtime_candidates():
-            try:
-                model = WhisperModel(
-                    self.model_name,
-                    device=device,
-                    compute_type=compute_type,
-                )
-                raw_segments, info = model.transcribe(
-                    source_path,
-                    vad_filter=True,
-                    word_timestamps=True,
-                )
-
-                segments = self._sanitize_segments(
-                    (
-                        {
-                            "start": segment.start,
-                            "end": segment.end,
-                            "text": segment.text,
-                            "confidence": None,
-                            "words": getattr(segment, "words", None),
-                        }
-                        for segment in raw_segments
-                    ),
-                    audio_track=audio_track,
-                )
-
-                if not segments:
-                    raise TranscriptUnavailableError(
-                        "faster-whisper returned no valid segments"
-                    )
-
-                return TranscriptResult(
-                    source_path=result_source_path or source_path,
-                    language=getattr(info, "language", None),
-                    segments=segments,
-                    full_text=self._build_full_text(segments),
-                    engine="faster-whisper",
-                )
-            except Exception as exc:
-                errors.append(f"{device}/{compute_type}: {exc}")
-
-        raise TranscriptUnavailableError(
-            "faster-whisper failed for all runtimes: " + "; ".join(errors)
+        engine = FasterWhisperEngine(
+            model_name=self.model_name,
+            runtime_candidates=self._faster_whisper_runtime_candidates,
+        )
+        return engine.transcribe(
+            source_path,
+            result_source_path=result_source_path,
+            audio_track=audio_track,
+            sanitize_segments=self._sanitize_segments,
         )
 
     def _faster_whisper_runtime_candidates(self) -> list[tuple[str, str]]:
@@ -181,7 +142,6 @@ class TranscriptProcessor:
             "off",
         }:
             return False
-
         try:
             probe = subprocess.run(
                 ["nvidia-smi", "-L"],
@@ -194,34 +154,6 @@ class TranscriptProcessor:
             return False
 
         return probe.returncode == 0 and bool(probe.stdout.strip())
-
-    def _transcribe_with_openai_whisper(
-        self,
-        source_path: str,
-        *,
-        result_source_path: str | None = None,
-        audio_track: str = "mic",
-    ) -> TranscriptResult:
-        import whisper
-
-        model = whisper.load_model(self.model_name)
-        result = model.transcribe(source_path)
-
-        segments = self._sanitize_segments(
-            result.get("segments", []),
-            audio_track=audio_track,
-        )
-
-        if not segments:
-            raise TranscriptUnavailableError("whisper returned no valid segments")
-
-        return TranscriptResult(
-            source_path=result_source_path or source_path,
-            language=result.get("language"),
-            segments=segments,
-            full_text=self._build_full_text(segments),
-            engine="whisper",
-        )
 
     def _test_fallback(self, source_path: str, audio_track: str = "mic") -> TranscriptResult:
         segments = [
@@ -257,7 +189,6 @@ class TranscriptProcessor:
         audio_track: str = "mic",
     ) -> list[TranscriptSegment]:
         sanitized = []
-
         for item in raw_segments:
             if isinstance(item, dict):
                 start = item.get("start")
