@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from core.power_profile import PowerProfile
 from core.transcript_processor import TranscriptProcessor, TranscriptUnavailableError
 from core.transcript_segment_normalizer import normalize_transcript_segments
 from core.transcript_source_selector import (
@@ -249,7 +250,16 @@ def run_transcript_for_job(
         metadata={"stage": safe_metadata.get("stage")},
     )
 
-    processor = transcript_processor or TranscriptProcessor()
+    configured_engine = PowerProfile.normalize_transcription_engine(
+        safe_metadata.get("transcription_engine")
+        or getattr(job, "transcription_engine", None)
+        or PowerProfile.transcription_engine
+    )
+    safe_metadata["transcription_engine"] = configured_engine
+
+    processor = transcript_processor or TranscriptProcessor(
+        transcription_engine=configured_engine,
+    )
 
     report = build_transcript_run_report(
         selection=selection,
@@ -276,6 +286,13 @@ def apply_transcript_run_report_to_job(
     job.transcript_duration_seconds = float(report.duration_seconds or 0.0)
     job.transcript_language = report.language
     job.transcript_recommendation = report.recommendation
+
+    try:
+        job.transcription_engine = str(
+            report.engine or report.metadata.get("transcription_engine") or PowerProfile.transcription_engine
+        )
+    except Exception:
+        pass
 
     if hasattr(job, "transcript_normalized_segment_count"):
         job.transcript_normalized_segment_count = int(report.normalized_segment_count or 0)
@@ -310,6 +327,7 @@ def apply_transcript_run_report_to_job(
         job.touch()
 
     return job
+
 
 def detect_transcript_cache_status(job: Any) -> dict[str, Any]:
     return {
