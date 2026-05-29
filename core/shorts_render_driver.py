@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
@@ -32,7 +33,11 @@ from core.power_profile import PowerProfile
 from core.resource_monitor import guarded_ffmpeg_execution
 from core.subtitle_ffmpeg_builder import SubtitleFFmpegBuilder
 from core.subtitle_generator import SubtitleGenerator, SubtitleSegment, SubtitleStyle
-from core.shorts_transcript_caption_builder import build_caption_words_from_transcript
+from core.shorts_transcript_caption_builder import (
+    SaneCaptionWordResult,
+    build_caption_words_from_transcript,
+    build_sane_caption_words_from_transcript,
+)
 from models.shorts_clip import ShortsClip
 from models.transcript_result import TranscriptResult, TranscriptWord
 
@@ -257,45 +262,64 @@ def _caption_groups_from_segments(
 
 
 
+def _caption_word_result_for_clip(
+    clip: ShortsClip,
+    transcript: TranscriptResult,
+) -> SaneCaptionWordResult:
+    clip_start = _safe_optional_float(getattr(clip, "source_start_time", None))
+    clip_end = _safe_optional_float(getattr(clip, "source_end_time", None))
+    if clip_start is None or clip_end is None:
+        return SaneCaptionWordResult()
+
+    return build_sane_caption_words_from_transcript(
+        transcript=transcript,
+        clip_start_seconds=clip_start,
+        clip_end_seconds=clip_end,
+    )
+
+
+def _caption_groups_from_word_result(
+    caption_result: SaneCaptionWordResult,
+) -> list[CaptionGroup]:
+    if not caption_result.words:
+        return []
+    return [CaptionGroup(words=list(caption_result.words))]
+
+
+def _write_caption_audit(
+    output_path: Path,
+    caption_result: SaneCaptionWordResult,
+    ass_groups: list[list[Any]],
+) -> Path:
+    audit_path = output_path.with_suffix(".caption_audit.json")
+    group_texts = [[str(word.text) for word in group] for group in ass_groups]
+    payload = caption_result.to_audit_dict()
+    payload.update(
+        {
+            "source": "whisperx_word_timestamps",
+            "renderer": "libass",
+            "active_word_highlighting": True,
+            "group_count": len(ass_groups),
+            "group_word_counts": [len(group) for group in ass_groups],
+            "groups": group_texts,
+            "max_group_words": max([len(group) for group in ass_groups] or [0]),
+            "max_group_chars": max([len(" ".join(group)) for group in group_texts] or [0]),
+        }
+    )
+    audit_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return audit_path
+
+
 def _caption_groups_for_clip(
     clip: ShortsClip,
     transcript: TranscriptResult,
 ) -> list[CaptionGroup]:
-    clip_start = _safe_optional_float(getattr(clip, "source_start_time", None))
-    clip_end = _safe_optional_float(getattr(clip, "source_end_time", None))
-    if clip_start is None or clip_end is None:
-        return []
-
-    relative_words: list[TranscriptWord] = []
-
-    for word in _transcript_words(transcript):
-        start = _word_seconds(word, ("start_seconds", "start", "start_time"))
-        end = _word_seconds(word, ("end_seconds", "end", "end_time"))
-        text_value = getattr(word, "text", "")
-        text = " ".join(str(text_value or "").split())
-
-        if start is None or end is None or not text:
-            continue
-
-        if start < clip_start or end > clip_end:
-            continue
-
-        relative_start = max(0.0, round(start - clip_start, 3))
-        relative_end = max(0.0, round(end - clip_start, 3))
-
-        if relative_end <= relative_start:
-            continue
-
-        relative_words.append(
-            TranscriptWord(
-                text=text,
-                start_seconds=relative_start,
-                end_seconds=relative_end,
-                probability=getattr(word, "probability", None),
-            )
-        )
-
-    return [CaptionGroup(words=relative_words)] if relative_words else []
+    return _caption_groups_from_word_result(
+        _caption_word_result_for_clip(clip=clip, transcript=transcript)
+    )
 
 
 def _transcript_words(transcript: TranscriptResult) -> list[Any]:
@@ -826,10 +850,18 @@ class ShortsRenderDriver:
             return ""
 
         if _caption_renderer() == CAPTION_RENDERER_LIBASS and transcript is not None:
-            caption_groups = _caption_groups_for_clip(clip=clip, transcript=transcript)
+            caption_result = _caption_word_result_for_clip(clip=clip, transcript=transcript)
+            caption_groups = _caption_groups_from_word_result(caption_result)
             if caption_groups:
                 ass_path = Path(output_path).with_suffix(".ass")
-                CaptionASSBuilder().generate_ass_file(
+                ass_builder = CaptionASSBuilder()
+                ass_groups = ass_builder.build_groups(caption_groups)
+                _write_caption_audit(
+                    output_path=Path(output_path),
+                    caption_result=caption_result,
+                    ass_groups=ass_groups,
+                )
+                ass_builder.generate_ass_file(
                     caption_groups=caption_groups,
                     output_path=str(ass_path),
                 )

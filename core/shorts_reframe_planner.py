@@ -113,6 +113,12 @@ def build_facecam_centered_filter(source: SourceFormat) -> str:
     )
 
 
+def build_center_crop_9_16_filter(source: SourceFormat) -> str:
+    """Generic non-32:9 source -> 9:16 centered Shorts crop."""
+    return "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
+
+
+
 HYBRID_RATIONALE_TAG = "hybrid"
 
 PROMPT_TEMPLATE = (
@@ -341,6 +347,9 @@ class ShortsReframePlanner:
         source_video_path: str | Path | None = None,
     ) -> str:
         source = self._resolve_source_format(source_video_path)
+
+        if not source.is_32_9_composite:
+            return build_center_crop_9_16_filter(source)
 
         if layout_type == LAYOUT_GAMEPLAY_CENTERED:
             return build_gameplay_centered_filter(source)
