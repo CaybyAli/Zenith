@@ -1,5 +1,11 @@
 ﻿from __future__ import annotations
 
+from core.transcription_engine import (
+    DEFAULT_TRANSCRIPTION_ENGINE,
+    VALID_TRANSCRIPTION_ENGINES,
+    normalize_transcription_engine_name,
+)
+
 
 class PowerProfile:
     OFF = "off"
@@ -10,6 +16,9 @@ class PowerProfile:
 
     DEFAULT = "balanced"
     ALL = ["off", "eco", "balanced", "performance", "full_power"]
+
+    transcription_engine = DEFAULT_TRANSCRIPTION_ENGINE
+    TRANSCRIPTION_ENGINES = list(VALID_TRANSCRIPTION_ENGINES)
 
     @staticmethod
     def normalize(value: str) -> str:
@@ -23,6 +32,10 @@ class PowerProfile:
             return clean
 
         return PowerProfile.DEFAULT
+
+    @staticmethod
+    def normalize_transcription_engine(value: str | None) -> str:
+        return normalize_transcription_engine_name(value)
 
     @staticmethod
     def resolve_worker_count(power_profile: str) -> int:
