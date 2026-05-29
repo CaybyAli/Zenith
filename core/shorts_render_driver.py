@@ -286,22 +286,57 @@ def _caption_groups_from_word_result(
     return [CaptionGroup(words=list(caption_result.words))]
 
 
+def _clean_caption_token(value: object) -> str:
+    return str(value or "").strip().casefold().strip(".,!?;:'\"????")
+
+
+def _is_repetitive_caption_result(caption_result: SaneCaptionWordResult) -> bool:
+    words = [
+        _clean_caption_token(getattr(word, "text", ""))
+        for word in list(caption_result.words or [])
+    ]
+    words = [word for word in words if word]
+
+    if len(words) < 8:
+        return False
+
+    unique_words = set(words)
+    if len(unique_words) <= 2:
+        return True
+
+    most_common = max(words.count(word) for word in unique_words)
+    return most_common / max(1, len(words)) >= 0.72
+
+
 def _write_caption_audit(
     output_path: Path,
     caption_result: SaneCaptionWordResult,
     ass_groups: list[list[Any]],
+    rejected_reason: str | None = None,
 ) -> Path:
     audit_path = output_path.with_suffix(".caption_audit.json")
     group_texts = [[str(word.text) for word in group] for group in ass_groups]
+    group_speakers = [
+        [str(getattr(word, "speaker", "unknown")) for word in group]
+        for group in ass_groups
+    ]
+    group_audio_tracks = [
+        [str(getattr(word, "audio_track", "mic")) for word in group]
+        for group in ass_groups
+    ]
+
     payload = caption_result.to_audit_dict()
     payload.update(
         {
             "source": "whisperx_word_timestamps",
             "renderer": "libass",
             "active_word_highlighting": True,
+            "rejected_reason": rejected_reason,
             "group_count": len(ass_groups),
             "group_word_counts": [len(group) for group in ass_groups],
             "groups": group_texts,
+            "group_speakers": group_speakers,
+            "group_audio_tracks": group_audio_tracks,
             "max_group_words": max([len(group) for group in ass_groups] or [0]),
             "max_group_chars": max([len(" ".join(group)) for group in group_texts] or [0]),
         }
@@ -317,9 +352,10 @@ def _caption_groups_for_clip(
     clip: ShortsClip,
     transcript: TranscriptResult,
 ) -> list[CaptionGroup]:
-    return _caption_groups_from_word_result(
-        _caption_word_result_for_clip(clip=clip, transcript=transcript)
-    )
+    caption_result = _caption_word_result_for_clip(clip=clip, transcript=transcript)
+    if _is_repetitive_caption_result(caption_result):
+        return []
+    return _caption_groups_from_word_result(caption_result)
 
 
 def _transcript_words(transcript: TranscriptResult) -> list[Any]:
@@ -859,6 +895,21 @@ class ShortsRenderDriver:
 
         if _caption_renderer() == CAPTION_RENDERER_LIBASS and transcript is not None:
             caption_result = _caption_word_result_for_clip(clip=clip, transcript=transcript)
+
+            if _is_repetitive_caption_result(caption_result):
+                _write_caption_audit(
+                    output_path=Path(output_path),
+                    caption_result=caption_result,
+                    ass_groups=[],
+                    rejected_reason="repetitive_caption_words",
+                )
+                LOGGER.warning(
+                    "Repetitive / low-quality shorts captions rejected for clip %.3f-%.3f",
+                    float(clip.source_start_time),
+                    float(clip.source_end_time),
+                )
+                return ""
+
             caption_groups = _caption_groups_from_word_result(caption_result)
             if caption_groups:
                 ass_path = Path(output_path).with_suffix(".ass")

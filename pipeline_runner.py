@@ -162,19 +162,38 @@ _INBOX_CHANNEL_MAP: dict[str, ChannelType] = {
 
 def _write_export_job_json(job, export_dir: Path) -> Path:
     job_json_path = export_dir / "job.json"
-    slim_dict = compact_job_dict_for_persistence(job.to_dict())
+    full_dict = job.to_dict()
+    slim_dict = compact_job_dict_for_persistence(full_dict)
+
+    transcript_segments = list(full_dict.get("transcript_segments") or [])
+    if transcript_segments:
+        transcript_segments_path = export_dir / "transcript_segments.json"
+        with transcript_segments_path.open("w", encoding="utf-8") as handle:
+            json.dump(
+                {
+                    "job_id": job.job_id,
+                    "count": len(transcript_segments),
+                    "segments": transcript_segments,
+                },
+                handle,
+                indent=4,
+                ensure_ascii=False,
+            )
+        slim_dict["transcript_segments_path"] = str(transcript_segments_path)
+        slim_dict["transcript_segment_count"] = len(transcript_segments)
+
+    transcript_report = full_dict.get("transcript_report")
+    if isinstance(transcript_report, dict) and transcript_report:
+        transcript_report_path = export_dir / "transcript_report.json"
+        with transcript_report_path.open("w", encoding="utf-8") as handle:
+            json.dump(transcript_report, handle, indent=4, ensure_ascii=False)
+        slim_dict["transcript_report_path"] = str(transcript_report_path)
 
     with job_json_path.open("w", encoding="utf-8") as handle:
         json.dump(slim_dict, handle, indent=4, ensure_ascii=False)
 
     print(f"[pipeline_runner] JOB_JSON  {job.job_id}  path={job_json_path}")
     return job_json_path
-
-
-
-# ------------------------------------------------------------------ #
-#  Inbox scanner                                                       #
-# ------------------------------------------------------------------ #
 
 def _scan_inbox_and_create_jobs(job_store: JobStore) -> None:
     """Scan inbox folders and create a job for every new MP4."""

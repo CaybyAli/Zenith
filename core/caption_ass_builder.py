@@ -11,6 +11,7 @@ from typing import Any
 ASS_FONT_ENV_VAR = "ZENITH_CAPTION_FONT_NAME"
 DEFAULT_ASS_FONT_NAME = "Bangers"
 ASS_HIGHLIGHT_GREEN = "&H0000FF00&"
+ASS_HIGHLIGHT_YELLOW = "&H0000FFFF&"
 ASS_DEFAULT_WHITE = "&H00FFFFFF"
 ASS_OUTLINE_BLACK = "&H00000000"
 DEFAULT_FONTS_DIR = Path(r"D:\Zenith\assets\fonts")
@@ -52,6 +53,8 @@ class CaptionASSWord:
     text: str
     start_seconds: float
     end_seconds: float
+    speaker: str = "unknown"
+    audio_track: str = "mic"
 
 
 def escape_ffmpeg_filter_path(path: str | Path) -> str:
@@ -118,7 +121,14 @@ class CaptionASSBuilder:
                 if word.text and word.end_seconds > word.start_seconds:
                     words.append(word)
 
-        return sorted(words, key=lambda word: word.start_seconds)
+        return sorted(
+            words,
+            key=lambda word: (
+                word.start_seconds,
+                self._speaker_priority(word),
+                word.end_seconds,
+            ),
+        )
 
     def _smooth_words(self, words: list[CaptionASSWord]) -> list[CaptionASSWord]:
         smoothed: list[CaptionASSWord] = []
@@ -139,6 +149,8 @@ class CaptionASSBuilder:
                     text=word.text,
                     start_seconds=start,
                     end_seconds=end,
+                    speaker=word.speaker,
+                    audio_track=word.audio_track,
                 )
             )
             previous_end = end
@@ -292,8 +304,9 @@ class CaptionASSBuilder:
                         word_text = self._escape_ass_text(word.text.upper())
 
                         if word is active_word:
+                            active_colour = self._highlight_colour_for_word(word)
                             parts.append(
-                                rf"{{\fs{active_size}\c{ASS_HIGHLIGHT_GREEN}}}"
+                                rf"{{\fs{active_size}\c{active_colour}}}"
                                 + word_text
                                 + rf"{{\fs{base_size}\c{ASS_DEFAULT_WHITE}}}"
                             )
@@ -452,20 +465,40 @@ class CaptionASSBuilder:
         return f"{hours}:{minutes:02d}:{seconds:02d}.{centiseconds:02d}"
 
     @staticmethod
+    def _speaker_priority(word: CaptionASSWord) -> int:
+        marker = f"{word.speaker} {word.audio_track}".casefold()
+        if any(item in marker for item in ("mic", "owner", "ali", "hajar", "primary", "main")):
+            return 0
+        return 1
+
+    @staticmethod
+    def _highlight_colour_for_word(word: CaptionASSWord) -> str:
+        marker = f"{word.speaker} {word.audio_track}".casefold()
+        if any(item in marker for item in ("discord", "friend", "secondary", "teammate", "team")):
+            return ASS_HIGHLIGHT_YELLOW
+        return ASS_HIGHLIGHT_GREEN
+
+    @staticmethod
     def _caption_word_from_any(word: Any) -> CaptionASSWord:
         if isinstance(word, dict):
             text = word.get("word") or word.get("text") or ""
             start = word.get("start_seconds", word.get("start", 0.0))
             end = word.get("end_seconds", word.get("end", start))
+            speaker = word.get("speaker", "unknown")
+            audio_track = word.get("audio_track", "mic")
         else:
             text = getattr(word, "text", None) or getattr(word, "word", "")
             start = getattr(word, "start_seconds", getattr(word, "start", 0.0))
             end = getattr(word, "end_seconds", getattr(word, "end", start))
+            speaker = getattr(word, "speaker", "unknown")
+            audio_track = getattr(word, "audio_track", "mic")
 
         return CaptionASSWord(
             text=" ".join(str(text or "").split()),
             start_seconds=float(start or 0.0),
             end_seconds=float(end or 0.0),
+            speaker=str(speaker or "unknown"),
+            audio_track=str(audio_track or "mic"),
         )
 
     @staticmethod

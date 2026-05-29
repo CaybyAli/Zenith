@@ -8,6 +8,8 @@ class TranscriptWord:
     end_seconds: float
     text: str
     probability: Optional[float] = None
+    audio_track: str = "mic"
+    speaker: str = "unknown"
 
     def to_dict(self) -> dict:
         return {
@@ -15,6 +17,8 @@ class TranscriptWord:
             "end_seconds": self.end_seconds,
             "text": self.text,
             "probability": self.probability,
+            "audio_track": self.audio_track,
+            "speaker": self.speaker,
         }
 
 

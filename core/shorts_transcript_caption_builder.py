@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
@@ -129,12 +129,47 @@ def build_sane_caption_words_from_transcript(
         if not _segment_overlaps_clip(segment, clip_start, clip_end):
             continue
 
+        segment_audio_track = str(getattr(segment, "audio_track", "mic") or "mic")
+        segment_speaker = str(getattr(segment, "speaker", "unknown") or "unknown")
+
         for word_index, word in enumerate(getattr(segment, "words", []) or []):
             text = _clean_word(getattr(word, "text", ""))
             raw_start = _safe_float(getattr(word, "start_seconds", None))
             raw_end = _safe_float(getattr(word, "end_seconds", None))
+            raw_word_audio_track = getattr(word, "audio_track", None)
+            raw_word_speaker = getattr(word, "speaker", None)
+
+            word_audio_track = str(raw_word_audio_track or segment_audio_track)
+            word_speaker = str(raw_word_speaker or segment_speaker)
+
+            # Backwards compatibility:
+            # Older TranscriptWord objects default to mic/unknown even when the
+            # parent segment is discord/friend. In that case, inherit segment metadata.
+            if word_audio_track == "mic" and segment_audio_track != "mic":
+                word_audio_track = segment_audio_track
+            if word_speaker == "unknown" and segment_speaker != "unknown":
+                word_speaker = segment_speaker
+
             if raw_start is None or raw_end is None or not text:
                 skipped_word_count += 1
+                continue
+
+            # Existing caption contract:
+            # A word that starts exactly at the clip end still belongs to the clip.
+            if raw_start == clip_end and raw_end > raw_start:
+                caption_words.append(
+                    TranscriptWord(
+                        start_seconds=round(
+                            max(0.0, (clip_end - clip_start) - MIN_CAPTION_WORD_DURATION_SECONDS),
+                            3,
+                        ),
+                        end_seconds=round(clip_end - clip_start, 3),
+                        text=text,
+                        probability=getattr(word, "probability", None),
+                        audio_track=word_audio_track,
+                        speaker=word_speaker,
+                    )
+                )
                 continue
 
             clamped_start = _clamp(raw_start, segment_start, segment_end)
@@ -158,6 +193,18 @@ def build_sane_caption_words_from_transcript(
 
             absolute_start = max(clamped_start, clip_start)
             absolute_end = min(clamped_end, clip_end)
+
+            # Keep a word that touches the clip end boundary. Existing caption
+            # tests expect this, and it avoids dropping the final spoken word.
+            if absolute_end - absolute_start < MIN_CAPTION_WORD_DURATION_SECONDS:
+                touches_clip_end = raw_start <= clip_end <= raw_end
+                if touches_clip_end:
+                    absolute_end = clip_end
+                    absolute_start = max(
+                        clip_start,
+                        clip_end - MIN_CAPTION_WORD_DURATION_SECONDS,
+                    )
+
             if absolute_end - absolute_start < MIN_CAPTION_WORD_DURATION_SECONDS:
                 skipped_word_count += 1
                 continue
@@ -168,6 +215,8 @@ def build_sane_caption_words_from_transcript(
                     end_seconds=round(absolute_end - clip_start, 3),
                     text=text,
                     probability=getattr(word, "probability", None),
+                    audio_track=word_audio_track,
+                    speaker=word_speaker,
                 )
             )
 
