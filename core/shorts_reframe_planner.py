@@ -61,7 +61,7 @@ def build_stack_filter_60_40(source: SourceFormat) -> str:
         facecam_y = 0
         facecam_w = 1920
         facecam_h = 1080
-        gameplay_x = 1850
+        gameplay_x = 1910  # P5-G2 owner tweak: shift gameplay image slightly left in Shorts stack
         gameplay_y = 0
         gameplay_w = 1920
         gameplay_h = 1080

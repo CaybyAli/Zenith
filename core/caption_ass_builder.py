@@ -17,8 +17,9 @@ DEFAULT_FONTS_DIR = Path(r"D:\Zenith\assets\fonts")
 
 ASS_TEXT_DELAY_SECONDS = 0.12
 ASS_GROUP_BREAK_GAP = 0.48
-ASS_BLANK_ONLY_AFTER_SILENCE = 1.15
-ASS_GROUP_TAIL_SECONDS = 0.28
+ASS_BLANK_ONLY_AFTER_SILENCE = 0.28
+ASS_GROUP_TAIL_SECONDS = 0.16
+ASS_MAX_WORD_DISPLAY_SECONDS = 0.72
 
 ASS_NORMAL_MAX_WORDS = 3
 ASS_FAST_MAX_WORDS = 5
@@ -125,7 +126,8 @@ class CaptionASSBuilder:
 
         for word in words:
             start = max(0.0, float(word.start_seconds))
-            end = max(start + 0.08, float(word.end_seconds))
+            raw_end = max(start + 0.08, float(word.end_seconds))
+            end = min(raw_end, start + ASS_MAX_WORD_DISPLAY_SECONDS)
 
             if start < previous_end - 0.04:
                 start = max(0.0, previous_end - 0.02)
@@ -261,8 +263,8 @@ class CaptionASSBuilder:
 
             gap_to_next_group = next_group_start - group[-1].end_seconds
 
-            if gap_to_next_group < ASS_BLANK_ONLY_AFTER_SILENCE:
-                group_end = next_group_start
+            if gap_to_next_group <= ASS_BLANK_ONLY_AFTER_SILENCE:
+                group_end = min(next_group_start, group[-1].end_seconds + ASS_GROUP_TAIL_SECONDS)
             else:
                 group_end = group[-1].end_seconds + ASS_GROUP_TAIL_SECONDS
 

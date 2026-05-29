@@ -166,3 +166,47 @@ def test_libass_caption_audit_is_written_with_word_timestamp_source(tmp_path: Pa
         f"clamps={audit['clamped_word_timestamp_count']} "
         f"groups={audit['groups']}"
     )
+
+def test_ass_caption_clears_after_long_silence() -> None:
+    from core.caption_ass_builder import CaptionASSBuilder, CaptionGroup
+    from models.transcript_result import TranscriptWord
+
+    words = [
+        TranscriptWord(text="sagen", start_seconds=0.0, end_seconds=0.42),
+        TranscriptWord(text="weiter", start_seconds=3.42, end_seconds=3.72),
+    ]
+
+    builder = CaptionASSBuilder()
+    groups = builder.build_groups([CaptionGroup(words=words)])
+    events = builder._dialogue_events_from_groups(groups)
+
+    first_event = events[0]
+    assert "SAGEN" in first_event
+    assert "0:00:00.70" in first_event
+    assert "0:00:03." not in first_event
+
+    print("P5_G2_CAPTION_CLEAR_AUDIT first_event=" + first_event)
+
+def test_emoji_overlay_does_not_cover_caption_safe_zone() -> None:
+    from core.caption_ass_builder import ASS_TWO_LINE_Y
+    from core.emoji_overlay_builder import EMOJI_SIZE, EMOJI_X, EMOJI_Y
+
+    caption_bottom_y = max(ASS_TWO_LINE_Y)
+
+    assert EMOJI_SIZE <= 220
+    assert EMOJI_X >= 0
+    assert EMOJI_X + EMOJI_SIZE <= 1080
+
+    # Owner rule: emoji is allowed below text, but must never overlap captions.
+    assert EMOJI_Y >= caption_bottom_y + 120
+    assert EMOJI_Y + EMOJI_SIZE <= 1880
+
+    print(
+        "P5_G2_EMOJI_LAYOUT_AUDIT "
+        f"size={EMOJI_SIZE} "
+        f"x={EMOJI_X} "
+        f"y={EMOJI_Y} "
+        f"top={EMOJI_Y} "
+        f"bottom={EMOJI_Y + EMOJI_SIZE} "
+        f"caption_bottom_y={caption_bottom_y}"
+    )

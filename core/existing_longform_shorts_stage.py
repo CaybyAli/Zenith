@@ -58,16 +58,36 @@ def _probe_duration_seconds(source_video_path: str | Path) -> float:
     return max(0.0, float(result.stdout.strip() or 0.0))
 
 
-def _load_transcript_from_sibling_job_json(source_video_path: str | Path) -> TranscriptResult | None:
+def _load_sibling_job_payload(source_video_path: str | Path) -> dict:
     job_json_path = Path(source_video_path).parent / "job.json"
     if not job_json_path.exists():
-        return None
+        return {}
 
     try:
-        payload = json.loads(job_json_path.read_text(encoding="utf-8"))
+        return json.loads(job_json_path.read_text(encoding="utf-8"))
     except Exception:
-        return None
+        return {}
 
+
+def _resolve_existing_longform_render_source(source_video_path: str | Path) -> Path:
+    source_path = Path(source_video_path)
+    payload = _load_sibling_job_payload(source_path)
+
+    for key in ("raw_video_path", "input_file", "source_file", "file_path"):
+        value = payload.get(key)
+        if not value:
+            continue
+        candidate = Path(str(value))
+        if candidate.exists() and candidate.is_file() and candidate.suffix.lower() == ".mp4":
+            return candidate
+
+    return source_path
+
+
+def _load_transcript_from_sibling_job_json(source_video_path: str | Path) -> TranscriptResult | None:
+    payload = _load_sibling_job_payload(source_video_path)
+    if not payload:
+        return None
     raw_segments = list(payload.get("transcript_segments") or [])
     if not raw_segments:
         report = payload.get("transcript_report")
@@ -213,6 +233,7 @@ def run_shorts_from_existing_longform_output(
     add_captions: bool = True,
 ) -> dict:
     source_path = Path(source_video_path)
+    render_source_path = _resolve_existing_longform_render_source(source_path)
     duration_seconds = _probe_duration_seconds(source_path)
     timeline = build_existing_longform_shorts_timeline(
         job,
@@ -225,7 +246,7 @@ def run_shorts_from_existing_longform_output(
     stage.run(
         job=job,
         timeline=timeline,
-        source_video_path=str(source_path),
+        source_video_path=str(render_source_path),
         output_base_dir=str(output_base_dir),
         power_profile=str(power_profile),
         llm_mode=str(llm_mode),
@@ -237,6 +258,7 @@ def run_shorts_from_existing_longform_output(
         "job": job,
         "final_job_status": getattr(getattr(job, "status", ""), "value", job.status),
         "final_video_path": str(source_path),
+        "shorts_render_source_path": str(render_source_path),
         "shorts_from_existing_longform": True,
         "shorts_count": len(getattr(job, "shorts_clips", []) or []),
         "existing_longform_duration_seconds": duration_seconds,
