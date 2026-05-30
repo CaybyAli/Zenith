@@ -1,4 +1,4 @@
-﻿
+
 from __future__ import annotations
 
 import argparse
@@ -87,6 +87,7 @@ def _write_markdown_report(
     duration = plan["duration_contract"]
     audit = plan["anti_overcut_audit"]
     old_new = plan["old_vs_new"]
+    minimum_filter = plan.get("minimum_standalone_block_filter", {})
     selected_blocks = plan["selected_blocks"]
 
     lines: list[str] = []
@@ -117,6 +118,45 @@ def _write_markdown_report(
     lines.append("## Anti-Overcut Audit")
     lines.append(f"- fail_count: {audit['fail_count']}")
     lines.append(f"- tolerance_seconds: {audit['tolerance_seconds']}")
+    lines.append("")
+    lines.append("## G8.1 Minimum Standalone Block Filter")
+    if minimum_filter:
+        lines.append(f"- enabled: {minimum_filter.get('enabled')}")
+        lines.append(f"- min_standalone_block_seconds: {minimum_filter.get('min_standalone_block_seconds')}")
+        lines.append(f"- before_block_count: {minimum_filter.get('before_block_count')}")
+        lines.append(f"- after_block_count: {minimum_filter.get('after_block_count')}")
+        lines.append(f"- before_available_keep_active_budget_seconds: {minimum_filter.get('before_available_keep_active_budget_seconds')}")
+        lines.append(f"- after_available_keep_active_budget_seconds: {minimum_filter.get('after_available_keep_active_budget_seconds')}")
+        lines.append(f"- budget_delta_seconds: {minimum_filter.get('budget_delta_seconds')}")
+        lines.append(f"- discarded_count: {minimum_filter.get('discarded_count')}")
+        lines.append(f"- expanded_count: {minimum_filter.get('expanded_count')}")
+        lines.append(f"- after_budget_below_720: {minimum_filter.get('after_budget_below_720')}")
+        lines.append("")
+        lines.append("### Before Blocks")
+        lines.append("| block_id | start | end | keep_budget | quality |")
+        lines.append("|---|---:|---:|---:|---:|")
+        for block in minimum_filter.get("before_blocks", []):
+            lines.append(
+                f"| {block.get('block_id')} | {block.get('start_seconds')} | {block.get('end_seconds')} | {block.get('keep_active_budget_seconds')} | {block.get('quality_score')} |"
+            )
+        lines.append("")
+        lines.append("### After Blocks")
+        lines.append("| block_id | start | end | keep_budget | quality |")
+        lines.append("|---|---:|---:|---:|---:|")
+        for block in minimum_filter.get("after_blocks", []):
+            lines.append(
+                f"| {block.get('block_id')} | {block.get('start_seconds')} | {block.get('end_seconds')} | {block.get('keep_active_budget_seconds')} | {block.get('quality_score')} |"
+            )
+        lines.append("")
+        lines.append("### Filter Actions")
+        lines.append("| block_id | action | reason | keep_budget |")
+        lines.append("|---|---|---|---:|")
+        for action in minimum_filter.get("actions", []):
+            lines.append(
+                f"| {action.get('block_id')} | {action.get('action')} | {action.get('reason')} | {action.get('keep_active_budget_seconds', action.get('after_keep_active_budget_seconds', ''))} |"
+            )
+    else:
+        lines.append("- filter_report: missing")
     lines.append("")
     lines.append("## Selected Blocks")
     lines.append("| rank | block_id | start | end | keep_budget | quality | source |")
@@ -166,6 +206,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--highlights-json", default=None, help="Optional highlight/quality JSON.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--bridge-seconds", type=float, default=8.0)
+    parser.add_argument("--min-standalone-block-seconds", type=float, default=12.0)
     parser.add_argument("--max-duration-seconds", type=float, default=None)
     args = parser.parse_args(argv)
 
@@ -195,7 +236,10 @@ def main(argv: list[str] | None = None) -> int:
     highlights = _load_optional_spans(highlights_path)
     highlights_source = str(highlights_path) if highlights_path and highlights_path.exists() else "g6_confidence_intensity_fallback"
 
-    planner = G8BlockAssemblyPlanner(bridge_seconds=args.bridge_seconds)
+    planner = G8BlockAssemblyPlanner(
+        bridge_seconds=args.bridge_seconds,
+        min_standalone_block_seconds=args.min_standalone_block_seconds,
+    )
     plan = planner.build_plan(
         label=label,
         play_segments=play_segments,
@@ -227,6 +271,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[G8] planned_output_duration={plan.planned_output_duration_seconds:.3f}s")
     print(f"[G8] old_performance_stop_92={plan.old_performance_stop_92_seconds:.3f}s")
     print(f"[G8] performance_cap_removed_for_longform={plan.performance_cap_removed_for_longform}")
+    minimum_filter = plan_dict.get("minimum_standalone_block_filter", {})
+    if minimum_filter:
+        print(f"[G8.1] min_standalone_block_seconds={minimum_filter.get('min_standalone_block_seconds')}")
+        print(f"[G8.1] before_block_count={minimum_filter.get('before_block_count')}")
+        print(f"[G8.1] after_block_count={minimum_filter.get('after_block_count')}")
+        print(f"[G8.1] discarded_count={minimum_filter.get('discarded_count')}")
+        print(f"[G8.1] expanded_count={minimum_filter.get('expanded_count')}")
+        print(f"[G8.1] after_budget_below_720={minimum_filter.get('after_budget_below_720')}")
     return 0 if plan.anti_overcut_fail_count == 0 else 2
 
 

@@ -1,4 +1,4 @@
-﻿
+
 from __future__ import annotations
 
 import uuid
@@ -11,6 +11,7 @@ G8_MIN_PREFERRED_SECONDS = 720.0
 G8_PREFERRED_TARGET_SECONDS = 900.0
 G8_MAX_SECONDS = 1200.0
 DEFAULT_BRIDGE_SECONDS = 8.0
+DEFAULT_MIN_STANDALONE_BLOCK_SECONDS = 12.0
 ANTI_OVERCUT_TOLERANCE_SECONDS = 0.5
 
 ACTIVE_STATE = "active_play"
@@ -257,6 +258,7 @@ class G8AssemblyPlan:
     selected_blocks: list[G8Block]
     timeline_segments: list[G8TimelinePlanSegment]
     anti_overcut_issues: list[G8AntiOvercutIssue]
+    minimum_standalone_block_filter: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -291,6 +293,7 @@ class G8AssemblyPlan:
                 "tolerance_seconds": ANTI_OVERCUT_TOLERANCE_SECONDS,
                 "issues": [issue.to_dict() for issue in self.anti_overcut_issues],
             },
+            "minimum_standalone_block_filter": dict(self.minimum_standalone_block_filter or {}),
             "blocks": [block.to_dict() for block in self.blocks],
             "selected_blocks": [block.to_dict() for block in self.selected_blocks],
             "timeline_segments": [segment.to_dict() for segment in self.timeline_segments],
@@ -303,8 +306,16 @@ class G8BlockAssemblyPlanner:
 
     engine = "g8-block-assembly-planner-v1"
 
-    def __init__(self, bridge_seconds: float = DEFAULT_BRIDGE_SECONDS) -> None:
+    def __init__(
+        self,
+        bridge_seconds: float = DEFAULT_BRIDGE_SECONDS,
+        min_standalone_block_seconds: float = DEFAULT_MIN_STANDALONE_BLOCK_SECONDS,
+    ) -> None:
         self.bridge_seconds = max(0.0, float(bridge_seconds))
+        self.min_standalone_block_seconds = max(
+            0.0,
+            float(min_standalone_block_seconds),
+        )
 
     def build_plan(
         self,
@@ -329,6 +340,7 @@ class G8BlockAssemblyPlanner:
             block.quality_score, block.quality_source = self._score_block(block, highlight_spans)
 
         blocks = [block for block in blocks if block.keep_active_budget_seconds > 0.0]
+        blocks, minimum_filter_report = self.apply_minimum_standalone_block_filter(blocks)
         ranked_blocks = sorted(
             blocks,
             key=lambda block: (-block.quality_score, -block.keep_active_budget_seconds, block.start_seconds),
@@ -341,6 +353,10 @@ class G8BlockAssemblyPlanner:
             ranked_blocks,
             available_budget,
         )
+        if int(minimum_filter_report.get("discarded_count", 0) or 0) > 0:
+            notes.append("g8_1_min_standalone_filter_discarded_isolated_micro_blocks")
+        if bool(minimum_filter_report.get("after_budget_below_720", False)):
+            notes.append("g8_1_less_viable_content_after_min_standalone_filter")
         selected_blocks = sorted(selected_blocks, key=lambda block: (block.start_seconds, block.end_seconds))
         for block in blocks:
             block.selected = block in selected_blocks
@@ -380,6 +396,7 @@ class G8BlockAssemblyPlanner:
             selected_blocks=selected_blocks,
             timeline_segments=timeline_segments,
             anti_overcut_issues=issues,
+            minimum_standalone_block_filter=minimum_filter_report,
             notes=notes,
         )
 
@@ -545,6 +562,224 @@ class G8BlockAssemblyPlanner:
 
         close_current()
         return blocks
+
+
+    def apply_minimum_standalone_block_filter(
+        self,
+        blocks: list[G8Block],
+    ) -> tuple[list[G8Block], dict[str, Any]]:
+        ordered_blocks = sorted(
+            blocks,
+            key=lambda block: (block.start_seconds, block.end_seconds),
+        )
+        before_blocks = [block.to_dict() for block in ordered_blocks]
+        before_budget = round(
+            sum(block.keep_active_budget_seconds for block in ordered_blocks),
+            3,
+        )
+
+        if self.min_standalone_block_seconds <= 0.0:
+            return ordered_blocks, {
+                "enabled": False,
+                "min_standalone_block_seconds": self.min_standalone_block_seconds,
+                "bridge_seconds": self.bridge_seconds,
+                "before_block_count": len(before_blocks),
+                "after_block_count": len(before_blocks),
+                "before_available_keep_active_budget_seconds": before_budget,
+                "after_available_keep_active_budget_seconds": before_budget,
+                "budget_delta_seconds": 0.0,
+                "discarded_count": 0,
+                "expanded_count": 0,
+                "kept_connected_micro_count": 0,
+                "after_budget_below_720": before_budget < G8_MIN_PREFERRED_SECONDS,
+                "before_blocks": before_blocks,
+                "after_blocks": before_blocks,
+                "actions": [],
+            }
+
+        kept_blocks: list[G8Block] = []
+        actions: list[dict[str, Any]] = []
+
+        for index, block in enumerate(ordered_blocks):
+            is_micro = (
+                block.keep_active_budget_seconds < self.min_standalone_block_seconds
+            )
+            isolated, previous_gap, next_gap = self._standalone_isolation_info(
+                index,
+                ordered_blocks,
+            )
+
+            if not is_micro:
+                kept_blocks.append(block)
+                continue
+
+            if not isolated:
+                kept_blocks.append(block)
+                actions.append(
+                    {
+                        "block_id": block.block_id,
+                        "action": "kept_connected_micro_block",
+                        "reason": "micro_block_has_neighbor_within_bridge_distance",
+                        "start_seconds": _round_seconds(block.start_seconds),
+                        "end_seconds": _round_seconds(block.end_seconds),
+                        "keep_active_budget_seconds": round(
+                            block.keep_active_budget_seconds,
+                            3,
+                        ),
+                        "min_standalone_block_seconds": round(
+                            self.min_standalone_block_seconds,
+                            3,
+                        ),
+                        "previous_gap_seconds": previous_gap,
+                        "next_gap_seconds": next_gap,
+                    }
+                )
+                continue
+
+            before_micro_budget = block.keep_active_budget_seconds
+            expanded = self._try_context_extend_micro_block(block)
+
+            if expanded and block.keep_active_budget_seconds >= self.min_standalone_block_seconds:
+                kept_blocks.append(block)
+                actions.append(
+                    {
+                        "block_id": block.block_id,
+                        "action": "expanded_isolated_micro_block",
+                        "reason": "direct_adjacent_untrimmed_active_play_context_available",
+                        "start_seconds": _round_seconds(block.start_seconds),
+                        "end_seconds": _round_seconds(block.end_seconds),
+                        "before_keep_active_budget_seconds": round(before_micro_budget, 3),
+                        "after_keep_active_budget_seconds": round(
+                            block.keep_active_budget_seconds,
+                            3,
+                        ),
+                        "min_standalone_block_seconds": round(
+                            self.min_standalone_block_seconds,
+                            3,
+                        ),
+                        "previous_gap_seconds": previous_gap,
+                        "next_gap_seconds": next_gap,
+                    }
+                )
+                continue
+
+            actions.append(
+                {
+                    "block_id": block.block_id,
+                    "action": "discarded_isolated_micro_block",
+                    "reason": "isolated_micro_block_below_minimum_without_adjacent_untrimmed_active_play_context",
+                    "start_seconds": _round_seconds(block.start_seconds),
+                    "end_seconds": _round_seconds(block.end_seconds),
+                    "keep_active_budget_seconds": round(
+                        block.keep_active_budget_seconds,
+                        3,
+                    ),
+                    "quality_score": _clamp01(block.quality_score),
+                    "quality_source": block.quality_source,
+                    "quality_does_not_override_minimum_standalone_duration": True,
+                    "min_standalone_block_seconds": round(
+                        self.min_standalone_block_seconds,
+                        3,
+                    ),
+                    "previous_gap_seconds": previous_gap,
+                    "next_gap_seconds": next_gap,
+                }
+            )
+
+        after_blocks = [block.to_dict() for block in kept_blocks]
+        after_budget = round(
+            sum(block.keep_active_budget_seconds for block in kept_blocks),
+            3,
+        )
+
+        return kept_blocks, {
+            "enabled": True,
+            "min_standalone_block_seconds": round(
+                self.min_standalone_block_seconds,
+                3,
+            ),
+            "bridge_seconds": round(self.bridge_seconds, 3),
+            "before_block_count": len(before_blocks),
+            "after_block_count": len(after_blocks),
+            "before_available_keep_active_budget_seconds": before_budget,
+            "after_available_keep_active_budget_seconds": after_budget,
+            "budget_delta_seconds": round(after_budget - before_budget, 3),
+            "discarded_count": sum(
+                1
+                for action in actions
+                if action.get("action") == "discarded_isolated_micro_block"
+            ),
+            "expanded_count": sum(
+                1
+                for action in actions
+                if action.get("action") == "expanded_isolated_micro_block"
+            ),
+            "kept_connected_micro_count": sum(
+                1
+                for action in actions
+                if action.get("action") == "kept_connected_micro_block"
+            ),
+            "after_budget_below_720": after_budget < G8_MIN_PREFERRED_SECONDS,
+            "before_blocks": before_blocks,
+            "after_blocks": after_blocks,
+            "actions": actions,
+        }
+
+    def _standalone_isolation_info(
+        self,
+        index: int,
+        blocks: list[G8Block],
+    ) -> tuple[bool, float | None, float | None]:
+        block = blocks[index]
+        previous_gap: float | None = None
+        next_gap: float | None = None
+
+        if index > 0:
+            previous_gap = round(block.start_seconds - blocks[index - 1].end_seconds, 3)
+        if index + 1 < len(blocks):
+            next_gap = round(blocks[index + 1].start_seconds - block.end_seconds, 3)
+
+        has_close_previous = (
+            previous_gap is not None
+            and previous_gap >= 0.0
+            and previous_gap <= self.bridge_seconds
+        )
+        has_close_next = (
+            next_gap is not None
+            and next_gap >= 0.0
+            and next_gap <= self.bridge_seconds
+        )
+        return (not has_close_previous and not has_close_next), previous_gap, next_gap
+
+    def _try_context_extend_micro_block(self, block: G8Block) -> bool:
+        """Only extends from active_play already present in the block and not covered by G7a trim."""
+        candidate_active_ranges = _merge_ranges(
+            (span.start_seconds, span.end_seconds)
+            for span in block.source_spans
+            if span.is_active
+        )
+        candidate_keep_ranges = _subtract_ranges(
+            candidate_active_ranges,
+            block.trim_ranges,
+        )
+        candidate_budget = round(
+            sum(end - start for start, end in candidate_keep_ranges),
+            3,
+        )
+
+        if candidate_budget <= block.keep_active_budget_seconds:
+            return False
+        if candidate_budget < self.min_standalone_block_seconds:
+            return False
+
+        block.active_ranges = candidate_active_ranges
+        block.keep_ranges = candidate_keep_ranges
+        block.keep_active_budget_seconds = candidate_budget
+        if candidate_keep_ranges:
+            block.start_seconds = candidate_keep_ranges[0][0]
+            block.end_seconds = candidate_keep_ranges[-1][1]
+        return True
+
 
     def audit_active_play_gaps(
         self,
