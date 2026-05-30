@@ -1,0 +1,75 @@
+﻿from __future__ import annotations
+
+GROUND_TRUTH = [
+    {"id": "01", "timestamp": "00:02:40.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien Nils hinter dir"},
+    {"id": "02", "timestamp": "00:02:53.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien Er ist hinter dir"},
+    {"id": "03", "timestamp": "00:04:06.000", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "lauter gesprochen mit lachen"},
+    {"id": "04", "timestamp": "00:08:54.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien FALLE AUSGELOEST"},
+    {"id": "05", "timestamp": "00:08:58.500", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "bisschen lauter als normal"},
+    {"id": "06", "timestamp": "00:09:37.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien und gelacht"},
+    {"id": "07", "timestamp": "00:10:15.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien Guckmal Ruhe"},
+    {"id": "08", "timestamp": "00:10:26.500", "label": "negative", "intensity": "none", "source": "Ali candidate review", "note": "normal"},
+    {"id": "09", "timestamp": "00:13:29.000", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "bisschen lauter als normal"},
+    {"id": "10", "timestamp": "00:15:01.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien FALLE AUSGELOEST"},
+    {"id": "11", "timestamp": "00:15:12.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien MAYDAY MAYDAY MAYDAY"},
+    {"id": "12", "timestamp": "00:19:40.000", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "bisschen lauter als normal"},
+    {"id": "13", "timestamp": "00:22:02.500", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "bisschen lauter als normal"},
+    {"id": "14", "timestamp": "00:22:15.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "15", "timestamp": "00:25:32.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "16", "timestamp": "00:28:04.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "17", "timestamp": "00:28:15.500", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "bisschen lauter als normal"},
+    {"id": "18", "timestamp": "00:32:44.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "19", "timestamp": "00:33:14.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "20", "timestamp": "00:34:22.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "21", "timestamp": "00:34:29.500", "label": "reaction", "intensity": "low", "source": "Ali candidate review", "note": "bisschen lauter als normal"},
+    {"id": "22", "timestamp": "00:38:43.500", "label": "reaction", "intensity": "medium", "source": "Ali candidate review", "note": "lauter als normal"},
+    {"id": "23", "timestamp": "00:42:03.000", "label": "reaction", "intensity": "medium", "source": "Ali candidate review", "note": "lauter als normal"},
+    {"id": "24", "timestamp": "00:43:23.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "25", "timestamp": "00:43:30.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "26", "timestamp": "00:43:43.000", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "27", "timestamp": "00:43:52.500", "label": "reaction", "intensity": "high", "source": "Ali candidate review", "note": "geschrien"},
+    {"id": "28", "timestamp": "00:44:05.000", "label": "reaction", "intensity": "medium", "source": "Ali candidate review", "note": "lauter als normal"},
+    {"id": "29", "timestamp": "00:44:16.000", "label": "dont_care", "intensity": "outro", "source": "Ali candidate review", "note": "outro, not precision fail"},
+    {"id": "30", "timestamp": "00:44:25.500", "label": "dont_care", "intensity": "outro", "source": "Ali candidate review", "note": "outro, not precision fail"},
+]
+
+MISSED_REACTIONS = [
+    {"id": "M01", "timestamp": "00:01:13:14", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+    {"id": "M02", "timestamp": "00:06:15:10", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+    {"id": "M03", "timestamp": "00:07:37:44", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+    {"id": "M04", "timestamp": "00:25:11:29", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+    {"id": "M05", "timestamp": "00:25:37:50", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+    {"id": "M06", "timestamp": "00:39:09:10", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+    {"id": "M07", "timestamp": "00:43:06:48", "label": "reaction", "intensity": "unknown", "source": "Ali missed reaction", "note": "extra reaction mark"},
+]
+
+QUIET_NEGATIVES = [
+    {"id": "N01", "timestamp": "00:00:21:17", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N02", "timestamp": "00:00:55:36", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N03", "timestamp": "00:01:48:54", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N04", "timestamp": "00:05:45:08", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N05", "timestamp": "00:05:51:03", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N06", "timestamp": "00:06:30:48", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N07", "timestamp": "00:07:06:14", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N08", "timestamp": "00:08:38:07", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N09", "timestamp": "00:10:48:19", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N10", "timestamp": "00:11:07:37", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N11", "timestamp": "00:16:40:52", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N12", "timestamp": "00:17:30:52", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N13", "timestamp": "00:26:13:30", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N14", "timestamp": "00:26:48:58", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N15", "timestamp": "00:27:21:58", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N16", "timestamp": "00:31:23:13", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N17", "timestamp": "00:31:57:33", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N18", "timestamp": "00:34:57:48", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N19", "timestamp": "00:35:12:43", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N20", "timestamp": "00:37:58:32", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N21", "timestamp": "00:40:04:10", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N22", "timestamp": "00:41:09:09", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N23", "timestamp": "00:41:19:53", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+    {"id": "N24", "timestamp": "00:42:45:35", "label": "negative", "intensity": "none", "source": "Ali quiet mark", "note": "quiet or normal, no reaction"},
+]
+
+
+def all_ground_truth():
+    return [*GROUND_TRUTH, *MISSED_REACTIONS, *QUIET_NEGATIVES]
