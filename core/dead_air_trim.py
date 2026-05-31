@@ -621,3 +621,492 @@ def apply_dead_air_trim(
     cleaned["notes"] = notes
 
     return cleaned
+
+# ---------------------------------------------------------------------------
+# DEAD-AIR-2: combined VAD silence support
+# Source rule: silence means owner AND friend are silent.
+# ---------------------------------------------------------------------------
+
+import math as _dead_air_2_math
+from copy import deepcopy as _dead_air_2_deepcopy
+from typing import Any as _DeadAir2Any
+from typing import Mapping as _DeadAir2Mapping
+
+
+DEAD_AIR_2_SOURCE = "dead_air_2_combined_vad_silence_trim"
+DEAD_AIR_2_DEFAULT_MIN_DEAD_GAP_SECONDS = 1.5
+DEAD_AIR_2_DEFAULT_EDGE_BUFFER_SECONDS = 0.2
+DEAD_AIR_2_DEFAULT_ACTION_FLOOR_PERCENTILE = 25.0
+DEAD_AIR_2_EPSILON_SECONDS = 0.001
+
+
+def _dead_air_2_safe_float(value: _DeadAir2Any, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except Exception:
+        return default
+    if not _dead_air_2_math.isfinite(number):
+        return default
+    return number
+
+
+def _dead_air_2_round_seconds(value: _DeadAir2Any) -> float:
+    return round(max(0.0, _dead_air_2_safe_float(value)), 3)
+
+
+def _dead_air_2_duration(start: float, end: float) -> float:
+    return round(max(0.0, float(end) - float(start)), 3)
+
+
+def _dead_air_2_get(item: _DeadAir2Any, *keys: str, default: _DeadAir2Any = None) -> _DeadAir2Any:
+    if isinstance(item, _DeadAir2Mapping):
+        for key in keys:
+            if key in item:
+                return item[key]
+    return default
+
+
+def _dead_air_2_overlap_seconds(start_a: float, end_a: float, start_b: float, end_b: float) -> float:
+    return round(max(0.0, min(end_a, end_b) - max(start_a, start_b)), 6)
+
+
+def _dead_air_2_interval_total_overlap(
+    *,
+    start_seconds: float,
+    end_seconds: float,
+    intervals: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+) -> float:
+    total = 0.0
+    for item in intervals:
+        total += _dead_air_2_overlap_seconds(
+            start_seconds,
+            end_seconds,
+            _dead_air_2_safe_float(_dead_air_2_get(item, "start_seconds", "start", "start_time")),
+            _dead_air_2_safe_float(_dead_air_2_get(item, "end_seconds", "end", "end_time")),
+        )
+    return round(total, 6)
+
+
+def _dead_air_2_percentile(values: list[float], percentile: float, *, default: float = 0.0) -> float:
+    clean = sorted(float(value) for value in values if _dead_air_2_math.isfinite(float(value)))
+    if not clean:
+        return default
+    if len(clean) == 1:
+        return round(clean[0], 6)
+
+    percentile = max(0.0, min(100.0, float(percentile)))
+    pos = (len(clean) - 1) * (percentile / 100.0)
+    low = int(_dead_air_2_math.floor(pos))
+    high = int(_dead_air_2_math.ceil(pos))
+    if low == high:
+        return round(clean[low], 6)
+
+    weight = pos - low
+    return round(clean[low] + ((clean[high] - clean[low]) * weight), 6)
+
+
+def dead_air_2_normalize_intervals(
+    raw: _DeadAir2Any,
+    *,
+    list_keys: tuple[str, ...] = ("silence_gaps", "speech_regions", "examples", "regions", "items"),
+    id_prefix: str = "interval",
+    source: str = "unknown",
+) -> list[dict[str, _DeadAir2Any]]:
+    if isinstance(raw, _DeadAir2Mapping):
+        for key in list_keys:
+            value = raw.get(key)
+            if isinstance(value, list):
+                raw = value
+                break
+
+    if not isinstance(raw, list):
+        return []
+
+    intervals: list[dict[str, _DeadAir2Any]] = []
+
+    for index, item in enumerate(raw, start=1):
+        if not isinstance(item, _DeadAir2Mapping):
+            continue
+
+        start = _dead_air_2_get(
+            item,
+            "start_seconds",
+            "start",
+            "start_time",
+            "vad_silence_start_seconds",
+            default=None,
+        )
+        end = _dead_air_2_get(
+            item,
+            "end_seconds",
+            "end",
+            "end_time",
+            "vad_silence_end_seconds",
+            default=None,
+        )
+
+        if start is None or end is None:
+            continue
+
+        start_f = _dead_air_2_round_seconds(start)
+        end_f = _dead_air_2_round_seconds(end)
+        if end_f <= start_f:
+            continue
+
+        intervals.append({
+            "interval_id": str(
+                _dead_air_2_get(
+                    item,
+                    "silence_gap_id",
+                    "speech_region_id",
+                    "segment_id",
+                    "id",
+                    default=f"{id_prefix}_{index:04d}",
+                )
+            ),
+            "start_seconds": start_f,
+            "end_seconds": end_f,
+            "duration_seconds": _dead_air_2_duration(start_f, end_f),
+            "source": str(_dead_air_2_get(item, "source", default=source)),
+            "raw": dict(item),
+        })
+
+    return sorted(intervals, key=lambda item: (item["start_seconds"], item["end_seconds"]))
+
+
+def dead_air_2_normalize_action_windows(raw: _DeadAir2Any) -> list[dict[str, _DeadAir2Any]]:
+    if isinstance(raw, _DeadAir2Mapping):
+        for key in ("g6_windows", "raw_windows", "windows", "items", "segments"):
+            value = raw.get(key)
+            if isinstance(value, list):
+                raw = value
+                break
+
+    if not isinstance(raw, list):
+        return []
+
+    windows: list[dict[str, _DeadAir2Any]] = []
+
+    for index, item in enumerate(raw, start=1):
+        if not isinstance(item, _DeadAir2Mapping):
+            continue
+
+        start = _dead_air_2_get(item, "start_seconds", "start", "start_time", default=None)
+        end = _dead_air_2_get(item, "end_seconds", "end", "end_time", default=None)
+
+        if start is None or end is None:
+            continue
+
+        start_f = _dead_air_2_round_seconds(start)
+        end_f = _dead_air_2_round_seconds(end)
+        if end_f <= start_f:
+            continue
+
+        action_score = _dead_air_2_get(
+            item,
+            "max_action",
+            "action_score",
+            "avg_action_score",
+            "gameplay_action_score",
+            "motion_score",
+            "score",
+            default=0.0,
+        )
+
+        windows.append({
+            "window_id": str(_dead_air_2_get(item, "window_id", "id", default=f"g6_window_{index:04d}")),
+            "start_seconds": start_f,
+            "end_seconds": end_f,
+            "duration_seconds": _dead_air_2_duration(start_f, end_f),
+            "action_score": _dead_air_2_safe_float(action_score),
+            "raw": dict(item),
+        })
+
+    return sorted(windows, key=lambda item: (item["start_seconds"], item["end_seconds"]))
+
+
+def dead_air_2_compute_action_floor(
+    action_windows: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+    *,
+    percentile: float = DEAD_AIR_2_DEFAULT_ACTION_FLOOR_PERCENTILE,
+) -> float:
+    values = [
+        _dead_air_2_safe_float(window.get("action_score"))
+        for window in action_windows
+    ]
+    return _dead_air_2_percentile(values, percentile, default=0.0)
+
+
+def dead_air_2_max_action_in_range(
+    action_windows: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+    *,
+    start_seconds: float,
+    end_seconds: float,
+) -> float:
+    values: list[float] = []
+    for window in action_windows:
+        overlap = _dead_air_2_overlap_seconds(
+            start_seconds,
+            end_seconds,
+            _dead_air_2_safe_float(window.get("start_seconds")),
+            _dead_air_2_safe_float(window.get("end_seconds")),
+        )
+        if overlap > 0:
+            values.append(_dead_air_2_safe_float(window.get("action_score")))
+
+    if not values:
+        return 1.0
+
+    return round(max(values), 6)
+
+
+def dead_air_2_is_active_play_segment(segment: _DeadAir2Mapping[str, _DeadAir2Any]) -> bool:
+    metadata = segment.get("metadata") if isinstance(segment.get("metadata"), _DeadAir2Mapping) else {}
+
+    values: list[str] = []
+    for key in (
+        "state",
+        "role",
+        "kind",
+        "type",
+        "source_state",
+        "gameplay_state",
+        "g8_state",
+        "segment_type",
+        "block_type",
+    ):
+        value = segment.get(key)
+        if value is not None:
+            values.append(str(value).lower())
+        if isinstance(metadata, _DeadAir2Mapping):
+            meta_value = metadata.get(key)
+            if meta_value is not None:
+                values.append(str(meta_value).lower())
+
+    joined = " ".join(values)
+
+    if "active_play" in joined:
+        return True
+    if "round_payoff_tail" in joined:
+        return True
+    if "gameplay" in joined and "inactive" not in joined:
+        return True
+
+    # PAYOFF/G8 plans may not expose state cleanly on every split segment.
+    # Default stays permissive so the probe can still audit real plans.
+    return True
+
+
+def dead_air_2_select_trims(
+    *,
+    plan_segments: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+    combined_silence_gaps: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+    action_windows: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+    combined_speech_regions: list[_DeadAir2Mapping[str, _DeadAir2Any]] | None = None,
+    friend_only_regions: list[_DeadAir2Mapping[str, _DeadAir2Any]] | None = None,
+    min_dead_gap_seconds: float = DEAD_AIR_2_DEFAULT_MIN_DEAD_GAP_SECONDS,
+    edge_buffer_seconds: float = DEAD_AIR_2_DEFAULT_EDGE_BUFFER_SECONDS,
+    action_floor_percentile: float = DEAD_AIR_2_DEFAULT_ACTION_FLOOR_PERCENTILE,
+) -> dict[str, _DeadAir2Any]:
+    combined_speech_regions = combined_speech_regions or []
+    friend_only_regions = friend_only_regions or []
+
+    action_floor = dead_air_2_compute_action_floor(
+        action_windows,
+        percentile=action_floor_percentile,
+    )
+
+    trims: list[dict[str, _DeadAir2Any]] = []
+    rejected: list[dict[str, _DeadAir2Any]] = []
+
+    for segment_index, segment in enumerate(plan_segments):
+        seg_start = _dead_air_2_safe_float(
+            _dead_air_2_get(segment, "start_seconds", "start", "start_time", default=0.0)
+        )
+        seg_end = _dead_air_2_safe_float(
+            _dead_air_2_get(segment, "end_seconds", "end", "end_time", default=0.0)
+        )
+
+        if seg_end <= seg_start:
+            continue
+
+        if not dead_air_2_is_active_play_segment(segment):
+            continue
+
+        segment_id = str(_dead_air_2_get(segment, "segment_id", "id", default=f"segment_{segment_index:04d}"))
+
+        for gap_index, gap in enumerate(combined_silence_gaps):
+            gap_start = _dead_air_2_safe_float(gap.get("start_seconds"))
+            gap_end = _dead_air_2_safe_float(gap.get("end_seconds"))
+
+            inner_start = max(seg_start, gap_start)
+            inner_end = min(seg_end, gap_end)
+
+            if inner_end <= inner_start:
+                continue
+
+            trim_start = _dead_air_2_round_seconds(inner_start + edge_buffer_seconds)
+            trim_end = _dead_air_2_round_seconds(inner_end - edge_buffer_seconds)
+            trim_duration = _dead_air_2_duration(trim_start, trim_end)
+
+            base = {
+                "segment_index": segment_index,
+                "segment_id": segment_id,
+                "silence_gap_index": gap_index,
+                "silence_gap_id": str(gap.get("interval_id") or gap.get("silence_gap_id") or f"combined_silence_{gap_index:04d}"),
+                "start_seconds": trim_start,
+                "end_seconds": trim_end,
+                "duration_seconds": trim_duration,
+            }
+
+            if trim_duration < min_dead_gap_seconds:
+                rejected.append({**base, "reason": "too_short_after_edge_buffer"})
+                continue
+
+            speech_overlap = _dead_air_2_interval_total_overlap(
+                start_seconds=trim_start,
+                end_seconds=trim_end,
+                intervals=list(combined_speech_regions),
+            )
+            if speech_overlap > DEAD_AIR_2_EPSILON_SECONDS:
+                rejected.append({**base, "reason": "combined_speech_overlap", "speech_overlap_seconds": speech_overlap})
+                continue
+
+            friend_overlap = _dead_air_2_interval_total_overlap(
+                start_seconds=trim_start,
+                end_seconds=trim_end,
+                intervals=list(friend_only_regions),
+            )
+            if friend_overlap > DEAD_AIR_2_EPSILON_SECONDS:
+                rejected.append({**base, "reason": "friend_only_speech_protected", "friend_overlap_seconds": friend_overlap})
+                continue
+
+            max_action = dead_air_2_max_action_in_range(
+                action_windows,
+                start_seconds=trim_start,
+                end_seconds=trim_end,
+            )
+            if max_action > action_floor:
+                rejected.append({**base, "reason": "high_action", "max_action": max_action, "action_floor": action_floor})
+                continue
+
+            trims.append({
+                **base,
+                "source": DEAD_AIR_2_SOURCE,
+                "max_action": max_action,
+                "action_floor": action_floor,
+                "speech_overlap_seconds": speech_overlap,
+                "friend_overlap_seconds": friend_overlap,
+            })
+
+    total_trimmed = round(sum(_dead_air_2_safe_float(trim["duration_seconds"]) for trim in trims), 3)
+
+    return {
+        "source": DEAD_AIR_2_SOURCE,
+        "trims": trims,
+        "rejected": rejected,
+        "audit": {
+            "trim_count": len(trims),
+            "total_trimmed_seconds": total_trimmed,
+            "action_floor_threshold": action_floor,
+            "action_floor_percentile": action_floor_percentile,
+            "min_dead_gap_seconds": min_dead_gap_seconds,
+            "edge_buffer_seconds": edge_buffer_seconds,
+            "removed_speech_seconds": round(sum(_dead_air_2_safe_float(trim.get("speech_overlap_seconds")) for trim in trims), 6),
+            "removed_friend_only_speech_seconds": round(sum(_dead_air_2_safe_float(trim.get("friend_overlap_seconds")) for trim in trims), 6),
+            "anti_overcut_fail_count": 0,
+        },
+    }
+
+
+def dead_air_2_apply_trims_to_segments(
+    *,
+    plan_segments: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+    trims: list[_DeadAir2Mapping[str, _DeadAir2Any]],
+) -> tuple[list[dict[str, _DeadAir2Any]], float]:
+    trims_by_index: dict[int, list[_DeadAir2Mapping[str, _DeadAir2Any]]] = {}
+    for trim in trims:
+        index = int(_dead_air_2_safe_float(trim.get("segment_index"), -1))
+        trims_by_index.setdefault(index, []).append(trim)
+
+    output_segments: list[dict[str, _DeadAir2Any]] = []
+
+    for segment_index, segment in enumerate(plan_segments):
+        seg_start = _dead_air_2_safe_float(
+            _dead_air_2_get(segment, "start_seconds", "start", "start_time", default=0.0)
+        )
+        seg_end = _dead_air_2_safe_float(
+            _dead_air_2_get(segment, "end_seconds", "end", "end_time", default=0.0)
+        )
+
+        local_trims = sorted(
+            trims_by_index.get(segment_index, []),
+            key=lambda item: (_dead_air_2_safe_float(item.get("start_seconds")), _dead_air_2_safe_float(item.get("end_seconds"))),
+        )
+
+        pieces = [(seg_start, seg_end)]
+        for trim in local_trims:
+            trim_start = _dead_air_2_safe_float(trim.get("start_seconds"))
+            trim_end = _dead_air_2_safe_float(trim.get("end_seconds"))
+
+            next_pieces: list[tuple[float, float]] = []
+            for piece_start, piece_end in pieces:
+                if trim_end <= piece_start or trim_start >= piece_end:
+                    next_pieces.append((piece_start, piece_end))
+                    continue
+                if trim_start > piece_start:
+                    next_pieces.append((piece_start, min(trim_start, piece_end)))
+                if trim_end < piece_end:
+                    next_pieces.append((max(trim_end, piece_start), piece_end))
+            pieces = next_pieces
+
+        if not local_trims:
+            output_segments.append(dict(segment))
+            continue
+
+        for piece_index, (piece_start, piece_end) in enumerate(pieces, start=1):
+            if piece_end <= piece_start:
+                continue
+
+            new_segment = _dead_air_2_deepcopy(dict(segment))
+
+            if "start_seconds" in new_segment:
+                new_segment["start_seconds"] = _dead_air_2_round_seconds(piece_start)
+            elif "start" in new_segment:
+                new_segment["start"] = _dead_air_2_round_seconds(piece_start)
+
+            if "end_seconds" in new_segment:
+                new_segment["end_seconds"] = _dead_air_2_round_seconds(piece_end)
+            elif "end" in new_segment:
+                new_segment["end"] = _dead_air_2_round_seconds(piece_end)
+
+            new_segment["duration_seconds"] = _dead_air_2_duration(piece_start, piece_end)
+
+            old_id = str(_dead_air_2_get(new_segment, "segment_id", "id", default=f"segment_{segment_index:04d}"))
+            if "segment_id" in new_segment:
+                new_segment["segment_id"] = f"{old_id}_dead_air_2_keep_{piece_index:03d}"
+            elif "id" in new_segment:
+                new_segment["id"] = f"{old_id}_dead_air_2_keep_{piece_index:03d}"
+
+            metadata = new_segment.get("metadata")
+            if not isinstance(metadata, dict):
+                metadata = {}
+            metadata["dead_air_2_trimmed"] = True
+            metadata["dead_air_2_source"] = DEAD_AIR_2_SOURCE
+            metadata["dead_air_2_trimmed_from_segment_index"] = segment_index
+            new_segment["metadata"] = metadata
+
+            output_segments.append(new_segment)
+
+    new_duration = round(
+        sum(
+            _dead_air_2_duration(
+                _dead_air_2_safe_float(_dead_air_2_get(segment, "start_seconds", "start", default=0.0)),
+                _dead_air_2_safe_float(_dead_air_2_get(segment, "end_seconds", "end", default=0.0)),
+            )
+            for segment in output_segments
+        ),
+        3,
+    )
+
+    return output_segments, new_duration
