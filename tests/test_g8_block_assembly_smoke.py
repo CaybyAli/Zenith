@@ -26,7 +26,7 @@ def test_g8_builds_block_plan_breaks_540s_cap_and_keeps_chronological_blocks() -
         {"start_seconds": 660.0, "end_seconds": 1040.0, "highlight_score": 0.80},
     ]
 
-    plan = G8BlockAssemblyPlanner(bridge_seconds=8.0).build_plan(
+    plan = G8BlockAssemblyPlanner(bridge_seconds=8.0, round_gap_seconds=20.0).build_plan(
         label="synthetic_long",
         play_segments=play_segments,
         g7a_spans=g7a_spans,
@@ -63,7 +63,7 @@ def test_g8_long_non_active_gap_creates_block_boundary() -> None:
         {"start_seconds": 240.0, "end_seconds": 360.0, "state": "active_play", "confidence": 0.8},
     ]
 
-    planner = G8BlockAssemblyPlanner(bridge_seconds=8.0)
+    planner = G8BlockAssemblyPlanner(bridge_seconds=8.0, round_gap_seconds=20.0)
     blocks = planner.build_blocks(planner.normalize_play_segments(play_segments))
 
     assert len(blocks) == 2

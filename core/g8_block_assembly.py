@@ -11,6 +11,9 @@ G8_MIN_PREFERRED_SECONDS = 720.0
 G8_PREFERRED_TARGET_SECONDS = 900.0
 G8_MAX_SECONDS = 1200.0
 DEFAULT_BRIDGE_SECONDS = 8.0
+DEFAULT_ROUND_GAP_SECONDS = 45.0
+DEFAULT_LOBBY_MIN_SECONDS = 5.0
+DEFAULT_LOBBY_BOUNDARY_MIN_ACTIVE_SECONDS = 80.0
 DEFAULT_MIN_STANDALONE_BLOCK_SECONDS = 12.0
 ANTI_OVERCUT_TOLERANCE_SECONDS = 0.5
 
@@ -247,6 +250,9 @@ class G8AssemblyPlan:
     label: str
     status: str
     bridge_seconds: float
+    round_gap_seconds: float
+    lobby_min_seconds: float
+    lobby_boundary_min_active_seconds: float
     target_duration_seconds: float
     available_keep_active_budget_seconds: float
     selected_keep_active_budget_seconds: float
@@ -272,6 +278,9 @@ class G8AssemblyPlan:
             "engine": "g8-block-assembly-planner-v1",
             "status": self.status,
             "bridge_seconds": round(self.bridge_seconds, 3),
+            "round_gap_seconds": round(self.round_gap_seconds, 3),
+            "lobby_min_seconds": round(self.lobby_min_seconds, 3),
+            "lobby_boundary_min_active_seconds": round(self.lobby_boundary_min_active_seconds, 3),
             "duration_contract": {
                 "youtube_floor_seconds": YOUTUBE_MIN_DURATION_SECONDS,
                 "preferred_min_seconds": G8_MIN_PREFERRED_SECONDS,
@@ -310,12 +319,18 @@ class G8BlockAssemblyPlanner:
         self,
         bridge_seconds: float = DEFAULT_BRIDGE_SECONDS,
         min_standalone_block_seconds: float = DEFAULT_MIN_STANDALONE_BLOCK_SECONDS,
+        round_gap_seconds: float = DEFAULT_ROUND_GAP_SECONDS,
+        lobby_min_seconds: float = DEFAULT_LOBBY_MIN_SECONDS,
+        lobby_boundary_min_active_seconds: float = DEFAULT_LOBBY_BOUNDARY_MIN_ACTIVE_SECONDS,
     ) -> None:
         self.bridge_seconds = max(0.0, float(bridge_seconds))
         self.min_standalone_block_seconds = max(
             0.0,
             float(min_standalone_block_seconds),
         )
+        self.round_gap_seconds = max(0.0, float(round_gap_seconds))
+        self.lobby_min_seconds = max(0.0, float(lobby_min_seconds))
+        self.lobby_boundary_min_active_seconds = max(0.0, float(lobby_boundary_min_active_seconds))
 
     def build_plan(
         self,
@@ -357,6 +372,12 @@ class G8BlockAssemblyPlanner:
             notes.append("g8_1_min_standalone_filter_discarded_isolated_micro_blocks")
         if bool(minimum_filter_report.get("after_budget_below_720", False)):
             notes.append("g8_1_less_viable_content_after_min_standalone_filter")
+        notes.append(
+            "g8_2_state_aware_round_gap_lookahead_enabled "
+            f"round_gap_seconds={self.round_gap_seconds:.3f} "
+            f"lobby_min_seconds={self.lobby_min_seconds:.3f} "
+            f"lobby_boundary_min_active_seconds={self.lobby_boundary_min_active_seconds:.3f}"
+        )
         selected_blocks = sorted(selected_blocks, key=lambda block: (block.start_seconds, block.end_seconds))
         for block in blocks:
             block.selected = block in selected_blocks
@@ -385,6 +406,9 @@ class G8BlockAssemblyPlanner:
             label=str(label),
             status=status,
             bridge_seconds=self.bridge_seconds,
+            round_gap_seconds=self.round_gap_seconds,
+            lobby_min_seconds=self.lobby_min_seconds,
+            lobby_boundary_min_active_seconds=self.lobby_boundary_min_active_seconds,
             target_duration_seconds=round(target_duration, 3),
             available_keep_active_budget_seconds=available_budget,
             selected_keep_active_budget_seconds=selected_budget,
@@ -490,36 +514,83 @@ class G8BlockAssemblyPlanner:
         return sorted(normalized, key=lambda span: (span.start_seconds, span.end_seconds))
 
     def build_blocks(self, play_segments: list[G8SourceSpan]) -> list[G8Block]:
-        blocks: list[G8Block] = []
-        current: list[G8SourceSpan] = []
-        pending_bridge: list[G8SourceSpan] = []
+        """
+        G8.2 state-aware round-end lookahead block builder.
 
-        def bridge_ok(spans: list[G8SourceSpan]) -> bool:
-            if not spans:
-                return True
-            if any(span.state not in BRIDGE_STATES for span in spans):
-                return False
-            return sum(span.duration_seconds for span in spans) <= self.bridge_seconds
+        A block bridges a non-active gap only when:
+        - the next active_play is within round_gap_seconds, and
+        - the gap does not contain a real lobby boundary.
+
+        A real lobby boundary requires:
+        - cumulative intro_menu_lobby overlap >= lobby_min_seconds, and
+        - enough active round context before that lobby
+          (lobby_boundary_min_active_seconds).
+
+        This avoids false G6 lobby blips splitting a live round.
+        """
+        ordered = sorted(
+            play_segments,
+            key=lambda span: (span.start_seconds, span.end_seconds, span.state),
+        )
+        active_spans = [span for span in ordered if span.is_active]
+        if not active_spans:
+            return []
+
+        blocks: list[G8Block] = []
+        current_active: list[G8SourceSpan] = []
+
+        def non_active_spans_between(gap_start: float, gap_end: float) -> list[G8SourceSpan]:
+            return [
+                span
+                for span in ordered
+                if not span.is_active
+                and span.end_seconds > gap_start
+                and span.start_seconds < gap_end
+            ]
+
+        def cumulative_intro_lobby_seconds(
+            spans: list[G8SourceSpan],
+            gap_start: float,
+            gap_end: float,
+        ) -> float:
+            lobby_ranges = []
+            for span in spans:
+                if span.state != "intro_menu_lobby":
+                    continue
+                start = max(gap_start, span.start_seconds)
+                end = min(gap_end, span.end_seconds)
+                if end > start:
+                    lobby_ranges.append((start, end))
+            return round(sum(end - start for start, end in _merge_ranges(lobby_ranges)), 3)
+
+        def current_active_budget_seconds() -> float:
+            return round(
+                sum(max(0.0, span.end_seconds - span.start_seconds) for span in current_active),
+                3,
+            )
 
         def close_current() -> None:
-            nonlocal current
-            if not current:
+            nonlocal current_active
+            if not current_active:
                 return
+
             active_ranges = _merge_ranges(
                 (span.start_seconds, span.end_seconds)
-                for span in current
-                if span.is_active
+                for span in current_active
             )
             if not active_ranges:
-                current = []
+                current_active = []
                 return
+
             block_start = active_ranges[0][0]
             block_end = active_ranges[-1][1]
             source_spans = [
                 span
-                for span in current
-                if span.end_seconds > block_start and span.start_seconds < block_end
+                for span in ordered
+                if span.end_seconds > block_start
+                and span.start_seconds < block_end
             ]
+
             blocks.append(
                 G8Block(
                     block_id=f"g8_block_{len(blocks) + 1:03d}",
@@ -529,36 +600,39 @@ class G8BlockAssemblyPlanner:
                     active_ranges=active_ranges,
                     trim_ranges=[],
                     keep_ranges=active_ranges,
-                    keep_active_budget_seconds=round(sum(end - start for start, end in active_ranges), 3),
+                    keep_active_budget_seconds=round(
+                        sum(end - start for start, end in active_ranges),
+                        3,
+                    ),
                     quality_score=0.0,
                     quality_source="unscored",
                 )
             )
-            current = []
+            current_active = []
 
-        for segment in play_segments:
-            if segment.is_active:
-                if not current:
-                    current = [segment]
-                    pending_bridge = []
-                    continue
-                if pending_bridge:
-                    if bridge_ok(pending_bridge):
-                        current.extend(pending_bridge)
-                    else:
-                        close_current()
-                        current = []
-                    pending_bridge = []
-                current.append(segment)
+        current_active = [active_spans[0]]
+
+        for next_active in active_spans[1:]:
+            previous_active = current_active[-1]
+            gap_start = previous_active.end_seconds
+            gap_end = next_active.start_seconds
+            gap_to_next_active = round(max(0.0, gap_end - gap_start), 3)
+
+            gap_spans = non_active_spans_between(gap_start, gap_end)
+            lobby_seconds = cumulative_intro_lobby_seconds(gap_spans, gap_start, gap_end)
+            active_budget_before_lobby = current_active_budget_seconds()
+
+            has_real_lobby_boundary = (
+                lobby_seconds >= self.lobby_min_seconds
+                and active_budget_before_lobby >= self.lobby_boundary_min_active_seconds
+            )
+
+            if (not has_real_lobby_boundary) and gap_to_next_active <= self.round_gap_seconds:
+                current_active.append(next_active)
                 continue
 
-            if not current:
-                continue
-
-            pending_bridge.append(segment)
-            if not bridge_ok(pending_bridge):
-                close_current()
-                pending_bridge = []
+            close_current()
+            current_active = [next_active]
 
         close_current()
         return blocks
