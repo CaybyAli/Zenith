@@ -10665,13 +10665,52 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             "renderer_type": type(active_renderer).__name__,
         },
     )
+    render_edit_timeline = edit_timeline
+    render_facecam_static_tiny = False
+
+    if os.environ.get("ZENITH_RENDER_USE_G8_PLAN") == "1":
+        try:
+            from core.g8_render_timeline_adapter import (
+                build_edit_timeline_from_g8_plan,
+                resolve_g8_plan_path_from_env,
+            )
+
+            _g8_render_plan_path = resolve_g8_plan_path_from_env()
+            if _g8_render_plan_path is not None:
+                render_edit_timeline = build_edit_timeline_from_g8_plan(
+                    job_id=str(job.job_id),
+                    plan_path=_g8_render_plan_path,
+                )
+                render_facecam_static_tiny = (
+                    os.environ.get("ZENITH_RENDER_FACECAM_STATIC_TINY", "1") != "0"
+                )
+                print(
+                    f"[gaming_pipeline] RENDER_G8_PLAN {job.job_id} "
+                    f"plan={_g8_render_plan_path} "
+                    f"segments={len(render_edit_timeline.selected_segments)} "
+                    f"duration={render_edit_timeline.total_selected_duration:.3f}s "
+                    f"facecam_static_tiny={render_facecam_static_tiny}"
+                )
+            else:
+                print(
+                    f"[gaming_pipeline] RENDER_G8_PLAN {job.job_id} "
+                    "fallback=old_edit_timeline reason=no_g8_plan_found"
+                )
+        except Exception as _g8_render_exc:
+            render_edit_timeline = edit_timeline
+            render_facecam_static_tiny = False
+            print(
+                f"[gaming_pipeline] RENDER_G8_PLAN {job.job_id} "
+                f"fallback=old_edit_timeline reason={type(_g8_render_exc).__name__}:{_g8_render_exc}"
+            )
+
     final_video_path = active_renderer.render(
         job=job,
         source_path=job.raw_video_path,
-        edit_timeline=edit_timeline,
+        edit_timeline=render_edit_timeline,
         reframe_plan=reframe_plan,
         dynamic_edit_plan=dynamic_edit_plan,
-        smooth_zoom_curve=smooth_zoom_curve,
+        facecam_static_tiny=render_facecam_static_tiny,
     )
     transition_job_state(
         job,

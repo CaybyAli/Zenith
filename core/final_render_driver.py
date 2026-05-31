@@ -486,6 +486,7 @@ class FinalRenderDriver:
         src_h: int,
         side: str,
         smooth_zoom_policy: dict | None = None,
+        facecam_static_tiny: bool = False,
     ) -> tuple[str, str]:
         base_w = src_w // 2
         base_h = src_h
@@ -558,6 +559,7 @@ class FinalRenderDriver:
         src_h: int,
         focus_policy: dict | None = None,
         smooth_zoom_policy: dict | None = None,
+        facecam_static_tiny: bool = False,
     ) -> tuple[str, str]:
 
         """
@@ -580,6 +582,17 @@ class FinalRenderDriver:
         )
 
         if src_w >= 3000:  # 32:9 Format
+            if facecam_static_tiny:
+                print("[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (STATIC TINY: 480x270)")
+                return self._build_32x9_gameplay_with_facecam_pip_filter(
+                    src_w=src_w,
+                    src_h=src_h,
+                    pip_width=480,
+                    pip_height=270,
+                    pip_x=20,
+                    pip_y=100,
+                )
+
             if layout_kind == "facecam_emphasis":
                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (FACECAM EMPHASIS)")
                 return self._build_32x9_gameplay_with_facecam_pip_filter(
@@ -1368,6 +1381,7 @@ class FinalRenderDriver:
         dynamic_edit_plan: DynamicEditPlan | None = None,
         smooth_zoom_curve: object | None = None,
         output_dir: str | Path = "output",
+        facecam_static_tiny: bool = False,
     ) -> str:
 
         from core.audio_peak_detector import AudioPeakDetector
@@ -1425,6 +1439,9 @@ class FinalRenderDriver:
                     seg,
                     dynamic_edit_plan,
                 )
+                if facecam_static_tiny:
+                    zoom_instructions = []
+                    print("[DEBUG] [FACECAM_STATIC_TINY] Audio-peak PiP growth disabled for this render")
                 if zoom_instructions:
                     # AUDIO-PEAK DETECTION fuer reactive zoom
                     audio_peaks = AudioPeakDetector().detect_peaks(
@@ -1478,6 +1495,7 @@ class FinalRenderDriver:
                     src_h,
                     focus_policy=focus_policy,
                     smooth_zoom_policy=smooth_zoom_policy,
+                    facecam_static_tiny=facecam_static_tiny,
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
                 render_tasks.append(
@@ -1570,6 +1588,14 @@ class FinalRenderDriver:
                 len(reframe_plan.instructions) if reframe_plan is not None else 0
             ),
             "dynamic_edit_plan_used": dynamic_edit_plan is not None,
+            "facecam_static_tiny_used": bool(facecam_static_tiny),
+            "facecam_pip_default_size": (
+                {"width": 480, "height": 270}
+                if facecam_static_tiny
+                else None
+            ),
+            "facecam_audio_peak_growth_disabled": bool(facecam_static_tiny),
+            "facecam_emphasis_big_disabled": bool(facecam_static_tiny),
             "focus_decisions_available": bool(getattr(job, "focus_decisions", None)),
             "focus_decisions_used": any(
                 str(item.get("policy_source")) == "focus_decision"
