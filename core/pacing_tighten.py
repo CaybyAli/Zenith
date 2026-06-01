@@ -24,6 +24,9 @@ class PacingTightenConfig:
     audio_action_peak_percentile: float = 0.75
     audio_action_peak_min_score: float = 0.80
     action_calm_subrange_min_cut_seconds: float = 1.2
+    min_dead_in_combat_seconds: float = 4.0
+    owner_v8_dead_run_start_seconds: float = 199.0
+    owner_v8_dead_run_end_seconds: float = 207.0
     breath_ms: int = 150
     min_breath_ms: int = 100
     round_transition_tail_gap_min_seconds: float = 1.5
@@ -1356,10 +1359,14 @@ def apply_pacing_tighten(
                     action_floor=action_floor,
                     config=config,
                 )
-                candidate_cuts = [
-                    cut for cut in candidate_cuts
-                    if cut.get("reason") != "semantic_dead_or_filler"
-                ]
+                candidate_cuts = _p4_action_candidate_cuts(
+                    candidate_cuts,
+                    combined_speech_regions=combined_speech_regions,
+                    raw_windows=raw_windows,
+                    semantic_units=semantic_units,
+                    audio_peak_floor=audio_peak_floor,
+                    config=config,
+                )
                 action_cut_min_seconds = max(
                     config.internal_silence_min_seconds,
                     config.action_calm_subrange_min_cut_seconds,
@@ -1580,12 +1587,35 @@ def apply_pacing_tighten(
         <= old_duration + allowed_extension_seconds + duration_floor_tolerance_seconds
     )
 
+    owner_v8_dead_cut_present = any(
+        _overlap(
+            _num(cut.get("start_seconds")),
+            _num(cut.get("end_seconds")),
+            config.owner_v8_dead_run_start_seconds,
+            config.owner_v8_dead_run_end_seconds,
+        ) >= min(
+            config.owner_v8_dead_run_end_seconds - config.owner_v8_dead_run_start_seconds,
+            _num(cut.get("duration_seconds")),
+        ) * 0.60
+        for row in action_rows
+        for cut in row.get("internal_cuts", [])
+    )
+
     hard_checks = {
+        "owner_v8_dead_run_199_207_cut": {
+            "status": "JA" if owner_v8_dead_cut_present else "NEIN",
+            "target": [config.owner_v8_dead_run_start_seconds, config.owner_v8_dead_run_end_seconds],
+            "meaning": "Sustained dead air inside combat range is allowed to be cut.",
+        },
         "round1_fight_full_coverage": {
-            "status": "JA" if fight_coverage >= 0.999 and locked_action_cut_overlap_count == 0 else "NEIN",
+            "status": "JA" if combat_ranges_zero_internal_cuts else "NEIN",
             "target": [config.round1_fight_start_seconds, config.round1_fight_end_seconds],
             "coverage": fight_coverage,
-            "internal_cut_count": locked_action_cut_overlap_count,
+            # PACING-POLISH-4:
+            # internal_cut_count meint ab jetzt:
+            # Cuts IN echten Combat-Sub-Spans, nicht tote Zwischenräume im groben Fight-Lock.
+            "internal_cut_count": combat_protected_cut_overlap_count,
+            "allowed_dead_cut_count_inside_fight_range": locked_action_cut_overlap_count,
             "hit_ranges": fight_hits,
         },
         "payoff_locked_exact": {
@@ -1668,3 +1698,192 @@ def apply_pacing_tighten(
     }
 
     return output_segments, audit
+
+
+def _p4_row_bounds(row: Any) -> tuple[float, float]:
+    if not isinstance(row, dict):
+        return 0.0, 0.0
+    start = _num(row.get("start_seconds") or row.get("start") or row.get("t0") or row.get("time_seconds") or 0.0)
+    end = _num(row.get("end_seconds") or row.get("end") or row.get("t1") or row.get("stop_seconds") or 0.0)
+    if end <= start:
+        duration = _num(row.get("duration_seconds") or row.get("duration") or 0.0)
+        if duration > 0:
+            end = start + duration
+    return start, end
+
+
+def _p4_has_speech_overlap(start: float, end: float, speech_regions: list[dict[str, Any]]) -> bool:
+    for row in speech_regions:
+        if _overlap(start, end, _num(row.get("start_seconds")), _num(row.get("end_seconds"))) > 0.05:
+            return True
+    return False
+
+
+def _p4_audio_peak_between(raw_windows: list[dict[str, Any]], start: float, end: float) -> float:
+    peak = 0.0
+    for row in raw_windows:
+        window_start, window_end = _p4_row_bounds(row)
+        if _overlap(start, end, window_start, window_end) <= 0:
+            continue
+        peak = max(peak, _audio_peak_score(row))
+    return peak
+
+
+def _p4_semantic_dead_overlap_seconds(start: float, end: float, semantic_units: list[dict[str, Any]]) -> float:
+    total = 0.0
+    for row in semantic_units:
+        unit_start = _num(row.get("start_seconds"))
+        unit_end = _num(row.get("end_seconds"))
+        reasons = " ".join(str(item) for item in row.get("semantic_reasons", [])).lower()
+        unit_id = str(row.get("utterance_id") or "").lower()
+        is_dead = bool(row.get("is_dead_or_filler"))
+        if not is_dead and "silence" not in reasons and "dead" not in reasons and not unit_id.startswith("silence"):
+            continue
+        total += _overlap(start, end, unit_start, unit_end)
+    return _round(total)
+
+
+def _p4_overlaps_configured_fight(start: float, end: float, config: Any) -> bool:
+    return _overlap(
+        start,
+        end,
+        _num(getattr(config, "round1_fight_start_seconds", 0.0)),
+        _num(getattr(config, "round1_fight_end_seconds", 0.0)),
+    ) > 0.0
+
+
+def _p4_is_sustained_dead_cut(
+    cut: dict[str, Any],
+    *,
+    combined_speech_regions: list[dict[str, Any]],
+    raw_windows: list[dict[str, Any]],
+    semantic_units: list[dict[str, Any]],
+    audio_peak_floor: float,
+    config: Any,
+) -> tuple[bool, dict[str, Any]]:
+    cut_start = _num(cut.get("start_seconds"))
+    cut_end = _num(cut.get("end_seconds"))
+    duration = _duration(cut_start, cut_end)
+    min_dead = _num(getattr(config, "min_dead_in_combat_seconds", 4.0))
+
+    if duration < min_dead:
+        return False, cut
+
+    has_speech = _p4_has_speech_overlap(cut_start, cut_end, combined_speech_regions)
+    audio_peak = _p4_audio_peak_between(raw_windows, cut_start, cut_end)
+    semantic_dead = _p4_semantic_dead_overlap_seconds(cut_start, cut_end, semantic_units)
+
+    ok = bool(
+        not has_speech
+        and audio_peak < audio_peak_floor
+        and semantic_dead >= min(duration * 0.60, duration - 0.10)
+    )
+    if not ok:
+        return False, cut
+
+    enriched = dict(cut)
+    enriched["reason"] = "sustained_dead_in_combat"
+    enriched["combat_dead_cut"] = True
+    enriched["semantic_dead_overlap_seconds"] = _round(semantic_dead)
+    enriched["max_audio_peak_score"] = _round(audio_peak)
+    enriched["min_dead_in_combat_seconds"] = min_dead
+    return True, enriched
+
+
+def _p4_action_candidate_cuts(
+    candidate_cuts: list[dict[str, Any]],
+    *,
+    combined_speech_regions: list[dict[str, Any]],
+    raw_windows: list[dict[str, Any]],
+    semantic_units: list[dict[str, Any]],
+    audio_peak_floor: float,
+    config: Any,
+) -> list[dict[str, Any]]:
+    kept: list[dict[str, Any]] = []
+
+    for cut in candidate_cuts:
+        cut_start = _num(cut.get("start_seconds"))
+        cut_end = _num(cut.get("end_seconds"))
+
+        if _p4_overlaps_configured_fight(cut_start, cut_end, config):
+            is_sustained_dead, enriched = _p4_is_sustained_dead_cut(
+                cut,
+                combined_speech_regions=combined_speech_regions,
+                raw_windows=raw_windows,
+                semantic_units=semantic_units,
+                audio_peak_floor=audio_peak_floor,
+                config=config,
+            )
+            if is_sustained_dead:
+                kept.append(enriched)
+            continue
+
+        if cut.get("reason") != "semantic_dead_or_filler":
+            kept.append(cut)
+
+    return kept
+
+
+def _sustained_dead_in_combat_candidate_cuts(
+    candidate_cuts: list[dict[str, Any]],
+    *,
+    combined_speech_regions: list[dict[str, Any]],
+    raw_windows: list[dict[str, Any]],
+    semantic_units: list[dict[str, Any]],
+    audio_peak_floor: float,
+    config: Any,
+) -> list[dict[str, Any]]:
+    return _p4_action_candidate_cuts(
+        candidate_cuts,
+        combined_speech_regions=combined_speech_regions,
+        raw_windows=raw_windows,
+        semantic_units=semantic_units,
+        audio_peak_floor=audio_peak_floor,
+        config=config,
+    )
+
+
+def _combat_protected_ranges(
+    *,
+    start: float,
+    end: float,
+    raw_windows: list[dict[str, Any]],
+    semantic_units: list[dict[str, Any]],
+    audio_peak_floor: float,
+    config: Any,
+) -> list[tuple[float, float]]:
+    pad = _num(getattr(config, "combat_subspan_pad_seconds", getattr(config, "breath_ms", 150) / 1000.0))
+    merge_gap = _num(getattr(config, "combat_subspan_merge_gap_seconds", 1.20))
+    ranges: list[tuple[float, float]] = []
+
+    for row in raw_windows:
+        window_start, window_end = _p4_row_bounds(row)
+        if _overlap(start, end, window_start, window_end) <= 0:
+            continue
+        if _audio_peak_score(row) >= audio_peak_floor:
+            ranges.append((max(start, window_start - pad), min(end, window_end + pad)))
+
+    for row in semantic_units:
+        if not bool(row.get("is_event_callout")) and not bool(row.get("is_emotional")):
+            continue
+        unit_start = _num(row.get("start_seconds"))
+        unit_end = _num(row.get("end_seconds"))
+        if _overlap(start, end, unit_start, unit_end) <= 0:
+            continue
+        ranges.append((max(start, unit_start - pad), min(end, unit_end + pad)))
+
+    ranges = [(a, b) for a, b in ranges if b > a]
+    if not ranges:
+        return []
+
+    ranges.sort(key=lambda item: (item[0], item[1]))
+    merged: list[tuple[float, float]] = []
+    cur_start, cur_end = ranges[0]
+    for next_start, next_end in ranges[1:]:
+        if next_start <= cur_end + merge_gap:
+            cur_end = max(cur_end, next_end)
+        else:
+            merged.append((_round(cur_start), _round(cur_end)))
+            cur_start, cur_end = next_start, next_end
+    merged.append((_round(cur_start), _round(cur_end)))
+    return merged
