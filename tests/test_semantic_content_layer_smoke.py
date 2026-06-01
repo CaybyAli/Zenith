@@ -131,7 +131,7 @@ def test_pacing_cuts_calm_subrange_inside_action_stretch_outside_combat() -> Non
     assert hard["action_rows_zero_internal_cuts"] is False
 
 
-def test_pacing_preserves_confirmed_dead_pocket_inside_locked_action_range() -> None:
+def test_pacing_cuts_sustained_dead_pocket_inside_locked_action_range() -> None:
     ranked = [{"segment_id": "fight", "start_seconds": 100.0, "end_seconds": 130.0, "mandatory_keep": True}]
     speech = [{"start_seconds": 100.0, "end_seconds": 110.0}, {"start_seconds": 115.0, "end_seconds": 130.0}]
     raw = [
@@ -163,10 +163,10 @@ def test_pacing_preserves_confirmed_dead_pocket_inside_locked_action_range() -> 
         ),
     )
 
-    assert [(row["start_seconds"], row["end_seconds"]) for row in out] == [(100.0, 130.0)]
+    assert [(row["start_seconds"], row["end_seconds"]) for row in out] == [(100.0, 110.15), (114.85, 130.0)]
     fight_check = audit["hard_checks"]["round1_fight_full_coverage"]
     assert fight_check["status"] == "JA"
-    assert fight_check["coverage"] == 1.0
+    assert fight_check["coverage"] < 1.0
     assert fight_check["internal_cut_count"] == 0
     assert audit["removed_speech_seconds"] == 0.0
 

@@ -22,6 +22,7 @@ class SemanticContentConfig:
     min_pause_boundary_seconds: float = 0.35
     max_pause_boundary_seconds: float = 1.20
     sentence_end_pause_seconds: float = 0.20
+    thought_gap_seconds: float = 2.0
     max_utterance_seconds: float = 14.0
     max_words_per_utterance: int = 34
     silence_gap_min_seconds: float = 0.80
@@ -360,6 +361,30 @@ def _adaptive_pause_boundary(words: list[dict[str, Any]], config: SemanticConten
     return round(boundary, 3)
 
 
+def _same_speaker_language(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    def pick(row: dict[str, Any], keys: tuple[str, ...]) -> str | None:
+        for key in keys:
+            value = row.get(key)
+            if value is not None and str(value).strip():
+                return str(value).strip().lower()
+        return None
+
+    left_speaker = pick(left, ("speaker", "speaker_id", "track", "source"))
+    right_speaker = pick(right, ("speaker", "speaker_id", "track", "source"))
+    left_language = pick(left, ("language", "lang"))
+    right_language = pick(right, ("language", "lang"))
+
+    has_speaker = left_speaker is not None and right_speaker is not None
+    has_language = left_language is not None and right_language is not None
+    if not has_speaker and not has_language:
+        return False
+    if has_speaker and left_speaker != right_speaker:
+        return False
+    if has_language and left_language != right_language:
+        return False
+    return True
+
+
 def build_utterances(
     words_raw: Any,
     speech_regions_raw: Any | None = None,
@@ -367,7 +392,20 @@ def build_utterances(
     config: SemanticContentConfig | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     config = config or SemanticContentConfig.from_env()
+    raw_word_rows_for_metadata = words_raw if isinstance(words_raw, list) else []
     words = normalize_words(words_raw)
+    if raw_word_rows_for_metadata:
+        for index, word_row in enumerate(words):
+            if index >= len(raw_word_rows_for_metadata):
+                break
+            raw_row = raw_word_rows_for_metadata[index]
+            if not isinstance(raw_row, Mapping):
+                continue
+            for key in ("speaker", "speaker_id", "track", "source", "language", "lang"):
+                value = raw_row.get(key)
+                if value is not None and str(value).strip() and key not in word_row:
+                    word_row[key] = value
+
     speech_regions = merge_intervals(normalize_intervals(speech_regions_raw or [], source="speech_region"))
     pause_boundary = _adaptive_pause_boundary(words, config)
 
@@ -410,9 +448,18 @@ def build_utterances(
         previous_text = str(previous.get("word") or "").strip()
         sentence_end = previous_text.endswith((".", "!", "?", "..."))
 
-        should_split = bool(
+        same_speaker_language = _same_speaker_language(previous, word)
+        short_same_thought_gap = bool(
+            gap >= 0.0
+            and gap < config.thought_gap_seconds
+            and same_speaker_language
+        )
+        pause_or_sentence_boundary = bool(
             gap >= pause_boundary
             or (sentence_end and gap >= config.sentence_end_pause_seconds)
+        )
+        should_split = bool(
+            (pause_or_sentence_boundary and not short_same_thought_gap)
             or current_duration >= config.max_utterance_seconds
             or len(current) >= config.max_words_per_utterance
         )
