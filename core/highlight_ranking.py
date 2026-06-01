@@ -19,6 +19,7 @@ class HighlightRankingConfig:
     reaction_weight: float = 0.55
     audio_weight: float = 0.30
     speech_weight: float = 0.15
+    semantic_weight: float = 0.10
 
     high_reaction_score: float = 0.80
     medium_reaction_score: float = 0.50
@@ -262,6 +263,55 @@ def _speech_seconds(
     return round(total, 3)
 
 
+def _semantic_summary(
+    semantic_units: list[Mapping[str, Any]],
+    start: float,
+    end: float,
+) -> dict[str, Any]:
+    weighted_relevance = 0.0
+    total_overlap = 0.0
+    dead_overlap = 0.0
+    hit_count = 0
+    event_count = 0
+    max_relevance = 0.0
+    hit_ids: list[str] = []
+
+    for unit in semantic_units:
+        se = _start_end(unit)
+        if se is None:
+            continue
+
+        overlap_seconds = _overlap(start, end, se[0], se[1])
+        if overlap_seconds <= 0:
+            continue
+
+        hit_count += 1
+        total_overlap += overlap_seconds
+        relevance = max(0.0, min(1.0, _safe_float(unit.get("relevance_score"))))
+        weighted_relevance += relevance * overlap_seconds
+        max_relevance = max(max_relevance, relevance)
+        if bool(unit.get("is_dead_or_filler")):
+            dead_overlap += overlap_seconds
+        if bool(unit.get("is_event_callout")):
+            event_count += 1
+
+        if len(hit_ids) < 8:
+            hit_ids.append(str(unit.get("utterance_id") or unit.get("id") or "semantic_unit"))
+
+    semantic_relevance = weighted_relevance / total_overlap if total_overlap > 0 else 0.0
+    duration = max(0.001, end - start)
+
+    return {
+        "semantic_hit_count": hit_count,
+        "semantic_relevance_score": round(semantic_relevance, 6),
+        "semantic_max_relevance_score": round(max_relevance, 6),
+        "semantic_dead_or_filler_overlap_seconds": round(dead_overlap, 3),
+        "semantic_dead_or_filler_share": round(dead_overlap / duration, 6),
+        "semantic_event_callout_count": event_count,
+        "semantic_hit_ids": hit_ids,
+    }
+
+
 def _reaction_level(item: Mapping[str, Any]) -> str:
     # reaction_adaptive serialisiert echtes Signal als intensity=HIGH/MEDIUM/LOW.
     # Alte level/reaction_level Felder bleiben als Fallback.
@@ -444,6 +494,7 @@ def _row_for_segment(
     raw_windows: list[Mapping[str, Any]],
     reactions: list[Mapping[str, Any]],
     speech_regions: list[Mapping[str, Any]],
+    semantic_units: list[Mapping[str, Any]],
     payoff_tail_segments: list[Mapping[str, Any]],
     global_audio_values: list[float],
     config: HighlightRankingConfig,
@@ -460,6 +511,7 @@ def _row_for_segment(
     speech_s = _speech_seconds(speech_regions, start, end)
     speech_share = round(speech_s / max(0.001, duration), 6)
     speech_engagement = round(speech_share * audio["audio_peak_prominence"], 6)
+    semantic = _semantic_summary(semantic_units, start, end)
 
     reaction = _reaction_summary(reactions, start, end, config)
     payoff_tail = _payoff_tail_summary(payoff_tail_segments, segment, start, end)
@@ -474,6 +526,7 @@ def _row_for_segment(
         config.reaction_weight * reaction["reaction_strength"]
         + config.audio_weight * audio["audio_peak_prominence"]
         + config.speech_weight * speech_engagement
+        + config.semantic_weight * semantic["semantic_relevance_score"]
     )
     importance = round(importance, 6)
 
@@ -505,6 +558,13 @@ def _row_for_segment(
         "speech_seconds": speech_s,
         "speech_share": speech_share,
         "speech_engagement": speech_engagement,
+        "semantic_relevance_score": semantic["semantic_relevance_score"],
+        "semantic_max_relevance_score": semantic["semantic_max_relevance_score"],
+        "semantic_dead_or_filler_overlap_seconds": semantic["semantic_dead_or_filler_overlap_seconds"],
+        "semantic_dead_or_filler_share": semantic["semantic_dead_or_filler_share"],
+        "semantic_event_callout_count": semantic["semantic_event_callout_count"],
+        "semantic_hit_count": semantic["semantic_hit_count"],
+        "semantic_hit_ids": semantic["semantic_hit_ids"],
         "importance_score": importance,
         "selection_score": selection_score,
         "kept": False,
@@ -589,6 +649,7 @@ def rank_highlight_segments(
     raw_windows: list[Mapping[str, Any]],
     reactions: list[Mapping[str, Any]] | None = None,
     combined_speech_regions: list[Mapping[str, Any]] | None = None,
+    semantic_units: list[Mapping[str, Any]] | None = None,
     payoff_tail_segments: list[Mapping[str, Any]] | None = None,
     target_seconds: float | None = None,
     config: HighlightRankingConfig | None = None,
@@ -596,12 +657,14 @@ def rank_highlight_segments(
     config = config or HighlightRankingConfig()
     reactions = reactions or []
     combined_speech_regions = combined_speech_regions or []
+    semantic_units = semantic_units or []
     payoff_tail_segments = payoff_tail_segments or []
 
     normalized_segments = normalize_intervals(content_segments, source="content_segment")
     normalized_raw = normalize_intervals(raw_windows, source="raw_action_window")
     normalized_reactions = normalize_intervals(reactions, source="reaction")
     normalized_speech = normalize_intervals(combined_speech_regions, source="combined_speech")
+    normalized_semantic = normalize_intervals(semantic_units, source="semantic_content")
     normalized_payoff_tails = normalize_intervals(payoff_tail_segments, source="payoff_tail")
 
     session_seconds = _session_seconds(normalized_segments)
@@ -620,6 +683,7 @@ def rank_highlight_segments(
             raw_windows=normalized_raw,
             reactions=normalized_reactions,
             speech_regions=normalized_speech,
+            semantic_units=normalized_semantic,
             payoff_tail_segments=normalized_payoff_tails,
             global_audio_values=global_audio_values,
             config=config,
@@ -729,6 +793,9 @@ def rank_highlight_segments(
             segment["metadata"]["highlight_keep_reason"] = row["keep_reason"]
             segment["metadata"]["highlight_mandatory_payoff_tail"] = row["mandatory_payoff_tail"]
             segment["metadata"]["highlight_payoff_tail_overlap_seconds"] = row["payoff_tail_overlap_seconds"]
+            segment["metadata"]["semantic_relevance_score"] = row["semantic_relevance_score"]
+            segment["metadata"]["semantic_dead_or_filler_share"] = row["semantic_dead_or_filler_share"]
+            segment["metadata"]["semantic_event_callout_count"] = row["semantic_event_callout_count"]
         output_segments.append(segment)
 
     final_duration = round(sum(row["duration_seconds"] for row in kept_rows_chronological), 3)
@@ -762,6 +829,7 @@ def rank_highlight_segments(
             "reaction_weight": config.reaction_weight,
             "audio_weight": config.audio_weight,
             "speech_weight": config.speech_weight,
+            "semantic_weight": config.semantic_weight,
             "high_reaction_score": config.high_reaction_score,
             "medium_reaction_score": config.medium_reaction_score,
             "high_reaction_prominence_percentile": config.high_reaction_prominence_percentile,
@@ -770,6 +838,7 @@ def rank_highlight_segments(
         "target_seconds": effective_target,
         "max_allowed_seconds": max_allowed_seconds,
         "input_segment_count": len(rows),
+        "semantic_unit_count": len(normalized_semantic),
         "kept_segment_count": len([row for row in rows if row["kept"]]),
         "dropped_segment_count": len([row for row in rows if not row["kept"]]),
         "input_duration_seconds": _duration_sum(rows),
