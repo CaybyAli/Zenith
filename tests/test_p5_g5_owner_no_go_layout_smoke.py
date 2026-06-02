@@ -38,7 +38,8 @@ def test_p5_g5_facecam_emphasis_keeps_gameplay_visible_for_32x9_source():
 
     # Left half is facecam, but only as PiP.
     assert "[fc_src]crop=" in filter_complex
-    assert "scale_cuda=720:405" in filter_complex
+    # 0-A v18 truth: old 720:405 -> new 704:396 from approved gaming_main PiP large.
+    assert "scale_cuda=704:396" in filter_complex
 
 
 def test_p5_g5_gameplay_crop_still_renders_gameplay_only_for_32x9_source():

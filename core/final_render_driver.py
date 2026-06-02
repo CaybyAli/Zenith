@@ -23,9 +23,17 @@ from core.power_profile import PowerProfile
 from core.resource_monitor import guarded_ffmpeg_execution
 from shared.errors import ValidationError
 
-from typing import Literal
+from typing import Any, Literal
 
-ZoomSize = Literal["tiny", "small", "medium", "large"]
+ZoomSize = Literal["tiny", "medium", "large"]
+
+FACECAM_PIP_STATES: tuple[str, str, str] = ("tiny", "medium", "large")
+FACECAM_PIP_SIZES: dict[str, tuple[int, int]] = {
+    "tiny": (480, 270),
+    "medium": (640, 360),
+    "large": (704, 396),
+}
+FACECAM_PIP_POSITION = {"x": 20, "y": 100}
 
 _CUDA_SCALE_DOWNLOAD_RE = re.compile(
     r"hwupload_cuda,scale_cuda=(?P<args>[^,;\[]+),"
@@ -116,12 +124,7 @@ def generate_zoom_expression(timeline: list[dict], segment_duration: float) -> s
     Returns: FFmpeg Expression String fuer width/height
     """
     # Groessen
-    sizes = {
-        "tiny": (480, 270),
-        "small": (540, 304),
-        "medium": (660, 371),
-        "large": (800, 450),
-    }
+    sizes = dict(FACECAM_PIP_SIZES)
     
     # Baue IF-ELSE Chain fuer WIDTH
     width_expr_parts = []
@@ -194,12 +197,7 @@ def interpolate_size(from_size: ZoomSize, to_size: ZoomSize, progress: float) ->
         (width, height) fuer aktuellen Progress
     """
     # Groessen-Definition
-    sizes = {
-        "tiny": (480, 270),
-        "small": (540, 304),
-        "medium": (660, 371),
-        "large": (800, 450),
-    }
+    sizes = dict(FACECAM_PIP_SIZES)
     
     from_w, from_h = sizes[from_size]
     to_w, to_h = sizes[to_size]
@@ -431,6 +429,176 @@ class FinalRenderDriver:
             number -= 1
         return max(number, minimum)
 
+    def _load_profile_config_for_job(self, job: Job | None = None) -> dict[str, Any]:
+        raw_channel = getattr(job, "channel_type", None) if job is not None else None
+        channel_id = getattr(raw_channel, "value", raw_channel) or "gaming_main"
+        try:
+            from core.profile_manager import ProfileManager
+
+            profile = ProfileManager().load_profile(str(channel_id))
+            return dict(profile) if isinstance(profile, dict) else {}
+        except Exception:
+            return {}
+
+    def _coerce_pip_size(self, raw: object, fallback: tuple[int, int]) -> tuple[int, int]:
+        if not isinstance(raw, dict):
+            return fallback
+        try:
+            width = self._safe_even_int(float(raw.get("w", raw.get("width", fallback[0]))))
+            height = self._safe_even_int(float(raw.get("h", raw.get("height", fallback[1]))))
+        except (TypeError, ValueError):
+            return fallback
+
+        if width * 9 != height * 16:
+            return fallback
+        return width, height
+
+    def _resolve_facecam_pip_sizes(self, job: Job | None = None) -> dict[str, tuple[int, int]]:
+        profile = self._load_profile_config_for_job(job)
+        pip_config = profile.get("facecam_pip") if isinstance(profile.get("facecam_pip"), dict) else {}
+        raw_sizes = pip_config.get("sizes") if isinstance(pip_config, dict) else {}
+
+        resolved: dict[str, tuple[int, int]] = {}
+        for state in FACECAM_PIP_STATES:
+            fallback = FACECAM_PIP_SIZES[state]
+            raw = raw_sizes.get(state) if isinstance(raw_sizes, dict) else None
+            resolved[state] = self._coerce_pip_size(raw, fallback)
+        return resolved
+
+    def _resolve_facecam_pip_position(self, job: Job | None = None) -> dict[str, int]:
+        profile = self._load_profile_config_for_job(job)
+        pip_config = profile.get("facecam_pip") if isinstance(profile.get("facecam_pip"), dict) else {}
+        raw_pos = pip_config.get("position") if isinstance(pip_config, dict) else {}
+        if not isinstance(raw_pos, dict):
+            return dict(FACECAM_PIP_POSITION)
+        try:
+            return {
+                "x": max(0, int(round(float(raw_pos.get("x", FACECAM_PIP_POSITION["x"]))))),
+                "y": max(0, int(round(float(raw_pos.get("y", FACECAM_PIP_POSITION["y"]))))),
+            }
+        except (TypeError, ValueError):
+            return dict(FACECAM_PIP_POSITION)
+
+    def _resolve_16x9_facecam_pip_crop(self, src_w: int, src_h: int) -> dict[str, int | float]:
+        base_w = src_w // 2
+        y = 8 if src_h >= 16 else 0
+        crop_h = self._safe_even_int(max(2, src_h - (2 * y)))
+        crop_w = self._safe_even_int(crop_h * 16 / 9)
+        if crop_w > base_w:
+            crop_w = self._safe_even_int(base_w - 32)
+            crop_h = self._safe_even_int(crop_w * 9 / 16)
+            y = self._safe_even_int((src_h - crop_h) / 2, minimum=0)
+        x = self._safe_even_int(max(0, (base_w - crop_w) / 2), minimum=0)
+        return {"x": x, "y": y, "w": crop_w, "h": crop_h, "aspect": round(crop_w / crop_h, 6)}
+
+    def _facecam_pip_geometry_report(
+        self,
+        src_w: int,
+        src_h: int,
+        *,
+        job: Job | None = None,
+        facecam_crop: dict | None = None,
+    ) -> dict[str, Any]:
+        crop = self._coerce_facecam_crop(facecam_crop, src_w=src_w, src_h=src_h)
+        sizes = self._resolve_facecam_pip_sizes(job)
+        position = self._resolve_facecam_pip_position(job)
+        return {
+            "source": {"width": src_w, "height": src_h},
+            "facecam_crop": {**crop, "aspect": round(crop["w"] / crop["h"], 6)},
+            "scale_sizes": {
+                state: {
+                    "width": size[0],
+                    "height": size[1],
+                    "aspect": round(size[0] / size[1], 6),
+                }
+                for state, size in sizes.items()
+            },
+            "states": list(FACECAM_PIP_STATES),
+            "default_state": "tiny",
+            "overlay": {"x": position["x"], "y": position["y"], "pad_filter": None, "fill_color": None},
+        }
+
+
+    def _default_facecam_crop(self, *, src_w: int, src_h: int) -> dict[str, int]:
+        """Old/current render default, used only when no config crop exists."""
+        base_w = src_w // 2
+        crop_offset = int((src_w / 1920) * 28)
+        return {
+            "x": 0,
+            "y": 2 if src_h >= 12 else 0,
+            "w": self._safe_even_int(base_w - crop_offset),
+            "h": self._safe_even_int(max(2, src_h - 12)),
+        }
+
+    def _coerce_facecam_crop(
+        self,
+        crop: object,
+        *,
+        src_w: int,
+        src_h: int,
+    ) -> dict[str, int]:
+        default = self._default_facecam_crop(src_w=src_w, src_h=src_h)
+
+        if not isinstance(crop, dict):
+            return default
+
+        try:
+            x = max(int(round(float(crop.get("x", default["x"])))), 0)
+            y = max(int(round(float(crop.get("y", default["y"])))), 0)
+            w = self._safe_even_int(float(crop.get("w", default["w"])))
+            h = self._safe_even_int(float(crop.get("h", default["h"])))
+        except (TypeError, ValueError):
+            return default
+
+        if x >= src_w or y >= src_h:
+            return default
+
+        w = self._safe_even_int(min(w, src_w - x))
+        h = self._safe_even_int(min(h, src_h - y))
+
+        if w < 2 or h < 2:
+            return default
+
+        return {"x": x, "y": y, "w": w, "h": h}
+
+    def _resolve_facecam_crop_config(
+        self,
+        *,
+        job: Job | None = None,
+        explicit: dict | None = None,
+    ) -> tuple[dict | None, str]:
+        if isinstance(explicit, dict):
+            return explicit, "render_argument"
+
+        if job is not None:
+            direct = getattr(job, "facecam_crop", None)
+            if isinstance(direct, dict):
+                return direct, "job.facecam_crop"
+
+            profile_metadata = getattr(job, "profile_metadata", None)
+            if isinstance(profile_metadata, dict) and isinstance(profile_metadata.get("facecam_crop"), dict):
+                return profile_metadata["facecam_crop"], "job.profile_metadata.facecam_crop"
+
+            for attr_name in ("render_config", "config"):
+                raw_config = getattr(job, attr_name, None)
+                if isinstance(raw_config, dict) and isinstance(raw_config.get("facecam_crop"), dict):
+                    return raw_config["facecam_crop"], f"job.{attr_name}.facecam_crop"
+
+            raw_channel = getattr(job, "channel_type", None)
+            channel_id = getattr(raw_channel, "value", raw_channel)
+            if channel_id:
+                try:
+                    from core.profile_manager import ProfileManager
+
+                    profile = ProfileManager().load_profile(str(channel_id))
+                    crop = profile.get("facecam_crop")
+                    if isinstance(crop, dict):
+                        return crop, f"profile:{channel_id}.facecam_crop"
+                except Exception:
+                    pass
+
+        return None, "default_current_render_value"
+
     def _resolve_smooth_zoom_policy(
         self,
         segment: TimelineSegment,
@@ -526,21 +694,132 @@ class FinalRenderDriver:
         pip_height: int = 405,
         pip_x: int = 20,
         pip_y: int = 100,
+        facecam_crop: dict | None = None,
     ) -> tuple[str, str]:
         """Gaming-main safe layout: gameplay stays visible, facecam is PiP."""
         base_w = src_w // 2
-        crop_offset = int((src_w / 1920) * 28)
-        facecam_crop_w = self._safe_even_int(base_w - crop_offset)
-        facecam_crop_h = self._safe_even_int(max(2, src_h - 12))
-        facecam_crop_y = 2 if src_h >= 12 else 0
+        crop = self._coerce_facecam_crop(facecam_crop, src_w=src_w, src_h=src_h)
 
         fc = (
             "[0:v]hwdownload,format=nv12,format=yuv420p,split=2[gp_src][fc_src];"
             f"[gp_src]crop={base_w}:{src_h}:{base_w}:0,"
             f"{_cuda_scale_filter(1920, 1080)}[gp];"
-            f"[fc_src]crop={facecam_crop_w}:{facecam_crop_h}:0:{facecam_crop_y},"
+            f"[fc_src]crop={crop['w']}:{crop['h']}:{crop['x']}:{crop['y']},"
             f"{_cuda_scale_filter(pip_width, pip_height)}[fc];"
             f"[gp][fc]overlay={pip_x}:{pip_y}[out]"
+        )
+        return fc, "[out]"
+
+    def _reaction_size_events_for_segment(
+        self,
+        segment: TimelineSegment,
+        reaction_size_events: list[dict] | None,
+    ) -> list[dict[str, Any]]:
+        if not reaction_size_events:
+            return []
+
+        seg_start = float(segment.start_time)
+        seg_end = float(segment.end_time)
+        segment_events: list[dict[str, Any]] = []
+
+        for raw_event in reaction_size_events:
+            if not isinstance(raw_event, dict):
+                continue
+            size = str(raw_event.get("size") or "").strip().lower()
+            if size not in {"medium", "large"}:
+                continue
+
+            try:
+                event_start = float(raw_event.get("source_start_seconds"))
+                event_end = float(raw_event.get("source_end_seconds"))
+            except (TypeError, ValueError):
+                continue
+
+            overlap_start = max(seg_start, event_start)
+            overlap_end = min(seg_end, event_end)
+            if overlap_end <= overlap_start:
+                continue
+
+            item = dict(raw_event)
+            item["size"] = size
+            item["relative_start_seconds"] = round(overlap_start - seg_start, 3)
+            item["relative_end_seconds"] = round(overlap_end - seg_start, 3)
+            segment_events.append(item)
+
+        return sorted(
+            segment_events,
+            key=lambda item: (
+                float(item["relative_start_seconds"]),
+                0 if item["size"] == "large" else 1,
+                float(item["relative_end_seconds"]),
+            ),
+        )
+
+    def _build_32x9_reaction_size_switch_filter(
+        self,
+        *,
+        segment: TimelineSegment,
+        src_w: int,
+        src_h: int,
+        reaction_size_events: list[dict] | None,
+        facecam_crop: dict | None = None,
+        job: Job | None = None,
+    ) -> tuple[str, str]:
+        crop = self._coerce_facecam_crop(facecam_crop, src_w=src_w, src_h=src_h)
+        sizes = self._resolve_facecam_pip_sizes(job)
+        position = self._resolve_facecam_pip_position(job)
+        segment_events = self._reaction_size_events_for_segment(segment, reaction_size_events)
+
+        enable_medium: list[str] = []
+        enable_large: list[str] = []
+        for event in segment_events:
+            rel_start = float(event["relative_start_seconds"])
+            rel_end = max(rel_start + 0.001, float(event["relative_end_seconds"]))
+            expr = f"between(t,{rel_start:.3f},{rel_end:.3f})"
+            if event["size"] == "large":
+                enable_large.append(expr)
+            elif event["size"] == "medium":
+                enable_medium.append(expr)
+
+        if not enable_medium and not enable_large:
+            tiny_w, tiny_h = sizes["tiny"]
+            return self._build_32x9_gameplay_with_facecam_pip_filter(
+                src_w=src_w,
+                src_h=src_h,
+                pip_width=tiny_w,
+                pip_height=tiny_h,
+                pip_x=position["x"],
+                pip_y=position["y"],
+                facecam_crop=crop,
+            )
+
+        tiny_w, tiny_h = sizes["tiny"]
+        medium_w, medium_h = sizes["medium"]
+        large_w, large_h = sizes["large"]
+        enable_medium_str = "+".join(enable_medium) if enable_medium else "0"
+        enable_large_str = "+".join(enable_large) if enable_large else "0"
+        base_w = src_w // 2
+        pip_x = position["x"]
+        pip_y = position["y"]
+
+        print(
+            "[DEBUG] -> 3-STATE SNAP FACECAM ZOOM: "
+            f"MEDIUM={len(enable_medium)} LARGE={len(enable_large)} default=TINY"
+        )
+
+        fc = (
+            "[0:v]hwdownload,format=nv12,format=yuv420p,split=4[gp_src][fc_tiny_src][fc_medium_src][fc_large_src];"
+            f"[gp_src]crop={base_w}:{src_h}:{base_w}:0,"
+            f"{_cuda_scale_filter(1920, 1080)}[gp];"
+            f"[fc_tiny_src]crop={crop['w']}:{crop['h']}:{crop['x']}:{crop['y']},"
+            f"{_cuda_scale_filter(tiny_w, tiny_h)}[fc_tiny];"
+            f"[fc_medium_src]crop={crop['w']}:{crop['h']}:{crop['x']}:{crop['y']},"
+            f"{_cuda_scale_filter(medium_w, medium_h)}[fc_medium];"
+            f"[fc_large_src]crop={crop['w']}:{crop['h']}:{crop['x']}:{crop['y']},"
+            f"{_cuda_scale_filter(large_w, large_h)}[fc_large];"
+            f"[gp][fc_tiny]overlay={pip_x}:{pip_y}:enable='not(({enable_medium_str})+({enable_large_str}))':shortest=1[tmp1];"
+            f"[tmp1][fc_medium]overlay={pip_x}:{pip_y}:enable='{enable_medium_str}':shortest=1[tmp2];"
+            f"[tmp2][fc_large]overlay={pip_x}:{pip_y}:enable='{enable_large_str}':shortest=1[out]"
         )
         return fc, "[out]"
 
@@ -560,6 +839,9 @@ class FinalRenderDriver:
         focus_policy: dict | None = None,
         smooth_zoom_policy: dict | None = None,
         facecam_static_tiny: bool = False,
+        facecam_crop: dict | None = None,
+        reaction_size_events: list[dict] | None = None,
+        job: Job | None = None,
     ) -> tuple[str, str]:
 
         """
@@ -582,26 +864,58 @@ class FinalRenderDriver:
         )
 
         if src_w >= 3000:  # 32:9 Format
+            manual_facecam_crop = self._coerce_facecam_crop(facecam_crop, src_w=src_w, src_h=src_h)
+            print(
+                "[DEBUG] [FACECAM_CROP] "
+                f"x={manual_facecam_crop['x']} y={manual_facecam_crop['y']} "
+                f"w={manual_facecam_crop['w']} h={manual_facecam_crop['h']}"
+            )
+            if reaction_size_events:
+                return self._build_32x9_reaction_size_switch_filter(
+                    segment=segment,
+                    src_w=src_w,
+                    src_h=src_h,
+                    reaction_size_events=reaction_size_events,
+                    facecam_crop=manual_facecam_crop,
+                    job=job,
+                )
+
             if facecam_static_tiny:
-                print("[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (STATIC TINY: 480x270)")
+                sizes = self._resolve_facecam_pip_sizes(job)
+                position = self._resolve_facecam_pip_position(job)
+                tiny_w, tiny_h = sizes["tiny"]
+                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (STATIC TINY: {tiny_w}x{tiny_h})")
                 return self._build_32x9_gameplay_with_facecam_pip_filter(
                     src_w=src_w,
                     src_h=src_h,
-                    pip_width=480,
-                    pip_height=270,
-                    pip_x=20,
-                    pip_y=100,
+                    pip_width=tiny_w,
+                    pip_height=tiny_h,
+                    pip_x=position["x"],
+                    pip_y=position["y"],
+                    facecam_crop=manual_facecam_crop,
                 )
 
             if layout_kind == "facecam_emphasis":
+                if reframe_plan is not None:
+                    print(f"[DEBUG] -> Rendering FACECAM FOCUS ONLY (left half)")
+                    return self._build_32x9_focus_crop_filter(
+                        src_w=src_w,
+                        src_h=src_h,
+                        side="left",
+                        smooth_zoom_policy=smooth_zoom_policy,
+                    )
+                sizes = self._resolve_facecam_pip_sizes(job)
+                position = self._resolve_facecam_pip_position(job)
+                large_w, large_h = sizes["large"]
                 print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (FACECAM EMPHASIS)")
                 return self._build_32x9_gameplay_with_facecam_pip_filter(
                     src_w=src_w,
                     src_h=src_h,
-                    pip_width=720,
-                    pip_height=405,
-                    pip_x=20,
-                    pip_y=100,
+                    pip_width=large_w,
+                    pip_height=large_h,
+                    pip_x=position["x"],
+                    pip_y=position["y"],
+                    facecam_crop=manual_facecam_crop,
                 )
 
             if layout_kind in {"gameplay_crop", "gameplay_focus"}:
@@ -616,34 +930,30 @@ class FinalRenderDriver:
 # ZOOM-FEATURE: Finde Zoom-Momente fuer dieses Segment
             zoom_instructions = self._find_zoom_instructions(segment, dynamic_edit_plan)
             
-            # Basis-Groessen - 4 STUFEN fuer feinere Kontrolle (ANGEPASST: groesser)
-            PIP_TINY_W, PIP_TINY_H = 480, 270       # Sehr klein
-            PIP_SMALL_W, PIP_SMALL_H = 540, 304     # Normal
-            PIP_MEDIUM_W, PIP_MEDIUM_H = 600, 338   # Laut reden (kleiner)
-            PIP_LARGE_W, PIP_LARGE_H = 720, 405     # Schreien (kleiner)
-
-            PIP_X, PIP_Y = 20, 100
-            crop_offset = int((src_w / 1920) * 28)
+            pip_sizes = self._resolve_facecam_pip_sizes(job)
+            pip_position = self._resolve_facecam_pip_position(job)
+            PIP_TINY_W, PIP_TINY_H = pip_sizes["tiny"]
+            PIP_MEDIUM_W, PIP_MEDIUM_H = pip_sizes["medium"]
+            PIP_LARGE_W, PIP_LARGE_H = pip_sizes["large"]
+            PIP_X, PIP_Y = pip_position["x"], pip_position["y"]
             
             if not zoom_instructions:
-                # Keine Zooms -> immer kleine Groesse
-                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
+                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (TINY: {PIP_TINY_W}x{PIP_TINY_H})")
                 fc = (
                     "[0:v]hwdownload,format=nv12,format=yuv420p,split=2[gp_src][fc_src];"
                     f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,"
                     f"{_cuda_scale_filter(1920, 1080)}[gp];"
-                    f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,"
-                    f"{_cuda_scale_filter(PIP_SMALL_W, PIP_SMALL_H)}[fc];"
+                    f"[fc_src]crop={manual_facecam_crop['w']}:{manual_facecam_crop['h']}:{manual_facecam_crop['x']}:{manual_facecam_crop['y']},"
+                    f"{_cuda_scale_filter(PIP_TINY_W, PIP_TINY_H)}[fc];"
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
                 )
                 return fc, "[out]"
 
-            # MIT ZOOMS: INSTANT switching zwischen 4 Stufen
+            # MIT ZOOMS: INSTANT switching zwischen 3 Stufen
             seg_start = segment.start_time
             
             enable_large = []
             enable_medium = []
-            enable_small = []
             
             for peak in audio_peaks:
                 duration = peak["end"] - peak["start"]
@@ -655,66 +965,56 @@ class FinalRenderDriver:
                 rel_start = max(0.0, peak["start"] - seg_start)
                 rel_end = max(rel_start + 0.05, peak["end"] - seg_start)
                 
-                # 4-STUFEN-SYSTEM
+                # 3-STUFEN-SYSTEM: tiny default, medium, large
                 if peak["peak_db"] > -13.0:
                     enable_large.append(f"between(t,{rel_start:.1f},{rel_end:.1f})")
                     print(f"[DEBUG]     -> [RED] LARGE zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
                 elif peak["peak_db"] > -16.5:
                     enable_medium.append(f"between(t,{rel_start:.1f},{rel_end:.1f})")
                     print(f"[DEBUG]     -> [YEL] MEDIUM zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
-                elif peak["peak_db"] > -18.5:
-                    enable_small.append(f"between(t,{rel_start:.1f},{rel_end:.1f})")
-                    print(f"[DEBUG]     -> [GRN] SMALL zoom {rel_start:.1f}s-{rel_end:.1f}s ({peak['peak_db']:.1f}dB, {duration:.1f}s)")
                 else:
                     print(f"[DEBUG]     -> [-] TINY (quiet: {peak['peak_db']:.1f}dB)")
             
-            if not enable_large and not enable_medium and not enable_small:
+            if not enable_large and not enable_medium:
                 print(f"[DEBUG] -> Found {len(zoom_instructions)} zoom(s), but all low intensity")
-                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (SMALL: {PIP_SMALL_W}x{PIP_SMALL_H})")
+                print(f"[DEBUG] -> Rendering GAMEPLAY + Facecam PiP (TINY: {PIP_TINY_W}x{PIP_TINY_H})")
                 fc = (
                     "[0:v]hwdownload,format=nv12,format=yuv420p,split=2[gp_src][fc_src];"
                     f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,"
                     f"{_cuda_scale_filter(1920, 1080)}[gp];"
-                    f"[fc_src]crop={src_w//2 - crop_offset}:1068:0:2,"
-                    f"{_cuda_scale_filter(PIP_SMALL_W, PIP_SMALL_H)}[fc];"
+                    f"[fc_src]crop={manual_facecam_crop['w']}:{manual_facecam_crop['h']}:{manual_facecam_crop['x']}:{manual_facecam_crop['y']},"
+                    f"{_cuda_scale_filter(PIP_TINY_W, PIP_TINY_H)}[fc];"
                     f"[gp][fc]overlay={PIP_X}:{PIP_Y}[out]"
                 )
                 return fc, "[out]"
             
             enable_large_str = "+".join(enable_large) if enable_large else "0"
             enable_medium_str = "+".join(enable_medium) if enable_medium else "0"
-            enable_small_str = "+".join(enable_small) if enable_small else "0"
             
-            print(f"[DEBUG] -> [CUT] 4-STUFEN AUDIO-REACTIVE ZOOM:")
-            print(f"[DEBUG]    LARGE={len(enable_large)} | MEDIUM={len(enable_medium)} | SMALL={len(enable_small)}")
+            print(f"[DEBUG] -> [CUT] 3-STATE AUDIO-REACTIVE SNAP ZOOM:")
+            print(f"[DEBUG]    LARGE={len(enable_large)} | MEDIUM={len(enable_medium)} | default=TINY")
             
-            # Vier PiP-Groessen, INSTANT switching mit enable-Conditions
             fc = (
-                "[0:v]hwdownload,format=nv12,format=yuv420p,split=5[gp_src][fc_tiny_src][fc_small_src][fc_medium_src][fc_large_src];"
+                "[0:v]hwdownload,format=nv12,format=yuv420p,split=4[gp_src][fc_tiny_src][fc_medium_src][fc_large_src];"
                 f"[gp_src]crop={src_w//2}:1080:{src_w//2}:0,"
                 f"{_cuda_scale_filter(1920, 1080)}[gp];"
                 
                 # TINY PiP (default - leise Momente)
-                f"[fc_tiny_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"[fc_tiny_src]crop={manual_facecam_crop['w']}:{manual_facecam_crop['h']}:{manual_facecam_crop['x']}:{manual_facecam_crop['y']},"
                 f"{_cuda_scale_filter(PIP_TINY_W, PIP_TINY_H)}[fc_tiny];"
-                
-                # SMALL PiP (normal reden)
-                f"[fc_small_src]crop={src_w//2 - crop_offset}:1068:0:2,"
-                f"{_cuda_scale_filter(PIP_SMALL_W, PIP_SMALL_H)}[fc_small];"
-                
+
                 # MEDIUM PiP (laut/aufgeregt)
-                f"[fc_medium_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"[fc_medium_src]crop={manual_facecam_crop['w']}:{manual_facecam_crop['h']}:{manual_facecam_crop['x']}:{manual_facecam_crop['y']},"
                 f"{_cuda_scale_filter(PIP_MEDIUM_W, PIP_MEDIUM_H)}[fc_medium];"
                 
                 # LARGE PiP (schreien)
-                f"[fc_large_src]crop={src_w//2 - crop_offset}:1068:0:2,"
+                f"[fc_large_src]crop={manual_facecam_crop['w']}:{manual_facecam_crop['h']}:{manual_facecam_crop['x']}:{manual_facecam_crop['y']},"
                 f"{_cuda_scale_filter(PIP_LARGE_W, PIP_LARGE_H)}[fc_large];"
                 
-                # Overlays: TINY (default), dann SMALL, MEDIUM, LARGE (Prioritaet steigend)
-                f"[gp][fc_tiny]overlay={PIP_X}:{PIP_Y}:enable='not(({enable_small_str})+({enable_medium_str})+({enable_large_str}))':shortest=1[tmp1];"
-                f"[tmp1][fc_small]overlay={PIP_X}:{PIP_Y}:enable='{enable_small_str}':shortest=1[tmp2];"
-                f"[tmp2][fc_medium]overlay={PIP_X}:{PIP_Y}:enable='{enable_medium_str}':shortest=1[tmp3];"
-                f"[tmp3][fc_large]overlay={PIP_X}:{PIP_Y}:enable='{enable_large_str}':shortest=1[out]"
+                # Overlays: TINY default, dann MEDIUM, LARGE (Prioritaet steigend)
+                f"[gp][fc_tiny]overlay={PIP_X}:{PIP_Y}:enable='not(({enable_medium_str})+({enable_large_str}))':shortest=1[tmp1];"
+                f"[tmp1][fc_medium]overlay={PIP_X}:{PIP_Y}:enable='{enable_medium_str}':shortest=1[tmp2];"
+                f"[tmp2][fc_large]overlay={PIP_X}:{PIP_Y}:enable='{enable_large_str}':shortest=1[out]"
             )
             return fc, "[out]"
             
@@ -1382,6 +1682,8 @@ class FinalRenderDriver:
         smooth_zoom_curve: object | None = None,
         output_dir: str | Path = "output",
         facecam_static_tiny: bool = False,
+        facecam_crop: dict | None = None,
+        reaction_size_events: list[dict] | None = None,
     ) -> str:
 
         from core.audio_peak_detector import AudioPeakDetector
@@ -1415,9 +1717,31 @@ class FinalRenderDriver:
         render_layout_records: list[dict] = []
         render_layout_counts: dict[str, int] = {}
         smooth_zoom_records: list[dict] = []
+        reaction_size_events = list(reaction_size_events or [])
 
         try:
             src_w, src_h = self._get_video_dimensions(source)
+            raw_facecam_crop, resolved_facecam_crop_source = self._resolve_facecam_crop_config(
+                job=job,
+                explicit=facecam_crop,
+            )
+            resolved_facecam_crop = self._coerce_facecam_crop(
+                raw_facecam_crop,
+                src_w=src_w,
+                src_h=src_h,
+            )
+            print(
+                f"[DEBUG] [FACECAM_CROP_CONFIG] source={resolved_facecam_crop_source} "
+                f"x={resolved_facecam_crop['x']} y={resolved_facecam_crop['y']} "
+                f"w={resolved_facecam_crop['w']} h={resolved_facecam_crop['h']}"
+            )
+            facecam_pip_sizes = self._resolve_facecam_pip_sizes(job)
+            facecam_pip_geometry = self._facecam_pip_geometry_report(
+                src_w,
+                src_h,
+                job=job,
+                facecam_crop=resolved_facecam_crop,
+            )
             video_encoder = self._resolve_video_encoder(job)
 
             seg_paths: list[Path | None] = [None] * len(segments)
@@ -1496,6 +1820,9 @@ class FinalRenderDriver:
                     focus_policy=focus_policy,
                     smooth_zoom_policy=smooth_zoom_policy,
                     facecam_static_tiny=facecam_static_tiny,
+                    facecam_crop=resolved_facecam_crop,
+                    reaction_size_events=reaction_size_events,
+                    job=job,
                 )
                 tmp_path = tmp_dir / f"seg_{i:03d}_{seg.segment_role}.mp4"
                 render_tasks.append(
@@ -1589,11 +1916,27 @@ class FinalRenderDriver:
             ),
             "dynamic_edit_plan_used": dynamic_edit_plan is not None,
             "facecam_static_tiny_used": bool(facecam_static_tiny),
+            "facecam_crop": resolved_facecam_crop,
+            "facecam_crop_source": resolved_facecam_crop_source,
             "facecam_pip_default_size": (
-                {"width": 480, "height": 270}
+                {"width": facecam_pip_sizes["tiny"][0], "height": facecam_pip_sizes["tiny"][1]}
                 if facecam_static_tiny
                 else None
             ),
+            "facecam_pip_geometry": facecam_pip_geometry,
+            "facecam_pip_sizes": {
+                state: {"width": size[0], "height": size[1]}
+                for state, size in facecam_pip_sizes.items()
+            },
+            "facecam_zoom_model": {
+                "states": list(FACECAM_PIP_STATES),
+                "default_state": "tiny",
+                "large_is_max": True,
+                "snap_only": True,
+                "direct_return_to": "tiny",
+            },
+            "reaction_size_events_used": bool(reaction_size_events),
+            "reaction_size_events_count": len(reaction_size_events),
             "facecam_audio_peak_growth_disabled": bool(facecam_static_tiny),
             "facecam_emphasis_big_disabled": bool(facecam_static_tiny),
             "focus_decisions_available": bool(getattr(job, "focus_decisions", None)),

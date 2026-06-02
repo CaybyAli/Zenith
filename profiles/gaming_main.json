@@ -1,14 +1,14 @@
-﻿{
+{
   "profile_id": "gaming_main",
   "channel_type": "gaming_main",
   "display_name": "Main Channel Gaming",
   "quality_mode": "pro",
   "cut_aggressiveness": 0.85,
-  "dead_time_removal_strength": 0.90,
+  "dead_time_removal_strength": 0.9,
   "speech_protection_strength": 0.85,
-  "story_context_weight": 0.70,
-  "gameplay_context_weight": 0.90,
-  "reaction_context_weight": 0.80,
+  "story_context_weight": 0.7,
+  "gameplay_context_weight": 0.9,
+  "reaction_context_weight": 0.8,
   "music_enabled": true,
   "dynamic_zoom_allowed": true,
   "facecam_emphasis_allowed": true,
@@ -24,10 +24,59 @@
   "gameplay_zoom_mode": "aggressive",
   "camera_zoom_enabled": true,
   "camera_zoom_mode": "aggressive",
-  "camera_zoom_trigger": ["reaction", "shock", "laugh", "fail"],
+  "camera_zoom_trigger": [
+    "reaction",
+    "shock",
+    "laugh",
+    "fail"
+  ],
   "camera_zoom_strength": 0.25,
   "grading_strength": 0.3,
   "min_clip_duration": 2.0,
   "max_clip_duration": 45.0,
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "facecam_crop": {
+    "x": 16,
+    "y": 8,
+    "w": 1848,
+    "h": 1056
+  },
+  "facecam_pip": {
+    "position": {
+      "x": 20,
+      "y": 100
+    },
+    "sizes": {
+      "tiny": {
+        "w": 480,
+        "h": 270
+      },
+      "medium": {
+        "w": 640,
+        "h": 360
+      },
+      "large": {
+        "w": 704,
+        "h": 396
+      }
+    },
+    "zoom_model": {
+      "states": [
+        "tiny",
+        "medium",
+        "large"
+      ],
+      "default_state": "tiny",
+      "large_is_max": true,
+      "direct_return_to": "tiny",
+      "min_hold_seconds": 1.5,
+      "post_hold_seconds": 0.15,
+      "prominence_floor": 0.7,
+      "target_event_count_min": 35,
+      "target_event_count_max": 50
+    },
+    "round_transition": {
+      "xfade_seconds": 0.4
+    }
+  }
 }
