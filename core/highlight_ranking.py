@@ -5,6 +5,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from core.video_config import normalize_protected_ranges, protected_range_for_kind
+
 
 HIGHLIGHT_RANKING_SOURCE = "highlight_ranking_v1_budgeted_whole_segments"
 
@@ -24,6 +26,7 @@ class HighlightRankingConfig:
     high_reaction_score: float = 0.80
     medium_reaction_score: float = 0.50
     high_reaction_prominence_percentile: float = 0.70
+    protected_ranges: Any = None
 
 
 def _parse_float(value: Any) -> float | None:
@@ -44,6 +47,17 @@ def _parse_float(value: Any) -> float | None:
 def _safe_float(value: Any, default: float = 0.0) -> float:
     number = _parse_float(value)
     return default if number is None else number
+
+
+def _configured_range(config: HighlightRankingConfig, kind: str) -> tuple[float, float] | None:
+    protected = protected_range_for_kind(getattr(config, "protected_ranges", None), kind)
+    if protected is None:
+        return None
+    start = _parse_float(protected.get("start_seconds"))
+    end = _parse_float(protected.get("end_seconds"))
+    if start is None or end is None or end <= start:
+        return None
+    return round(start, 3), round(end, 3)
 
 
 def _round_seconds(value: Any) -> float:
@@ -819,6 +833,31 @@ def rank_highlight_segments(
         status["name"] = name
         late_lobby_status.append(status)
 
+    combat_range = _configured_range(config, "combat")
+    payoff_range = _configured_range(config, "payoff")
+    combat_range_status = (
+        _target_interval_status(rows, combat_range[0], combat_range[1])
+        if combat_range is not None
+        else {
+            "status": "JA",
+            "configured": False,
+            "target": None,
+            "meaning": "No per-video combat range configured; no game-specific combat hardcheck applied.",
+        }
+    )
+    combat_range_status["configured"] = combat_range is not None
+    payoff_range_status = (
+        _target_interval_status(rows, payoff_range[0], payoff_range[1])
+        if payoff_range is not None
+        else {
+            "status": "JA",
+            "configured": False,
+            "target": None,
+            "meaning": "No per-video payoff range configured; no game-specific payoff hardcheck applied.",
+        }
+    )
+    payoff_range_status["configured"] = payoff_range is not None
+
     audit = {
         "source": HIGHLIGHT_RANKING_SOURCE,
         "config": {
@@ -833,6 +872,7 @@ def rank_highlight_segments(
             "high_reaction_score": config.high_reaction_score,
             "medium_reaction_score": config.medium_reaction_score,
             "high_reaction_prominence_percentile": config.high_reaction_prominence_percentile,
+            "protected_ranges": normalize_protected_ranges(config.protected_ranges),
         },
         "session_seconds": session_seconds,
         "target_seconds": effective_target,
@@ -854,9 +894,8 @@ def rank_highlight_segments(
         "hard_checks": {
             "duration_within_budget_plus_10_percent": "JA" if final_duration <= max_allowed_seconds else "NEIN",
             "duration_at_least_480_seconds": "JA" if final_duration >= config.min_target_seconds else "NEIN",
-            "round1_fight_142_246_kept": _target_interval_status(rows, 142.0, 246.0),
-            "death_payoff_1786_1810_high_reaction_kept": _target_interval_status(rows, 1786.0, 1810.0),
-            "death_payoff_1792_1810_payoff_tail_kept": _target_interval_status(rows, 1792.0, 1810.417),
+            "combat_range_kept": combat_range_status,
+            "payoff_range_kept": payoff_range_status,
             "late_lobby_status": late_lobby_status,
             "no_mid_segment_cut": "JA" if no_mid_segment_cut else "NEIN",
         },

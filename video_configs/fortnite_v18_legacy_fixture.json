@@ -1,0 +1,19 @@
+{
+  "config_id": "fortnite_v18_legacy_fixture",
+  "fixture": true,
+  "fixture_scope": "ranked_cut_v18_approved_byte_identical_rerender",
+  "protected_ranges": {
+    "combat": {
+      "start_seconds": 142.0,
+      "end_seconds": 246.0,
+      "reason": "combat_142_246_event_visual_protected",
+      "protection_mode": "event_or_high_visual_not_blanket_lock"
+    },
+    "payoff": {
+      "start_seconds": 1756.0,
+      "end_seconds": 1810.817,
+      "reason": "payoff_locked",
+      "protection_mode": "hard_lock"
+    }
+  }
+}

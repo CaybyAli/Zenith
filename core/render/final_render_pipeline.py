@@ -415,7 +415,7 @@ def _write_report(path: Path, report: dict[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", default="reports/word_snap_2_fix/word_snap_2_fix_final_editorial_plan.json")
-    parser.add_argument("--video", default=r"D:\Zenith\inbox\gaming_main\Fortnite Full Video.mp4")
+    parser.add_argument("--video", required=True)
     parser.add_argument("--out-dir", default="reports/combined_render")
     parser.add_argument("--owner-volume", type=float, default=1.35)
     parser.add_argument("--friend-volume", type=float, default=1.35)

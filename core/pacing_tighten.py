@@ -4,6 +4,8 @@ from dataclasses import asdict, dataclass
 from typing import Any, Mapping
 import math
 
+from core.video_config import normalize_protected_ranges, protected_range_for_kind
+
 
 @dataclass(frozen=True)
 class PacingTightenConfig:
@@ -15,10 +17,11 @@ class PacingTightenConfig:
     owner_intro_min_seconds: float = 5.0
     owner_intro_max_seconds: float = 45.0
     min_plausible_duration_seconds: float = 700.0
-    round1_fight_start_seconds: float = 142.0
-    round1_fight_end_seconds: float = 246.0
-    payoff_expected_start_seconds: float = 1756.0
-    payoff_expected_end_seconds: float = 1810.817
+    round1_fight_start_seconds: float | None = None
+    round1_fight_end_seconds: float | None = None
+    payoff_expected_start_seconds: float | None = None
+    payoff_expected_end_seconds: float | None = None
+    protected_ranges: Any = None
     semantic_thought_boundary_snap_window_seconds: float = 4.0
     semantic_allow_action_dead_cuts_outside_locked: bool = True
     audio_action_peak_percentile: float = 0.75
@@ -52,6 +55,42 @@ def _num(value: Any, default: float = 0.0) -> float:
     except Exception:
         return default
     return number if math.isfinite(number) else default
+
+
+def _optional_range(start: Any, end: Any) -> tuple[float, float] | None:
+    if start is None or end is None:
+        return None
+    start_f = _num(start, math.nan)
+    end_f = _num(end, math.nan)
+    if not math.isfinite(start_f) or not math.isfinite(end_f) or end_f <= start_f:
+        return None
+    return _round(start_f), _round(end_f)
+
+
+def _configured_range(config: PacingTightenConfig, kind: str) -> tuple[float, float] | None:
+    protected = protected_range_for_kind(getattr(config, "protected_ranges", None), kind)
+    if protected is not None:
+        return _optional_range(protected.get("start_seconds"), protected.get("end_seconds"))
+
+    if kind == "combat":
+        return _optional_range(
+            getattr(config, "round1_fight_start_seconds", None),
+            getattr(config, "round1_fight_end_seconds", None),
+        )
+    if kind == "payoff":
+        return _optional_range(
+            getattr(config, "payoff_expected_start_seconds", None),
+            getattr(config, "payoff_expected_end_seconds", None),
+        )
+    return None
+
+
+def _configured_combat_range(config: PacingTightenConfig) -> tuple[float, float] | None:
+    return _configured_range(config, "combat")
+
+
+def _configured_payoff_range(config: PacingTightenConfig) -> tuple[float, float] | None:
+    return _configured_range(config, "payoff")
 
 
 def _boolish(value: Any) -> bool:
@@ -320,10 +359,12 @@ def _combat_protected_ranges(
     config: PacingTightenConfig,
 ) -> list[tuple[float, float]]:
     ranges: list[tuple[float, float]] = []
-    fight_start = max(start, config.round1_fight_start_seconds)
-    fight_end = min(end, config.round1_fight_end_seconds)
-    if fight_end > fight_start:
-        ranges.append((_round(fight_start), _round(fight_end)))
+    combat_range = _configured_combat_range(config)
+    if combat_range is not None:
+        fight_start = max(start, combat_range[0])
+        fight_end = min(end, combat_range[1])
+        if fight_end > fight_start:
+            ranges.append((_round(fight_start), _round(fight_end)))
 
     ranges.extend(_audio_peak_ranges(raw_windows, start, end, audio_peak_floor))
 
@@ -561,6 +602,10 @@ def _round_transition_splits(
     out: list[dict[str, Any]] = []
     transition_cuts: list[dict[str, Any]] = []
     breath = _breath_seconds(config)
+    combat_range = _configured_combat_range(config)
+    if combat_range is None:
+        return [dict(item) for item in ranked_segments], transition_cuts
+    combat_end_seconds = combat_range[1]
 
     for item in ranked_segments:
         se = _start_end(item)
@@ -568,11 +613,11 @@ def _round_transition_splits(
             continue
         start, end = se
 
-        if not (start < config.round1_fight_end_seconds < end):
+        if not (start < combat_end_seconds < end):
             out.append(dict(item))
             continue
 
-        search_start = config.round1_fight_end_seconds
+        search_start = combat_end_seconds
         search_end = min(end, search_start + config.round_transition_search_window_seconds)
         gaps = _speech_gaps(speech_regions, search_start, search_end)
         tail_gap: tuple[float, float] | None = None
@@ -1005,8 +1050,11 @@ def _overlaps_round1_fight(item: Mapping[str, Any], config: PacingTightenConfig)
     se = _start_end(item)
     if se is None:
         return False
+    combat_range = _configured_combat_range(config)
+    if combat_range is None:
+        return False
 
-    return _overlap(se[0], se[1], config.round1_fight_start_seconds, config.round1_fight_end_seconds) > 0.0
+    return _overlap(se[0], se[1], combat_range[0], combat_range[1]) > 0.0
 
 
 def _classify_stretch(
@@ -1284,16 +1332,18 @@ def apply_pacing_tighten(
         operations: list[str] = []
         internal_cuts: list[dict[str, Any]] = []
         combat_protected_ranges: list[tuple[float, float]] = []
+        payoff_range = _configured_payoff_range(config)
 
         if is_payoff:
             start = old_start
             end = old_end
             if (
-                abs(old_start - config.payoff_expected_start_seconds) <= 0.01
-                and old_end < config.payoff_expected_end_seconds
-                and config.payoff_expected_end_seconds - old_end <= 1.0
+                payoff_range is not None
+                and abs(old_start - payoff_range[0]) <= 0.01
+                and old_end < payoff_range[1]
+                and payoff_range[1] - old_end <= 1.0
             ):
-                end = config.payoff_expected_end_seconds
+                end = payoff_range[1]
                 operations.append("payoff_end_extended_to_expected_locked_tail")
             operations.append("payoff_locked_exact_no_start_snap_no_internal_cuts_no_tail_trim")
 
@@ -1504,31 +1554,43 @@ def apply_pacing_tighten(
         safe_boundaries=safe_cut_boundaries,
     )
 
-    fight_coverage, fight_hits = _coverage(
-        config.round1_fight_start_seconds,
-        config.round1_fight_end_seconds,
-        output_segments,
-    )
+    combat_range = _configured_combat_range(config)
+    payoff_range = _configured_payoff_range(config)
+    if combat_range is not None:
+        fight_coverage, fight_hits = _coverage(combat_range[0], combat_range[1], output_segments)
+    else:
+        fight_coverage, fight_hits = 0.0, []
 
     payoff_row = None
     for row in per_segment:
-        if row["is_payoff"] or _overlap(
-            row["old_start_seconds"],
-            row["old_end_seconds"],
-            1792.0,
-            config.payoff_expected_end_seconds,
-        ) > 0.0:
+        if row["is_payoff"]:
             payoff_row = row
             break
+        if payoff_range is not None:
+            if _overlap(
+                row["old_start_seconds"],
+                row["old_end_seconds"],
+                payoff_range[0],
+                payoff_range[1],
+            ) > 0.0:
+                payoff_row = row
+                break
 
     payoff_locked = False
     if payoff_row is not None:
-        payoff_locked = (
-            abs(payoff_row["old_start_seconds"] - config.payoff_expected_start_seconds) <= 0.01
-            and abs(payoff_row["new_start_seconds"] - payoff_row["old_start_seconds"]) <= 0.001
-            and abs(payoff_row["new_end_seconds"] - config.payoff_expected_end_seconds) <= 0.01
-            and payoff_row["internal_cut_count"] == 0
-        )
+        if payoff_range is not None:
+            payoff_locked = (
+                abs(payoff_row["old_start_seconds"] - payoff_range[0]) <= 0.01
+                and abs(payoff_row["new_start_seconds"] - payoff_row["old_start_seconds"]) <= 0.001
+                and abs(payoff_row["new_end_seconds"] - payoff_range[1]) <= 0.01
+                and payoff_row["internal_cut_count"] == 0
+            )
+        else:
+            payoff_locked = (
+                abs(payoff_row["new_start_seconds"] - payoff_row["old_start_seconds"]) <= 0.001
+                and abs(payoff_row["new_end_seconds"] - payoff_row["old_end_seconds"]) <= 0.001
+                and payoff_row["internal_cut_count"] == 0
+            )
 
     action_rows_zero_internal_cuts = all(row["internal_cut_count"] == 0 for row in action_rows)
     locked_action_cut_overlap_count = 0
@@ -1542,11 +1604,11 @@ def apply_pacing_tighten(
         ]
         combat_protected_ranges_checked.extend([[_round(a), _round(b)] for a, b in row_combat_ranges])
         for cut in row.get("internal_cuts", []):
-            if _overlap(
+            if combat_range is not None and _overlap(
                 _num(cut.get("start_seconds")),
                 _num(cut.get("end_seconds")),
-                config.round1_fight_start_seconds,
-                config.round1_fight_end_seconds,
+                combat_range[0],
+                combat_range[1],
             ) > 0:
                 locked_action_cut_overlap_count += 1
             for protected_start, protected_end in row_combat_ranges:
@@ -1609,7 +1671,8 @@ def apply_pacing_tighten(
         },
         "round1_fight_full_coverage": {
             "status": "JA" if combat_ranges_zero_internal_cuts else "NEIN",
-            "target": [config.round1_fight_start_seconds, config.round1_fight_end_seconds],
+            "target": list(combat_range) if combat_range is not None else None,
+            "configured": combat_range is not None,
             "coverage": fight_coverage,
             # PACING-POLISH-4:
             # internal_cut_count meint ab jetzt:
@@ -1620,8 +1683,9 @@ def apply_pacing_tighten(
         },
         "payoff_locked_exact": {
             "status": "JA" if payoff_locked else "NEIN",
-            "expected_start_seconds": config.payoff_expected_start_seconds,
-            "expected_end_seconds": config.payoff_expected_end_seconds,
+            "expected_start_seconds": payoff_range[0] if payoff_range is not None else None,
+            "expected_end_seconds": payoff_range[1] if payoff_range is not None else None,
+            "configured": payoff_range is not None,
             "payoff_row": payoff_row,
         },
         "owner_onset_plausible": {
@@ -1691,6 +1755,7 @@ def apply_pacing_tighten(
         "semantic_safe_boundaries_checked": [_round(value) for value in sorted(set(safe_cut_boundaries))],
         "semantic_unit_count": len(semantic_units),
         "config": asdict(config),
+        "protected_ranges": normalize_protected_ranges(getattr(config, "protected_ranges", None)),
         "per_segment": per_segment,
         "output_segments": output_segments,
         "hard_checks": hard_checks,
@@ -1744,12 +1809,10 @@ def _p4_semantic_dead_overlap_seconds(start: float, end: float, semantic_units: 
 
 
 def _p4_overlaps_configured_fight(start: float, end: float, config: Any) -> bool:
-    return _overlap(
-        start,
-        end,
-        _num(getattr(config, "round1_fight_start_seconds", 0.0)),
-        _num(getattr(config, "round1_fight_end_seconds", 0.0)),
-    ) > 0.0
+    combat_range = _configured_combat_range(config)
+    if combat_range is None:
+        return False
+    return _overlap(start, end, combat_range[0], combat_range[1]) > 0.0
 
 
 def _p4_is_sustained_dead_cut(

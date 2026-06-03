@@ -16,6 +16,7 @@ from core.content_gap_protector import (
     normalize_intervals,
     protect_content_gaps,
 )
+from core.video_config import normalize_protected_ranges, read_video_config
 
 
 def _read_json(path: Path) -> Any:
@@ -117,14 +118,9 @@ def _write_report(report_path: Path, audit: dict[str, Any], *, output_plan_path:
     lines.append("HARTE PRUEFUNG")
     hard = audit["hard_checks"]
     lines.append(
-        "- gap_142_166_content_and_reincluded="
-        f"{hard['round1_gap_142_166_content_and_reincluded']['status']} "
-        f"{hard['round1_gap_142_166_content_and_reincluded']}"
-    )
-    lines.append(
-        "- gap_172_246_content_and_reincluded="
-        f"{hard['round1_gap_172_246_content_and_reincluded']['status']} "
-        f"{hard['round1_gap_172_246_content_and_reincluded']}"
+        "- combat_content_gaps_reincluded="
+        f"{hard['combat_content_gaps_reincluded']['status']} "
+        f"{hard['combat_content_gaps_reincluded']}"
     )
     lines.append(
         "- within_round_gap_120_133_6_content="
@@ -205,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--reactions", default="reports/reaction_adaptive/reaction_adaptive_fortnite_reactions.json")
     parser.add_argument("--out-dir", default="reports/content_gap_protector_fix")
     parser.add_argument("--pytest-output", default="reports/content_gap_protector_fix/pytest_content_gap_protector_fix.txt")
+    parser.add_argument("--video-config", default="video_configs/fortnite_v18_legacy_fixture.json")
     parser.add_argument("--speech-run-min-seconds", type=float, default=4.0)
     parser.add_argument("--speech-share-min", type=float, default=0.50)
     parser.add_argument("--min-dead-gap-seconds", type=float, default=1.5)
@@ -240,6 +237,7 @@ def main(argv: list[str] | None = None) -> int:
     speech_regions = normalize_intervals(_read_json(speech_path), source="combined_speech")
     reactions = normalize_intervals(_read_json(reactions_path), source="reaction")
     g6_states = normalize_intervals(_read_json(g6_path), source="g6_state")
+    protected_ranges = normalize_protected_ranges(read_video_config(args.video_config))
 
     new_segments, audit = protect_content_gaps(
         kept_segments=source_segments,
@@ -247,6 +245,7 @@ def main(argv: list[str] | None = None) -> int:
         combined_speech_regions=speech_regions,
         reactions=reactions,
         g6_states=g6_states,
+        protected_ranges=protected_ranges,
         config=ContentGapProtectorConfig(
             speech_run_min_seconds=args.speech_run_min_seconds,
             speech_share_min=args.speech_share_min,
@@ -288,8 +287,7 @@ def main(argv: list[str] | None = None) -> int:
 
     hard = audit["hard_checks"]
     overall_pass = (
-        hard["round1_gap_142_166_content_and_reincluded"]["status"] == "JA"
-        and hard["round1_gap_172_246_content_and_reincluded"]["status"] == "JA"
+        hard["combat_content_gaps_reincluded"]["status"] == "JA"
         and hard["within_round_gap_120_133_6_content"]["status"] == "JA"
         and hard["anti_overcut_zero"] == "JA"
         and hard["no_kept_speech_lost"] == "JA"
@@ -315,8 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"new_kept_speech_seconds={audit['new_kept_speech_seconds']}")
     print(f"kept_speech_not_lost={audit['kept_speech_not_lost']}")
     print(f"anti_overcut_fail_count={audit['anti_overcut_fail_count']}")
-    print(f"gap_142_166={hard['round1_gap_142_166_content_and_reincluded']['status']}")
-    print(f"gap_172_246={hard['round1_gap_172_246_content_and_reincluded']['status']}")
+    print(f"combat_content_gaps_reincluded={hard['combat_content_gaps_reincluded']['status']}")
     print(f"gap_120_133_6={hard['within_round_gap_120_133_6_content']['status']}")
     print(f"late_round_dead_lobbies_remain_dead_trimmed={hard['late_round_dead_lobbies_remain_dead_trimmed']['status']}")
     print(f"late_dead_lobby_reincluded_count={hard['late_round_dead_lobbies_remain_dead_trimmed']['late_dead_lobby_reincluded_count']}")

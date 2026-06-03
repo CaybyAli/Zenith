@@ -14,22 +14,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.reaction_intensity_signal_builder import probe_video_size, resolve_video
+from core.video_config import normalize_protected_ranges, read_video_config
 
 
-DEFAULT_PROTECTED_RANGES = [
-    {
-        "start_seconds": 142.0,
-        "end_seconds": 246.0,
-        "reason": "combat_142_246_event_visual_protected",
-        "protection_mode": "event_or_high_visual_not_blanket_lock",
-    },
-    {
-        "start_seconds": 1756.0,
-        "end_seconds": 1810.817,
-        "reason": "payoff_locked",
-        "protection_mode": "hard_lock",
-    },
-]
+DEFAULT_PROTECTED_RANGES: list[dict[str, Any]] = []
 
 DEFAULT_REQUIRED_DEADTIME_SAMPLES = [
     {
@@ -427,7 +415,9 @@ def build_deadtime2_selection(
     visual_high_activity_percentile: float = 97.0,
     visual_range_summary_percentile: float = 95.0,
 ) -> dict[str, Any]:
-    protected = list(protected_ranges or DEFAULT_PROTECTED_RANGES)
+    protected = normalize_protected_ranges(
+        protected_ranges if protected_ranges is not None else DEFAULT_PROTECTED_RANGES
+    )
     samples = list(required_samples or DEFAULT_REQUIRED_DEADTIME_SAMPLES)
     visual_thresholds = visual_thresholds_from_features(
         visual_features,
@@ -1042,7 +1032,8 @@ def extract_gameplay_visual_features(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video", default=r"D:\Zenith\inbox\gaming_main\Fortnite Full Video.mp4")
+    parser.add_argument("--video", required=True)
+    parser.add_argument("--video-config", default="")
     parser.add_argument("--profile", default="profiles/gaming_main.json")
     parser.add_argument("--base-plan", default="reports/semantic_content_layer/semantic_content_layer_final_editorial_plan.json")
     parser.add_argument("--combined-silence", default="reports/combined_speech/combined_silence_gaps.json")
@@ -1063,6 +1054,8 @@ def main() -> int:
     parser.add_argument("--visual-scaled-width", type=int, default=96)
     parser.add_argument("--visual-scaled-height", type=int, default=54)
     args = parser.parse_args()
+    video_config = read_video_config(args.video_config) if args.video_config else {}
+    protected_ranges = normalize_protected_ranges(video_config)
 
     base_path = Path(args.base_plan)
     plan = read_json(base_path)
@@ -1097,7 +1090,7 @@ def main() -> int:
         combined_speech_regions=speech_regions,
         action_windows=action_windows,
         visual_features=features,
-        protected_ranges=DEFAULT_PROTECTED_RANGES,
+        protected_ranges=protected_ranges,
         required_samples=DEFAULT_REQUIRED_DEADTIME_SAMPLES,
         min_dead_gap_seconds=args.min_dead_gap,
         breath_reserve_seconds=args.breath_reserve,

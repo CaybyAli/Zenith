@@ -1867,7 +1867,7 @@ def min_render_start_gap(events: list[Mapping[str, Any]]) -> float | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video", default=r"D:\Zenith\inbox\gaming_main\Fortnite Full Video.mp4")
+    parser.add_argument("--video", required=True)
     parser.add_argument("--plan", default="reports/ranked_render/ranked_cut_v17_editorial_plan.json")
     parser.add_argument("--profile", default="profiles/gaming_main.json")
     parser.add_argument("--words", default="reports/speech_1_transcript_largev3/fortnite_words.json")

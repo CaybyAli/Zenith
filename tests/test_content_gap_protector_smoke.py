@@ -40,6 +40,37 @@ def test_high_audio_gap_with_little_speech_is_content_via_action():
     assert new_segments[0]["end_seconds"] == 30.0
 
 
+def test_combat_gap_hard_check_uses_configured_range():
+    kept_segments = [
+        {"segment_id": "a", "start_seconds": 0.0, "end_seconds": 10.0},
+        {"segment_id": "b", "start_seconds": 20.0, "end_seconds": 30.0},
+    ]
+    raw_windows = [
+        {"start_seconds": 0.0, "end_seconds": 10.0, "audio_peak_score": "0.10"},
+        {"start_seconds": 10.0, "end_seconds": 20.0, "audio_peak_score": "1.00"},
+        {"start_seconds": 20.0, "end_seconds": 30.0, "audio_peak_score": "0.20"},
+    ]
+
+    _, audit = protect_content_gaps(
+        kept_segments=kept_segments,
+        raw_windows=raw_windows,
+        combined_speech_regions=[{"start_seconds": 12.0, "end_seconds": 12.5}],
+        reactions=[],
+        g6_states=[{"start_seconds": 10.0, "end_seconds": 20.0, "state": "transition_dead_time"}],
+        protected_ranges={"combat": {"start_seconds": 10.0, "end_seconds": 20.0}},
+        config=ContentGapProtectorConfig(),
+    )
+
+    hard = audit["hard_checks"]
+    # alt: round1_gap_142_166_content_and_reincluded / round1_gap_172_246_content_and_reincluded
+    # neu: combat_content_gaps_reincluded.
+    # Grund: Der Audit prueft alle Content-Gaps innerhalb der per-video Combat-Range.
+    check = hard["combat_content_gaps_reincluded"]
+    assert check["configured"] is True
+    assert check["status"] == "JA"
+    assert check["content_gap_count"] == 1
+
+
 def test_long_gap_low_audio_with_sparse_speech_stays_dead():
     kept_segments = [
         {"segment_id": "a", "start_seconds": 0.0, "end_seconds": 10.0},

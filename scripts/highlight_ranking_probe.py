@@ -16,6 +16,7 @@ from core.highlight_ranking import (
     normalize_intervals,
     rank_highlight_segments,
 )
+from core.video_config import normalize_protected_ranges, read_video_config
 
 
 def _read_json(path: Path) -> Any:
@@ -103,8 +104,8 @@ def _write_report(
     hard = audit["hard_checks"]
     lines.append(f"- final_duration <= target+10%: {hard['duration_within_budget_plus_10_percent']}")
     lines.append(f"- final_duration >= 480s: {hard['duration_at_least_480_seconds']}")
-    lines.append(f"- round1_fight_142_246_kept: {hard['round1_fight_142_246_kept']}")
-    lines.append(f"- death_payoff_1786_1810_high_reaction_kept: {hard['death_payoff_1786_1810_high_reaction_kept']}")
+    lines.append(f"- combat_range_kept: {hard['combat_range_kept']}")
+    lines.append(f"- payoff_range_kept: {hard['payoff_range_kept']}")
     lines.append(f"- no_mid_segment_cut: {hard['no_mid_segment_cut']}")
     lines.append("")
     lines.append("LATE LOBBY STATUS")
@@ -170,6 +171,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--reactions", default="reports/reaction_adaptive/reaction_adaptive_fortnite_reactions.json")
     parser.add_argument("--out-dir", default="reports/highlight_ranking")
     parser.add_argument("--pytest-output", default="reports/highlight_ranking/pytest_highlight_ranking.txt")
+    parser.add_argument("--video-config", default="video_configs/fortnite_v18_legacy_fixture.json")
     parser.add_argument("--target-seconds", type=float, default=None)
     args = parser.parse_args(argv)
 
@@ -199,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     raw_windows = normalize_intervals(_read_json(raw_path), source="raw_action_window")
     speech_regions = normalize_intervals(_read_json(speech_path), source="combined_speech")
     reactions = normalize_intervals(_read_json(reactions_path), source="reaction")
+    protected_ranges = normalize_protected_ranges(read_video_config(args.video_config))
 
     output_segments, audit = rank_highlight_segments(
         content_segments=source_segments,
@@ -206,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
         reactions=reactions,
         combined_speech_regions=speech_regions,
         target_seconds=args.target_seconds,
-        config=HighlightRankingConfig(),
+        config=HighlightRankingConfig(protected_ranges=protected_ranges),
     )
 
     output_parent[output_key] = output_segments
@@ -246,8 +249,8 @@ def main(argv: list[str] | None = None) -> int:
     overall_pass = (
         hard["duration_within_budget_plus_10_percent"] == "JA"
         and hard["duration_at_least_480_seconds"] == "JA"
-        and hard["round1_fight_142_246_kept"]["status"] == "JA"
-        and hard["death_payoff_1786_1810_high_reaction_kept"]["status"] == "JA"
+        and hard["combat_range_kept"]["status"] == "JA"
+        and hard["payoff_range_kept"]["status"] == "JA"
         and hard["no_mid_segment_cut"] == "JA"
     )
 
@@ -262,8 +265,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"final_duration_seconds={audit['final_duration_seconds']}")
     print(f"kept_segment_count={audit['kept_segment_count']}")
     print(f"dropped_segment_count={audit['dropped_segment_count']}")
-    print(f"round1_fight_142_246_kept={hard['round1_fight_142_246_kept']['status']}")
-    print(f"death_payoff_1786_1810_high_reaction_kept={hard['death_payoff_1786_1810_high_reaction_kept']['status']}")
+    print(f"combat_range_kept={hard['combat_range_kept']['status']}")
+    print(f"payoff_range_kept={hard['payoff_range_kept']['status']}")
     print(f"late_lobby_dropped_count={late_dropped_count}/{len(late_statuses)}")
     print(f"no_mid_segment_cut={hard['no_mid_segment_cut']}")
     print(f"overall_pass={overall_pass}")

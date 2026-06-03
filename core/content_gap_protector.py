@@ -4,6 +4,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from core.video_config import normalize_protected_ranges
+
 
 CONTENT_GAP_PROTECTOR_SOURCE = "content_gap_protector_v2_audio_primary_dense_speech"
 
@@ -18,6 +20,7 @@ class ContentGapProtectorConfig:
     late_lobby_start_seconds: float = 900.0
     late_lobby_speech_run_min_seconds: float = 10.0
     late_lobby_speech_share_min: float = 0.75
+    protected_ranges: Any = None
 
 
 def _parse_float(value: Any) -> float | None:
@@ -455,11 +458,15 @@ def protect_content_gaps(
     combined_speech_regions: list[Mapping[str, Any]],
     reactions: list[Mapping[str, Any]] | None = None,
     g6_states: list[Mapping[str, Any]] | None = None,
+    protected_ranges: Any = None,
     config: ContentGapProtectorConfig | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     config = config or ContentGapProtectorConfig()
     reactions = reactions or []
     g6_states = g6_states or []
+    configured_protected_ranges = normalize_protected_ranges(
+        protected_ranges if protected_ranges is not None else config.protected_ranges
+    )
 
     normalized_kept = normalize_intervals(kept_segments, source="kept_plan_segment")
     normalized_raw = normalize_intervals(raw_windows, source="raw_action_window")
@@ -657,6 +664,59 @@ def protect_content_gaps(
             "status": "JA" if matching["classification"] == "CONTENT" and matching["reinclude_seconds"] > 0 else "NEIN",
         }
 
+    combat_ranges = [
+        row
+        for row in configured_protected_ranges
+        if "combat" in str(row.get("range_type") or row.get("range_id") or row.get("reason") or "").lower()
+    ]
+
+    combat_gap_rows: list[dict[str, Any]] = []
+    for protected in combat_ranges:
+        protected_start = _safe_float(protected.get("start_seconds"))
+        protected_end = _safe_float(protected.get("end_seconds"))
+        for row in gap_rows:
+            row_duration = max(0.001, row["end_seconds"] - row["start_seconds"])
+            ov = _overlap(protected_start, protected_end, row["start_seconds"], row["end_seconds"])
+            if ov <= 0.0:
+                continue
+            if ov < min(row_duration, protected_end - protected_start) * 0.20:
+                continue
+            combat_gap_rows.append(
+                {
+                    "gap_id": row["gap_id"],
+                    "target": [row["start_seconds"], row["end_seconds"]],
+                    "configured_range": [protected_start, protected_end],
+                    "classification": row["classification"],
+                    "content": row["classification"] == "CONTENT",
+                    "reincluded": row["reinclude_seconds"] > 0,
+                    "status": "JA"
+                    if row["classification"] != "CONTENT" or row["reinclude_seconds"] > 0
+                    else "NEIN",
+                }
+            )
+
+    combat_content_gap_rows = [row for row in combat_gap_rows if row["content"]]
+    combat_ranges_check = {
+        "status": "JA"
+        if not combat_ranges
+        or (combat_content_gap_rows and all(row["status"] == "JA" for row in combat_content_gap_rows))
+        else "NEIN",
+        "configured": bool(combat_ranges),
+        "configured_ranges": [
+            {
+                "range_id": row.get("range_id"),
+                "range_type": row.get("range_type"),
+                "start_seconds": row.get("start_seconds"),
+                "end_seconds": row.get("end_seconds"),
+            }
+            for row in combat_ranges
+        ],
+        "checked_gap_count": len(combat_gap_rows),
+        "content_gap_count": len(combat_content_gap_rows),
+        "gap_checks": combat_gap_rows,
+        "meaning": "Configured combat content gaps must be re-included; no check is forced when no per-video combat range is configured.",
+    }
+
     late_lobby_gap_rows = [row for row in gap_rows if row["late_dead_lobby"]]
     late_dead_reincluded = [row for row in late_lobby_gap_rows if row["classification"] == "CONTENT"]
 
@@ -678,6 +738,7 @@ def protect_content_gaps(
             "late_lobby_start_seconds": config.late_lobby_start_seconds,
             "late_lobby_speech_run_min_seconds": config.late_lobby_speech_run_min_seconds,
             "late_lobby_speech_share_min": config.late_lobby_speech_share_min,
+            "protected_ranges": configured_protected_ranges,
         },
         "metric_discovery": {
             "audio_keys": audio_keys,
@@ -698,8 +759,7 @@ def protect_content_gaps(
         "kept_speech_not_lost": new_speech_seconds >= old_speech_seconds,
         "anti_overcut_fail_count": anti_overcut_fail_count,
         "hard_checks": {
-            "round1_gap_142_166_content_and_reincluded": target_check(142.0, 166.0),
-            "round1_gap_172_246_content_and_reincluded": target_check(172.3, 246.0),
+            "combat_content_gaps_reincluded": combat_ranges_check,
             "within_round_gap_120_133_6_content": target_check(120.0, 133.596),
             "late_round_dead_lobbies_remain_dead_trimmed": {
                 "status": late_lobby_status,

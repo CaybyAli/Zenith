@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.ffmpeg_helper import get_ffprobe_path
+from core.video_config import normalize_protected_ranges, protected_range_for_kind, read_video_config
 
 
 def read_json(path: Path) -> Any:
@@ -83,6 +84,13 @@ def range_coverage(plan_path: Path, start_seconds: float, end_seconds: float) ->
     return round(total, 3)
 
 
+def configured_range(video_config: Mapping[str, Any], kind: str) -> tuple[float, float]:
+    protected = protected_range_for_kind(video_config, kind)
+    if protected is None:
+        raise ValueError(f"missing required {kind} protected range in video config")
+    return safe_float(protected.get("start_seconds")), safe_float(protected.get("end_seconds"))
+
+
 def stage_from_report(path: Path, fallback: str) -> str:
     if not path.exists():
         return fallback
@@ -130,8 +138,10 @@ def build_report(args: argparse.Namespace) -> tuple[list[str], dict[str, Any]]:
     expected_final = safe_float(xfade_report.get("expected_duration_seconds"), final_duration)
     actual_final_reported = safe_float(xfade_report.get("actual_duration_seconds"), final_duration)
 
-    combat_start, combat_end = 142.0, 246.0
-    payoff_start, payoff_end = 1756.0, 1810.817
+    video_config = read_video_config(args.video_config)
+    protected_ranges = normalize_protected_ranges(video_config)
+    combat_start, combat_end = configured_range(video_config, "combat")
+    payoff_start, payoff_end = configured_range(video_config, "payoff")
     v17_combat = range_coverage(Path(args.v17_plan), combat_start, combat_end)
     v18_combat = range_coverage(Path(args.plan), combat_start, combat_end)
     v17_payoff = range_coverage(Path(args.v17_plan), payoff_start, payoff_end)
@@ -167,10 +177,14 @@ def build_report(args: argparse.Namespace) -> tuple[list[str], dict[str, Any]]:
             "byte_identical": byte_identical,
         },
         "combat_payoff": {
-            "combat_142_246_coverage_v17": v17_combat,
-            "combat_142_246_coverage_v18": v18_combat,
-            "payoff_1756_1810_817_coverage_v17": v17_payoff,
-            "payoff_1756_1810_817_coverage_v18": v18_payoff,
+            "video_config": args.video_config,
+            "protected_ranges": protected_ranges,
+            "combat_range": [combat_start, combat_end],
+            "combat_range_coverage_v17": v17_combat,
+            "combat_range_coverage_v18": v18_combat,
+            "payoff_range": [payoff_start, payoff_end],
+            "payoff_range_coverage_v17": v17_payoff,
+            "payoff_range_coverage_v18": v18_payoff,
         },
         "render": {
             "hardcut_video": args.hardcut_video,
@@ -212,10 +226,13 @@ def build_report(args: argparse.Namespace) -> tuple[list[str], dict[str, Any]]:
         f"exact_match={segment_check['exact_match']}",
         "",
         "COMBAT/PAYOFF",
-        f"combat_142_246_coverage_v17={v17_combat}",
-        f"combat_142_246_coverage_v18={v18_combat}",
-        f"payoff_1756_1810.817_coverage_v17={v17_payoff}",
-        f"payoff_1756_1810.817_coverage_v18={v18_payoff}",
+        f"video_config={args.video_config}",
+        f"combat_range={combat_start}->{combat_end}",
+        f"combat_range_coverage_v17={v17_combat}",
+        f"combat_range_coverage_v18={v18_combat}",
+        f"payoff_range={payoff_start}->{payoff_end}",
+        f"payoff_range_coverage_v17={v17_payoff}",
+        f"payoff_range_coverage_v18={v18_payoff}",
         "",
         "RENDER",
         f"hardcut_video={args.hardcut_video}",
@@ -247,6 +264,7 @@ def main() -> int:
     parser.add_argument("--final-video", default="reports/ranked_render/ranked_cut_v18.mp4")
     parser.add_argument("--hardcut-report", default="reports/ranked_render/combined_render_report.json")
     parser.add_argument("--xfade-report", default="reports/ranked_render/ranked_cut_v18_round_xfade_report.json")
+    parser.add_argument("--video-config", default="video_configs/fortnite_v18_legacy_fixture.json")
     parser.add_argument("--out", default="reports/ranked_render/ranked_cut_v18_validation_report.txt")
     parser.add_argument("--json-out", default="")
     args = parser.parse_args()

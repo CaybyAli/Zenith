@@ -193,3 +193,35 @@ def test_high_reaction_low_audio_prominence_is_boost_not_mandatory():
     assert loud_talk["high_reaction_corrobated"] is False
     assert loud_talk["mandatory_keep"] is False
     assert loud_talk["keep_reason"] != "MANDATORY_HIGH_REACTION"
+
+
+def test_hard_checks_use_configured_protected_ranges():
+    protected_ranges = {
+        "combat": {"start_seconds": 142.0, "end_seconds": 246.0},
+        "payoff": {"start_seconds": 1756.0, "end_seconds": 1810.817},
+    }
+    content_segments = [
+        {"segment_id": "combat", "start_seconds": 142.0, "end_seconds": 246.0, "mandatory_keep": True},
+        {"segment_id": "payoff", "start_seconds": 1756.0, "end_seconds": 1810.817, "payoff_tail": True},
+    ]
+    raw_windows = _flat_windows(142.0, 246.0) + _flat_windows(1756.0, 1810.817)
+
+    _, audit = rank_highlight_segments(
+        content_segments=content_segments,
+        raw_windows=raw_windows,
+        reactions=[],
+        payoff_tail_segments=[content_segments[1]],
+        combined_speech_regions=[],
+        target_seconds=240.0,
+        config=HighlightRankingConfig(min_target_seconds=0.0, protected_ranges=protected_ranges),
+    )
+
+    hard = audit["hard_checks"]
+    # alt: round1_fight_142_246_kept -> neu: combat_range_kept.
+    # Grund: Die Bounds kommen aus per-video protected_ranges statt aus Fortnite-Codekonstanten.
+    assert hard["combat_range_kept"]["target"] == [142.0, 246.0]
+    assert hard["combat_range_kept"]["status"] == "JA"
+    # alt: death_payoff_*_kept -> neu: payoff_range_kept.
+    # Grund: Der Payoff-Bereich wird als Config-Range geprueft, nicht als festes Fortnite-Subfenster.
+    assert hard["payoff_range_kept"]["target"] == [1756.0, 1810.817]
+    assert hard["payoff_range_kept"]["status"] == "JA"
