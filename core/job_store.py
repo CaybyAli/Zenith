@@ -8,10 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from core.transcription_engine import (
-    DEFAULT_TRANSCRIPTION_ENGINE,
-    normalize_transcription_engine_name,
-)
+from core.transcription_engine import DEFAULT_TRANSCRIPTION_ENGINE
 from models.job import Job
 from shared.errors import NotFoundError, StorageError
 from storage.base_storage_provider import BaseStorageProvider
@@ -119,9 +116,15 @@ def _serialized_size_exceeds_threshold(value: Any, threshold: int) -> bool:
 
 def _with_default_transcription_engine(job_dict: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(job_dict)
-    enriched[_TRANSCRIPTION_ENGINE_FIELD] = normalize_transcription_engine_name(
-        enriched.get(_TRANSCRIPTION_ENGINE_FIELD) or DEFAULT_TRANSCRIPTION_ENGINE
-    )
+    recorded_engine = enriched.get(_TRANSCRIPTION_ENGINE_FIELD)
+
+    if recorded_engine is None or str(recorded_engine).strip() == "":
+        enriched[_TRANSCRIPTION_ENGINE_FIELD] = DEFAULT_TRANSCRIPTION_ENGINE
+    else:
+        # Recording darf die real gelaufene Engine speichern, z.B. "test-fallback".
+        # Die strenge Auswahl-Validierung bleibt in TranscriptionEngine/PowerProfile.
+        enriched[_TRANSCRIPTION_ENGINE_FIELD] = str(recorded_engine)
+
     return enriched
 
 

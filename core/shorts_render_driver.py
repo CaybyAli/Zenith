@@ -906,8 +906,8 @@ class ShortsRenderDriver:
     def _caption_filter_for_render(
         self,
         clip: ShortsClip,
-        source_video_path: str,
-        output_path: str,
+        source_video_path: str | None = None,
+        output_path: str = "",
         add_captions: bool = True,
         transcript: TranscriptResult | None = None,
     ) -> str:
@@ -917,7 +917,7 @@ class ShortsRenderDriver:
         caption_transcript = transcript
 
         if _caption_renderer() == CAPTION_RENDERER_LIBASS:
-            if caption_transcript is None:
+            if caption_transcript is None and source_video_path:
                 multispeaker_transcript = build_multispeaker_caption_transcript_for_clip(
                     source_video_path=source_video_path,
                     clip_start_seconds=float(clip.source_start_time),
