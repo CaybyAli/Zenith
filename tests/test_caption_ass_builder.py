@@ -6,6 +6,7 @@ from pathlib import Path
 from core.caption_ass_builder import (
     ASS_DEFAULT_WHITE,
     ASS_HIGHLIGHT_GREEN,
+    ASS_HIGHLIGHT_YELLOW,
     ASS_NORMAL_ACTIVE_SIZE,
     ASS_NORMAL_BASE_SIZE,
     ASS_OUTLINE_SIZE,
@@ -76,8 +77,8 @@ def test_karaoke_timing_uses_final_delay_and_hold(tmp_path: Path) -> None:
     assert "0:00:02.12,0:00:02.42" in lines[0]
     assert "0:00:02.42,0:00:02.72" in lines[1]
 
-    # Last word holds briefly, so captions do not flicker.
-    assert "0:00:02.72,0:00:03.40" in lines[2]
+    # Last word holds briefly, with owner-confirmed 0.16s tail.
+    assert "0:00:02.72,0:00:03.28" in lines[2]
 
     pattern = re.compile(r"Dialogue: 0,\d+:\d{2}:\d{2}\.\d{2},\d+:\d{2}:\d{2}\.\d{2},")
     assert all(pattern.match(line) for line in lines)
@@ -193,3 +194,50 @@ def test_short_caption_uses_larger_short_sizes(tmp_path: Path) -> None:
     assert f"\\fs{ASS_SHORT_BASE_SIZE}" in line
     assert f"\\fs{ASS_SHORT_ACTIVE_SIZE}" in line
     assert f"\\fs{ASS_NORMAL_ACTIVE_SIZE}" not in line
+
+
+def test_friend_discord_words_use_yellow_highlight(tmp_path: Path) -> None:
+    output = tmp_path / "friend_yellow.ass"
+    friend_word = TranscriptWord(
+        text="discord",
+        start_seconds=0.0,
+        end_seconds=0.4,
+        probability=0.9,
+        speaker="friend",
+        audio_track="discord",
+    )
+
+    CaptionASSBuilder().generate_ass_file(
+        [CaptionGroup(words=[friend_word])],
+        str(output),
+    )
+
+    text = output.read_text(encoding="utf-8-sig")
+    assert f"\\c{ASS_HIGHLIGHT_YELLOW}" in text
+
+
+def test_owner_and_friend_words_do_not_share_caption_group() -> None:
+    owner_word = TranscriptWord(
+        text="owner",
+        start_seconds=0.0,
+        end_seconds=0.3,
+        probability=0.9,
+        speaker="ali",
+        audio_track="mic",
+    )
+    friend_word = TranscriptWord(
+        text="discord",
+        start_seconds=0.32,
+        end_seconds=0.6,
+        probability=0.9,
+        speaker="friend",
+        audio_track="discord",
+    )
+
+    groups = CaptionASSBuilder().build_groups(
+        [CaptionGroup(words=[owner_word, friend_word])]
+    )
+
+    assert len(groups) == 2
+    assert [word.audio_track for word in groups[0]] == ["mic"]
+    assert [word.audio_track for word in groups[1]] == ["discord"]

@@ -1,0 +1,16 @@
+{
+  "caption_power_profile": "final",
+  "caption_whisper_models": {
+    "fast": "base",
+    "debug": "base",
+    "medium": "medium",
+    "quality": "large-v3",
+    "final": "large-v3",
+    "max_quality": "large-v3"
+  },
+  "notes": {
+    "reason": "G2-S3c-1: base produced wrong words like Spaege/Ballegut; medium and large-v3 corrected Spiel/Ball/gut. Final real renders default to large-v3.",
+    "caption_highlight_timing_nudge_seconds": "G2-S3c-2 visual adjustment: -0.15 improved sync but looked choppy/overlapping. Use -0.10 and shift the full visual karaoke frame, not only the active line."
+  },
+  "caption_highlight_timing_nudge_seconds": -0.1
+}

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from core.caption_highlight_timing_nudge import apply_caption_highlight_timing_nudge_to_ass_text
+
 import json
 import logging
 import os
@@ -28,6 +30,7 @@ from core.audio_normalizer import (
     AudioNormalizer,
 )
 from core.ffmpeg_capability_resolver import resolve_ffmpeg_capabilities
+from core.multispeaker_caption_transcript import build_multispeaker_caption_transcript_for_clip
 from core.ffmpeg_helper import apply_ffmpeg_thread_cap
 from core.power_profile import PowerProfile
 from core.resource_monitor import guarded_ffmpeg_execution
@@ -76,7 +79,23 @@ _CUDA_SCALE_DOWNLOAD_RE = re.compile(
 )
 
 
+
+def _apply_caption_highlight_nudge_to_ass_file(ass_path: str | Path) -> None:
+    path = Path(ass_path)
+    if not path.exists():
+        return
+
+    original = path.read_text(encoding="utf-8")
+    nudged = apply_caption_highlight_timing_nudge_to_ass_text(original)
+
+    if nudged != original:
+        path.write_text(nudged, encoding="utf-8")
+
+
 @dataclass(frozen=True)
+
+
+
 class VideoCodecChoice:
     encoder: str
     uses_nvenc: bool
@@ -569,6 +588,7 @@ class ShortsRenderDriver:
         codec_choice = self._resolve_video_codec()
         caption_filter = self._caption_filter_for_render(
             clip=clip,
+            source_video_path=source_video_path,
             output_path=output_path,
             add_captions=add_captions,
             transcript=transcript,
@@ -886,6 +906,7 @@ class ShortsRenderDriver:
     def _caption_filter_for_render(
         self,
         clip: ShortsClip,
+        source_video_path: str,
         output_path: str,
         add_captions: bool = True,
         transcript: TranscriptResult | None = None,
@@ -893,47 +914,60 @@ class ShortsRenderDriver:
         if not add_captions:
             return ""
 
-        if _caption_renderer() == CAPTION_RENDERER_LIBASS and transcript is not None:
-            caption_result = _caption_word_result_for_clip(clip=clip, transcript=transcript)
+        caption_transcript = transcript
 
-            if _is_repetitive_caption_result(caption_result):
-                _write_caption_audit(
-                    output_path=Path(output_path),
-                    caption_result=caption_result,
-                    ass_groups=[],
-                    rejected_reason="repetitive_caption_words",
+        if _caption_renderer() == CAPTION_RENDERER_LIBASS:
+            if caption_transcript is None:
+                multispeaker_transcript = build_multispeaker_caption_transcript_for_clip(
+                    source_video_path=source_video_path,
+                    clip_start_seconds=float(clip.source_start_time),
+                    clip_end_seconds=float(clip.source_end_time),
                 )
+                if multispeaker_transcript is not None:
+                    caption_transcript = multispeaker_transcript
+
+            if caption_transcript is not None:
+                caption_result = _caption_word_result_for_clip(clip=clip, transcript=caption_transcript)
+
+                if _is_repetitive_caption_result(caption_result):
+                    _write_caption_audit(
+                        output_path=Path(output_path),
+                        caption_result=caption_result,
+                        ass_groups=[],
+                        rejected_reason="repetitive_caption_words",
+                    )
+                    LOGGER.warning(
+                        "Repetitive / low-quality shorts captions rejected for clip %.3f-%.3f",
+                        float(clip.source_start_time),
+                        float(clip.source_end_time),
+                    )
+                    return ""
+
+                caption_groups = _caption_groups_from_word_result(caption_result)
+                if caption_groups:
+                    ass_path = Path(output_path).with_suffix(".ass")
+                    ass_builder = CaptionASSBuilder()
+                    ass_groups = ass_builder.build_groups(caption_groups)
+                    _write_caption_audit(
+                        output_path=Path(output_path),
+                        caption_result=caption_result,
+                        ass_groups=ass_groups,
+                    )
+                    ass_builder.generate_ass_file(
+                        caption_groups=caption_groups,
+                        output_path=str(ass_path),
+                    )
+                    _apply_caption_highlight_nudge_to_ass_file(ass_path)
+                    return self._ass_caption_filter(ass_path)
+
                 LOGGER.warning(
-                    "Repetitive / low-quality shorts captions rejected for clip %.3f-%.3f",
-                    float(clip.source_start_time),
-                    float(clip.source_end_time),
+                    "No word-level timestamps available for libass, falling back to drawtext captions"
                 )
-                return ""
-
-            caption_groups = _caption_groups_from_word_result(caption_result)
-            if caption_groups:
-                ass_path = Path(output_path).with_suffix(".ass")
-                ass_builder = CaptionASSBuilder()
-                ass_groups = ass_builder.build_groups(caption_groups)
-                _write_caption_audit(
-                    output_path=Path(output_path),
-                    caption_result=caption_result,
-                    ass_groups=ass_groups,
-                )
-                ass_builder.generate_ass_file(
-                    caption_groups=caption_groups,
-                    output_path=str(ass_path),
-                )
-                return self._ass_caption_filter(ass_path)
-
-            LOGGER.warning(
-                "No word-level timestamps available for libass, falling back to drawtext captions"
-            )
 
         return self._caption_filter(
             clip=clip,
             add_captions=add_captions,
-            transcript=transcript,
+            transcript=caption_transcript,
         )
 
     def _ass_caption_filter(self, ass_path: Path) -> str:

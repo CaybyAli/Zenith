@@ -173,6 +173,9 @@ class CaptionASSBuilder:
                 if gap >= ASS_GROUP_BREAK_GAP:
                     should_break = True
 
+                if not self._same_caption_voice(current[-1], word):
+                    should_break = True
+
                 if not self._can_extend_fast(current, word):
                     should_break = True
 
@@ -463,6 +466,10 @@ class CaptionASSBuilder:
         seconds = remainder // 100
         centiseconds = remainder % 100
         return f"{hours}:{minutes:02d}:{seconds:02d}.{centiseconds:02d}"
+
+    @staticmethod
+    def _same_caption_voice(left: CaptionASSWord, right: CaptionASSWord) -> bool:
+        return CaptionASSBuilder._speaker_priority(left) == CaptionASSBuilder._speaker_priority(right)
 
     @staticmethod
     def _speaker_priority(word: CaptionASSWord) -> int:

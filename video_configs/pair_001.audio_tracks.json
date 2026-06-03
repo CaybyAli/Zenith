@@ -1,0 +1,39 @@
+{
+  "video_id": "pair_001",
+  "source_path": "learning_corpus/pairs/pair_001/raw.mp4",
+  "mapping_source": "owner_ear_probe_g2_s3b_step1c",
+  "notes": [
+    "Owner-ohr bestaetigt: 0:a:0 Owner, 0:a:1 Discord/Friend, 0:a:2 Ingame, 0:a:3 still.",
+    "Kontaminierte ali_voice_reference/audit 0:a:1 wird NICHT als Rollen-Beweis genutzt."
+  ],
+  "audio_tracks": [
+    {
+      "role": "owner",
+      "audio_track": "mic",
+      "speaker": "ali",
+      "ffmpeg_audio_index": "0:a:0",
+      "transcribe_for_captions": true
+    },
+    {
+      "role": "friend",
+      "audio_track": "discord",
+      "speaker": "friend",
+      "ffmpeg_audio_index": "0:a:1",
+      "transcribe_for_captions": true
+    },
+    {
+      "role": "game",
+      "audio_track": "ingame",
+      "speaker": "unknown",
+      "ffmpeg_audio_index": "0:a:2",
+      "transcribe_for_captions": false
+    },
+    {
+      "role": "silent",
+      "audio_track": "silent",
+      "speaker": "unknown",
+      "ffmpeg_audio_index": "0:a:3",
+      "transcribe_for_captions": false
+    }
+  ]
+}

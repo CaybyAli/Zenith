@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from core.shorts_caption_hygiene import CaptionHygieneEvent, apply_caption_display_hygiene
 from models.transcript_result import TranscriptResult, TranscriptSegment, TranscriptWord
 
 LOGGER = logging.getLogger(__name__)
@@ -43,12 +44,15 @@ class SaneCaptionWordResult:
     words: list[TranscriptWord] = field(default_factory=list)
     clamp_events: list[CaptionTimestampClampEvent] = field(default_factory=list)
     skipped_word_count: int = 0
+    hygiene_events: list[CaptionHygieneEvent] = field(default_factory=list)
 
     def to_audit_dict(self) -> dict[str, Any]:
         return {
             "word_count": len(self.words),
             "clamped_word_timestamp_count": len(self.clamp_events),
             "skipped_word_count": self.skipped_word_count,
+            "hygiene_removed_word_count": len(self.hygiene_events),
+            "hygiene_events": [event.to_dict() for event in self.hygiene_events],
             "clamp_events": [event.to_dict() for event in self.clamp_events],
             "words": [word.to_dict() for word in self.words],
         }
@@ -229,10 +233,13 @@ def build_sane_caption_words_from_transcript(
             [event.to_dict() for event in clamp_events],
         )
 
+    hygiene_result = apply_caption_display_hygiene(caption_words)
+
     return SaneCaptionWordResult(
-        words=caption_words,
+        words=hygiene_result.words,
         clamp_events=clamp_events,
         skipped_word_count=skipped_word_count,
+        hygiene_events=hygiene_result.events,
     )
 
 
