@@ -105,6 +105,8 @@ class WhisperXEngine(TranscriptionEngine):
                 check=False,
                 timeout=self.timeout_seconds,
             )
+            if completed.stdout:
+                print(completed.stdout, end="")
 
             if completed.returncode != 0:
                 message = (completed.stderr or completed.stdout or "").strip()

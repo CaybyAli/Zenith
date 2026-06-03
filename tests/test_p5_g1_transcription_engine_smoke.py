@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import fields
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ from core.transcription_engine import (
     TranscriptUnavailableError,
     TranscriptionEngine,
 )
+from models.job import Job
 from models.transcript_result import TranscriptResult, TranscriptSegment
 
 
@@ -65,6 +67,12 @@ def test_power_profile_transcription_engine_default_and_validation() -> None:
 
     with pytest.raises(ValueError, match="Unsupported transcription_engine"):
         PowerProfile.normalize_transcription_engine("silent_fallback")
+
+
+
+def test_job_model_has_persisted_transcription_engine_field() -> None:
+    field_names = {field.name for field in fields(Job)}
+    assert "transcription_engine" in field_names
 
 
 def test_job_persistence_always_contains_transcription_engine() -> None:

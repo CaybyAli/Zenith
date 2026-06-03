@@ -51,24 +51,39 @@ def _write_report(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def _log(message: str) -> None:
+    print(f"[whisperx_bridge] {message}", flush=True)
+
+
 def run_bridge(input_path: str, output_path: str, model_name: str) -> int:
     report_path = Path(output_path)
     try:
+        _log(f"start input={input_path} model={model_name}")
         import whisperx
 
+        _log("import_whisperx.done")
         audio_path = str(input_path)
+        _log(f"model.load.start model={model_name} device=cuda compute_type=float16")
         model = whisperx.load_model(model_name, device="cuda", compute_type="float16")
+        _log("model.load.done")
+        _log("audio.load.start")
         audio = whisperx.load_audio(audio_path)
+        _log("audio.load.done")
+        _log("transcribe.start batch_size=16")
         result = model.transcribe(audio, batch_size=16)
 
         language = result.get("language")
         segments = list(result.get("segments") or [])
+        _log(f"transcribe.done language={language} segment_count={len(segments)}")
 
         try:
+            _log(f"align.load.start language={language} device=cuda")
             align_model, metadata = whisperx.load_align_model(
                 language_code=language,
                 device="cuda",
             )
+            _log("align.load.done")
+            _log("align.start")
             aligned = whisperx.align(
                 segments,
                 align_model,
@@ -78,7 +93,9 @@ def run_bridge(input_path: str, output_path: str, model_name: str) -> int:
                 return_char_alignments=False,
             )
             segments = list(aligned.get("segments") or segments)
+            _log(f"align.done segment_count={len(segments)}")
         except Exception as align_exc:
+            _log(f"align.failed {type(align_exc).__name__}: {align_exc}")
             _write_report(
                 report_path,
                 {
@@ -91,6 +108,7 @@ def run_bridge(input_path: str, output_path: str, model_name: str) -> int:
             )
             return 0
 
+        _log("write_report.ok")
         _write_report(
             report_path,
             {
@@ -103,6 +121,7 @@ def run_bridge(input_path: str, output_path: str, model_name: str) -> int:
         )
         return 0
     except Exception as exc:
+        _log(f"error {type(exc).__name__}: {exc}")
         _write_report(
             report_path,
             {

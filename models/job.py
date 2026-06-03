@@ -82,6 +82,7 @@ class Job:
     failed_audio_targets: list[str] = field(default_factory=list)
 
     transcript_report: dict[str, Any] = field(default_factory=dict)
+    transcription_engine: str = "whisperx"
     transcript_status: str | None = None
     transcript_source_path: str | None = None
     transcript_source_type: str | None = None
