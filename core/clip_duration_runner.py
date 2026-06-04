@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from core.clip_duration_optimizer import optimize_clip_durations
+from core.style_dna_pacing_adapter import StyleDnaPacingAdapter
 from models.clip_duration import ClipDurationOptimizationPlan
 from models.clip_duration_run import ClipDurationRunReport
 
@@ -35,6 +36,88 @@ def _set_job_value(job: Any, key: str, value: Any) -> None:
         return
 
     setattr(job, key, value)
+
+
+def _build_duration_profile_from_style_dna_decision(decision: Any) -> dict[str, Any] | None:
+    if not bool(getattr(decision, "loaded", False)):
+        return None
+
+    target_clip_seconds = getattr(decision, "target_clip_seconds", None)
+    confidence = getattr(decision, "confidence", 0.0)
+
+    try:
+        target_clip_seconds = float(target_clip_seconds)
+        confidence = float(confidence)
+    except (TypeError, ValueError):
+        return None
+
+    if target_clip_seconds <= 0.0 or confidence <= 0.0:
+        return None
+
+    target_rule = {"target": target_clip_seconds}
+    return {
+        "duration_rules": {
+            "KEEP": dict(target_rule),
+            "REVIEW_KEEP": dict(target_rule),
+            "REVIEW_TRIM": dict(target_rule),
+            "UNKNOWN_REVIEW": dict(target_rule),
+        }
+    }
+
+
+def _merge_duration_profile(
+    existing_profile: Any,
+    style_profile: dict[str, Any],
+) -> dict[str, Any]:
+    profile = dict(existing_profile) if isinstance(existing_profile, dict) else {}
+
+    existing_rules = profile.get("duration_rules")
+    merged_rules = dict(existing_rules) if isinstance(existing_rules, dict) else {}
+
+    style_rules = style_profile.get("duration_rules")
+    if isinstance(style_rules, dict):
+        for action, rule in style_rules.items():
+            base_rule = merged_rules.get(action)
+            merged_rule = dict(base_rule) if isinstance(base_rule, dict) else {}
+            if isinstance(rule, dict):
+                merged_rule.update(rule)
+            merged_rules[action] = merged_rule
+
+    profile["duration_rules"] = merged_rules
+    return profile
+
+
+def _apply_style_dna_pacing_metadata(run_metadata: dict[str, Any]) -> dict[str, Any]:
+    enriched_metadata = dict(run_metadata or {})
+
+    if enriched_metadata.get("style_dna_pacing_enabled") is not True:
+        return enriched_metadata
+
+    try:
+        style_dna_path = enriched_metadata.get("style_dna_path")
+        adapter = StyleDnaPacingAdapter()
+        if style_dna_path:
+            decision = adapter.load_decision(style_dna_path)
+        else:
+            decision = adapter.load_decision()
+
+        enriched_metadata["style_dna_pacing_decision"] = decision.to_dict()
+
+        style_profile = _build_duration_profile_from_style_dna_decision(decision)
+        if style_profile:
+            enriched_metadata["profile"] = _merge_duration_profile(
+                enriched_metadata.get("profile"),
+                style_profile,
+            )
+            enriched_metadata["style_dna_pacing_profile_applied"] = True
+        else:
+            enriched_metadata["style_dna_pacing_profile_applied"] = False
+
+    except Exception as exc:
+        enriched_metadata["style_dna_pacing_profile_applied"] = False
+        enriched_metadata["style_dna_pacing_error"] = str(exc)
+
+    return enriched_metadata
 
 
 def _extract_list_from_container(container: Any, keys: tuple[str, ...]) -> list[Any]:
@@ -135,6 +218,7 @@ def run_clip_duration_optimization_for_job(
     metadata: dict[str, Any] | None = None,
 ) -> ClipDurationRunReport:
     run_metadata = dict(metadata or {})
+    run_metadata = _apply_style_dna_pacing_metadata(run_metadata)
     cut_list_items = _read_cut_list_items_from_job(job)
 
     if not cut_list_items:
