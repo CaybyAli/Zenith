@@ -5,7 +5,6 @@ import json
 import math
 import sys
 from collections import Counter, OrderedDict
-from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, median
 from typing import Any
@@ -91,9 +90,6 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     )
     tmp.replace(path)
 
-
-def _now_utc() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _to_float(value: Any) -> float | None:
@@ -375,7 +371,6 @@ def _aggregate_group(
     content_type: str,
     files: list[Path],
     payloads_by_path: dict[Path, dict[str, Any]],
-    generated_utc: str,
     pair_truth_path: Path,
 ) -> dict[str, Any]:
     payloads = [payloads_by_path[path] for path in files]
@@ -441,7 +436,6 @@ def _aggregate_group(
         "schema_version": SCHEMA_VERSION,
         "content_type": content_type,
         "source_count": len(files),
-        "generated_utc": generated_utc,
         "cuts_per_minute": _summary(cuts),
         "median_clip_seconds": _summary(median_clip_seconds),
         "audio_dynamic_range": _summary(audio_dynamic_range),
@@ -486,7 +480,6 @@ def build_style_dna(
     output_dir = Path(output_dir)
     pair_truth_path = Path(pair_truth_path)
 
-    generated_utc = _now_utc()
     result: dict[str, Any] = {}
 
     for content_type, spec in OUTPUT_SPECS.items():
@@ -497,7 +490,6 @@ def build_style_dna(
             content_type=content_type,
             files=files,
             payloads_by_path=payloads_by_path,
-            generated_utc=generated_utc,
             pair_truth_path=pair_truth_path,
         )
 

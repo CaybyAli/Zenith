@@ -2,7 +2,6 @@
   "schema_version": "p5_g3_style_dna_v1",
   "content_type": "gaming_pairs",
   "source_count": 20,
-  "generated_utc": "2026-06-04T16:38:59Z",
   "cuts_per_minute": {
     "median": 5.829,
     "p10": 1.226,

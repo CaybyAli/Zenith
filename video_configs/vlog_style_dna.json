@@ -2,7 +2,6 @@
   "schema_version": "p5_g3_style_dna_v1",
   "content_type": "vlog",
   "source_count": 3,
-  "generated_utc": "2026-06-04T16:38:59Z",
   "cuts_per_minute": {
     "median": 10.737,
     "p10": 7.527,
