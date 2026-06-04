@@ -9,35 +9,35 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.style_dna_aggregator import build_style_dna
+import scripts.aggregate_style_dna as aggregate_style_dna
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--corpus-root", default="learning_corpus")
-    parser.add_argument("--output-dir", default="style_dna/ali")
-    parser.add_argument("--no-strict-counts", action="store_true")
+    parser.add_argument("--corpus-root", default=str(aggregate_style_dna.DEFAULT_CORPUS_ROOT))
+    parser.add_argument("--output-dir", default=str(aggregate_style_dna.DEFAULT_OUTPUT_DIR))
+    parser.add_argument("--pair-truth-path", default=str(aggregate_style_dna.PAIR_TRUTH_PATH))
     args = parser.parse_args()
 
-    result = build_style_dna(
+    result = aggregate_style_dna.build_style_dna(
         corpus_root=args.corpus_root,
         output_dir=args.output_dir,
-        strict_counts=not args.no_strict_counts,
+        pair_truth_path=args.pair_truth_path,
     )
 
-    manifest = result["manifest"]
-    print("P5_G3_STYLE_DNA_MANIFEST", result["manifest_path"])
-    print("P5_G3_TOTAL_SOURCE_COUNT", manifest["total_source_count"])
-    print("P5_G3_SOURCE_COUNTS", json.dumps(manifest["source_counts"], sort_keys=True))
-    print(
-        "P5_G3_TRANSCRIPT_NON_EMPTY_COUNTS",
-        json.dumps(manifest["transcript_non_empty_counts"], sort_keys=True),
-    )
-    for kind, path in manifest["output_files"].items():
-        print(f"P5_G3_OUTPUT {kind} {path}")
+    print("P5_G3_STYLE_DNA_OUTPUT_DIR", args.output_dir)
+    print("P5_G3_PAIR_TRUTH_PATH", args.pair_truth_path)
+    for kind, payload in result.items():
+        dna = payload["dna"]
+        print(f"P5_G3_OUTPUT {kind} {payload['output_path']}")
+        print(
+            f"P5_G3_SOURCE_COUNT {kind} "
+            f"{json.dumps({'source_count': dna.get('source_count')}, sort_keys=True)}"
+        )
 
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+    

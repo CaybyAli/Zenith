@@ -37,7 +37,7 @@ class FocusDecision:
 
 
 class FocusSwitchEngine:
-    DEFAULT_STYLE_DNA_PATH = Path("style_dna/ali/gaming_pairs_style_dna.json")
+    DEFAULT_STYLE_DNA_PATH = Path("video_configs/gaming_pairs_style_dna.json")
     DEFAULT_NORMAL_GAMEPLAY_CONFIDENCE = 0.55
 
     def __init__(self, style_dna_path: str | Path | None = None) -> None:
@@ -77,8 +77,17 @@ class FocusSwitchEngine:
                 .get("counts", {})
                 .get("normal", {})
             )
-            gameplay_count = int(normal_counts.get("gameplay", 0) or 0)
-            facecam_count = int(normal_counts.get("facecam", 0) or 0)
+
+            if isinstance(normal_counts, dict) and normal_counts:
+                gameplay_count = int(normal_counts.get("gameplay", 0) or 0)
+                facecam_count = int(normal_counts.get("facecam", 0) or 0)
+            else:
+                focus_distribution = self._style_dna.get("focus_decision_distribution", {})
+                if not isinstance(focus_distribution, dict):
+                    focus_distribution = {}
+                gameplay_count = int(focus_distribution.get("gameplay", 0) or 0)
+                facecam_count = int(focus_distribution.get("facecam", 0) or 0)
+
             total = gameplay_count + facecam_count
             ratio = (gameplay_count / total) if total else 0.0
 

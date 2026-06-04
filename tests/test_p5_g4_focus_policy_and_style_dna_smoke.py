@@ -78,7 +78,7 @@ def test_p5_g4_focus_switch_engine_consumes_gaming_pairs_style_dna():
 
     assert report["loaded"] is True
     assert report["content_type"] == "gaming_pairs"
-    assert report["path"].replace("\\", "/").endswith("style_dna/ali/gaming_pairs_style_dna.json")
+    assert report["path"].replace("\\", "/").endswith("video_configs/gaming_pairs_style_dna.json")
     assert report["normal_voice_gameplay_confidence_before"] == 0.55
     assert report["normal_voice_gameplay_confidence_after"] > 0.55
     assert "confidence 0.55->" in report["changed_decision"]

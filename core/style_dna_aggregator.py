@@ -735,7 +735,7 @@ def _aggregate_kind(kind: str, sources: list[dict[str, Any]]) -> dict[str, Any]:
 
 def build_style_dna(
     corpus_root: str | Path = "learning_corpus",
-    output_dir: str | Path = "style_dna/ali",
+    output_dir: str | Path = "video_configs",
     strict_counts: bool = True,
 ) -> dict[str, Any]:
     corpus_root = Path(corpus_root)
