@@ -1,0 +1,184 @@
+{
+  "schema_version": "p5_g3_style_dna_v1",
+  "content_type": "gaming_pairs",
+  "source_count": 20,
+  "generated_utc": "2026-06-04T16:38:59Z",
+  "cuts_per_minute": {
+    "median": 5.829,
+    "p10": 1.226,
+    "p90": 11.014
+  },
+  "median_clip_seconds": {
+    "median": 5.542,
+    "p10": 3.006,
+    "p90": 24.882
+  },
+  "audio_dynamic_range": {
+    "median": 16.63,
+    "p10": 8.589,
+    "p90": 55.975
+  },
+  "voice_intensity_distribution": {
+    "normal": 79.193,
+    "leise_erhoeht": 13.976,
+    "schreien": 6.021,
+    "bruellen": 0.809
+  },
+  "intensity_clustering": {
+    "front_loaded": 5,
+    "burst": 10,
+    "even": 1,
+    "scattered": 1,
+    "back_loaded": 3
+  },
+  "opening_pattern": {
+    "action": 5,
+    "question": 15
+  },
+  "closing_pattern": {
+    "action": 20
+  },
+  "clip_length_histogram": [
+    {
+      "label": "0-2s",
+      "count": 496
+    },
+    {
+      "label": "2-5s",
+      "count": 340
+    },
+    {
+      "label": "5-10s",
+      "count": 241
+    },
+    {
+      "label": "10-20s",
+      "count": 169
+    },
+    {
+      "label": "20s+",
+      "count": 174
+    }
+  ],
+  "focus_decision_distribution": {
+    "facecam": 3,
+    "gameplay": 17
+  },
+  "first_window_text": [
+    {
+      "source": "learning_corpus/pairs/pair_001",
+      "first_window_text": "Wir steigen heute wieder hinter das Lenkrad. Und versuchen, so viele Tore bemüglich zu schießen. Aber wir kommen heute wie stärkste Kama-Klatsche, die es ehemals gegeben hat. Ihr lasst schon mal ein Liked und aber nicht gern diesen Kanal. Schreibt ebenfalls über die in die Kommentare. Und dann würde ich jetzt sagen, los geht's. Ich gehe, ich gehe, ich gehe, ich gehe. So, ich als geht's von los, warte mal. Ich muss her in die weglegen. Ich hab bin da. Ich bin da. Ich bin da. Ich bin da. Ich bin da. Ab und zu stört. Sehr schön. Ich bin da. Hände so geniezt. Ich bin, nicht da. Nichts da, ne? Deiner. Pass vor. Wom pass du nicht vor? Wom pass du nicht vor? Wom pass du den Balken geben? Ich gehe halt dein Maul. Wom pass du den Balken geben, ich erst immer bitte. Überfahren. Warte, ich bin mir nicht da. Nein! Die bewegen sich ja gar nicht. Ja, der eine. Der andere Augen muss so halb. Komm mal. Und trotzdem schafft es kein Tod zu machen. Okay, die ja ja, ja, ja, ja, weiter weiter weiter. Deiner ist aufkall. Nies ist ein Zweigen eins. Okay, sie ist hier da. Oh mein Gott, ich beginne die Wand gekneilt. Parade. Wie kann's so eine Parade verdukommen? Das wäre schmutz. Oh, ich bin da. Ich bin da."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_002",
+      "first_window_text": "Wir springen heute wieder in die Welt vom Bett was, ob du heute unseren ersten Sieg holen werden, das werden wir sehen. Lass schon mal leidt aber mit gerne Kerr und schreibt eure denen in die Kommentare. Und dann würde ich sagen, los geht's. Hierhin, auf drei. Eins, zwei, drei, drei. Wie klast du? 40. Ich auch, so. Lass das nicht voll, das geht's. Jeder für uns kriegt natürlich was. Aber es ist nicht, dass er mit beide Ränge, dass wir mehr bekommen. Wie kriegen's gleich hier? Nein. Ich hab da aufgenommen, 40. Mühl für Gold, dass du? Brei? Ja, das macht Sinn natürlich. Weil die Maschine gibt natürlich einen gewissen Impot. Geht's mal zu sein, ne? Nein, das war euer Locke ein Sinn. Du kriegst ja nicht mehr. Du kriegst ja nicht mehr. Es würde ich magische Weise verdoppelt. Du kriegst ja nicht in der Mitte. Hier sind wir keine Gegner. Obwohl ich hier so alleine. Ich hör und nicht. So, ich hab drei. Oh, man kann von hier rüber was. Was ist das gut? Ich kann von Gegnern an da was er nubst. Hallo, lieb's noch? Ja. Ich rede hier in der halbe Stunde monotoner einfach wie du selber. Ich konzentriere mich gerade. Ja, merkt man gar nicht. Was soll das sein? Was soll das sein? Was soll das sein? Was? Was? Ich hab unser Bett eingebaut. So, drehen wir uns die Plakheit. Ich gehe die Gegner zu töten. Nein! Eigrün kommt, brün kommt. Was? Brün kommt. Oh mein, ich hab das doch gemacht, warte. Tschüss und so, Bett. Wir sehen uns."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_003",
+      "first_window_text": "Die neue Chivalen ist da, wir testen sie zuerst meinem Game aus. Ob wir mir die Spaß haben werden, dass sie den in der heutigen Folge last erlegt. Aber die Gänne kann und ich hab doch die Idee in die Kommentare. Oder würde ich jetzt sagen, los geht's. Du, ich würde sagen, wie ich jetzt erst einmal schon gesehen kragens leer. Es war ein scheinendes, sehr, sehr stark sein. Gehen wir zum Blub auf. Oh, quinnen und so kämpfe schon. Oh mein Gott, das ist schon soll. Bestell uns, wenn wir einen Tag machen, meine Kuhmachlopfen schlaht. Das ist ein Schild und das sind Feuerspeier. Mein Drach vom ist mein Drachend vom noch. Ja, ich kann die mehrmals einsetzen, okay. Gut, ich hab's ungefähr drauf. Okay, meine Kuhmachlopfen aus der Griset. Ich hab' den Frosch hier. Ich bin mir schon in der Welt 3 Gänken. Ich glaub' nicht. Das macht sogar Flächen schadens. Ich würde oben in den Wortlen, das ist schön. Macht meinen A, meine okay, meine weh macht's überschaden. Wenn ich mein Weh macht's überschaden, den sie explodiert, das ist schon sehr gut. Wir müssen aber so schnell wie möglich lebe 6 werden. Okay, der Flächen schaden ist schon geist krank mit der. So machen wir mal ein Fuhl kühl. Und man Gott, ihr wird zehn ab wie überlebt. So, wir müssen nicht fertig sein. Ich bin mir schon direkt Gänken. So ist natürlich nicht so cool. Und, gimme mal rein. Er wusste mein Team. Er fängt mal durch's gebraucht, egal wo uns die Kappe. Zell es gestorben. Oh mein Gott, kann wir wo gerade gemacht. Das heißt, hier müssen wir es irgendwo setzen. Ah, läuft doch immer zurück. Wir können auch oben move. Woh, wo, wo, wo, wo, wo, wo? Ich darf das riegel. Kei, ich darf das riegel. Oh, egal, ich darf das riegel. Ich kann da nichts riegel."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_004",
+      "first_window_text": "Die heutige Folge ist ohne wird's eider Spanzenbett was folgen, die ich hier erlebt habe. Schaffen heute wirkt schon unseren ersten Sieg, oder erinnert alles im absoluten Chaos, ihr dürft gespannt sein. Banner ist die Action gefällt, lasst um den Geleikter oder bin ich gerne Kanal, um nichts mehr zu verpassen. Abtien auch richtig den für eine weitere Wunder, dann schreibt es auch gerne Kommentare. Und dann will ich jetzt sagen, los geht's. O mal, kommst du das. Dage, ich freib mich mal, wer die Maps baut."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_005",
+      "first_window_text": "Die neue Fortnite-Sysens endlich da. Ich springe direkt rein und schauen wir alles einmal an. Was ist euer Heidate? Schreibt das schon in die Kommentare und lasst ein Weik, dann hab ich mir gern diesen Kanal. Und dann würde ich sagen, los geht's. So, jetzt kann ich mal keine Symboose einfach steuern. Das ist so geil. Das geht's. Warum? Warum an? Schade. Oh, das ist so geil. Was? Das darf nur Einde."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_006",
+      "first_window_text": "Leute, die heutige Folge zeigt Perfekt, wie eine einzige Fehlentscheidung, ein komplettes Spiel auf den Kopf stellen kann. Ob wir das Ruder im Ende noch rumreißen können und ein Sieg zu holen, jedoch es gespazt."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_007",
+      "first_window_text": "Fortnite hat heute ein neues Update rausgebracht und das hat es wirklich in sich. Heute und nur heute gibt es sehr viel Neues und ja, interessant es würde ich sagen in Fortnite. Lasst gern schon mal leichter und damit gerne genauer um nichts mehr zu passen und schreibt, da würde ich Ihnen die Kommentare und dann würde ich jetzt sagen, los geht's. Oh mein Gott, ich habe mich wirklich alle große Köpfe. Ja, okay, okay, wo gehen wir hin? Hier. Okay, um los geht's. Und das ist doch nichts. Du kannst auch an die Tankstelle unter uns gehen. Ne, würde ich jetzt sagen, oder mach jetzt das, okay? Das ist mein Kapo China Auto. Ich langen in diesem Boot. Ich habe ein Kapo China Auto. Wegschutz, was soll das sein? Meine anderen. Aber ich will komplett geprägen, ihr geht's nichts, komm mal zu dir. Aber ich verstehe, ist die Hitbox der Köpfe jetzt auch größer. Das war ja, ich hab mich auch von gefragt. Das wäre gut, war ein Treffjahr, was? Ja, der tatsächlich gar nicht so verkehrt bei dir. Morgen, die ist die Pippe, Pippe, war eine Pippe. Ah, ja, dann ist das ein. Aber, und mit davon wird's ja mehr. Wenn die da liegen, auf dem Boden, dann liegen die da 1.000 Vakum. Ich hab Fingerpest holt. Im Montag und Pippe, Pippe, und ich würde nicht mal anderslungen werden mitnehmen. Sind es eher ein Pippe oder erstungen gewesen? Dungen, wer komplett. Aber das kann so auch warm bleiben stehen. Warte. Aber trink, trink, trink, trink, trink, trink, trink, trink, trink, trink, oh mein Gott. Nein! Wo Gott, du hast es in der Schwände, dich erlaubt. Ja, aber die sind, waffe kannst du auch nachkampft benutzen. Also, ich hab vorhin eine Runde zwei gezockt und ich hab mit der gegen eine Schottgern am Nachkampf gewonnen."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_008",
+      "first_window_text": "Ah, schön, ich Wege ist hier. Mein Wege, das bringt gar nicht. Jego, das war komplett reingeschistend. Es wird entsparsch. Ich wird einfach ein Tanki-Draven sein. Oh, ich bin weg. Oh, ich bin so wech 50 lieben. Ich muss nur einmal slow. Ha, kannst du doch einmal den Stand treffen. Oh, ich hab das kennen nicht geschaffen. Und den auch nicht. Und den auch. Ich habe einfach alle vertroffen. Ich brauche Hilfe. Ich brauche Hilfe. Zack. Ich mach nur nur gar kein Dammelchen, aber auch eine Kuh, als wie der Full-Life perfekt. Okay, wir holen uns jetzt in Asos. Er geht uns. Jungs Mädels. Er geht nicht uns. So, meine Freunde, wir kommen wieder zu einer neuen Folge von League of Randomizer heute. Wieder ganz normal. Wie immer, wir drücken auf Randomize. Spiele runter und hoffen ich. Wie wir sie auf Wensch gefällt. Was den like damit gerne kann. Und ich würde sagen, wir drücken jetzt auf Randomize. So, wir haben hier Draven in der Midlane. Ich würde sagen, wir sehen uns gleich in der Runde. So, wie spielen. Geigen. Eine Aerie. Und als Erstens müssen unsere E-Level. Das ist natürlich nicht so gut. Aber ja, das wird schon irgendwie klappen. Das Gute ist. Mittlerweile wissen wir gar nicht wie verschaden. Elis, sie ist eigentlich machen. So, noch einen Autoteck für sie. Und noch einer. Und noch einer. Und noch einer. Und slow."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_009",
+      "first_window_text": "Nichts nehmen! Was war das? Hm, was war das, lau ich nicht voll?"
+    },
+    {
+      "source": "learning_corpus/pairs/pair_010",
+      "first_window_text": "Ja, ich habe gedacht, der geht eher rein, was soll ich da machen haben? Ich dachte, komm, ich bin selber, ich hab schon da noch rein. Tatsächlich, viermal, neunes gelumpft für das Auto. Äh, bis jetzt da nicht, tatsächlich. Du musst den Ballab fern, der ich doch hab, was machst du da? Ich die ganze Zeit. Die Leps, Drei Sekund, was nicht im Tilsfühn, okay? Hämmer zu. Nein, nein, ich hatte ja nicht mehr Zutäge. Ich hatte dich zu. Ich weiß nicht, die Brazilians schauen uns gefühlt haben. Ich... auch leider. Wir sind Geld, gehen nur so. Ja, leider nicht will, aber auch gar sie gehen soll. Äh, muss ich gar nicht gehen, ich bin dann, dass ich sie bin. Lass ich dann mal mal. Es steht zur Freundel, die was unternehmen. Die geh ich, wie seit drei Minuten meine Nase, kratzen, als Jürgwang kann ich mal ein Thomas in. Warum gehst du da hin? Mit du wenig. Warum gehst du da hin? Ich hab mir dir jetzt gekauft, einfach. Wen. Denen, die Nase. Tösslich. So, meine Freunde, willkommen wieder zu einer neuen Folge von Rocket League zusammen, mit mir jetzt... Ja, was. Die gehst du bis hin, was ummutig wird, kann es mal ein bisschen so bis hin. Komm mal, du hast gerade, ich hab mir gleich ein echt Geld für das Auto ausgegeben. Ich gehst echt Geld ausgegeben, die gerade raus zu meinem Ding, oder raus zu meiner Gruppe. Ein extra echtes Geld? Ich glaub, wie ich... Wie schmeißt du hier raus? Jetzt sagt er, hechtlich. Wenn's sich wieder gewählt, lassen wir gerne können. Und ich würde sagen, Sie sehen uns an den der ersten Runde. Bis du ready."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_011",
+      "first_window_text": "Ich bin Mengenbäude. Du musst auch so alle, ich bin Mengenbäude. Das ist das Nährung, es ist meine Bauer nicht von Anfang an drin. Warum? Ich bin aussehen auf Erzeil gekommen. Natürlich, auf sich Wurde geschossen. Ja, ach, das ist aber ganz mal für mich. Entweder ich habe einen Gegner gesehen oder Bordz. Bordz. Wir wissen gegen einen Bordz das gleiche. Oh mein, cool, was machst du? Warum ich schnostest du, du bist helft mir mal! Das ist ein Elektroot, du. Bin, wir einser Serie. Es gibt hier BMWs? Wo ist denn da dir? Wir reden gerade in eine Richtung. Was ist da wohl hinter mir? Dänge, wo geht's du denn? Ich kann nicht schwachen! Komm, wenn du kein Mann bist, da gehst du nicht hin. Ja, bin ich kein Mann, scheiß drauf. Schmsch, schmsch, schmsch, schmsch. Also, noch die uns hören. Dicke, ich brauche absolut Ruhe. Ja, aber was machst du, er bin im hier? Er bin im Hilf mir! Ich bin jetzt ein, ich bin Optus Prime. Nein! Ich komme nicht in Berg hoch. Komm, was? Das ist ein Bordz! So, meine Freundin will, komm, wir zu einer neuen Folge von Fortnite. Aber, bevor wir anfangen, erst mal, wieder wird nirgst. Ja, was? Ich habe hier schon den letzten Folge gesehen. Wir haben den falschen Modus gespielt. Und weil wir den falschen Modus gespielt haben, haben wir gleich die OG-Sysin gespielt. Diesmal sehen wir einen richtigen Modus. Das heißt, wenn es doch wieder gefällt, lasst neigt, damit wir gerne klar. Und ich würde dir zeigen, wie springet es auch schon in die ersten."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_012",
+      "first_window_text": "Wer braucht Boost? Er ist so viel verlassen. Zah, echt. Ich hab den Mut nicht bekommen. Ich hab wieder nicht bekommen. Ich fähke. Oh. Ich komm nicht. Ja, ich bin nicht rum. Nein, ich bin nicht rum. Nach so eine Vorlage musst du einen Tor machen. Und ich bin nicht rum. Jetzt find ich. Nee. Ich hab den Zubeil. Ich mach ihn rein. Ich sag nicht. Ich hab das zurück. Nein, du muss die und doch. Ich hab kein Boost. Ich hab das nicht gemacht. Ich hab das nicht gemacht. Ich hab das nicht gemacht. Ich hab das nicht gemacht."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_013",
+      "first_window_text": "Ich gebe das Matcha, und wenn er es mir nicht geht, kann ich uns selbst heilen. Fajk! Hey, du bist so ein Idiot, reinde auf mich drauf und ich bin überlebt, ich bin mir ins mich noch. Ich habe keinen bekommen, das ist ein schwieriges Match. War noch mal, was macht ihr auf der Boden eigentlich? Ja, wie gut du schaffst hast es gerein, ob wie gut was eine Aufgabe nun gehabt. Deswegen, ich sag doch so, rackertoppelt ist gut. Weil ich denke, dass ich das nicht bekomme. Oh, ich hab was gesehen, was nicht sehen wollte. Was machst du da? Mehl, komm doch zu uns! Es bist du mir doch tot. Oh, ist die wo es nicht? Wie gut? Warum ist es wie gut tot eigentlich? So ein Freunde, willkommen wieder zu einem neuen Folge von League of Legends Randomizer. Und ich würde sagen, wenn zu gefällt, lassen wir gerne gerne. Wir drücken jetzt auf Randomizer. Wir haben, ob das kann sparen sein. So rackert auf der Top lane. Ich würde sagen, wir sind uns gleich in der Runde. So ich denke, das wird ein spannendes Match. Ich bin gegen Shen. Als allererstens unsere E-Level, die auch gut damage macht. Ich bin echt gespannt, wie Shen das regeln wird. Das Ding ist ja, man sagt, wenn du Lars hittend lernen willst, dann dem zu so rackern, nennen es mit ihr. Weil ihre Autotecks sind schwer zu treffen, das will ich mich jetzt."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_014",
+      "first_window_text": "Seh, wenn du sprennen. Wenn du... Ja, ja, wenn du geälder. Warte. Ich auch! Renn einfach. Ah, ich hab mich doch nicht. Und hier ist ein Bus und ich gleich wieder zu überleben. Was ist das? Falt, ich sterbe. Wie ist denn auch flattbare Schriftlande? Scheiße. Also, Faktbund und Störbord ist nichts zu sehen. Oh!"
+    },
+    {
+      "source": "learning_corpus/pairs/pair_015",
+      "first_window_text": "Ich mach da eigentlich auch! Hast du mega! Boah, krass für das im Ballastiger!"
+    },
+    {
+      "source": "learning_corpus/pairs/pair_016",
+      "first_window_text": "Kann ich diese Dreckspuppe töten? Nö, leider nicht. Ich war nie weg. Nein! Hä? Was ist ein Abschlussserie? Stimmeln! Ne, ich fau'n bis zuf. Oh! Oh! Oh! Oh! Oh! Oh! Genso und Genso und irgendwo. Hier, hier, hier. Was er hat? Ja, ich sei, wie sind durch? Ich bin Toh! Decker! Warum bewegst du dich auch? Weil auf mich gestossen wurde? Ich bin wegen."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_017",
+      "first_window_text": "Sag ausgewischen wie ein Profi. Also steht 2. Nun, was schon? Gut, das wird ich so. Ich fühle mich da gut. Und da ist... Ich weiß gar nicht, wie der Kollege heißt. Farben mich ein bisschen. Woher wollen die aufgeben, wie gewinnt es noch? Ja, wie geht man nicht gerade eine Spaß hier runter? Okay, ich kann mich, ich kann mich, kann mich, kann mich. Wenn du spät. Wie ist der zu mir gekommen? Hey, was für eine Krasse Ulti war das gerade? Komm, sagt's. Oh, das muss mich stammt. Jungs, ich muss es heben. Was macht die Mutter? So, man Freunde will, kann man wieder zu einer neuen Folgevollen Lieger-Frenner-Wiser. Wenn es wieder gefällt, lasst du gleich, der wir gerne kennen. Und ich würde sagen, wir drücken jetzt direkt auf Random-Wiser. Wir kriegen Oriana Support. Ich würde sagen, dann sehen wir uns gleiche in der Runde. Wir sind im Game und geht schon auf unserer Lain. So, wir spielen gegen Gin und Nico. Das sollte anstrengend sein. Aber wenn es im Bekommen, dann Oriana Support ist die neue Meter. Ja, Nico, komm mal drauf. Ich bin jetzt echt gespannt, wie das hier wird. So, schält. Ja, das ist ein bisschen schwierig, was ich gedacht habe. So, sagt's, sagt's. Noch ein Auto."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_018",
+      "first_window_text": "Hast es so sehr ... WAT?! Hey, was macht die? Wir haben einen Blitzkrank, der Nullsexte ist halt Blitzkrank bitte gemacht. Einfach der Beste. Oh oh, so wie fahren wir noch ein bisschen? Ich hab hab ich die Runde nicht in einen Kennen bekommen, so keiner darf da reinlaufen. Und es ist reingelaufen. Herfektig, ich sag's da. Oh, da ist Blitzkrank? Oh, ich für Schirm um Blitzkrank da ist. Und ich sprint mal ein bisschen. Ja, ich hab keine Ahnung. Ich hab keine Ahnung. Ich hab keine Ahnung. Ich hab keine Ahnung. Ich hab keine Ahnung. Ich hab keine Ahnung. Ich hab alle Taschen einfach getrückt. Oh, noch zu wissen, was sie gebracht haben. Das ist League of Legends. Super, du pointet scheinbar. Hier bekommt man zu einer neuen Folge von League of Randomizer. Wenn sich für der Geppel hat, leichte wir gerne. Und ich würd sagen, wir drücken jetzt schon auf Randomizer. Wir haben Teamu auf der Mittelein. Mit Ignite und hier, wir müssen in Toxic Shortmacksen. Eigentlich hasse ich Teamu aus der erste Meim Team. Oh, wenn ich in selber spielen kann. Das heißt, es kann nur gut sein. Da würde ich sagen, wir sehen uns gleiche. So, wie wir gehen beim Gang direkt. Perfektiv ist doch doch so, was in die. Oh, oh, peik ist doch so. Oh, peik ist doch so. Oh, peik wird getroffen. Peik ist doch so. Nee, den kriegen wir nicht mehr. Peik ist doch doch so. Das ist sehr gut. Ich kann eigentlich nicht helfen."
+    },
+    {
+      "source": "learning_corpus/pairs/pair_019",
+      "first_window_text": "Nimm mal die Granate aufguckt, die mal die die aushören. Das ist kein Foto. Ich bin immer von der Schule so... ...extreme schnell nach Hause. Wie wir teilweise nach Hause gebrätet sind. Warum ist es so schnell? Ich hab die gesagt, die ist extrem schnell. Bei mir? Ich hab kein Schuss getroffen. Ja, guck's ja cool in das Video. Ja, ich hab ihn. Ich hab ihn. Jetzt kannst du ja durch Fenster springen, mittlerweile. Ja. Aber damals ging es nicht. Boß auch positiv sein. Also ja, wir sind krass. Oh, den hast du ihn sein. Oh mein Gott. Hast du einen? Nein, die haben mich getroffen. Superne Freunde. Scheibe Ali. Wir kommen zu einer neuen Folge, aber eine speciale Folge, die es man sieht, das schon fortmallt. OG Nullbauen-Modus. Sie haben es endlich rausgebracht, den OG-Modus, mit den alten Waffen, den alten Maps, den alten Soundefekten. Alter, Alter, das ist keine Ahnung. Und wie spürst du dich alleine? Sollen wir eine OG-Ligandene? Ja, was. Man sieht schon, das ist gut. Und ich würde sagen, wer sich gefällt, lasten, damit ich gerne kann. Und wir springen uns auch schon in die 1. Rundereil. Perfekt, da können wir jetzt. Oh mein Gott, die liegt mit geil aus. Okay. Wo gehen wir hin? Moistimeier. Moistimeier. Wenn du das sagst. Das kennst du gar nicht, ne?"
+    },
+    {
+      "source": "learning_corpus/pairs/pair_020",
+      "first_window_text": "Das ist immer noch ein Team Game. Ein Fingerleine schwach auf fünf Pilz und Bilden. Das ist ja ein ..."
+    }
+  ],
+  "ali_source_truth": "video_configs/pair_track_truth.json",
+  "speaker_distribution": {
+    "ali_median_pct": 68.344,
+    "friend_median_pct": 31.656
+  },
+  "speaker_distribution_duo_source_count": 15,
+  "speaker_distribution_excluded_solos": [
+    "pair_003",
+    "pair_008",
+    "pair_013",
+    "pair_017",
+    "pair_018"
+  ],
+  "ali_source_by_pair": {
+    "pair_001": "a0",
+    "pair_002": "a0",
+    "pair_003": "a0",
+    "pair_004": "a0",
+    "pair_005": "a0",
+    "pair_006": "a0",
+    "pair_007": "a0",
+    "pair_008": "a1",
+    "pair_009": "a0",
+    "pair_010": "a1",
+    "pair_011": "a1",
+    "pair_012": "a1",
+    "pair_013": "a1",
+    "pair_014": "a1",
+    "pair_015": "a1",
+    "pair_016": "a1",
+    "pair_017": "a1",
+    "pair_018": "a1",
+    "pair_019": "a1",
+    "pair_020": "a1"
+  }
+}

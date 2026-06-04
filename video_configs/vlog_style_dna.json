@@ -1,0 +1,80 @@
+{
+  "schema_version": "p5_g3_style_dna_v1",
+  "content_type": "vlog",
+  "source_count": 3,
+  "generated_utc": "2026-06-04T16:38:59Z",
+  "cuts_per_minute": {
+    "median": 10.737,
+    "p10": 7.527,
+    "p90": 13.283
+  },
+  "median_clip_seconds": {
+    "median": 3.28,
+    "p10": 2.448,
+    "p90": 3.664
+  },
+  "audio_dynamic_range": {
+    "median": 21.2,
+    "p10": 12.522,
+    "p90": 35.937
+  },
+  "voice_intensity_distribution": {
+    "normal": 29.758,
+    "leise_erhoeht": 54.743,
+    "schreien": 14.476,
+    "bruellen": 1.023
+  },
+  "intensity_clustering": {
+    "front_loaded": 1,
+    "burst": 1,
+    "even": 0,
+    "scattered": 0,
+    "back_loaded": 1
+  },
+  "opening_pattern": {
+    "action": 3
+  },
+  "closing_pattern": {
+    "action": 3
+  },
+  "clip_length_histogram": [
+    {
+      "label": "0-2s",
+      "count": 215
+    },
+    {
+      "label": "2-5s",
+      "count": 151
+    },
+    {
+      "label": "5-10s",
+      "count": 124
+    },
+    {
+      "label": "10-20s",
+      "count": 54
+    },
+    {
+      "label": "20s+",
+      "count": 22
+    }
+  ],
+  "focus_decision_distribution": {
+    "facecam": 1,
+    "gameplay": 2
+  },
+  "first_window_text": [
+    {
+      "source": "learning_corpus/vlogs/vlog_001",
+      "first_window_text": "So meine Freunde, willkommen zu einem neuen Video hier auf diesem Kanal. Mal was ganz anderes, äh, wie seht, wir sind hier auf dem Weg gerade unterwegs, nämlich uns zwar gehen wir zu Nils,"
+    },
+    {
+      "source": "learning_corpus/vlogs/vlog_002",
+      "first_window_text": "So meine Freude, Willkommen zu einem neuen Video auf diesem Kanal, aber keinen ganz normalen Video, sondern erstmals nichts dabei. Wir werden heute eigentlich ein kleines Koch-Challenge machen und zwar haben wir uns ein paar Sachen aus dem Spur macht geholt und zwar werden wir heute lasagne machen."
+    },
+    {
+      "source": "learning_corpus/vlogs/vlog_003",
+      "first_window_text": "So, meine Freunde, willkommen mal wieder zu einem Special-Video hier auf diesem Kanal. Ihr kennt hier alle meinen Hintergrund. Kamera-Man, einmal bitte nach links für. Genau, was man hier sieht, man sieht gar nichts."
+    }
+  ]
+}

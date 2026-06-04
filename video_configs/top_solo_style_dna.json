@@ -1,0 +1,188 @@
+{
+  "schema_version": "p5_g3_style_dna_v1",
+  "content_type": "top_solo",
+  "source_count": 30,
+  "generated_utc": "2026-06-04T16:38:59Z",
+  "cuts_per_minute": {
+    "median": 6.012,
+    "p10": 0.762,
+    "p90": 26.753
+  },
+  "median_clip_seconds": {
+    "median": 4.175,
+    "p10": 0.972,
+    "p90": 23.074
+  },
+  "audio_dynamic_range": {
+    "median": 18.178,
+    "p10": 12.842,
+    "p90": 25.318
+  },
+  "voice_intensity_distribution": {
+    "normal": 73.018,
+    "leise_erhoeht": 21.321,
+    "schreien": 4.629,
+    "bruellen": 1.032
+  },
+  "intensity_clustering": {
+    "front_loaded": 10,
+    "burst": 10,
+    "even": 5,
+    "scattered": 3,
+    "back_loaded": 2
+  },
+  "opening_pattern": {
+    "action": 18,
+    "question": 12
+  },
+  "closing_pattern": {
+    "action": 30
+  },
+  "clip_length_histogram": [
+    {
+      "label": "0-2s",
+      "count": 2186
+    },
+    {
+      "label": "2-5s",
+      "count": 762
+    },
+    {
+      "label": "5-10s",
+      "count": 358
+    },
+    {
+      "label": "10-20s",
+      "count": 232
+    },
+    {
+      "label": "20s+",
+      "count": 219
+    }
+  ],
+  "focus_decision_distribution": {
+    "gameplay": 30
+  },
+  "first_window_text": [
+    {
+      "source": "learning_corpus/top_solo/video_001",
+      "first_window_text": "Die heutige Challenge ist es, nur mit grünen Waffen zu gewinnen. Keine Lille, keine Golden, nur Grüne. Wenn wir damit gewinnen, schuld ich ihm ein Abo und ich sag es euch. Am Ende, das hat das knappeste, was ich jemanden ein Vorteil erlebt habe."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_002",
+      "first_window_text": "Ihr fragt euch bestimmt, was ist das für ein Skin? Ich zerstörer in dieser Folge die gesamte Top-Lin mit einem Bleistift. Wie gut wir sind. Echtest du?"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_003",
+      "first_window_text": "Wir dürfen heute nur mit der Waffe spielen, die wir auch die ersten Kiste erhalten haben. Wie gut wir sind. Er sagt, ich hab nicht zu verlieren, da gefilmt. Ja, und du sagst ihm, hau, wir müssen zu verlieren, wo bin ich zu verlieren, zu verlieren."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_004",
+      "first_window_text": "Nach unserem letzten BadWos-Fail haben ich schon nils noch stetig für besser. Wie gut wir heute sind. Ich sag dir nicht, dass du bornstet. Eben ich auch. Oh mein Gott, hab ich schon es genommen. Erdenkunftsgenut."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_005",
+      "first_window_text": "Mein letztes Bett, wo's wieder war, kann ab einem Jahr. Wie gut meine Pippo Pilskills noch sind. Äh, hier, mir, jetzt, wo bist du? Suck, er ist bei uns!"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_006",
+      "first_window_text": "Im heutigen Video werden wir versuchen, ein Sieg zu holen, aber nur mit grauen Waffen. Ob wir Spaß haben werden. Nicht nur! Lasst mich nur an den guten Stress! Das hält in der heutigen Folge."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_007",
+      "first_window_text": "Da ist wieder ein großen Pokémon halt, gibt dacht ich mir testen heute was Smaller aus Aber nicht den ganz normalen Smaller, sondern umgewandeln von Glomander bis hin zu Glucher Wie das aussehen wird und ob wir Spaß haben werden Handtürgen geht weiter, Handtürgen"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_008",
+      "first_window_text": "Was passiert, wenn man einer Frau eine Page in die Hand gibt? Genau, man bekommt Nieler. Heute testen wir das erste Mal Nieler aus. Ob wir uns einen neuen Main gefunden haben. Oh mein Gott, wie schnell wir gemacht."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_009",
+      "first_window_text": "Wie geht er? Warum bist du so weit vorne? Warum bist du dann so weit vorne? Ja, ja, was ja. Wo bin ich? Oh mein Gott, was kannst du da? Ich kann nicht gar nicht übersehen. Ich hab wieder mal drei in beschenkt. Oh, und ich hab die geäckten Golden über..."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_010",
+      "first_window_text": "So ein Freundin bekommen wir zu einer neuen Folge von League of Legends. Wir spielen heute Nulus gerne auf der Bottlein. Wir haben noch nie gefilmt, Nulus gerade gespült. Deswegen wird's schon lustig. Wenn das die Quelle trastet, dann liken wir gerne den Kanal."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_011",
+      "first_window_text": "So eine Freude in der Koalition einfach auf diesen Kanal, die werden heute Yasuyonig auf der Bordle entspielen. Wie das sein wird, ob wir Spaß haben werden oder komplett auf die Fresse bekommen, dass wir gleich sehen, wenn's gefällt, lasst es gleich, die aber gerne gehen können."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_012",
+      "first_window_text": "So, meine Freunde, wir kommen wieder zu einer neuen Folge auf diesem Kanal. Heute mal nicht allein, sind wir mit zwei Kollegen. Wir gehen ins Rank rein, wenn's gefällt, lasst es gleich die gerne in die Kanal. Und ich würde sagen, wir springen in die Runderein. Wege einfach verkaufen, ich hab's den Rücken und einfach kaufen, mich einfach."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_013",
+      "first_window_text": "So meine Freunde bekommen wieder zu einer neuen Folge von League of Legends. Heute mal was anderes, denn wir spielen zwar Mordekaiser für Toplane, aber die League of Legends kennen unter euch wissen, dass es ja Customs Skins gibt, die man testen kann."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_014",
+      "first_window_text": "So, Freunde, wir kommen wieder zur Rundfrage von League of Legends, heute spielen wir mal Twisted Fate auf dem Mittlerien, aber schon lange nicht mehr gespielt, ganz gefällt, lasst ein Like, der wir gerne nicht her. Und ich würde sagen, wir springen uns auch schon in die Runderei."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_015",
+      "first_window_text": "So meine Freunde, wir kommen wieder zu einer neuen Folge von Minecraft's Syrupol, als wir jetzt zusammen mit dem Nilz. Heute werden wir versuchen. Danke dir. Heute werden wir versuchen, das sie fertig zu bauen, uns hat den Hochgeschwindigkeitskühler, damit wir hier auch weiterbauen können."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_016",
+      "first_window_text": "Äh, ich meine die echte Giga, wow. Das waren richtig gute Gegner. Dein Steinschleuder, wirst die Steinschleuder... Ja, kannst du wieder kommen jetzt? Warte mal ganz kurz. Ja, geht dir? Nicht du, das war für die Gegner."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_017",
+      "first_window_text": "So meine Freundin, willkommen wieder zu einer neuen Folge von League of Legends. Heute spielen wir mal was Neues wie Spielen, Varus auf der Top-Lane. Warum? Gerade spielt jeder Varus auf der Top-Lane. Das ist nämlich gerade Free-Alo. Deswegen testen wir das auch gerne mal aus."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_018",
+      "first_window_text": "So, meine Freunde, wir kommen wieder zur neuen Frühgeporne League of Legends. Wir spielen heute mal das erste Mal Breyer im Dragon. Ich hab coolen Skin für sie bekommen und doch der Rock-Testen wird es mal nicht. Also wenn ich gehört, lasst mal nicht, aber ich kann auch nicht für sagen,"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_019",
+      "first_window_text": "So in der Freunde bekommen wir wieder zu einer neuen Folge von Minecraft-Zu-Pulis. In der letzten Folge haben wir es geschafft, diese Maschinenkonstruktion hier zu bauen. Die Verbrauchten noch ein bisschen zu viel Energie, das ist nicht so gut,"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_020",
+      "first_window_text": "So, meine Freunde, willkommen wieder zu einer neuen Folge von League of Legends. Heute spielen wir keinen League of randomizer, sondern wir spielen Schiwana im Jangle. Warum? Schiwana mit Balkan-Upgrade bekommen wir sogar einen Re-Work. Ich habe sie in der ganze Zeit, wo ich League of Legends spiele, vielleicht einmal gespielt."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_021",
+      "first_window_text": "So, meine Freunde, bekommen wir jetzt zum neuen Bier auf diesem Kanal. Wir springen direkt in die nächste Runde rein. Wenn's euch weht, lasst nicht um gerne die Kanal. Und wir sehen uns gleich in der Runde drin. Lasst Schifty geht auf ganz Oldschool. Ich hab' einen Schofflinte. Alle wie sieht die aus."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_022",
+      "first_window_text": "So, meine Freunde, willkommen wieder zu einer neuen Folge von Microfzio-Produce. In der letzten Folge haben wir diese Maschinen gebaut. Nils hat einfach mal irgendwelche Stöcke hierhin gebaut, die darf ich jetzt wieder abbauen."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_023",
+      "first_window_text": "So meine Freunde, du kommst wieder zur neuen Konto von League of Randomizer. Wir drücken direkt auf Randomize Fantasy gefällt lassen, nach dem Legionnika und ich würde sagen, wie los geht's. So, wir haben Gin auf der Midlane mit Exhaust und Teleport."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_024",
+      "first_window_text": "Hier ist ein Gegner vor mir. Wau, digger, ich treffe wieder gar nichts zu den Nächsten. Korrekt, he? Ja, ich habe einen."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_025",
+      "first_window_text": "So meine Freunde, wir kommen wieder zu einer neuen Folge von Minecraft-Ciopulis. Wir sind in der 10. Folge. In der letzten Folge haben wir, man sieht es in der Kiste hier schon ein paar Kisten geboten."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_026",
+      "first_window_text": "Die ist noch eine Kiste. Mit nichts. Stark. Wow, bigger. Mein Aim ist... ...Auer."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_027",
+      "first_window_text": "Seid ihr gedärscht? Oh mein Gott, die Dasch wird! Oha! Jawoll! Wusst ihr echt mit Tod? Reil? Das war krass."
+    },
+    {
+      "source": "learning_corpus/top_solo/video_028",
+      "first_window_text": "Ja, du wirst gleich hier, äh, ob der Baummeister seh wie ich, ob ich hier Baum werde. Wach, guck! Wie bauch ich was? Das ist der Mutus. Voll speziell. Ja, wann hast du schon einmal hiermals mal getötet?"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_029",
+      "first_window_text": "Ich komme zu den Hilfe, ich mein es ernst Hilfe. Digger, ich bin tot, laber mich nicht voll. Hab mich einen Schuss getroffen. Okay, und dann?"
+    },
+    {
+      "source": "learning_corpus/top_solo/video_030",
+      "first_window_text": "Warum bist du stehen geblieben? Warum bist du genau die Wunsch stehen geblieben? Digger, ich bin tou! Ah, bin! Ja. Digger, lass doch mal los! Ich brauche den Snipe jetzt."
+    }
+  ]
+}
