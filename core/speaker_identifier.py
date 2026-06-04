@@ -73,6 +73,10 @@ class SpeakerIdentifier:
     def __init__(
         self,
         reference_audio_path: str | Path = "data/voice_references/ali_voice_reference.wav",
+        # Reference: data/voice_references/ali_voice_reference.wav
+        # Source: pair_001 0:a:0 (Ali/Mic, Owner-ear-verified 2026-06-04)
+        # Contaminated predecessor renamed to ali_voice_reference.CONTAMINATED.wav
+        
         embedding_backend: EmbeddingBackend | None = None,
         ali_similarity_threshold: float = 0.60,
         friend_similarity_threshold: float = 0.40,

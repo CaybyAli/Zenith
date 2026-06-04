@@ -4,6 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
+# ali_source must be read from video_configs/pair_track_truth.json per pair.
+# Hardcoded 0:a:1 was wrong (contaminated). Retired 2026-06-04.
 
 ROOT = Path(".")
 AUDIT_PATH = ROOT / "reports" / "phase4_8" / "preflight" / "audio_track_audit.json"
@@ -46,7 +48,7 @@ def main() -> int:
         "-i",
         str(raw),
         "-map",
-        "0:a:1",
+        "0:a:0",  # TODO: read ali_source per-pair from video_configs/pair_track_truth.json — hardcoded retired 2026-06-04
         "-ac",
         "1",
         "-ar",
