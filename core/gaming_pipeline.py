@@ -4368,6 +4368,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             metadata={
                 "stage": "2B-28-C",
                 "job_id": getattr(job, "job_id", None),
+                "style_dna_pacing_enabled": True,
+                "style_dna_path": "video_configs/gaming_pairs_style_dna.json",
             },
         )
         apply_clip_duration_run_report_to_job(

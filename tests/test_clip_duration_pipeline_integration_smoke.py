@@ -55,6 +55,13 @@ def test_clip_duration_runner_and_apply_are_used():
     assert "clip_duration_report = run_clip_duration_optimization_for_job" in block
 
 
+def test_clip_duration_pipeline_enables_style_dna_pacing_opt_in():
+    block = _clip_duration_block()
+
+    assert '"style_dna_pacing_enabled": True' in block
+    assert '"style_dna_path": "video_configs/gaming_pairs_style_dna.json"' in block
+
+
 def test_clip_duration_block_has_safe_try_except():
     block = _clip_duration_block()
 
