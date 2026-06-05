@@ -133,3 +133,17 @@ Rule ? K7 must use clean source without burned-in captions.
 - Phase 5 Final-GO wird dadurch vorbereitet, aber noch NICHT automatisch gestartet.
 - Phase 5.5 bleibt locked bis ausdruecklicher Master Final-GO.
 <!-- K7-1J_GO_NO_GO_END -->
+
+<!-- PHASE5_FINAL_GO_DECISION_START -->
+## 2026-06-05 - Entscheidung: PHASE 5 FINAL-GO
+
+- Entscheidung: GO
+- Phase 5 Status: 100% / DONE / FINAL-GO
+- Blocker: keine
+- Risiken: nur sauberer Uebergang in Phase 5.5
+- Alle 8 Endkriterien sind DONE
+- K7 echter Kontroll-Run + Ali-Freigabe ist DONE
+- Phase 5.5 ist noch NICHT gestartet
+- Entscheidung: Phase 5 abgeschlossen
+- Naechster Schritt: separates Phase 5.5 Opening-Gate
+<!-- PHASE5_FINAL_GO_DECISION_END -->

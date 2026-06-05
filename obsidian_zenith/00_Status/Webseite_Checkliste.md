@@ -66,5 +66,24 @@ Nicht als erledigt markieren:
 - Overnight-Learning-Loop
 - Dauerlernen
 - Phase 5.5
-- Final-GO als eigener sp?terer Schritt
+- Final-GO als eigener spaeterer Schritt
 <!-- K7-1J_WEBSEITE_CHECKLISTE_END -->
+
+<!-- PHASE5_FINAL_GO_WEBSITE_START -->
+## Phase 5 Final-GO - Checkliste
+
+Stand: 2026-06-05
+
+Erledigt:
+- Phase 5 Final-GO / Endkriterien vollstaendig
+- Alle 8 Phase-5-Endkriterien DONE
+- K7 echter Kontroll-Run + Ali-Freigabe erledigt
+- Analyse-Only KI-Track / K8 erledigt, falls in dieser Checkliste gefuehrt
+
+Nicht erledigt / nicht starten:
+- Overnight-Learning-Loop
+- Dauerlernen
+- Phase 5.5 gestartet
+- Musik
+- Qwen-Autocut
+<!-- PHASE5_FINAL_GO_WEBSITE_END -->
