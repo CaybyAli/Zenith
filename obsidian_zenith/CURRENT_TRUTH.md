@@ -152,3 +152,14 @@ Beweise:
 - TimelineBuilder Introspection grün
 
 Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung, abhängig vom Masterplan.
+
+## K3K6_VISUAL_PROOF_ACCEPTED_2026_06_05
+
+- Phase 5: ca. 90?92%
+- K3 Captions: DONE
+- K6 Layout/Fokus: DONE
+- K7 Kontroll-Run + Ali-Freigabe: OPEN
+- Phase 5 Final-GO: NEIN
+- Phase 5.5: 0%, gesperrt
+- N?chster Gate: K7 Kontroll-Run Vorbereitung
+- K7-Regel: saubere Quelle ohne bereits eingebrannte Captions nutzen

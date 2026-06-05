@@ -78,3 +78,11 @@ Proof-Commit: 9d4a159
 Phase 5: ca. 84–85%
 Phase 5.5: 0%, gesperrt
 Nächster Gate: K3/K6 oder K7 nach Masterentscheidung.
+
+## K3K6_STATUS_BOARD_UPDATE_2026_06_05
+
+- Current phase: ca. 90?92%
+- K3: DONE
+- K6: DONE
+- Next: K7 Kontroll-Run Vorbereitung
+- Phase 5.5: 0%, gesperrt

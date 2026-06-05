@@ -103,3 +103,9 @@ Commit: 9d4a159
 Begründung: K1 Final Proof nach Minimal-Fix grün.
 Phase 5 Final-GO: weiterhin NEIN.
 Phase 5.5: gesperrt.
+
+GO ? K3/K6 technical DONE accepted.
+
+NO-GO ? Phase 5 Final-GO still blocked until K7 control run and Ali approval.
+
+Rule ? K7 must use clean source without burned-in captions.

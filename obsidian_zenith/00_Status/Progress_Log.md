@@ -112,3 +112,5 @@ Proof:
 - Kein Render/Ingest/Qwen/Musik/Phase 5.5.
 
 Phase 5 jetzt ca. 84–85%.
+
+2026-06-05 ? K3/K6 Visual Proof accepted as DONE. Preview after libass path hotfix proved K3 captions and K6 layout/focus. Double caption layer documented as source artifact. Next: K7 prep.

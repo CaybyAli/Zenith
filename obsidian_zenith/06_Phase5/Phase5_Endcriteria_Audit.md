@@ -170,3 +170,15 @@ Endcriteria-Status nach K1:
 6. dynamischer Layout-/Fokus-Wechsel sichtbar = PARTIAL
 7. echter Kontroll-Run + Ali-Freigabe = OPEN
 8. LLMBrain Qwen Neben-Track = DONE
+
+## K3K6_ENDCRITERIA_UPDATE_2026_06_05
+
+- K3 Shorts Captions OpusClips-nah: DONE
+- K6 dynamischer Layout-/Fokus-Wechsel sichtbar: DONE
+- K7 echter Kontroll-Run + Ali-Freigabe: OPEN
+- Phase 5: ca. 90?92%
+- Final-GO: NEIN
+
+Audit-Eintrag:
+
+2026-06-05 ? K3/K6 Visual Proof accepted. Double caption layer accepted as source-artifact. K7 must use clean source without burned-in captions.

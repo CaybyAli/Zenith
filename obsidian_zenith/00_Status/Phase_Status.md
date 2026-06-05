@@ -53,3 +53,24 @@ DONE:
 Offen:
 - K3/K6 Shorts-Captions/Layout/Fokus Final Proof
 - K7 echter Kontroll-Run + Ali-Freigabe
+
+## K3K6_STATUS_UPDATE_2026_06_05
+
+Phase 5: ca. 90?92%
+Phase 5.5: 0%, gesperrt
+
+Fertig:
+
+- K1
+- K2
+- K3
+- K4
+- K5
+- K6
+- K8
+
+Offen:
+
+- K7 echter Kontroll-Run + Ali-Freigabe
+
+Phase 5 Final-GO: NEIN
