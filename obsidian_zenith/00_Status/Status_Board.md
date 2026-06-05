@@ -36,7 +36,7 @@ Remote full hash:
 7f0bfdf0105359764e995cab4ddc7aa7e48c7395
 
 Nächster Gate:
-K2 WhisperX Lifeline Gate.
+K1 Skeleton/Core Final Proof.
 
 ## K8 Update
 
@@ -52,4 +52,21 @@ Sicherheitsgrenze:
 Qwen darf nur analysieren, nicht schneiden.
 
 Nächster Gate:
-K2 WhisperX Lifeline Gate.
+K1 Skeleton/Core Final Proof.
+## K2 Update
+
+K2 WhisperX Lifeline ist DONE.
+
+Beweis:
+- echter Bridge-Smoke mit .venv_whisperx_p5_2
+- Engine: whisperx
+- Segments: 1
+- Words: 13
+- Timestamped Words: 13
+- kein silent fallback sichtbar
+
+Hinweis:
+torchcodec-Warnung bleibt Beobachtungsrisiko.
+
+Nächster Gate:
+K1 Skeleton/Core Final Proof.

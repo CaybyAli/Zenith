@@ -32,7 +32,6 @@ K5 DONE bedeutet NICHT Phase 5 final.
 
 Weiterhin offen:
 - K1 Skeleton/Core final beweisen
-- K2 WhisperX stable Primary Engine
 - K3 Shorts Captions visueller Qualitätscheck
 - K6 Layout/Fokus sichtbarer Proof
 - K7 echter Kontroll-Run + Ali-Freigabe
@@ -40,7 +39,7 @@ Weiterhin offen:
 
 ## Nächster Gate
 
-K2 WhisperX Lifeline Gate.
+K1 Skeleton/Core Final Proof.
 
 Nicht:
 - Full Render

@@ -17,7 +17,7 @@ Ergebnis:
 - Phase 5 neu bewertet: ca. 65–70%
 - Phase 5.5 bleibt 0% und gesperrt
 - K4 DONE
-- K1/K2/K3/K5/K6 PARTIAL
+- K1/K3/K6 PARTIAL
 - K7 OPEN
 
 Entscheidung:
@@ -47,7 +47,7 @@ Phase-Status:
 - Phase 5 Final-GO: nein
 
 Nächster Gate:
-K2 WhisperX Lifeline Gate.
+K1 Skeleton/Core Final Proof.
 
 ## 2026-06-05 — K8 Qwen Local Side-Track DONE
 
@@ -64,9 +64,39 @@ Code Commit:
 c549586 feat(P5-K8): add local Qwen side-track adapter
 
 Phase-Status:
-- Phase 5: ca. 78–80%
+- Phase 5: ca. 80–82%
 - Phase 5.5: 0%, gesperrt
 - Phase 5 Final-GO: nein
 
 Nächster Gate:
-K2 WhisperX Lifeline Gate.
+K1 Skeleton/Core Final Proof.
+## 2026-06-05 — K2 WhisperX Lifeline DONE
+
+Ergebnis:
+- K2 von PARTIAL auf DONE gesetzt.
+- WhisperX Primary Engine technisch bewiesen.
+- Echter Bridge-Smoke grün.
+- TEMP-Report entsteht.
+- Segmente und Word-Timestamps vorhanden.
+- Kein silent fallback sichtbar.
+
+Smoke:
+- Bridge Python: D:\Zenith\.venv_whisperx_p5_2\Scripts\python.exe
+- Audio Fixture: tests\fixtures\whisper_probe.wav
+- Engine: whisperx
+- Segments: 1
+- Words: 13
+- Timestamped Words: 13
+- Fallback Hint: False
+- K2_REAL_BRIDGE_SMOKE_OK
+
+Risiko:
+torchcodec-Warnung beobachten, aktuell kein Blocker.
+
+Phase-Status:
+- Phase 5: ca. 80–82%
+- Phase 5.5: 0%, gesperrt
+- Phase 5 Final-GO: nein
+
+Nächster Gate:
+K1 Skeleton/Core Final Proof.

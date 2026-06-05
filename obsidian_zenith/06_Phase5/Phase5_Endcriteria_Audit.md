@@ -6,7 +6,7 @@ Status: akzeptiert durch ChatGPT Senior-Master
 
 ## Neue Fortschrittsbewertung
 
-- Phase 5: ca. 78–80%
+- Phase 5: ca. 80–82%
 - Phase 5.5: 0%
 - Phase 5 Final-GO: nein
 - Phase 5.5 öffnen: nein
@@ -16,7 +16,7 @@ Status: akzeptiert durch ChatGPT Senior-Master
 | Nr | Kriterium | Status | Harte Wahrheit |
 |---|---|---:|---|
 | 1 | Skeleton sauber in core | PARTIAL | Core-Struktur existiert, aber Struktur-/Full-Suite-Gate fehlt. |
-| 2 | WhisperX stable Primary Engine | PARTIAL | Eingebaut, aber echter stabiler Lauf mit Umgebung/PATH/ffmpeg fehlt. |
+| 2 | WhisperX stable Primary Engine | DONE | Echter Bridge-Smoke mit WhisperX, CUDA, ffmpeg, TEMP-Report, Segmenten und Word-Timestamps bewiesen. |
 | 3 | Shorts-Captions OpusClips-nah | PARTIAL | Technisch gebaut, aber visueller Qualitätscheck fehlt. |
 | 4 | Style-DNA aus 53 Fingerprints | DONE | 20 + 30 + 3 = 53 Fingerprints plausibel bewiesen. |
 | 5 | Pipeline schneidet nach gelerntem Ali-Stil | DONE | Style-DNA beeinflusst Timeline-Scoring mit Test-Beweis. Commit: 7f0bfdf. |
@@ -31,7 +31,6 @@ Status: akzeptiert durch ChatGPT Senior-Master
 ## Teilweise gebaut
 
 - K1 Skeleton/Core
-- K2 WhisperX Primary
 - K3 Shorts Captions
 - K5 Ali-Stil Consumption
 - K6 Layout/Fokus
@@ -52,7 +51,7 @@ Status: akzeptiert durch ChatGPT Senior-Master
 
 ## Neue Reihenfolge
 
-1. K2 WhisperX Lifeline Gate
+1. K1 Skeleton/Core Final Proof
 3. Analyse-only KI-Track
 4. Overnight-Learning-Loop
 5. Style-Memory Prüfung
@@ -109,7 +108,36 @@ Beweis:
 - Keine Dateiänderung beim Real-Smoke.
 
 Neue Phase-5-Schätzung:
-ca. 78–80%
+ca. 80–82%
+
+Phase 5 Final-GO:
+NEIN
+
+Phase 5.5:
+weiter 0% und gesperrt
+## Update 2026-06-05 — K2 DONE
+
+K2 wurde von PARTIAL auf DONE gesetzt.
+
+Beweis:
+- K2 1A Diagnose: grün
+- K2 1A.2 Bridge-venv Import: grün
+- K2 1B Mini-Smoke: grün
+- Bridge Python: D:\Zenith\.venv_whisperx_p5_2\Scripts\python.exe
+- Audio Fixture: tests\fixtures\whisper_probe.wav
+- Engine: whisperx
+- Segments: 1
+- Words: 13
+- Timestamped Words: 13
+- Fallback Hint: False
+- K2_REAL_BRIDGE_SMOKE_OK
+- tracked-only final leer
+
+Hinweis:
+torchcodec-Warnung bleibt Beobachtungsrisiko, aber kein Blocker für K2 DONE.
+
+Neue Phase-5-Schätzung:
+ca. 80–82%
 
 Phase 5 Final-GO:
 NEIN

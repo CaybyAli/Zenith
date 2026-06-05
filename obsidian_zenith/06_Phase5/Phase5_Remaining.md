@@ -1,9 +1,9 @@
-﻿# PHASE 5 REMAINING
+# PHASE 5 REMAINING
 
 ## Was Phase 5 am Ende noch beweisen muss
 
 1. Skeleton sauber in `core`
-2. WhisperX stabile Primary Engine
+2. DONE: WhisperX stabile Primary Engine
 3. Shorts-Captions Qualität
 4. Style-DNA aus 53 Fingerprints plausibel
 5. Pipeline nutzt gelernten Ali-Stil

@@ -3,10 +3,11 @@
 ## Phase 5
 
 Status: nicht final fertig
-Fortschritt: ca. 78–80%
+Fortschritt: ca. 80–82%
 
 ## Fertig / hart bewiesen
 
+- K2 WhisperX Primary Engine / Lifeline
 - K4 Style-DNA aus 53 Fingerprints / Reference plausibel
 - K5 Style-DNA beeinflusst Timeline-Scoring
 - K8 Qwen lokaler Side-Track über Ollama REST
@@ -17,7 +18,6 @@ Fortschritt: ca. 78–80%
 ## Teilweise gebaut, aber nicht final bewiesen
 
 - K1 Skeleton/Core
-- K2 WhisperX Primary Engine
 - K3 Shorts Captions OpusClips-nah
 - K6 dynamischer Layout-/Fokus-Wechsel sichtbar
 
@@ -30,7 +30,7 @@ Fortschritt: ca. 78–80%
 
 ## Nächster Gate
 
-K2 WhisperX Lifeline Gate.
+K1 Skeleton/Core Final Proof.
 
 ## Phase 5.5
 

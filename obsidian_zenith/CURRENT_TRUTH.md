@@ -12,7 +12,7 @@ Truth owner: Ali / ChatGPT Senior-Master bis Claude zurück ist
 
 ## Aktuelle Phase
 
-- Phase 5: ca. 78–80%
+- Phase 5: ca. 80–82%
 - Phase 5.5: 0%
 - Status: Freeze erreicht, Obsidian wird aufgebaut
 - Phase 5 ist noch NICHT final fertig
@@ -83,9 +83,9 @@ Danach erst Phase 5 geordnet weiterführen.
 - [[Phase5_Endcriteria_Audit]]
 - Ergebnis: Phase 5 ca. 65–70%
 - K4 DONE
-- K1/K2/K3/K6 PARTIAL
+- K1/K3/K6 PARTIAL
 - K7 OPEN
-- Nächster Gate: K2 WhisperX Lifeline Gate
+- Nächster Gate: K1 Skeleton/Core Final Proof
 
 ## K5 Update
 
@@ -97,7 +97,7 @@ Danach erst Phase 5 geordnet weiterführen.
 - Phase 5 jetzt ca. 72–75%.
 - Phase 5 Final-GO bleibt NEIN.
 - Phase 5.5 bleibt gesperrt.
-- Nächster Gate: K2 WhisperX Lifeline Gate.
+- Nächster Gate: K1 Skeleton/Core Final Proof.
 
 ## K8 Update
 
@@ -108,7 +108,23 @@ Danach erst Phase 5 geordnet weiterführen.
 - role=analysis_only.
 - can_cut=false.
 - Kein Qwen-Auto-Schnitt.
-- Phase 5 jetzt ca. 78–80%.
+- Phase 5 jetzt ca. 80–82%.
 - Phase 5 Final-GO bleibt NEIN.
 - Phase 5.5 bleibt gesperrt.
-- Nächster Gate: K2 WhisperX Lifeline Gate.
+- Nächster Gate: K1 Skeleton/Core Final Proof.
+## K2 Update
+
+- [[K2_WhisperX_Lifeline]]
+- Status: DONE
+- WhisperX Primary Engine technisch bewiesen.
+- Echter Bridge-Smoke grün.
+- Engine: whisperx.
+- Segments: 1.
+- Words: 13.
+- Timestamped Words: 13.
+- Kein silent fallback sichtbar.
+- torchcodec-Warnung bleibt Beobachtungsrisiko, aktuell kein Blocker.
+- Phase 5 jetzt ca. 80–82%.
+- Phase 5 Final-GO bleibt NEIN.
+- Phase 5.5 bleibt gesperrt.
+- Nächster Gate: K1 Skeleton/Core Final Proof.
