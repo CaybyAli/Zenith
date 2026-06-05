@@ -8,9 +8,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from core.ffmpeg_helper import get_ffmpeg_path, get_ffprobe_path
 
-FFMPEG_EXE = Path(r"D:\Tools\ffmpeg\bin\ffmpeg.exe")
-FFPROBE_EXE = Path(r"D:\Tools\ffmpeg\bin\ffprobe.exe")
+
+FFMPEG_EXE = Path(get_ffmpeg_path())
+FFPROBE_EXE = Path(get_ffprobe_path())
 
 
 def read_json(path: Path) -> Any:

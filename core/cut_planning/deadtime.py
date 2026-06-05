@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from core.ffmpeg_helper import get_ffmpeg_path
+
 from core.reaction_intensity_signal_builder import probe_video_size, resolve_video
 from core.video_config import normalize_protected_ranges, read_video_config
 
@@ -932,10 +934,7 @@ def write_text_report(path: Path, audit: dict[str, Any]) -> None:
 
 
 def _ffmpeg_path() -> str:
-    for candidate in (Path(r"D:\Tools\ffmpeg\bin\ffmpeg.exe"), Path(r"C:\ffmpeg\bin\ffmpeg.exe")):
-        if candidate.exists():
-            return str(candidate)
-    return "ffmpeg"
+    return get_ffmpeg_path()
 
 
 def resolve_gameplay_region(
