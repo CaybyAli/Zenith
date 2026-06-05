@@ -13,6 +13,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from core import pair_track_truth_loader
 from core.ffmpeg_helper import apply_ffmpeg_thread_cap, get_ffmpeg_path
+from core.shorts_render_driver import ShortsRenderDriver
+from models.shorts_clip import ShortsClip
+from models.shorts_reframe_plan import ShortsReframePlan
 
 PLAN_FILENAME = "k7_control_plan.json"
 MANIFEST_FILENAME = "k7_control_manifest.json"
@@ -26,6 +29,21 @@ BLOCKED_SOURCE_PARTS = {"reports", "exports", "shorts"}
 BLOCKED_SOURCE_NAME_TOKENS = ("caption", "subtitle", "preview", "proof", "emoji")
 ALLOWED_SOURCE_EXTENSIONS = {".mp4", ".mov", ".mkv"}
 OUTPUT_DIR_SEQUENCE = ("reports", "phase5", "k7_control_run")
+
+PRODUCTION_RENDERER_ROUTE = "ShortsRenderDriver.render_short"
+PRODUCTION_LAYOUT_EXPECTED = "hybrid_split_or_existing_short_layout"
+PRODUCTION_JOB_ID = "k7_control_preview"
+PRODUCTION_HYBRID_SPLIT_FILTER = (
+    "[0:v]hwdownload,format=nv12,format=yuv420p,setsar=1,"
+    "split=2[facecam_src][gameplay_src];"
+    "[facecam_src]crop=1920:1080:0:0,"
+    "hwupload_cuda,scale_cuda=1080:640:force_original_aspect_ratio=increase,"
+    "hwdownload,format=yuv420p,crop=1080:640:10:0[facecam_block];"
+    "[gameplay_src]crop=1920:1080:1910:0,"
+    "hwupload_cuda,scale_cuda=1080:1280:force_original_aspect_ratio=increase,"
+    "hwdownload,format=yuv420p,crop=1080:1280[gameplay_block];"
+    "[facecam_block][gameplay_block]vstack=inputs=2[out]"
+)
 
 
 def _casefold_parts(path: Path) -> list[str]:
@@ -256,7 +274,8 @@ def build_manifest(
     *,
     plan: dict[str, Any],
     output_video: Path,
-    command: list[str],
+    command: list[str] | None = None,
+    captions_generated: bool = False,
 ) -> dict[str, Any]:
     return {
         "status": "ok",
@@ -276,17 +295,22 @@ def build_manifest(
         "clean_source_guard": True,
         "real_run_enabled": True,
         "audio_present_expected": True,
-        "audio_strategy": f"map_{plan['ali_source']}_minimal_control_audio",
-        "captions_generated": False,
-        "captions_reason": (
-            "K7 runner control render only; full caption pipeline remains checked "
-            "by K3 and K7 Ali review"
-        ),
+        "audio_strategy": "production_short_renderer_audio",
+        "captions_generated": bool(captions_generated),
+        "captions_reason": "Captions are delegated to the production short renderer route.",
+        "captions_route": "production_short_renderer",
         "layout_or_reframe_applied": True,
-        "ffmpeg_command": command,
+        "renderer_route": PRODUCTION_RENDERER_ROUTE,
+        "quality_renderer": True,
+        "k7_test_filter_used_for_quality": False,
+        "production_layout_route_used": True,
+        "layout_expected": PRODUCTION_LAYOUT_EXPECTED,
+        "owner_review_required": True,
+        "bridge_call": command or [PRODUCTION_RENDERER_ROUTE],
         "notes": [
             "Uses locked clean source only.",
-            "Does not call old batch render entrypoints.",
+            "Uses the existing production ShortsRenderDriver route for quality output.",
+            "Does not call old probe scripts as subprocess entrypoints.",
             "Does not call external AI autocut.",
             "Does not add background audio.",
             "Documents pair truth in plan and manifest.",
@@ -295,7 +319,42 @@ def build_manifest(
     }
 
 
-def run_real_control_run(
+def build_production_short_clip(duration: float) -> ShortsClip:
+    return ShortsClip(
+        source_job_id="k7_control_bridge",
+        source_start_time=0.0,
+        source_end_time=float(duration),
+        planned_duration=float(duration),
+        reframe_plan=ShortsReframePlan(
+            layout_type="hybrid_split",
+            ffmpeg_crop_filter=PRODUCTION_HYBRID_SPLIT_FILTER,
+            layout_rationale=(
+                "K7 quality bridge uses the existing G2 hybrid_split short layout "
+                "through ShortsRenderDriver.render_short."
+            ),
+        ),
+        clip_index=0,
+    )
+
+
+def _move_output_and_sidecars_to_k7_names(rendered_path: Path, output_video: Path) -> None:
+    if not rendered_path.exists():
+        raise RuntimeError("K7_PRODUCTION_SHORT_OUTPUT_MISSING")
+
+    for suffix in (".ass", ".caption_audit.json", ".emoji_events.txt"):
+        sidecar = rendered_path.with_suffix(suffix)
+        target = output_video.with_suffix(suffix)
+        if sidecar.exists() and sidecar.resolve() != target.resolve():
+            sidecar.replace(target)
+
+    if rendered_path.resolve() != output_video.resolve():
+        rendered_path.replace(output_video)
+
+    if not output_video.exists():
+        raise RuntimeError("K7_PRODUCTION_SHORT_OUTPUT_MISSING")
+
+
+def _run_production_short_bridge(
     *,
     source: Path,
     output_dir: Path,
@@ -305,21 +364,48 @@ def run_real_control_run(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_video = output_dir / OUTPUT_VIDEO_FILENAME
-    command = build_ffmpeg_command(
-        source=source,
-        output_video=output_video,
-        duration=duration,
-        ali_source=str(plan["ali_source"]),
+    clip = build_production_short_clip(duration)
+
+    rendered_path = Path(
+        ShortsRenderDriver().render_short(
+            clip=clip,
+            source_video_path=str(source),
+            output_dir=str(output_dir),
+            job_id=PRODUCTION_JOB_ID,
+            add_captions=True,
+            transcript=None,
+        )
     )
 
-    run_ffmpeg_command(command)
+    _move_output_and_sidecars_to_k7_names(rendered_path, output_video)
 
     manifest = build_manifest(
         plan=plan,
         output_video=output_video,
-        command=command,
+        command=[
+            PRODUCTION_RENDERER_ROUTE,
+            f"job_id={PRODUCTION_JOB_ID}",
+            f"duration={float(duration):.3f}",
+            f"output_video={output_video}",
+        ],
+        captions_generated=output_video.with_suffix(".ass").exists(),
     )
     return write_json(manifest, output_dir / MANIFEST_FILENAME)
+
+
+def run_real_control_run(
+    *,
+    source: Path,
+    output_dir: Path,
+    duration: float,
+    plan: dict[str, Any],
+) -> Path:
+    return _run_production_short_bridge(
+        source=source,
+        output_dir=output_dir,
+        duration=duration,
+        plan=plan,
+    )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
