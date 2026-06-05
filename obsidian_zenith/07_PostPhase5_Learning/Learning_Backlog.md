@@ -18,8 +18,10 @@ Stand: 2026-06-06
 | P5-L6.5 5C | DONE | Obsidian Audit + Aufraeumen |
 | P5-L6.5 5D | DONE | Qwen Kontrollrun |
 | P5-L6.5 5E | DONE | Abschlussbericht / Final Audit |
-| P5-L7 | LATER / LOCKED | Echter kontrollierter Learning-Loop |
-| P5-L8 | LATER | Abschlussbericht / Final Audit |
+| P5-L6.5 5F | DONE | P5-L Close / 100% |
+| P5-L | CLOSED | Vorbereitung abgeschlossen |
+| Runtime Learning Gate | LATER / LOCKED | Spaeterer echter Schlaf-/Learning-Run |
+| Phase 5.5 Opening-Gate | NEXT / LOCKED | Musik-Integration vorbereiten, nur nach Master-GO |
 | Phase 5.5 Musik | LOCKED | Nicht Learning, nicht gestartet |
 
 ## DONE
@@ -34,6 +36,7 @@ Stand: 2026-06-06
 - 5C: Obsidian Audit + Aufraeumen abgeschlossen.
 - 5D: Qwen Kontrollrun abgeschlossen.
 - 5E: Final Audit Report und Claude Senior Handoff erstellt.
+- 5F: P5-L Close abgeschlossen, P5-L 100% / CLOSED.
 
 ## IN PROGRESS
 
@@ -41,13 +44,12 @@ Stand: 2026-06-06
 
 ## NEXT
 
-- Entscheidungs-Gate: P5-L7 echter kontrollierter Learning-Loop oder P5-L-Close.
+- Phase 5.5 Opening-Gate Musik-Integration.
 - Nur nach Master-GO.
 
 ## LATER
 
-- P5-L7 echter kontrollierter Learning-Loop.
-- P5-L8 Abschlussbericht / Final Audit.
+- Runtime Learning Gate / echter Schlaf-Learning-Run.
 
 ## 5D Ergebnis
 
@@ -66,9 +68,19 @@ Stand: 2026-06-06
 - Naechster Entscheidungs-Gate: P5-L7 oder P5-L-Close.
 - Phase 5.5 Musik bleibt locked.
 
+## 5F Ergebnis
+
+- P5-L: CLOSED.
+- P5-L6.5 5F: DONE.
+- Runtime Learning Gate: later / locked.
+- Phase 5.5 Opening-Gate: next, aber locked bis Master-GO.
+- Keine Runtime gestartet.
+- Keine Musik gestartet.
+
 ## LOCKED
 
 - Phase 5.5 Musik.
 - Qwen-Autocut.
+- Runtime Learning Gate ohne Master-GO.
 - Render/Ingest ohne eigenes Gate.
 - Reports committen ohne explizites GO.

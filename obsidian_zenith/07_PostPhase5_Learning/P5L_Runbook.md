@@ -29,32 +29,28 @@ Dieses Runbook erklaert neuen Chats, wie P5-L-Gruppen ablaufen.
 
 ## P5-L aktueller Stand
 
-- P5-L: 95%.
+- P5-L: 100% / CLOSED.
 - P5-L0 bis P5-L6: DONE.
 - P5-L6.5 5A: DONE.
 - P5-L6.5 5B: DONE.
 - P5-L6.5 5C: DONE.
 - P5-L6.5 5D: Qwen Kontrollrun DONE.
 - P5-L6.5 5E: Abschlussbericht / Final Audit DONE.
-- Naechster Schritt: Master-Entscheidung P5-L7 vs. P5-L-Close.
+- P5-L6.5 5F: P5-L Close DONE.
+- Naechster Projektbereich: Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
 
-## Entscheidungsweg nach 5E
+## 5F Entscheidung
 
-Option A: P5-L7 echter kontrollierter Learning-Loop.
-- Nur mit Master-GO.
-- Nur mit Enable-Flag, Stop-Schalter, Timeout, Manifest und klaren Output-Grenzen.
-- Kein Qwen-Autocut.
-- Keine Phase 5.5.
-
-Option B: P5-L als Vorbereitung schliessen.
+Option B wurde gewaehlt:
+- P5-L als Vorbereitung schliessen.
 - Echter Schlaf-/Learning-Run bleibt separates Runtime-Gate.
 - Phase 5.5 Musik bleibt locked bis separater Master-GO erteilt ist.
 
-## P5-L7 Status
+## Runtime Learning Gate Status
 
-P5-L7 echter kontrollierter Learning-Loop ist noch NICHT gestartet.
+P5-L7 / echter Schlaf-Learning-Run ist Runtime Learning Gate / later / locked.
 
-Vor P5-L7 braucht es:
+Vor Runtime Learning Gate braucht es:
 - Master-GO.
 - Enable-Flag.
 - Stop-Schalter.
@@ -70,3 +66,5 @@ Phase 5.5 Musik ist locked.
 Phase 5.5 ist NICHT Learning.
 
 Musik wurde nicht gestartet.
+
+Phase 5.5 Opening-Gate ist der naechste Projektbereich, aber nur nach Master-GO.

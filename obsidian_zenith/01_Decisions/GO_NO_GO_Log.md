@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L steht bei 95%. 5E Dokumentation ist erstellt. P5-L7 echter Loop bleibt NO-GO bis Master-GO. Phase 5.5 Musik bleibt locked.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik bleibt locked bis Opening-Gate.
 
 ## Phase 5 FINAL GO
 
@@ -167,11 +167,35 @@ Grenzen:
 - Keine Musik.
 - Kein echter Learning-Loop.
 
+## P5-L6.5 Gruppe 5F P5-L CLOSE FINAL GO
+
+Entscheidung: GO.
+
+Beweis:
+- Option B dokumentiert.
+- `obsidian_zenith/07_PostPhase5_Learning/P5L_Close_Report.md`
+- `obsidian_zenith/07_PostPhase5_Learning/Runtime_Learning_Gate.md`
+
+Ergebnis:
+- P5-L ist 100% / CLOSED.
+- P5-L wurde als Vorbereitung abgeschlossen.
+- P5-L7 / Schlaf-Learning-Run ist spaeteres Runtime Learning Gate / later / locked.
+
+Grenzen:
+- Echter Learning-Run bleibt NO-GO bis Runtime-Gate mit Master-GO.
+- Phase 5.5 Musik bleibt locked bis Opening-Gate mit Master-GO.
+- Kein Code.
+- Keine Reports committed.
+- Kein Qwen gestartet.
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
+
 ## Naechster Gate
 
-Master-Entscheidung nach 5E: P5-L7 echter kontrollierter Learning-Loop oder P5-L-Close als Vorbereitung.
+Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
 
 Weiterhin NO-GO:
-- P5-L7 echter Learning-Loop.
+- Runtime Learning Gate / echter Learning-Loop.
 - Phase 5.5 Musik.
 - Qwen-Autocut.

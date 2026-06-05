@@ -9,10 +9,9 @@ Post-Phase-5 Learning-Loop / P5-L.
 ## Aktueller Status
 
 - Phase 5: 100% / DONE / FINAL-GO.
-- P5-L: 90% / 100%.
-- P5-L6.5 5B Fixes: DONE.
-- P5-L6.5 5C Obsidian Audit + Aufraeumen: dieser Stand.
-- P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet.
+- P5-L: 100% / CLOSED.
+- P5-L6.5 5F P5-L Close: DONE.
+- Runtime Learning Gate: later / locked.
 - Phase 5.5 Musik: 0% / locked.
 
 ## Klare Trennung
@@ -43,4 +42,4 @@ Post-Phase-5 Learning-Loop / P5-L.
 
 ## Naechster Schritt
 
-P5-L6.5 Gruppe 5D - Qwen Kontrollrun, nur nach Master-GO.
+Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.

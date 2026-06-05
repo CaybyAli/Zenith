@@ -7,8 +7,8 @@ Stand: 2026-06-06
 | Bereich | Status | Harte Wahrheit |
 |---|---:|---|
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
-| P5-L | 95% / 100% | 5E Final Audit / Handoff erstellt; P5-L-Close braucht Master-Entscheidung. |
-| P5-L7 | offen | Echter kontrollierter Learning-Loop ist noch NICHT gestartet. |
+| P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
+| Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
 | Phase 5.5 Musik | 0% / locked | Musik ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
@@ -27,22 +27,20 @@ Stand: 2026-06-06
 | P5-L6.5 5C | DONE | 90% | Obsidian Audit + Aufraeumen |
 | P5-L6.5 5D | DONE | 95% | Qwen Kontrollrun |
 | P5-L6.5 5E | DONE | 95% | Abschlussbericht / Final Audit |
-| P5-L7 | OPEN | - | Echter kontrollierter Learning-Loop |
-| P5-L8 | LATER | - | Abschlussbericht / Final Audit |
+| P5-L6.5 5F | DONE | 100% | P5-L Close |
+| Runtime Learning Gate | LATER / LOCKED | - | Spaeterer echter Schlaf-/Learning-Run |
 
 ## Naechster Gate
 
-Master-Entscheidung nach 5E:
-- Option A: P5-L7 echter kontrollierter Learning-Loop.
-- Option B: P5-L als Vorbereitung schliessen und Schlaf-/Learning-Run als separates Runtime-Gate fuehren.
+Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
-- P5-L7 echter Learning-Loop: NO-GO bis Master-GO.
-- Echter Overnight-Dauerlauf: NO-GO bis eigenes Gate.
+- Runtime Learning Gate / echter Schlaf-Learning-Run: NO-GO bis Master-GO.
+- Echter Overnight-Dauerlauf: NO-GO bis eigenes Runtime-Gate.
 - Qwen-Autocut: NO-GO.
-- Render/Preview-Render: NO-GO in P5-L6.5.
-- Ingest: NO-GO in P5-L6.5.
+- Render/Preview-Render: NO-GO ohne eigenes Gate.
+- Ingest: NO-GO ohne eigenes Gate.
 - Musik / Phase 5.5: locked.
 - Reports: bleiben untracked und werden nicht committed.
 
@@ -81,3 +79,12 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - P5-L bleibt 95% bis Master P5-L-Close entscheidet.
 - P5-L7 weiterhin offen und nicht gestartet.
 - Phase 5.5 Musik locked.
+
+## 5F Ergebnis
+
+- Option B dokumentiert.
+- P5-L ist 100% / CLOSED.
+- P5-L7 / Schlaf-Learning-Run ist Runtime Learning Gate / later / locked.
+- Kein neuer Run.
+- Phase 5.5 Musik locked.
+- Naechster Gate: Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.

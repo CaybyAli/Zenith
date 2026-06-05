@@ -17,11 +17,15 @@ Stand: 2026-06-06
 - [x] P5-L6 Owner Review + Quality Gate.
 - [x] P5-L6.5 5A Codex Audit.
 - [x] P5-L6.5 5B Audit-Fixes.
-- [x] P5-L6.5 5C Obsidian Audit + Aufraeumen, sobald dieser Commit remote ist.
+- [x] P5-L6.5 5C Obsidian Audit + Aufraeumen.
+- [x] P5-L6.5 5D Qwen Kontrollrun.
+- [x] P5-L6.5 5E Final Audit / Handoff.
+- [x] P5-L6.5 5F P5-L Close.
+- [x] P5-L Abschluss / 100% CLOSED als Vorbereitung.
 
 ## Darf NICHT als erledigt markiert sein
 
-- [ ] P5-L7 echter kontrollierter Learning-Loop.
+- [ ] Runtime Learning Gate / echter Schlaf-Learning-Run.
 - [ ] Echter Overnight-Dauerlauf.
 - [ ] Dauerlernen.
 - [ ] Qwen-Autocut.
@@ -33,14 +37,15 @@ Stand: 2026-06-06
 ## Aktueller Status fuer Webseite
 
 - Phase 5: 100% / DONE.
-- P5-L: 90% / 100%.
-- P5-L7: offen.
+- P5-L: 100% / CLOSED.
+- Runtime Learning Gate: later / locked.
 - Phase 5.5 Musik: 0% / locked.
-- Naechster Gate: P5-L6.5 Gruppe 5D Qwen Kontrollrun nach Master-GO.
+- Naechster Gate: Phase 5.5 Opening-Gate Musik-Integration nach Master-GO.
 
 ## Hinweise
 
 - P5-L5 war nur ein bounded dry-run, kein echter Overnight-Dauerlauf.
 - P5-L6 Owner Review ist DONE, aber das startet keinen echten Loop.
+- P5-L Close startet keinen echten Learning-Run.
 - Qwen darf analysieren, aber nicht schneiden.
 - Reports bleiben lokal/untracked und werden nicht committed.

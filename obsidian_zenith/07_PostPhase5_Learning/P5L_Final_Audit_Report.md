@@ -5,9 +5,9 @@ Stand: 2026-06-06
 ## Status
 
 - Phase 5: 100% / DONE / FINAL-GO.
-- P5-L: 95% / 100%.
+- P5-L: 100% / CLOSED nach 5F.
 - P5-L6.5 5D Qwen Kontrollrun: DONE.
-- P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet.
+- P5-L7 / Schlaf-Learning-Run: Runtime Learning Gate / later / locked nach 5F.
 - Phase 5.5 Musik: 0% / locked.
 
 ## Was Phase 5 final erreicht hat
@@ -35,6 +35,7 @@ Stand: 2026-06-06
 - P5-L6.5 5C Obsidian Cleanup.
 - P5-L6.5 5D Qwen Kontrollrun.
 - P5-L6.5 5E Final Audit / Handoff erstellt.
+- P5-L6.5 5F P5-L Close erstellt.
 
 ## Scripts
 
@@ -88,9 +89,8 @@ Hinweis: Reports sind lokal/untracked und wurden nicht committed.
 
 ## Offene Gates
 
-- P5-L7 echter kontrollierter Learning-Loop: offen.
-- Schlaf-/Overnight-Learning-Run: offen, nur mit eigenem Master-GO.
-- P5-L8 oder Final Close: offen.
+- Runtime Learning Gate / echter Schlaf-Learning-Run: later / locked, nur mit eigenem Master-GO.
+- P5-L Close: DONE nach 5F.
 - Phase 5.5 Musik: locked bis P5-L final bewertet und Master-GO erteilt ist.
 
 ## Empfehlung

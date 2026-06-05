@@ -4,13 +4,15 @@ Stand: 2026-06-06
 
 ## Laufstatus
 
-- Echter Learning-Run: noch NICHT gestartet.
-- Echter Overnight-Dauerlauf: noch NICHT gestartet.
-- Dauerlernen: noch NICHT gestartet.
-- Qwen-Autocut: noch NICHT gestartet.
-- Ingest: noch NICHT gestartet.
-- Render: noch NICHT gestartet.
-- Musik: noch NICHT gestartet.
+- P5-L: 100% / CLOSED.
+- Runtime Learning Gate: locked / later.
+- Echter Learning-Run: nicht gestartet.
+- Echter Overnight-Dauerlauf: nicht gestartet.
+- Dauerlernen: nicht gestartet.
+- Qwen-Autocut: nicht gestartet.
+- Ingest: nicht gestartet.
+- Render: nicht gestartet.
+- Musik: nicht gestartet.
 
 ## P5-L2 Mini-Run - Analysis-only
 
@@ -131,6 +133,22 @@ Safety:
 - Neue Datei: `obsidian_zenith/07_PostPhase5_Learning/Claude_Senior_Handoff.md`.
 - Keine neue Runtime.
 - Kein Qwen gestartet.
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
+- Kein echter Learning-Loop.
+- Reports bleiben lokal/untracked und nicht committed.
+
+## P5-L6.5 5F P5-L Close
+
+- Art: Obsidian-only Abschlussdokumentation.
+- Neue Datei: `obsidian_zenith/07_PostPhase5_Learning/P5L_Close_Report.md`.
+- Neue Datei: `obsidian_zenith/07_PostPhase5_Learning/Runtime_Learning_Gate.md`.
+- P5-L: 100% / CLOSED.
+- Option B dokumentiert.
+- Runtime Learning Gate bleibt locked / later.
+- Kein neuer Run.
+- Qwen nicht gestartet.
 - Kein Render.
 - Kein Ingest.
 - Keine Musik.

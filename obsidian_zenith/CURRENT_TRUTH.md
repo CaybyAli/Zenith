@@ -7,23 +7,27 @@ Stand: 2026-06-06
 - Phase 5: 100% / DONE / FINAL-GO.
 - Alle 8 Phase-5-Endkriterien sind DONE.
 - K7 echter Production-Short Kontroll-Run + Ali-Freigabe ist DONE.
-- P5-L: 95% / 100%.
+- P5-L: 100% / CLOSED.
+- P5-L ist als Vorbereitung abgeschlossen.
 - P5-L6.5 Gruppe 5A Codex Audit: DONE.
 - P5-L6.5 Gruppe 5B Audit-Fixes: DONE und remote gesichert.
 - P5-L6.5 Gruppe 5C Obsidian Audit + Aufraeumen: DONE.
 - P5-L6.5 Gruppe 5D Qwen Kontrollrun: DONE und remote gesichert.
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
+- P5-L6.5 Gruppe 5F P5-L Close: DONE.
+- Runtime Learning Gate: locked / later.
 - Qwen sichtbar geprueft: ja.
 - `qwen_role=analysis_only`.
 - `qwen_can_cut=false`.
 - `qwen_autocut_allowed=false`.
-- P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet.
+- P5-L7 / Schlaf-Learning-Run: Runtime Learning Gate / later / locked.
 - Phase 5.5 Musik: 0% / locked.
 
 ## Klare Trennung
 
 - Phase 5 = Video-Pipeline finalisiert.
-- P5-L = Post-Phase-5 Learning-Vorbereitung und Gated-Learning-Bereich.
+- P5-L = abgeschlossene Post-Phase-5 Learning-Vorbereitung.
+- Runtime Learning Gate = spaeterer echter Schlaf-/Learning-Run, nicht Teil von P5-L Close.
 - Phase 5.5 = Musik-Integration.
 - Phase 5.5 ist NICHT Learning.
 - Qwen ist Analyse-Side-Track, kein Cutter.
@@ -31,9 +35,9 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-Master-Entscheidung nach 5E: P5-L7 echter kontrollierter Learning-Loop oder P5-L als Vorbereitung schliessen und Runtime-Gate spaeter separat fuehren.
+Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
 
-P5-L7 bleibt bis eigenes Master-GO gesperrt.
+Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
 ## Harte NO-GOs
 
@@ -93,6 +97,18 @@ P5-L7 bleibt bis eigenes Master-GO gesperrt.
 - Kein echter Learning-Loop.
 - Phase 5.5 Musik bleibt locked.
 
+### P5-L6.5 5F P5-L Close
+
+- Close Report: [[P5L_Close_Report]]
+- Runtime Learning Gate: [[Runtime_Learning_Gate]]
+- Option B dokumentiert: P5-L als Vorbereitung geschlossen.
+- P5-L7 / Schlaf-Learning-Run ist aus dem P5-L-Abschluss herausgeloest.
+- Kein Code geaendert.
+- Kein Qwen gestartet.
+- Kein Render, kein Ingest, keine Musik.
+- Kein echter Learning-Loop.
+- Phase 5.5 Musik bleibt locked.
+
 ## Wichtige Links
 
 - [[ZENITH_HOME]]
@@ -112,4 +128,6 @@ P5-L7 bleibt bis eigenes Master-GO gesperrt.
 - [[P5L_Runbook]]
 - [[P5L_Final_Audit_Report]]
 - [[Claude_Senior_Handoff]]
+- [[P5L_Close_Report]]
+- [[Runtime_Learning_Gate]]
 - [[NEXT_PROMPT]]

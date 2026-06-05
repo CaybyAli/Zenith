@@ -7,10 +7,10 @@ Ziel: Ein neuer Claude Senior Chat soll sofort verstehen, was gebaut wurde und w
 ## Kurzstatus
 
 - Phase 5: DONE / FINAL-GO.
-- P5-L: 95% / 100%.
+- P5-L: 100% / CLOSED.
 - Qwen Control Run: DONE.
 - Phase 5.5 Musik: locked.
-- P5-L7 echter kontrollierter Learning-Loop: nicht gestartet.
+- Runtime Learning Gate / echter Schlaf-Learning-Run: later / locked.
 
 ## Repository Status
 
@@ -26,6 +26,8 @@ Wichtige Commits:
 - 5B: `19e16d2` / `c925724`.
 - 5C: `a892568`.
 - 5D: `a3af5e3` / `d537e5a`.
+- 5E: `f31bcb9`.
+- 5F: siehe aktueller Close-Commit.
 
 ## Scripts
 
@@ -66,8 +68,8 @@ Hinweis: Reports sind lokal/untracked und nicht committed.
 ## Naechste Entscheidung
 
 Claude soll bewerten:
-- P5-L7 noch noetig vor P5-L-Abschluss?
-- Oder P5-L als Vorbereitung schliessen und den echten Schlaf-/Learning-Run als separates Runtime-Gate fuehren?
+- Phase 5.5 Opening-Gate Musik-Integration vorbereiten?
+- Runtime Learning Gate separat spaeter starten?
 - Phase 5.5 Musik erst nach finaler Master-Entscheidung oeffnen.
 
 ## Harte Verbote

@@ -30,9 +30,13 @@ Stand: 2026-06-06
 
 ## Aktueller Gate
 
-Naechster Gate: P5-L6.5 Gruppe 5E - Abschlussbericht / Final Audit, nur nach Master-GO.
+P5-L ist geschlossen: 100% / CLOSED.
 
-P5-L7 und Phase 5.5 bleiben gesperrt.
+Runtime Learning Gate: locked / later.
+
+Naechster Gate: Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
+
+Runtime Learning Gate und Phase 5.5 Musik bleiben gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
 
@@ -49,3 +53,14 @@ P5-L7 und Phase 5.5 bleiben gesperrt.
 - `autocut_used=false`.
 - `learning_loop_started=false`.
 - `phase_5_5_used=false`.
+
+## 5F Close Safety
+
+- P5-L geschlossen.
+- Runtime Learning Gate locked.
+- Phase 5.5 Musik weiterhin locked.
+- Kein Qwen gestartet.
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
+- Kein echter Learning-Loop.

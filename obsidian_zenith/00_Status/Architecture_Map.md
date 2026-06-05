@@ -18,12 +18,23 @@ Status:
 P5-L ist die Post-Phase-5 Learning-Vorbereitung.
 
 Status:
-- 90% / 100%.
+- 100% / CLOSED.
 - P5-L0 bis P5-L6 sind DONE.
-- P5-L6.5 5A/5B sind DONE.
-- 5C ist Obsidian Cleanup.
-- 5D ist Qwen Kontrollrun als naechster Gate.
-- P5-L7 echter Learning-Loop ist noch NICHT gestartet.
+- P5-L6.5 5A bis 5F sind DONE.
+- P5-L ist Vorbereitung, kein Runtime-Run.
+- P5-L7 / Schlaf-Learning-Run ist als Runtime Learning Gate / later / locked ausgelagert.
+
+### Runtime Learning Gate
+
+Runtime Learning Gate ist ein spaeterer Betriebsbereich fuer echten Schlaf-/Learning-Run.
+
+Status:
+- later / locked.
+- Nur mit eigenem Master-GO.
+- Kein Autocut.
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
 
 ### Phase 5.5
 
@@ -62,4 +73,6 @@ Wichtige Dateien:
 - [[Script_Index]]
 - [[Safety_Index]]
 - [[P5L_Runbook]]
+- [[P5L_Close_Report]]
+- [[Runtime_Learning_Gate]]
 - [[NEXT_PROMPT]]

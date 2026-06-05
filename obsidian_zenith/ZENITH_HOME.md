@@ -16,10 +16,9 @@ Wenn du neu in diesem Projekt bist, lies in dieser Reihenfolge:
 ## Aktueller Stand
 
 - Phase 5: 100% / DONE / FINAL-GO.
-- P5-L: 90% / 100%.
-- P5-L6.5 5B Fixes: DONE und remote gesichert.
-- P5-L6.5 5C Obsidian Audit + Aufraeumen: dieser Obsidian-Stand.
-- P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet.
+- P5-L: 100% / CLOSED.
+- P5-L6.5 5F P5-L Close: DONE.
+- Runtime Learning Gate: later / locked.
 - Phase 5.5 Musik: 0% / locked.
 
 ## Wichtigste Regel
@@ -56,6 +55,8 @@ Vor jeder Arbeit:
 - [[Learning_Backlog]]
 - [[Learning_Run_Log]]
 - [[Codex_Audit_Log]]
+- [[P5L_Close_Report]]
+- [[Runtime_Learning_Gate]]
 
 ### Historie und Webseite
 - [[Progress_Log]]
