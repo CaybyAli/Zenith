@@ -299,6 +299,7 @@ def make_base_manifest(output_dir: Path, repo_root: Path) -> dict[str, Any]:
         "owner_review_required": True,
         "owner_review_completed": False,
         "owner_go": False,
+        "owner_review_source": None,
         "quality_gate_ready": True,
         "render_used": False,
         "ingest_used": False,
@@ -460,6 +461,12 @@ def make_owner_packet(
             "dangerous_response_detected": manifest["dangerous_response_detected"],
             "transport_status": qwen_response.get("status"),
         },
+        "owner_review": {
+            "required": manifest["owner_review_required"],
+            "completed": manifest["owner_review_completed"],
+            "go": manifest["owner_go"],
+            "source": manifest["owner_review_source"],
+        },
         "owner_review_questions": [
             "Hast du owner_review_summary.md gelesen? ja/nein",
             "Wirkt die Lernqualität plausibel? ja/nein",
@@ -511,8 +518,9 @@ def make_summary_md(
 - Phase 5.5 Musik: 0% / locked
 - Quality Gate ready: {str(manifest["quality_gate_ready"]).lower()}
 - Owner Review required: true
-- Owner Review completed: false
-- Owner GO: false
+- Owner Review completed: {str(manifest["owner_review_completed"]).lower()}
+- Owner GO: {str(manifest["owner_go"]).lower()}
+- Owner Review source: {manifest["owner_review_source"]}
 
 ## Was wurde geprüft?
 
@@ -618,6 +626,7 @@ def build_owner_review(
     enable_local_qwen: bool = False,
     qwen_base_url: str = "http://127.0.0.1:11434",
     qwen_model: str = "qwen3.6:latest",
+    owner_review_go: bool = False,
 ) -> dict[str, Any]:
     root = Path(repo_root).resolve()
     out = resolve_output_dir(root, output_dir)
@@ -633,6 +642,18 @@ def build_owner_review(
     manifest["quality_findings"] = collect_quality_findings(inputs)
     manifest["warnings"] = aggregate_warnings(inputs)
     manifest["forbidden_inputs_used"] = aggregate_forbidden_inputs(inputs)
+
+    if owner_review_go:
+        manifest["owner_review_completed"] = True
+        manifest["owner_go"] = True
+        manifest["owner_review_source"] = "ali_manual_owner_review"
+
+        for finding in manifest["quality_findings"]:
+            if finding.get("area") == "P5-L6 owner review requirement":
+                finding["status"] = "completed"
+                finding["evidence"]["owner_review_completed"] = True
+                finding["evidence"]["owner_go"] = True
+                finding["evidence"]["owner_review_source"] = "ali_manual_owner_review"
 
     qwen_response: dict[str, Any] = {
         "status": "skipped_not_requested",
@@ -713,6 +734,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--enable-local-qwen", action="store_true")
     parser.add_argument("--qwen-base-url", default="http://127.0.0.1:11434")
     parser.add_argument("--qwen-model", default="qwen3.6:latest")
+    parser.add_argument("--owner-review-go", action="store_true")
     return parser.parse_args()
 
 
@@ -724,6 +746,7 @@ def main() -> int:
         enable_local_qwen=args.enable_local_qwen,
         qwen_base_url=args.qwen_base_url,
         qwen_model=args.qwen_model,
+        owner_review_go=args.owner_review_go,
     )
     print(json.dumps(manifest, indent=2, ensure_ascii=False))
     return 0 if manifest.get("status") in {"ok", "no_go"} else 1

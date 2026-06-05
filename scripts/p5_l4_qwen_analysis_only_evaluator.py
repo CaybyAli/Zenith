@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -42,6 +43,12 @@ def validate_output_dir(repo_root: Path, output_dir: Path) -> Path:
         )
 
     return out
+
+
+def ensure_repo_root_on_sys_path(repo_root: Path) -> None:
+    root_text = str(repo_root.resolve())
+    if root_text not in sys.path:
+        sys.path.insert(0, root_text)
 
 
 def validate_local_qwen_base_url(base_url: str) -> str:
@@ -400,6 +407,7 @@ def run_evaluator(
     )
 
     if enable_local_qwen:
+        ensure_repo_root_on_sys_path(root)
         run_optional_local_qwen(report, qwen_base_url)
 
     write_outputs(report, out, root)

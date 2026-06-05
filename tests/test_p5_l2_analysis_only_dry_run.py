@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "p5_l2_analysis_only_dry_run.py"
 
@@ -114,10 +116,10 @@ def test_report_safety_flags_are_false(tmp_path: Path):
 def test_write_report_only_writes_expected_files_in_output_dir(tmp_path: Path):
     module = load_module()
     repo = make_fake_repo(tmp_path)
-    output_dir = tmp_path / "reports" / "p5_l2_analysis_only_dry_run"
+    output_dir = repo / "reports" / "p5_l2_analysis_only_dry_run"
 
     report = module.build_report(repo)
-    json_path, md_path = module.write_report(report, output_dir)
+    json_path, md_path = module.write_report(report, output_dir, repo)
 
     assert json_path == output_dir / "p5_l2_analysis_report.json"
     assert md_path == output_dir / "p5_l2_analysis_summary.md"
@@ -129,6 +131,41 @@ def test_write_report_only_writes_expected_files_in_output_dir(tmp_path: Path):
         "p5_l2_analysis_report.json",
         "p5_l2_analysis_summary.md",
     ]
+
+
+def test_validate_output_dir_allows_exact_reports_target(tmp_path: Path):
+    module = load_module()
+    repo = make_fake_repo(tmp_path)
+
+    rel_out = module.validate_output_dir(repo, Path("reports") / "p5_l2_analysis_only_dry_run")
+    abs_out = module.validate_output_dir(repo, repo / "reports" / "p5_l2_analysis_only_dry_run")
+
+    assert rel_out == repo.resolve() / "reports" / "p5_l2_analysis_only_dry_run"
+    assert abs_out == repo.resolve() / "reports" / "p5_l2_analysis_only_dry_run"
+
+
+def test_validate_output_dir_rejects_wrong_reports_target(tmp_path: Path):
+    module = load_module()
+    repo = make_fake_repo(tmp_path)
+
+    with pytest.raises(ValueError):
+        module.validate_output_dir(repo, Path("reports") / "other")
+
+
+def test_validate_output_dir_rejects_non_report_or_outside_targets(tmp_path: Path):
+    module = load_module()
+    repo = make_fake_repo(tmp_path)
+
+    blocked = [
+        Path("video_configs"),
+        Path("learning_corpus"),
+        Path(".."),
+        tmp_path / "outside" / "reports" / "p5_l2_analysis_only_dry_run",
+    ]
+
+    for output_dir in blocked:
+        with pytest.raises(ValueError):
+            module.validate_output_dir(repo, output_dir)
 
 
 def test_missing_pair_track_truth_returns_error(tmp_path: Path):

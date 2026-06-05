@@ -34,6 +34,23 @@ def _safe_relative(path: Path, repo_root: Path) -> str:
         return path.as_posix()
 
 
+def validate_output_dir(repo_root: Path | str, output_dir: Path | str) -> Path:
+    root = Path(repo_root).resolve()
+    raw = Path(output_dir)
+    out = raw if raw.is_absolute() else root / raw
+    out = out.resolve()
+
+    try:
+        rel = out.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("output-dir must be inside repo-root") from exc
+
+    if rel.as_posix() != DEFAULT_OUTPUT_DIR.as_posix():
+        raise ValueError("output-dir must be exactly reports/p5_l2_analysis_only_dry_run")
+
+    return out
+
+
 def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
@@ -292,8 +309,12 @@ def _summary_lines(report: dict[str, Any]) -> list[str]:
     return lines
 
 
-def write_report(report: dict[str, Any], output_dir: Path | str) -> tuple[Path, Path]:
-    out_dir = Path(output_dir)
+def write_report(
+    report: dict[str, Any],
+    output_dir: Path | str,
+    repo_root: Path | str,
+) -> tuple[Path, Path]:
+    out_dir = validate_output_dir(repo_root, output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     json_path = out_dir / "p5_l2_analysis_report.json"
@@ -323,7 +344,7 @@ def main() -> int:
     report = build_report(args.repo_root)
 
     if not args.no_write or args.write_report:
-        json_path, md_path = write_report(report, args.output_dir)
+        json_path, md_path = write_report(report, args.output_dir, args.repo_root)
         print(f"report_json={json_path}")
         print(f"summary_md={md_path}")
     else:

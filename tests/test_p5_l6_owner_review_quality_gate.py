@@ -223,6 +223,33 @@ def test_safety_flags_without_qwen(tmp_path):
     assert manifest["owner_review_required"] is True
     assert manifest["owner_review_completed"] is False
     assert manifest["owner_go"] is False
+    assert manifest["owner_review_source"] is None
+
+
+def test_owner_review_go_marks_manifest_machine_readable(tmp_path):
+    module = load_module()
+    repo = make_fake_repo(tmp_path)
+
+    manifest = module.build_owner_review(
+        repo,
+        "reports/p5_l6_owner_review_quality_gate",
+        owner_review_go=True,
+    )
+
+    assert manifest["status"] == "ok"
+    assert manifest["owner_review_required"] is True
+    assert manifest["owner_review_completed"] is True
+    assert manifest["owner_go"] is True
+    assert manifest["owner_review_source"] == "ali_manual_owner_review"
+
+    owner_finding = [
+        item
+        for item in manifest["quality_findings"]
+        if item["area"] == "P5-L6 owner review requirement"
+    ][0]
+    assert owner_finding["status"] == "completed"
+    assert owner_finding["evidence"]["owner_review_completed"] is True
+    assert owner_finding["evidence"]["owner_go"] is True
 
 
 def test_output_scope_only_reports_p5_l6(tmp_path):

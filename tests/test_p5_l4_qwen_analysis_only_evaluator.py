@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -206,6 +208,27 @@ def test_output_outside_allowed_folder_is_blocked(tmp_path: Path) -> None:
             repo_root=repo,
             output_dir=repo / "reports" / "wrong_folder",
         )
+
+
+def test_repo_root_is_inserted_for_core_import() -> None:
+    module = load_module()
+    root_text = str(ROOT.resolve())
+    original_sys_path = sys.path[:]
+
+    try:
+        sys.path[:] = [
+            item
+            for item in sys.path
+            if Path(item or ".").resolve() != ROOT.resolve()
+        ]
+
+        module.ensure_repo_root_on_sys_path(ROOT)
+
+        assert sys.path[0] == root_text
+        imported = importlib.import_module("core.qwen_side_track")
+        assert hasattr(imported, "LocalQwenSideTrack")
+    finally:
+        sys.path[:] = original_sys_path
 
 
 def test_qwen_dangerous_response_is_no_go_and_executes_nothing() -> None:
