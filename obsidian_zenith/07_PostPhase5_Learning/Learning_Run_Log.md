@@ -114,3 +114,43 @@ Safety:
 - learning_loop_started=false
 - phase_5_5_used=false
 - deleted_files=[]
+
+## 2026-06-05 ? P5-L6 Owner Review Quality Gate Run
+
+Run:
+- script: scripts/p5_l6_owner_review_quality_gate.py
+- mode: owner_review_quality_gate
+- Mini-run ohne Qwen: status=ok
+- Qwen Wake-Up: skipped_qwen_unavailable / timeout
+- Owner Review: GO durch Ali
+
+Reports:
+- reports/p5_l6_owner_review_quality_gate/owner_review_packet.json
+- reports/p5_l6_owner_review_quality_gate/owner_review_manifest.json
+- reports/p5_l6_owner_review_quality_gate/owner_review_summary.md
+- reports/p5_l6_owner_review_quality_gate/qwen_wake_up_response.json
+
+Ali Owner Review:
+- Summary gelesen: ja
+- Lernqualit?t plausibel: ja
+- Qwen Wake-Up: skipped
+- Qwen Schneide-Rechte bekommen: nein
+- GO f?r P5-L7 Vorbereitung: ja
+- Bauchgef?hl-NO-GO: nein
+
+Safety:
+- qwen_requested=true
+- qwen_used=false
+- qwen_role=analysis_only
+- qwen_can_cut=false
+- qwen_autocut_allowed=false
+- dangerous_response_detected=false
+- render_used=false
+- ingest_used=false
+- music_used=false
+- autocut_used=false
+- overnight_started=false
+- real_overnight_started=false
+- learning_loop_started=false
+- phase_5_5_used=false
+- deleted_files=[]

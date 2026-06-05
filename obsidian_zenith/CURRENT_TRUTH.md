@@ -5,7 +5,7 @@ Stand: 2026-06-05
 ## Aktuelle Wahrheit
 
 - Phase 5: 100% / DONE / FINAL-GO
-- P5-L Learning-Loop: 45% / P5-L3 Style-Memory Safe Write abgeschlossen und remote gesichert
+- P5-L Learning-Loop: 85% / P5-L6 Owner Review + Lernqualit?t abgeschlossen und remote gesichert
 - Phase 5.5 Musik: 0% / locked
 - Phase 5.5 ist NICHT Learning.
 - Post-Phase-5 Learning-Loop ist ein eigener Zwischenbereich nach Phase 5.
@@ -29,7 +29,7 @@ Stand: 2026-06-05
 
 ## Naechster Schritt
 
-P5-L0 Commit-Gate nach Opening-Doku.
+P5-L7 echter kontrollierter Learning-Loop, aber nur nach Master-GO.
 
 ## Verboten
 
@@ -189,4 +189,63 @@ Reports:
 Naechster Schritt:
 - P5-L6 Owner Review + Lernqualitaet nur nach Master-GO.
 - Kein realer Learning-Loop vor eigenem Gate.
+- Phase 5.5 Musik bleibt locked.
+
+## 2026-06-05 ? P5-L6 Owner Review + Lernqualit?t DONE
+
+Status:
+- Phase 5: 100% / DONE
+- P5-L: 85% / P5-L6 Owner Review + Lernqualit?t abgeschlossen
+- Phase 5.5 Musik: 0% / locked
+
+Code/Test:
+- Feature Commit: 37bd5f8 feat(P5-L6): add owner review quality gate
+- Feature Full Hash: 37bd5f8666204754335479410bd49d9dce397c8e
+- Cleanup Commit: 45f57f1 chore(P5-L6): clean owner review whitespace
+- Cleanup Full Hash: 45f57f10dcc756f6444f72936a7d0d52653db10b
+- Remote main verifiziert: ja
+
+Test/Run:
+- py_compile: gr?n
+- pytest tests/test_p5_l6_owner_review_quality_gate.py -vv = 8 passed
+- Mini-run ohne Qwen: status=ok
+- Qwen Wake-Up: skipped_qwen_unavailable / timeout
+- owner_review_required=true
+- owner_review_completed=false im Manifest
+- Owner Review durch Ali: GO
+
+Ali Owner Review:
+- Summary gelesen: ja
+- Lernqualit?t plausibel: ja
+- Qwen Wake-Up: skipped
+- Qwen Schneide-Rechte bekommen: nein
+- GO f?r P5-L7 Vorbereitung: ja
+- Bauchgef?hl-NO-GO: nein
+
+Safety:
+- qwen_role=analysis_only
+- qwen_can_cut=false
+- qwen_autocut_allowed=false
+- dangerous_response_detected=false
+- render_used=false
+- ingest_used=false
+- music_used=false
+- autocut_used=false
+- overnight_started=false
+- real_overnight_started=false
+- learning_loop_started=false
+- phase_5_5_used=false
+- external_network_used=false
+- api_key_used=false
+- deleted_files=[]
+
+Reports:
+- reports/p5_l6_owner_review_quality_gate/owner_review_packet.json
+- reports/p5_l6_owner_review_quality_gate/owner_review_manifest.json
+- reports/p5_l6_owner_review_quality_gate/owner_review_summary.md
+- reports/p5_l6_owner_review_quality_gate/qwen_wake_up_response.json
+- Reports sind lokal erzeugt und NICHT committed.
+
+N?chster Schritt:
+- P5-L7 echter kontrollierter Learning-Loop nur nach Master-GO.
 - Phase 5.5 Musik bleibt locked.

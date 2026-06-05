@@ -15,7 +15,7 @@ Stand: 2026-06-05
 
 ## Aktuell
 
-P5-L0 ist in Arbeit.
+P5-L6 ist DONE.
 
 Alle echten Ausfuehrungen bleiben gesperrt.
 
@@ -77,6 +77,32 @@ Beweis:
 Next:
 - P5-L6 Owner Review + Lernqualitaet
 - nur nach Master-GO
+
+Locked:
+- Phase 5.5 Musik
+- Qwen-Autocut
+- Render/Ingest ohne eigenes Gate
+
+## 2026-06-05 ? P5-L6 DONE
+
+Done:
+- P5-L6 Owner Review + Lernqualit?t
+- Qwen Wake-Up Check sichtbar versucht und sauber skipped wegen Timeout
+- Owner Review durch Ali mit GO abgeschlossen
+- Reports-only Output erzeugt
+
+Beweis:
+- Feature Commit: 37bd5f8
+- Cleanup Commit: 45f57f1
+- pytest: 8 passed
+- Mini-run: status=ok
+- qwen_can_cut=false
+- dangerous_response_detected=false
+
+Next:
+- P5-L7 echter kontrollierter Learning-Loop
+- nur nach Master-GO
+- mit Enable-Flag, Stop-Schalter und Timeout
 
 Locked:
 - Phase 5.5 Musik

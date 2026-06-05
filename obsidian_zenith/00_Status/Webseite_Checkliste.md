@@ -167,3 +167,14 @@ Nicht erledigt / locked:
 Status:
 - P5-L: 75%
 - Phase 5.5 Musik: 0% / locked
+
+## 2026-06-05 ? Webseiten-Checkliste Update P5-L6
+
+Erledigt:
+- P5-L6 Owner Review + Lernqualit?t
+- Qwen Wake-Up Check versucht und sauber skipped
+- Owner Review durch Ali mit GO
+
+Nicht erledigt:
+- echter Learning-Loop / P5-L7 noch offen
+- Musik / Phase 5.5 weiterhin locked
