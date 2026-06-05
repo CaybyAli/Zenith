@@ -83,3 +83,34 @@ Report-Pfade:
 - reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_report.json
 - reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_manifest.json
 - reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_summary.md
+
+## 2026-06-05 — P5-L5 Overnight Dry-run Mini-run
+
+Run:
+- script: scripts/p5_l5_overnight_dry_run.py
+- mode: overnight_dry_run
+- dry_run_only=true
+- max_items=5
+- status=ok
+- items_planned=5
+- items_processed=5
+- stop_file_supported=true
+- stop_file_detected=false
+
+Reports:
+- reports/p5_l5_overnight_dry_run/overnight_dry_run_plan.json
+- reports/p5_l5_overnight_dry_run/overnight_dry_run_manifest.json
+- reports/p5_l5_overnight_dry_run/overnight_dry_run_summary.md
+
+Safety:
+- real_overnight_started=false
+- overnight_started=false
+- qwen_used=false
+- qwen_autocut_used=false
+- render_used=false
+- ingest_used=false
+- music_used=false
+- autocut_used=false
+- learning_loop_started=false
+- phase_5_5_used=false
+- deleted_files=[]

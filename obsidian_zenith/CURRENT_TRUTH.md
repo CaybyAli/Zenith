@@ -140,3 +140,53 @@ Naechster Schritt:
 - Kein Qwen-Autocut
 - Keine Musik
 - Kein echter Dauerloop
+
+## 2026-06-05 — P5-L5 Overnight Dry-run DONE
+
+Status:
+- Phase 5: 100% / DONE / FINAL-GO
+- Post-Phase-5 Learning-Loop: 75% / P5-L5 DONE
+- P5-L5: bounded Overnight Dry-run gebaut, getestet, mini-run gruen
+- Phase 5.5 Musik: 0% / locked
+
+Code/Test:
+- Code/Test Commit: e0768b4 feat(P5-L5): add bounded overnight dry-run
+- Full Hash: e0768b40117e23baffb0a660cbf2651c5fe2a5b5
+- Remote main verifiziert: ja
+
+Test/Run:
+- py_compile: gruen
+- pytest tests/test_p5_l5_overnight_dry_run.py -vv = 9 passed
+- Mini-run: status=ok
+- max_items=5
+- items_planned=5
+- items_processed=5
+- warnings=[]
+- forbidden_inputs_used=[]
+
+Safety:
+- dry_run_only=true
+- real_overnight_started=false
+- overnight_started=false
+- qwen_used=false
+- qwen_autocut_used=false
+- render_used=false
+- ingest_used=false
+- music_used=false
+- autocut_used=false
+- learning_loop_started=false
+- phase_5_5_used=false
+- external_network_used=false
+- api_key_used=false
+- deleted_files=[]
+
+Reports:
+- reports/p5_l5_overnight_dry_run/overnight_dry_run_plan.json
+- reports/p5_l5_overnight_dry_run/overnight_dry_run_manifest.json
+- reports/p5_l5_overnight_dry_run/overnight_dry_run_summary.md
+- Reports sind lokal erzeugt und NICHT committed.
+
+Naechster Schritt:
+- P5-L6 Owner Review + Lernqualitaet nur nach Master-GO.
+- Kein realer Learning-Loop vor eigenem Gate.
+- Phase 5.5 Musik bleibt locked.

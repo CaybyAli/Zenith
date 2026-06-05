@@ -66,3 +66,34 @@ P5-L4 Ergebnis:
 - Reports lokal erzeugt, nicht committed
 - Local-Qwen Smoke wurde sauber geskippt, kein Fake-Erfolg
 - Qwen bleibt analysis_only und can_cut=false
+
+## 2026-06-05 — P5-L5 Overnight Dry-run DONE
+
+Gesamt:
+- Phase 5: 100% / DONE
+- Post-Phase-5 Learning-Loop: 75% / 100%
+- Phase 5.5 Musik: 0% / locked
+
+P5-L Fortschritt:
+- P5-L0: DONE / 5%
+- P5-L1: DONE / 15%
+- P5-L2: DONE / 30%
+- P5-L3: DONE / 45%
+- P5-L4: DONE / 60%
+- P5-L5: DONE / 75%
+- P5-L6: offen / Owner Review + Lernqualitaet
+
+P5-L5 Beweis:
+- Code/Test Commit: e0768b4
+- pytest: 9 passed
+- Mini-run: status=ok
+- Reports: lokal erzeugt, nicht committed
+
+Safety:
+- Kein Render
+- Kein Ingest
+- Kein Qwen-Autocut
+- Keine Musik
+- Kein echter Overnight-Dauerlauf
+- Kein echter Learning-Loop
+- Phase 5.5 bleibt gesperrt

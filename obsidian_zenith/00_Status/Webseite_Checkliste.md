@@ -147,3 +147,23 @@ Nicht erledigt und weiterhin gesperrt:
 - Ingest
 - Musik
 - Phase 5.5
+
+## 2026-06-05 — P5-L5 Webseite-Status
+
+Erledigt:
+- P5-L5 bounded Overnight Dry-run
+- Reports-only Plan/Manifest/Summary
+- Safety-Flags dokumentiert
+
+Nicht erledigt / locked:
+- echter Overnight-Learning-Loop
+- Dauerlernen
+- Qwen-Autocut
+- Render
+- Ingest
+- Musik
+- Phase 5.5
+
+Status:
+- P5-L: 75%
+- Phase 5.5 Musik: 0% / locked

@@ -58,3 +58,27 @@ Naechster offener Bereich:
 - Kein Qwen-Autocut
 - Keine Musik
 - Kein Phase 5.5
+
+## 2026-06-05 — P5-L5 DONE
+
+Done:
+- P5-L5 Overnight Dry-run
+- bounded max_items=5
+- stop-file support vorhanden
+- reports-only output
+- kein echter Learning-Loop
+- kein echter Overnight-Dauerlauf
+
+Beweis:
+- Code/Test Commit: e0768b4
+- pytest: 9 passed
+- Mini-run: status=ok
+
+Next:
+- P5-L6 Owner Review + Lernqualitaet
+- nur nach Master-GO
+
+Locked:
+- Phase 5.5 Musik
+- Qwen-Autocut
+- Render/Ingest ohne eigenes Gate

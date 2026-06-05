@@ -213,3 +213,27 @@ Qwen-Regel:
 - Qwen bleibt analysis_only
 - Qwen can_cut=false
 - Qwen darf nicht schneiden, rendern, ingest starten, Musik nutzen oder Timeline ausfuehren.
+
+## 2026-06-05 — P5-L5 FINAL GO
+
+Entscheidung:
+- P5-L5 Overnight Dry-run: FINAL GO
+- Nur bounded dry-run, kein echter Dauerlauf.
+- Realer Learning-Loop bleibt NO-GO bis eigenes Gate.
+- P5-L6 Owner Review + Lernqualitaet ist naechster offener Schritt.
+- Phase 5.5 Musik bleibt locked.
+
+Beweis:
+- Code/Test Commit: e0768b4
+- pytest: 9 passed
+- Mini-run: status=ok
+- Safety Flags false
+
+Weiterhin verboten:
+- echter Overnight-Dauerlauf
+- Dauerlernen
+- Qwen-Autocut
+- Render
+- Ingest
+- Musik
+- Phase 5.5
