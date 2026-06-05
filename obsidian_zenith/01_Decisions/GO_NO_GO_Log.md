@@ -164,3 +164,11 @@ Rule ? K7 must use clean source without burned-in captions.
   - Owner-GO fehlt
 - Naechster Schritt: P5-L0 Commit-Gate
 <!-- P5_L0_OPENING_DOKU_DECISION_END -->
+
+## P5-L2 FINAL GO
+
+- Entscheidung: P5-L2 FINAL GO
+- Code/Test remote gesichert: ja
+- Echter Learning-Loop: weiterhin NO-GO
+- P5-L3: darf erst nach Master-GO starten
+- Phase 5.5 Musik: locked

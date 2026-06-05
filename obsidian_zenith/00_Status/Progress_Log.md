@@ -165,3 +165,18 @@ Phase 5 jetzt ca. 84–85%.
 - Qwen-Autocut bleibt NO-GO
 - Render/Ingest/Musik bleiben NO-GO
 <!-- P5_L0_OPENING_DOKU_PROGRESS_END -->
+
+## P5-L2 Analyse-only Dry-run abgeschlossen
+
+- Status: FINAL GO
+- Code/Test Commit: af5a89c
+- Full Hash: af5a89c1da903c78e93c052e1ee1e4ad1aea5184
+- P5-L2 Analyse-only Dry-run gebaut, getestet, Mini-Run grün
+- Pytest: 10 passed
+- Counts: 20 pairs, 30 top_solo, 3 vlogs, 20 pair_truth_entries
+- Safety Flags: alle false
+- forbidden_inputs_used: []
+- warnings: []
+- invalid_ali_sources: []
+- uses_forbidden_ali_reference: false
+- Reports nur dokumentiert, nicht committed

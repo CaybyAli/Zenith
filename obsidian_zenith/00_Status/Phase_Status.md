@@ -28,3 +28,11 @@ Stand: 2026-06-05
 ## Naechster Gate
 
 P5-L0 Commit-Gate nach Opening-Doku.
+
+## P5-L Fortschritt nach P5-L2
+
+- P5-L0: DONE = 5%
+- P5-L1: DONE = 15%
+- P5-L2: DONE = 30%
+- P5-L3: offen
+- Phase 5.5 Musik: locked

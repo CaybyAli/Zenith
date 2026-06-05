@@ -18,3 +18,9 @@ Stand: 2026-06-05
 P5-L0 ist in Arbeit.
 
 Alle echten Ausfuehrungen bleiben gesperrt.
+
+## P5-L Backlog Update
+
+- P5-L2 Analyse-only Dry-run: DONE
+- P5-L3 Style-Memory Safe Write: nächster offener Bereich
+- P5-L3 Start: nur nach Master-GO

@@ -111,3 +111,10 @@ Hinweis:
 P5-L ist der Post-Phase-5 Learning-Loop.
 Phase 5.5 bleibt Musik-Integration und locked.
 <!-- P5_L0_OPENING_DOKU_WEBSITE_END -->
+
+## P5-L2 Webseiten-Status
+
+- P5-L2 / Analyse-only Dry-run: erledigt
+- Echter Learning-Loop: NICHT erledigt
+- Overnight: NICHT erledigt
+- Musik / Phase 5.5: NICHT erledigt / locked
