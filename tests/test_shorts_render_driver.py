@@ -105,7 +105,7 @@ def test_hwaccel_fallback_converts_gpu_stack_filter_to_cpu_filter() -> None:
         "hwupload_cuda,scale_cuda=1080:640:force_original_aspect_ratio=increase,"
         "hwdownload,format=yuv420p,"
         "crop=1080:640:10:0[facecam_block];"
-        "[gameplay_src]crop=1920:1080:1850:0,"
+        "[gameplay_src]crop=1920:1080:1910:0,"
         "hwupload_cuda,scale_cuda=1080:1280:force_original_aspect_ratio=increase,"
         "hwdownload,format=yuv420p,"
         "crop=1080:1280[gameplay_block];"

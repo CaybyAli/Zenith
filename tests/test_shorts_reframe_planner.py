@@ -167,7 +167,7 @@ def test_hybrid_split_filter_stacks_facecam_top_and_gameplay_bottom() -> None:
     assert "[facecam_src]crop=1920:1080:0:0" in plan.ffmpeg_crop_filter
     assert "scale_cuda=1080:640" in plan.ffmpeg_crop_filter
     assert "crop=1080:640:10:0[facecam_block]" in plan.ffmpeg_crop_filter
-    assert "[gameplay_src]crop=1920:1080:1850:0" in plan.ffmpeg_crop_filter
+    assert "[gameplay_src]crop=1920:1080:1910:0" in plan.ffmpeg_crop_filter
     assert "scale_cuda=1080:1280" in plan.ffmpeg_crop_filter
     assert "crop=1080:1280[gameplay_block]" in plan.ffmpeg_crop_filter
     assert "[facecam_block][gameplay_block]vstack=inputs=2[out]" in plan.ffmpeg_crop_filter

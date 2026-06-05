@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from core.caption_ass_builder import ASS_TWO_LINE_Y
 from core.emoji_overlay_builder import (
     EMOJI_OUTLINE_ALPHA,
     EMOJI_OUTLINE_BLUR,
@@ -82,10 +83,12 @@ def test_renderer_filter_contains_final_visual_position_and_outline() -> None:
     assert "between(t,1.23,2.93)" in filter_complex
 
 def test_final_emoji_position_is_bottom_centered_below_captions() -> None:
-    # Final D7 safety rule:
-    # Emoji must never cover caption text.
-    # Captions live around y=1310/1385/1445, so sticker starts safely below.
-    assert EMOJI_SIZE == 700
-    assert EMOJI_X == 190
-    assert EMOJI_Y == 1220
+    # Final owner-safe rule:
+    # Emoji stays below caption safe zone and inside the 1080x1920 frame.
+    caption_bottom_y = max(ASS_TWO_LINE_Y)
 
+    assert EMOJI_SIZE <= 220
+    assert EMOJI_X >= 0
+    assert EMOJI_X + EMOJI_SIZE <= 1080
+    assert EMOJI_Y >= caption_bottom_y + 120
+    assert EMOJI_Y + EMOJI_SIZE <= 1880
