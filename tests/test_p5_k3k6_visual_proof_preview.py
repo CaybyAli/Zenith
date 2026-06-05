@@ -119,3 +119,60 @@ def test_caption_and_layout_outputs_are_temp_paths(monkeypatch: pytest.MonkeyPat
 
     for key in ("caption_ass", "layout_json", "manifest", "preview_video"):
         assert str(paths[key]).startswith(str(out_dir))
+
+
+def test_windows_ass_path_escapes_drive_colon_once():
+    import scripts.k3k6_visual_proof_preview as preview
+
+    raw = r"C:\Users\alihu\AppData\Local\Temp\zenith_k3k6_visual_proof_1b\k3_caption_proof.ass"
+    escaped = preview.escape_ffmpeg_filter_path(raw)
+
+    assert escaped.startswith("C\\:/Users/")
+    assert not escaped.startswith("C\\\\:/Users/")
+    assert "\\" in escaped
+    assert escaped.count("\\") == 1
+    assert "\\Users" not in escaped
+    assert "/Temp/zenith_k3k6_visual_proof_1b/k3_caption_proof.ass" in escaped
+
+
+def test_subtitles_filter_uses_escaped_ass_path(monkeypatch):
+    import scripts.k3k6_visual_proof_preview as preview
+
+    monkeypatch.setattr(preview, "get_ffmpeg_path", lambda: "ffmpeg")
+    raw = r"C:\Users\alihu\AppData\Local\Temp\zenith_k3k6_visual_proof_1b\k3_caption_proof.ass"
+
+    command = preview.build_ffmpeg_command(
+        "input.mp4",
+        1.0,
+        4.0,
+        "output.mp4",
+        raw,
+    )
+    vf = command[command.index("-vf") + 1]
+
+    assert "subtitles='C\\:/Users/" in vf
+    assert "C\\\\:/Users/" not in vf
+
+
+def test_called_process_error_surfaces_stderr(monkeypatch):
+    import pytest
+    import scripts.k3k6_visual_proof_preview as preview
+
+    def fake_run(command, capture_output, text, check):
+        raise preview.subprocess.CalledProcessError(
+            returncode=123,
+            cmd=command,
+            output="STDOUT_VISIBLE",
+            stderr="STDERR_VISIBLE",
+        )
+
+    monkeypatch.setattr(preview.subprocess, "run", fake_run)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        preview.run_command(["ffmpeg", "-bad"])
+
+    message = str(excinfo.value)
+    assert "FFMPEG_PREVIEW_FAILED" in message
+    assert "STDERR_VISIBLE" in message
+    assert "STDOUT_VISIBLE" in message
+    assert "ffmpeg" in message

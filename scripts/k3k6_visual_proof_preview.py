@@ -37,6 +37,22 @@ LAYOUT_JSON_NAME = "k6_layout_proof.json"
 MANIFEST_JSON_NAME = "visual_proof_manifest.json"
 
 
+
+def escape_ffmpeg_filter_path(path: str | Path) -> str:
+    """Escape Windows paths for ffmpeg subtitles= without double-escaping the drive colon."""
+    raw = str(path)
+
+    if len(raw) >= 4 and raw[1:4] == "\\\\:":
+        raw = raw[0] + ":" + raw[4:]
+    elif len(raw) >= 3 and raw[1:3] == "\\:":
+        raw = raw[0] + ":" + raw[3:]
+
+    escaped = raw.replace("\\", "/")
+    if len(escaped) >= 2 and escaped[1] == ":":
+        escaped = escaped[0] + "\\:" + escaped[2:]
+    return escaped
+
+
 def default_output_dir() -> Path:
     return Path(os.environ.get("TEMP") or tempfile.gettempdir()) / TEMP_PROOF_FOLDER_NAME
 
@@ -267,7 +283,19 @@ def build_ffprobe_command(media_path: str | Path) -> list[str]:
 
 
 def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, capture_output=True, text=True, check=True)
+    try:
+        return subprocess.run(command, capture_output=True, text=True, check=True)
+    except subprocess.CalledProcessError as exc:
+        stdout = exc.stdout or ""
+        stderr = exc.stderr or ""
+        message = (
+            "FFMPEG_PREVIEW_FAILED\n"
+            f"returncode={exc.returncode}\n"
+            f"command={exc.cmd}\n"
+            f"stdout:\n{stdout}\n"
+            f"stderr:\n{stderr}"
+        )
+        raise RuntimeError(message) from exc
 
 
 def build_manifest(
