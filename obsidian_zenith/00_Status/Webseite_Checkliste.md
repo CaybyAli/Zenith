@@ -178,3 +178,18 @@ Erledigt:
 Nicht erledigt:
 - echter Learning-Loop / P5-L7 noch offen
 - Musik / Phase 5.5 weiterhin locked
+
+## 2026-06-06 - Webseiten-Checkliste P5-L6.5 5B
+
+Erledigt:
+- P5-L6.5 5B Audit-Fixes
+- P5-L6 Owner-GO im Manifest maschinenlesbar
+- P5-L4 core Importproblem behoben
+- P5-L2 Output Guard gehaertet
+- Code/Test remote gesichert
+
+Nicht erledigt:
+- echter Learning-Loop / P5-L7 weiterhin offen
+- Musik / Phase 5.5 weiterhin locked
+- Qwen-Autocut weiterhin verboten
+- Render/Ingest weiterhin nicht gestartet

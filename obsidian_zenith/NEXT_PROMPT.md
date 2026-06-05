@@ -1,39 +1,27 @@
-PROJECT ZENITH ? P5-L GRUPPE 5 ? P5-L7 ECHTER KONTROLLIERTER LEARNING-LOOP
+PROJECT ZENITH - P5-L6.5 GRUPPE 5C - OBSIDIAN AUDIT + AUFRAEUMEN
 
 Nur nach Master-GO.
 
 Aktueller Stand:
-- Phase 5: 100% / DONE / FINAL-GO
-- Post-Phase-5 Learning-Loop: 85% / P5-L6 DONE
-- P5-L6 Owner Review + Lernqualit?t: DONE
-- Feature Commit: 37bd5f8
-- Cleanup Commit: 45f57f1
-- Mini-run: status=ok
-- Qwen Wake-Up: skipped_qwen_unavailable / timeout
-- Ali Owner Review: GO
-- Reports wurden lokal erzeugt und NICHT committed.
+- Phase 5: 100% / DONE
+- P5-L: 90% / P5-L6.5 5B Fixes abgeschlossen und remote gesichert
+- P5-L6.5 5A Codex Audit: DONE
+- P5-L6.5 5B Fixes: DONE
+- P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet
 - Phase 5.5 Musik: 0% / locked
 
-Ziel P5-L7:
-Echten kontrollierten Learning-Loop vorbereiten.
-Nur mit Enable-Flag.
-Nur mit Stop-Schalter.
-Nur mit Timeout.
-Ohne Render.
-Ohne Musik.
-Ohne Qwen-Autocut.
-Keine Phase 5.5.
+Ziel 5C:
+Obsidian auditieren und aufraeumen.
 
 Strikte Verbote:
 - Kein Render.
 - Kein Preview-Render.
-- Kein Ingest ohne eigenes Gate.
+- Kein Ingest.
 - Kein Qwen-Autocut.
 - Keine Musik.
-- Kein Phase 5.5 Start.
-- Keine Reports committen, au?er Master erlaubt es explizit.
-- Kein unbounded Dauerlauf.
-- Kein Start ohne Master-GO.
+- Kein echter Learning-Loop.
+- Keine Phase 5.5.
+- Keine Reports committen, ausser Master erlaubt es explizit.
 
-N?chster Schritt:
-Master-GO einholen und dann P5-L7 Diagnose/Plan starten.
+Naechster Schritt:
+Master-GO einholen und dann Gruppe 5C Obsidian Audit + Aufraeumen starten.

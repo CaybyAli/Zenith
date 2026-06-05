@@ -1,11 +1,11 @@
 # CURRENT TRUTH - PROJECT ZENITH
 
-Stand: 2026-06-05
+Stand: 2026-06-06
 
 ## Aktuelle Wahrheit
 
 - Phase 5: 100% / DONE / FINAL-GO
-- P5-L Learning-Loop: 85% / P5-L6 Owner Review + Lernqualit?t abgeschlossen und remote gesichert
+- P5-L Learning-Loop: 90% / P5-L6.5 5B Fixes abgeschlossen und remote gesichert
 - Phase 5.5 Musik: 0% / locked
 - Phase 5.5 ist NICHT Learning.
 - Post-Phase-5 Learning-Loop ist ein eigener Zwischenbereich nach Phase 5.
@@ -29,7 +29,9 @@ Stand: 2026-06-05
 
 ## Naechster Schritt
 
-P5-L7 echter kontrollierter Learning-Loop, aber nur nach Master-GO.
+Gruppe 5C Obsidian Audit + Aufraeumen, aber nur nach Master-GO.
+
+P5-L7 echter kontrollierter Learning-Loop ist noch NICHT gestartet.
 
 ## Verboten
 
@@ -249,3 +251,31 @@ Reports:
 N?chster Schritt:
 - P5-L7 echter kontrollierter Learning-Loop nur nach Master-GO.
 - Phase 5.5 Musik bleibt locked.
+
+## 2026-06-06 - P5-L6.5 Gruppe 5B Audit-Fixes DONE
+
+Status:
+- Phase 5: 100% / DONE
+- P5-L: 90% / P5-L6.5 5B Fixes abgeschlossen
+- P5-L7 echter Loop: noch nicht gestartet
+- Phase 5.5 Musik: 0% / locked
+
+Code/Test:
+- Commit: 19e16d2 fix(P5-L6.5): harden learning audit guards
+- Full Hash: 19e16d2b2423ba7ee188021c5fb338a2ee0ce93a
+- Push nach origin/main verifiziert: ja
+
+Fixes:
+- P5-L6 Owner-GO maschinenlesbar im Manifest: owner_review_completed=true, owner_go=true, owner_review_source=ali_manual_owner_review
+- P5-L4 core Importproblem behoben: Repo-Root wird vor LocalQwenSideTrack-Import in sys.path gesetzt
+- P5-L2 Output Guard gehaertet: Script schreibt nur nach reports/p5_l2_analysis_only_dry_run
+
+Tests/Runs:
+- py_compile: gruen
+- pytest Zieltests: 33 passed
+- Mini-Runs P5-L2/P5-L4/P5-L6: status=ok
+- Reports lokal erzeugt und NICHT committed.
+
+Naechster Schritt:
+- Gruppe 5C Obsidian Audit + Aufraeumen.
+- Kein P5-L7 Start ohne neues Master-GO.

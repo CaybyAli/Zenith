@@ -303,3 +303,36 @@ Safety Flags:
 - Kein Autocut.
 - Kein echter Learning-Loop.
 - Phase 5.5 locked.
+
+## 2026-06-06 - P5-L6.5 Gruppe 5B Audit-Fixes DONE
+
+Audit 5A:
+- Codex Audit 5A fand 3 Findings.
+
+5B Fixes umgesetzt:
+- P5-L6 Owner-GO manifestiert: owner_review_completed=true, owner_go=true, owner_review_source=ali_manual_owner_review.
+- P5-L4 core Importproblem behoben: LocalQwenSideTrack kann mit kontrolliert gesetztem Repo-Root importiert werden.
+- P5-L2 Output Guard gehaertet: Output ist hart auf reports/p5_l2_analysis_only_dry_run begrenzt.
+
+Code/Test:
+- Commit: 19e16d2 fix(P5-L6.5): harden learning audit guards
+- Full Hash: 19e16d2b2423ba7ee188021c5fb338a2ee0ce93a
+- Push nach origin/main verifiziert: ja
+
+Tests:
+- python -m py_compile scripts\p5_l2_analysis_only_dry_run.py scripts\p5_l4_qwen_analysis_only_evaluator.py scripts\p5_l6_owner_review_quality_gate.py = gruen
+- python -m pytest tests\test_p5_l2_analysis_only_dry_run.py tests\test_p5_l4_qwen_analysis_only_evaluator.py tests\test_p5_l6_owner_review_quality_gate.py -vv = 33 passed
+
+Mini-Runs:
+- P5-L2: status=ok, writes_only_under=reports/p5_l2_analysis_only_dry_run
+- P5-L4: status=ok, warnings=[], qwen_role=analysis_only, qwen_can_cut=false
+- P5-L6: status=ok, owner_review_completed=true, owner_go=true, owner_review_source=ali_manual_owner_review
+
+Safety:
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
+- Kein Autocut.
+- Kein echter Learning-Loop.
+- Keine Phase 5.5.
+- Reports nur lokal/untracked, nicht committed.

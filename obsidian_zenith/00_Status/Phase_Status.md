@@ -1,6 +1,6 @@
 # PHASE STATUS
 
-Stand: 2026-06-05
+Stand: 2026-06-06
 
 ## Phase 5
 
@@ -11,7 +11,7 @@ Stand: 2026-06-05
 
 ## P5-L - Post-Phase-5 Learning-Loop
 
-- Status: 85% / P5-L6 Owner Review + Lernqualit?t abgeschlossen
+- Status: 90% / P5-L6.5 5B Fixes abgeschlossen
 - P5-L ist ein eigener Zwischenbereich nach Phase 5.
 - Learning-Loop ist noch NICHT gestartet.
 - Overnight ist noch NICHT gestartet.
@@ -27,7 +27,7 @@ Stand: 2026-06-05
 
 ## Naechster Gate
 
-P5-L7 echter kontrollierter Learning-Loop nur nach Master-GO.
+Gruppe 5C Obsidian Audit + Aufraeumen nur nach Master-GO.
 
 ## P5-L Fortschritt nach P5-L2
 
@@ -119,6 +119,34 @@ P5-L6 Ergebnis:
 - Owner Review + Lernqualit?t gebaut
 - Qwen Wake-Up sauber skipped wegen Timeout
 - Qwen blieb analysis_only und can_cut=false
+- Reports lokal erzeugt, nicht committed
+- echter Learning-Loop noch NICHT gestartet
+- Phase 5.5 Musik locked
+
+## 2026-06-06 - P5-L Status nach P5-L6.5 5B
+
+Gesamt:
+- Phase 5: 100% / DONE
+- Post-Phase-5 Learning-Loop: 90% / 100%
+- Phase 5.5 Musik: 0% / locked
+
+P5-L Fortschritt:
+- P5-L0: DONE / 5%
+- P5-L1: DONE / 15%
+- P5-L2: DONE / 30%
+- P5-L3: DONE / 45%
+- P5-L4: DONE / 60%
+- P5-L5: DONE / 75%
+- P5-L6: DONE / 85%
+- P5-L6.5 5A Codex Audit: DONE
+- P5-L6.5 5B Fixes: DONE / 90%
+- P5-L7: offen / echter kontrollierter Learning-Loop nur nach Master-GO
+
+5B Ergebnis:
+- P5-L6 Owner-GO manifestiert
+- P5-L4 core Importproblem behoben
+- P5-L2 Output Guard gehaertet
+- Code/Test remote gesichert
 - Reports lokal erzeugt, nicht committed
 - echter Learning-Loop noch NICHT gestartet
 - Phase 5.5 Musik locked

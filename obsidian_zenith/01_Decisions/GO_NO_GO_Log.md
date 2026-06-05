@@ -260,3 +260,31 @@ Grenzen:
 - echter Learning-Loop wurde NICHT gestartet
 - P5-L7 darf erst nach Master-GO starten
 - Phase 5.5 Musik bleibt locked
+
+## 2026-06-06 - P5-L6.5 Gruppe 5B FINAL GO
+
+Entscheidung:
+- P5-L6.5 5B Audit-Fixes: FINAL GO
+- Code/Test remote gesichert
+- P5-L Fortschritt: 90%
+
+Beweis:
+- Code/Test Commit: 19e16d2
+- Full Hash: 19e16d2b2423ba7ee188021c5fb338a2ee0ce93a
+- py_compile: gruen
+- pytest Zieltests: 33 passed
+- Mini-Runs P5-L2/P5-L4/P5-L6: status=ok
+
+Fixes:
+- P5-L6 Owner-GO maschinenlesbar im Manifest
+- P5-L4 core Importproblem behoben
+- P5-L2 Output Guard gehaertet
+
+Weiterhin NO-GO:
+- echter Learning-Loop
+- P5-L7 Start ohne 5C/5D/5E und Master-GO
+- Qwen-Autocut
+- Render
+- Ingest
+- Musik
+- Phase 5.5

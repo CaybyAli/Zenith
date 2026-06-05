@@ -1,6 +1,6 @@
 # Learning Backlog - P5-L
 
-Stand: 2026-06-05
+Stand: 2026-06-06
 
 ## Reihenfolge
 
@@ -15,7 +15,7 @@ Stand: 2026-06-05
 
 ## Aktuell
 
-P5-L6 ist DONE.
+P5-L6.5 Gruppe 5B Fixes sind DONE.
 
 Alle echten Ausfuehrungen bleiben gesperrt.
 
@@ -105,6 +105,30 @@ Next:
 - mit Enable-Flag, Stop-Schalter und Timeout
 
 Locked:
+- Phase 5.5 Musik
+- Qwen-Autocut
+- Render/Ingest ohne eigenes Gate
+
+## 2026-06-06 - P5-L6.5 Gruppe 5B DONE
+
+Done:
+- 5B Fixes DONE
+- P5-L6 Owner-GO manifestiert
+- P5-L4 core Importproblem behoben
+- P5-L2 Output Guard gehaertet
+- Code/Test remote gesichert
+
+Beweis:
+- Commit: 19e16d2
+- pytest Zieltests: 33 passed
+- Mini-Runs: P5-L2/P5-L4/P5-L6 status=ok
+
+Next:
+- 5C Obsidian Audit + Aufraeumen
+- nur nach Master-GO
+
+Locked:
+- echter Learning-Loop / P5-L7
 - Phase 5.5 Musik
 - Qwen-Autocut
 - Render/Ingest ohne eigenes Gate

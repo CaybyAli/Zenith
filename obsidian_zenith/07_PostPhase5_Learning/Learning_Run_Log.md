@@ -1,6 +1,6 @@
 # Learning Run Log - P5-L
 
-Stand: 2026-06-05
+Stand: 2026-06-06
 
 ## Laufstatus
 
@@ -107,6 +107,43 @@ Safety:
 - overnight_started=false
 - qwen_used=false
 - qwen_autocut_used=false
+- render_used=false
+- ingest_used=false
+- music_used=false
+- autocut_used=false
+- learning_loop_started=false
+- phase_5_5_used=false
+- deleted_files=[]
+
+## 2026-06-06 - P5-L6.5 Gruppe 5B Fix-Run
+
+Run-Art:
+- Audit-Fix-Run
+- kein Render
+- kein Ingest
+- keine Musik
+- kein Autocut
+- kein echter Learning-Loop
+- kein Phase 5.5
+
+Code/Test:
+- Commit: 19e16d2
+- Full Hash: 19e16d2b2423ba7ee188021c5fb338a2ee0ce93a
+- py_compile: gruen
+- pytest Zieltests: 33 passed
+
+Report-Pfade:
+- reports/p5_l2_analysis_only_dry_run/p5_l2_analysis_report.json
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_manifest.json
+- reports/p5_l6_owner_review_quality_gate/owner_review_manifest.json
+- Reports wurden NICHT committed.
+
+Ergebnis:
+- P5-L2: status=ok, writes_only_under=reports/p5_l2_analysis_only_dry_run
+- P5-L4: status=ok, warnings=[], qwen_role=analysis_only, qwen_can_cut=false
+- P5-L6: status=ok, owner_review_completed=true, owner_go=true, owner_review_source=ali_manual_owner_review
+
+Safety:
 - render_used=false
 - ingest_used=false
 - music_used=false
