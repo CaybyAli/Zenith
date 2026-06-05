@@ -66,3 +66,14 @@ Ergebnis:
 
 Obsidian Second Brain vollständig aufbauen.
 Danach erst Phase 5 geordnet weiterführen.
+
+## Wichtige Links
+
+- [[ZENITH_HOME]]
+- [[Status_Board]]
+- [[Phase_Status]]
+- [[Phase5_Remaining]]
+- [[Qwen_Activation_Backlog]]
+- [[Overnight_Learning_Backlog]]
+- [[GO_NO_GO_Log]]
+- [[Webseite_Checkliste]]

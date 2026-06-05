@@ -35,3 +35,20 @@ Phase 5.5 Musik ist gesperrt.
 
 Nächster großer Bereich:
 Obsidian Second Brain fertig aufbauen.
+
+## Obsidian Navigation
+
+Hauptstartseite:
+[[ZENITH_HOME]]
+
+Aktueller Status:
+[[Status_Board]]
+
+Was als nächstes kommt:
+[[What_To_Do_Next]]
+
+Was Ali auf der Webseite anhaken darf:
+[[Webseite_Checkliste]]
+
+Nutzungsregeln:
+[[Obsidian_Usage_Rules]]
