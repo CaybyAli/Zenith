@@ -59,9 +59,8 @@ def apply_caption_display_hygiene(
     remove_indices: set[int] = set()
     events: list[CaptionHygieneEvent] = []
 
-    owner_regions = _build_owner_speech_regions(
-        [word for word in ordered if _is_owner_word(word)]
-    )
+    owner_words = [word for word in ordered if _is_owner_word(word)]
+    owner_regions = _build_owner_speech_regions(owner_words)
 
     # Wichtig:
     # Discord/Friend-W?rter innerhalb einer l?ngeren Owner-Sprachinsel werden ausgeblendet.
@@ -87,8 +86,13 @@ def apply_caption_display_hygiene(
 
         overlap_ratio = strongest_overlap / word_duration
 
+        word_token = _normalize_token(getattr(word, "text", ""))
+        overlapping_owner_tokens = _overlapping_owner_tokens(word, owner_words)
+        duplicates_owner_token = bool(word_token and word_token in overlapping_owner_tokens)
+
         if (
-            strongest_overlap >= MIN_OWNER_REGION_OVERLAP_SECONDS
+            duplicates_owner_token
+            and strongest_overlap >= MIN_OWNER_REGION_OVERLAP_SECONDS
             and (
                 overlap_ratio >= OWNER_REGION_SUPPRESS_RATIO
                 or center_inside_owner_region
@@ -100,8 +104,9 @@ def apply_caption_display_hygiene(
                     "owner_overlap_priority",
                     word,
                     (
-                        "friend/secondary word lands inside owner speech island; "
-                        f"owner display wins overlap={strongest_overlap:.3f}s ratio={overlap_ratio:.2f}"
+                        "friend/secondary duplicate token lands inside owner speech island; "
+                        f"owner display wins token={word_token!r} overlap={strongest_overlap:.3f}s "
+                        f"ratio={overlap_ratio:.2f}"
                     ),
                 )
             )
@@ -148,6 +153,29 @@ def apply_caption_display_hygiene(
     ]
 
     return CaptionHygieneResult(words=kept, events=events)
+
+
+def _overlapping_owner_tokens(
+    word: TranscriptWord,
+    owner_words: list[TranscriptWord],
+) -> set[str]:
+    word_start = float(getattr(word, "start_seconds", 0.0) or 0.0)
+    word_end = float(getattr(word, "end_seconds", 0.0) or 0.0)
+
+    tokens: set[str] = set()
+    for owner_word in owner_words:
+        owner_start = float(getattr(owner_word, "start_seconds", 0.0) or 0.0)
+        owner_end = float(getattr(owner_word, "end_seconds", 0.0) or 0.0)
+
+        overlap = max(0.0, min(word_end, owner_end) - max(word_start, owner_start))
+        if overlap < MIN_OWNER_REGION_OVERLAP_SECONDS:
+            continue
+
+        token = _normalize_token(getattr(owner_word, "text", ""))
+        if token:
+            tokens.add(token)
+
+    return tokens
 
 
 def _build_owner_speech_regions(owner_words: list[TranscriptWord]) -> list[tuple[float, float]]:
