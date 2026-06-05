@@ -1,3 +1,45 @@
+﻿<!-- K7-1J_CURRENT_TRUTH_START -->
+# CURRENT TRUTH ? PROJECT ZENITH
+
+Stand: 2026-06-05
+
+## Aktuelle Wahrheit
+
+- Phase 5: ca. 99%
+- Phase 5.5: 0%, locked
+- Letzter gesicherter Commit: `daf9637 fix(P5-K7): preserve friend captions in hygiene filter`
+- K7 echter Production-Short Kontroll-Run: DONE
+- K7-1I Production-Short Retry nach Friend-Caption-Fix: GO
+- Ali-Freigabe: ja
+- Naechster Schritt: Phase 5 Final-GO Audit
+- Phase 5 Status: FINAL-GO CANDIDATE
+- Phase 5.5 darf NICHT gestartet werden, bis Master Final-GO ausdr?cklich erteilt.
+
+## K7-1I Beweis
+
+- Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
+- `status`: `ok`
+- `renderer_route`: `ShortsRenderDriver.render_short`
+- `production_layout_route_used`: `true`
+- `k7_test_filter_used_for_quality`: `false`
+- `captions_generated`: `true`
+- `GREEN_COUNT`: 105
+- `YELLOW_COUNT`: 36
+- `word_count`: 141
+- `ali_words`: 105
+- `friend_words`: 36
+- Friend-Gruppen vorhanden
+- Safety Flags: `qwen=false`, `music=false`, `ingest=false`, `phase5_5=false`, `full_batch=false`
+
+## Gesperrt bis Master Final-GO
+
+- kein weiterer Render
+- kein Ingest
+- kein Qwen-Autocut
+- keine Musik
+- kein Phase 5.5 Start
+<!-- K7-1J_CURRENT_TRUTH_END -->
+
 # CURRENT TRUTH — PROJECT ZENITH
 
 Last updated: 2026-06-05
@@ -161,5 +203,5 @@ Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-
 - K7 Kontroll-Run + Ali-Freigabe: OPEN
 - Phase 5 Final-GO: NEIN
 - Phase 5.5: 0%, gesperrt
-- N?chster Gate: K7 Kontroll-Run Vorbereitung
+- Naechster Gate: K7 Kontroll-Run Vorbereitung
 - K7-Regel: saubere Quelle ohne bereits eingebrannte Captions nutzen

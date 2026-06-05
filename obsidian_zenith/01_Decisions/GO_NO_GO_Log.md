@@ -1,4 +1,4 @@
-# GO / NO-GO LOG
+﻿# GO / NO-GO LOG
 
 ## 2026-06-05 — ZENITH FREEZE GATE
 
@@ -109,3 +109,27 @@ GO ? K3/K6 technical DONE accepted.
 NO-GO ? Phase 5 Final-GO still blocked until K7 control run and Ali approval.
 
 Rule ? K7 must use clean source without burned-in captions.
+
+<!-- K7-1J_GO_NO_GO_START -->
+## 2026-06-05 - Entscheidung: K7-1I Production-Short Retry nach Friend-Fix
+
+- Entscheidung: GO
+- Owner Review: GO
+- Ali-Freigabe: ja
+- Grund:
+  - Production-Short-Route aktiv
+  - korrektes Short-Layout laut Owner
+  - Audio vorhanden
+  - Ali-Captions sichtbar
+  - Friend-Captions sichtbar und gelb/klar unterscheidbar
+  - keine alten Testfilter als Quality-Route
+  - keine Safety-Verletzung
+- Beweis:
+  - Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
+  - `renderer_route=ShortsRenderDriver.render_short`
+  - `GREEN_COUNT=105`
+  - `YELLOW_COUNT=36`
+  - `friend_words=36`
+- Phase 5 Final-GO wird dadurch vorbereitet, aber noch NICHT automatisch gestartet.
+- Phase 5.5 bleibt locked bis ausdruecklicher Master Final-GO.
+<!-- K7-1J_GO_NO_GO_END -->

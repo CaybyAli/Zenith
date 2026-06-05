@@ -1,4 +1,4 @@
-# PROGRESS LOG
+﻿# PROGRESS LOG
 
 ## 2026-06-05
 
@@ -113,4 +113,27 @@ Proof:
 
 Phase 5 jetzt ca. 84–85%.
 
-2026-06-05 ? K3/K6 Visual Proof accepted as DONE. Preview after libass path hotfix proved K3 captions and K6 layout/focus. Double caption layer documented as source artifact. Next: K7 prep.
+2026-06-05 - K3/K6 Visual Proof accepted as DONE. Preview after libass path hotfix proved K3 captions and K6 layout/focus. Double caption layer documented as source artifact. Next: K7 prep.
+
+<!-- K7-1J_PROGRESS_LOG_START -->
+## 2026-06-05 - K7-1I Production-Short Retry nach Friend-Caption-Fix bestanden
+
+- Ergebnis: GO / Ali-Freigabe
+- Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
+- Production Short Route genutzt: `ShortsRenderDriver.render_short`
+- Manifest `status`: `ok`
+- `production_layout_route_used`: `true`
+- `k7_test_filter_used_for_quality`: `false`
+- `captions_generated`: `true`
+- Friend-Captions sichtbar und gelb/klar unterscheidbar
+- `GREEN_COUNT`: 105
+- `YELLOW_COUNT`: 36
+- `word_count`: 141
+- `ali_words`: 105
+- `friend_words`: 36
+- Friend-Gruppen vorhanden
+- Ali-Freigabe: ja
+- Safety Flags sauber false: `qwen=false`, `music=false`, `ingest=false`, `phase5_5=false`, `full_batch=false`
+- tracked-only nach Run: leer
+- Kein Commit/Push/Obsidian waehrend K7-1I Run
+<!-- K7-1J_PROGRESS_LOG_END -->

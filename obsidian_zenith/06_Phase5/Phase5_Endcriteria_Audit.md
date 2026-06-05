@@ -1,4 +1,4 @@
-# PHASE 5 ENDKRITERIEN AUDIT
+﻿# PHASE 5 ENDKRITERIEN AUDIT
 
 Datum: 2026-06-05
 Audit: 1A
@@ -181,4 +181,50 @@ Endcriteria-Status nach K1:
 
 Audit-Eintrag:
 
-2026-06-05 ? K3/K6 Visual Proof accepted. Double caption layer accepted as source-artifact. K7 must use clean source without burned-in captions.
+2026-06-05 - K3/K6 Visual Proof accepted. Double caption layer accepted as source-artifact. K7 must use clean source without burned-in captions.
+
+<!-- K7-1J_ENDCRITERIA_START -->
+## Phase 5 Endcriteria Audit ? K7 Finalisierung
+
+Stand: 2026-06-05
+
+### Endkriterienstand
+
+1. Skeleton sauber in `core/` = DONE
+2. WhisperX stable Primary Engine = DONE
+3. Shorts Captions OpusClips-nah = DONE
+4. Style-DNA aus 53 Fingerprints = DONE
+5. Pipeline schneidet nach gelerntem Ali-Stil = DONE
+6. Dynamischer Layout-/Fokus-Wechsel sichtbar = DONE
+7. Echter Kontroll-Run + Ali-Freigabe = DONE
+8. LLMBrain Qwen Neben-Track = DONE
+
+### Endkriterium 7 Beweis
+
+- Status: DONE
+- Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
+- Manifest:
+  - `status=ok`
+  - `renderer_route=ShortsRenderDriver.render_short`
+  - `production_layout_route_used=true`
+  - `k7_test_filter_used_for_quality=false`
+  - `captions_generated=true`
+  - `qwen=false`
+  - `music=false`
+  - `ingest=false`
+  - `phase5_5=false`
+  - `full_batch=false`
+- Captions:
+  - `GREEN_COUNT=105`
+  - `YELLOW_COUNT=36`
+  - `word_count=141`
+  - `ali_words=105`
+  - `friend_words=36`
+- Owner/Ali Review: GO
+
+### Phase 5 Final-GO Status
+
+- Status: FINAL-GO CANDIDATE
+- Naechster Schritt: Master Final-GO Audit
+- Phase 5.5 bleibt locked.
+<!-- K7-1J_ENDCRITERIA_END -->
