@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import importlib.util
 import json
@@ -239,4 +239,3 @@ def test_external_url_blocked_and_local_urls_allowed() -> None:
 
     assert module.validate_local_qwen_base_url("http://127.0.0.1:11434") == "http://127.0.0.1:11434"
     assert module.validate_local_qwen_base_url("http://localhost:11434") == "http://localhost:11434"
-
