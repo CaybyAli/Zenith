@@ -2,50 +2,33 @@
 
 ## Aktueller nächster Auftrag
 
-Obsidian 0H Navigation + Nutzungssystem prüfen.
+K5 Consumption-Gate vorbereiten.
 
-## Danach
+## Ziel von K5
 
-Wenn 0H sauber ist:
+Beweisen, ob Style-DNA nicht nur existiert, sondern Cut-/Timeline-Entscheidungen messbar beeinflusst.
 
-1. 0H Commit-Gate
-2. 0H Commit + Push
-3. Phase-5-Endkriterien-Audit gegen PDF Punkt 1–8
+## Wichtig
 
-## Erlaubt jetzt
+Noch kein Render.
+Noch kein Ingest.
+Noch kein Qwen.
+Noch keine Musik.
+Noch keine Phase 5.5.
 
-- Dateien unter `obsidian_zenith\` lesen
-- Obsidian-Links prüfen
-- Navigation prüfen
-- Git-Status prüfen
+## Erwarteter nächster Bauauftrag
 
-## Verboten
-
-- Zenith Code ändern
-- Render starten
-- Ingest starten
-- Musik bauen
-- Phase 5.5 öffnen
-- Commit ohne Senior-Master-GO
-- Push ohne Senior-Master-GO
-
-## Nächster erwarteter Bericht
-
-Bauchat soll berichten:
-
-- Wurde `ZENITH_HOME.md` erstellt?
-- Wurden Status-/Nutzungsdateien erstellt?
-- Gibt es Obsidian-Links mit `[[...]]`?
-- Wurde `.obsidian/` nicht angefasst?
-- Wurde außerhalb von `obsidian_zenith\` nichts geändert?
-- Empfehlung: Commit-Gate oder STOPP
+Nur lesend prüfen:
+- Wo Style-DNA in Pipeline/Runner/Selector/Timeline ankommt
+- Ob HighlightSelector oder LongformTimelineBuilder wirklich beeinflusst wird
+- Ob es Tests gibt, die mit Style-DNA andere Entscheidungen zeigen als ohne Style-DNA
+- Was fehlt, damit K5 von PARTIAL auf DONE gehen kann
 
 ## Links
 
-- [[ZENITH_HOME]]
+- [[Phase5_Endcriteria_Audit]]
 - [[CURRENT_TRUTH]]
-- [[RULES_DO_NOT_BREAK]]
-- [[Status_Board]]
-- [[What_To_Do_Next]]
-- [[Webseite_Checkliste]]
-- [[Obsidian_Usage_Rules]]
+- [[Phase_Status]]
+- [[G4_Style_DNA_Consumption]]
+- [[Style_DNA_Truth]]
+- [[Pipeline_Map]]

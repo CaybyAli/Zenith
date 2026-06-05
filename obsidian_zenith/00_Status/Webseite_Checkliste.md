@@ -30,3 +30,15 @@ ChatGPT hat temporär Senior-Master-GO gegeben.
 - [ ] Claude prüft Obsidian-Struktur
 
 Der letzte Haken bleibt offen, bis Claude wirklich geprüft hat.
+
+### Phase 5 danach geordnet weiterführen
+
+- [x] Phase-5-Endkriterien gegen PDF prüfen
+- [ ] KI-Activation-Gate
+- [ ] Analyse-Only KI-Track
+- [ ] Overnight-Learning-Loop
+- [ ] Style-Memory prüfen
+
+Hinweis:
+Phase-5-Endkriterien-Audit ist erledigt.
+Nächster Schritt ist K5 Consumption-Gate, nicht Qwen und nicht Render.

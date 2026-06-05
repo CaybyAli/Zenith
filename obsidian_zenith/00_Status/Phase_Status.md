@@ -2,27 +2,31 @@
 
 ## Phase 5
 
-Status: eingefrorener Zwischenstand, nicht final fertig
-Fortschritt: ca. 70–75%
+Status: nicht final fertig
+Fortschritt: ca. 65–70%
 
-## Fertig / stark bewiesen
+## Fertig / hart bewiesen
 
+- K4 Style-DNA aus 53 Fingerprints / Reference plausibel
 - G3 Style-DNA Aggregation
-- G4 Style-DNA Adapter
-- G4 Runner-Verbrauch
-- G4 Pipeline-Opt-in
+- G4 Style-DNA Adapter / Pacing Consumption
 - G5 Minimal Owner-No-Go Testgate
+
+## Teilweise gebaut, aber nicht final bewiesen
+
+- K1 Skeleton/Core
+- K2 WhisperX Primary Engine
+- K3 Shorts Captions OpusClips-nah
+- K5 Pipeline schneidet nach gelerntem Ali-Stil
+- K6 dynamischer Layout-/Fokus-Wechsel sichtbar
 
 ## Offen
 
-- Phase-5-Endkriterien-Audit gegen PDF Punkt 1–8
-- Qwen/LLMBrain Activation Gate
+- K7 echter Kontroll-Run Longform + Shorts mit Ali-Freigabe
+- K8 LLMBrain Qwen 3.6 27B Neben-Track
 - Analyse-only KI-Track
 - Overnight-Learning-Loop
-- wiederholtes Lernen bis STOP
 - Style-Memory Prüfung
-- echter Kontroll-Run Longform + Shorts
-- Ali-Freigabe
 
 ## Phase 5.5
 

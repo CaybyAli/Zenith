@@ -5,14 +5,14 @@ Truth owner: Ali / ChatGPT Senior-Master bis Claude zurück ist
 
 ## Aktueller Freeze Commit
 
-- Local HEAD: `413f264`
-- origin/main: `413f264`
-- Full hash: `413f264ce0a2b36d032d3c06e102ff06a91d7cda`
-- Commit message: `feat(P5-G4): enable style dna pacing in gaming pipeline`
+- Local HEAD: `7cecd34`
+- origin/main: `7cecd34`
+- Full hash: `7cecd341459cfc592ced637e02ec8794154e3111`
+- Commit message: `docs(obsidian): add navigation dashboard and usage links`
 
 ## Aktuelle Phase
 
-- Phase 5: ca. 70–75%
+- Phase 5: ca. 65–70%
 - Phase 5.5: 0%
 - Status: Freeze erreicht, Obsidian wird aufgebaut
 - Phase 5 ist noch NICHT final fertig
@@ -77,3 +77,12 @@ Danach erst Phase 5 geordnet weiterführen.
 - [[Overnight_Learning_Backlog]]
 - [[GO_NO_GO_Log]]
 - [[Webseite_Checkliste]]
+
+## Aktuelles Phase-5-Audit
+
+- [[Phase5_Endcriteria_Audit]]
+- Ergebnis: Phase 5 ca. 65–70%
+- K4 DONE
+- K1/K2/K3/K5/K6 PARTIAL
+- K7/K8 OPEN
+- Nächster Gate: K5 Consumption-Gate
