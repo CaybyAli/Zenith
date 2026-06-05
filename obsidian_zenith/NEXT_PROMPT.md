@@ -1,29 +1,37 @@
-# NEXT PROMPT - PROJECT ZENITH
+﻿# NEXT PROMPT - PROJECT ZENITH
 
-PROJECT ZENITH - PHASE 5.5 OPENING-GATE VORBEREITUNG
+PROJECT ZENITH — P5-L0 OPENING-DOKU COMMIT-GATE
 
 Rolle:
-Du bist Master/Bauchat-Auditor.
+Du bist Bauchat/Auditor.
+Ali fuehrt lokal aus.
 
 Ziel:
-Nur Plan, Scope und Schutzregeln fuer Phase 5.5 vorbereiten.
+Nur Commit + Push der Obsidian-Doku fuer P5-L0 pruefen und ausfuehren.
+
+Status:
+- Phase 5: 100% / DONE / FINAL-GO
+- P5-L Learning-Loop: 0% / Opening-Doku erstellt
+- Phase 5.5 Musik: 0% / locked
 
 Strikte Verbote:
 - Kein Code.
 - Kein Render.
 - Kein Preview-Render.
 - Kein Ingest.
+- Kein Qwen starten.
 - Kein Qwen-Autocut.
 - Keine Musik.
 - Kein Overnight starten.
 - Kein Dauerlernen starten.
-- Kein Commit/Push ohne separates Commit-Gate.
+- Kein echter Learning-Loop starten.
 
-Aktueller Stand:
-- Phase 5: 100% / DONE / FINAL-GO
-- Phase 5.5: 0% / locked
-- Letzter gesicherter Commit vor Final-GO-Doku: `81da7f1 docs(obsidian): record K7 final control approval`
-- K7 Final Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
+Erlaubter Scope:
+- Nur Obsidian-Doku pruefen.
+- Nur erlaubte Obsidian-Dateien stagen.
+- Commit erst nach sauberem Diff-Check.
+- Push erst nach Commit-GO.
 
-Aufgabe:
-Phase 5.5 Opening-Gate planen, aber noch nichts bauen oder starten.
+Wichtig:
+Phase 5.5 ist Musik-Integration und bleibt locked.
+Learning-Loop ist P5-L und nicht Phase 5.5.

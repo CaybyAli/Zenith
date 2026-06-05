@@ -87,3 +87,27 @@ Nicht erledigt / nicht starten:
 - Musik
 - Qwen-Autocut
 <!-- PHASE5_FINAL_GO_WEBSITE_END -->
+
+<!-- P5_L0_OPENING_DOKU_WEBSITE_START -->
+## P5-L0 Opening-Doku - Webseite/Checkliste
+
+Stand: 2026-06-05
+
+Darf als erledigt gelten:
+- Phase 5 final schliessen
+- K7 / Ali-Freigabe
+- P5-L Opening-Doku vorbereitet
+
+Nicht als erledigt markieren:
+- echter Learning-Loop
+- Overnight-Learning-Loop
+- Dauerlernen
+- Phase 5.5 / Musik
+- Qwen-Autocut
+- Render
+- Ingest
+
+Hinweis:
+P5-L ist der Post-Phase-5 Learning-Loop.
+Phase 5.5 bleibt Musik-Integration und locked.
+<!-- P5_L0_OPENING_DOKU_WEBSITE_END -->

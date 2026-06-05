@@ -1,31 +1,21 @@
-# CURRENT TRUTH - PROJECT ZENITH
+﻿# CURRENT TRUTH - PROJECT ZENITH
 
 Stand: 2026-06-05
 
 ## Aktuelle Wahrheit
 
 - Phase 5: 100% / DONE / FINAL-GO
-- Phase 5.5: 0% / locked
-- Letzter gesicherter Commit vor Final-GO-Doku: `81da7f1 docs(obsidian): record K7 final control approval`
-- Phase 5 Final-GO Audit: GO
-- Blocker: keine
-- Alle 8 Phase-5-Endkriterien: DONE
+- P5-L Learning-Loop: 0% / Opening-Doku
+- Phase 5.5 Musik: 0% / locked
+- Phase 5.5 ist NICHT Learning.
+- Post-Phase-5 Learning-Loop ist ein eigener Zwischenbereich nach Phase 5.
 - K7 echter Production-Short Kontroll-Run + Ali-Freigabe: DONE
-- K7 Final Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
-
-## Phase-5-Endkriterien
-
-1. Skeleton sauber in `core/` = DONE
-2. WhisperX stable Primary Engine = DONE
-3. Shorts Captions OpusClips-nah = DONE
-4. Style-DNA aus 53 Fingerprints = DONE
-5. Pipeline schneidet nach gelerntem Ali-Stil = DONE
-6. Dynamischer Layout-/Fokus-Wechsel sichtbar = DONE
-7. Echter Kontroll-Run + Ali-Freigabe = DONE
-8. LLMBrain Qwen Neben-Track = DONE
+- Alle 8 Phase-5-Endkriterien: DONE
+- Blocker fuer Phase 5: keine
 
 ## K7 Final-Beweis
 
+- Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
 - `status=ok`
 - `renderer_route=ShortsRenderDriver.render_short`
 - `production_layout_route_used=true`
@@ -39,16 +29,19 @@ Stand: 2026-06-05
 
 ## Naechster Schritt
 
-Phase 5.5 Opening-Gate vorbereiten.
+P5-L0 Commit-Gate nach Opening-Doku.
 
-## Gesperrt bis separatem Opening-Gate
+## Verboten
 
+- kein echter Learning-Loop
 - kein Overnight
 - kein Dauerlernen
+- kein Render
+- kein Preview-Render
+- kein Ingest
 - kein Qwen-Autocut
 - keine Musik
-- kein neuer Render
-- kein Phase 5.5 Start ohne eigenes Gate
+- kein Phase 5.5 Start
 
 ## Wichtige Links
 
@@ -58,4 +51,8 @@ Phase 5.5 Opening-Gate vorbereiten.
 - [[Phase5_Endcriteria_Audit]]
 - [[GO_NO_GO_Log]]
 - [[Webseite_Checkliste]]
+- [[Learning_Opening_Gate]]
+- [[Learning_Safety_Rules]]
+- [[Learning_Backlog]]
+- [[Learning_Run_Log]]
 - [[NEXT_PROMPT]]

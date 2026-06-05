@@ -1,106 +1,30 @@
 ﻿# PHASE STATUS
 
+Stand: 2026-06-05
+
 ## Phase 5
 
-Status: nicht final fertig
-Fortschritt: ca. 80–82%
-
-## Fertig / hart bewiesen
-
-- K2 WhisperX Primary Engine / Lifeline
-- K4 Style-DNA aus 53 Fingerprints / Reference plausibel
-- K5 Style-DNA beeinflusst Timeline-Scoring
-- K8 Qwen lokaler Side-Track über Ollama REST
-- G3 Style-DNA Aggregation
-- G4 Style-DNA Adapter / Pacing Consumption
-- G5 Minimal Owner-No-Go Testgate
-
-## Teilweise gebaut, aber nicht final bewiesen
-
-- K1 Skeleton/Core
-- K3 Shorts Captions OpusClips-nah
-- K6 dynamischer Layout-/Fokus-Wechsel sichtbar
-
-## Offen
-
-- K7 echter Kontroll-Run Longform + Shorts mit Ali-Freigabe
-- Analyse-only KI-Track
-- Overnight-Learning-Loop
-- Style-Memory Prüfung
-
-## Nächster Gate
-
-K1 Skeleton/Core Final Proof.
-
-## Phase 5.5
-
-Status: LOCKED
-Grund: Phase 5 ist noch nicht final.
-
-## Phase 5 Status nach K1
-
-Stand: 2026-06-05
-Phase 5: ca. 84–85%
-Phase 5.5: 0%, gesperrt
-Final-GO Phase 5: NEIN
-
-DONE:
-- K1 Skeleton/Core Final Proof
-- K2 WhisperX Lifeline
-- K5 Style-DNA Timeline Consumption
-- K8 Qwen Local Side-Track
-
-Offen:
-- K3/K6 Shorts-Captions/Layout/Fokus Final Proof
-- K7 echter Kontroll-Run + Ali-Freigabe
-
-## K3K6_STATUS_UPDATE_2026_06_05
-
-Phase 5: ca. 90?92%
-Phase 5.5: 0%, gesperrt
-
-Fertig:
-
-- K1
-- K2
-- K3
-- K4
-- K5
-- K6
-- K8
-
-Offen:
-
-- K7 echter Kontroll-Run + Ali-Freigabe
-
-Phase 5 Final-GO: NEIN
-
-<!-- K7-1J_PHASE_STATUS_START -->
-## Phase 5 Status Update ? K7 Abschluss
-
-Stand: 2026-06-05
-
-- Phase 5: ca. 99%
-- Phase 5.5: 0%, locked
-- K7 echter Kontroll-Run + Ali-Freigabe: DONE
-- K7-1I Production-Short Retry nach Friend-Caption-Fix: GO / Ali-Freigabe
-- Phase 5 Final-GO: pending
-- Naechster Schritt: Master Final-GO Audit
-- Keine weitere Render-Arbeit vor Final-GO
-- Phase 5.5 bleibt gesperrt bis ausdruecklicher Master-GO.
-<!-- K7-1J_PHASE_STATUS_END -->
-
-<!-- PHASE5_FINAL_GO_STATUS_START -->
-## Phase 5 Final-GO Status
-
-Stand: 2026-06-05
-
-- Phase 5: 100% / DONE / FINAL-GO
-- Phase 5 Final-GO Datum: 2026-06-05
+- Status: 100% / DONE / FINAL-GO
 - Alle 8 Phase-5-Endkriterien: DONE
 - K7 echter Kontroll-Run + Ali-Freigabe: DONE
 - Kein weiterer Phase-5-Code/Render noetig
-- Phase 5.5: 0% / locked
-- Naechster Schritt: Phase 5.5 Opening-Gate vorbereiten
-- Phase 5.5 ist noch NICHT gestartet.
-<!-- PHASE5_FINAL_GO_STATUS_END -->
+
+## P5-L - Post-Phase-5 Learning-Loop
+
+- Status: 0% / Opening-Doku
+- P5-L ist ein eigener Zwischenbereich nach Phase 5.
+- Learning-Loop ist noch NICHT gestartet.
+- Overnight ist noch NICHT gestartet.
+- Dauerlernen ist noch NICHT gestartet.
+- Qwen-Autocut ist verboten.
+
+## Phase 5.5 Musik
+
+- Status: 0% / locked
+- Phase 5.5 ist Musik-Integration.
+- Phase 5.5 ist NICHT Learning.
+- Musik ist noch NICHT gestartet.
+
+## Naechster Gate
+
+P5-L0 Commit-Gate nach Opening-Doku.

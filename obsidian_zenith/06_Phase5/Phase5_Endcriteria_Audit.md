@@ -240,7 +240,7 @@ Stand: 2026-06-05
 - Phase 5: 100%
 - Phase 5.5: 0% / locked
 - Blocker: keine
-- Naechster Schritt: separates Phase 5.5 Opening-Gate
+- Naechster Schritt: Post-Phase-5 Learning-Loop Opening-Gate / P5-L0. Phase 5.5 bleibt Musik-Integration und locked.
 
 ### Endkriterien
 

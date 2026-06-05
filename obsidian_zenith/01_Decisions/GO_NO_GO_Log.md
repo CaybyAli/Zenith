@@ -145,5 +145,22 @@ Rule ? K7 must use clean source without burned-in captions.
 - K7 echter Kontroll-Run + Ali-Freigabe ist DONE
 - Phase 5.5 ist noch NICHT gestartet
 - Entscheidung: Phase 5 abgeschlossen
-- Naechster Schritt: separates Phase 5.5 Opening-Gate
+- Naechster Schritt: Post-Phase-5 Learning-Loop Opening-Gate / P5-L0
 <!-- PHASE5_FINAL_GO_DECISION_END -->
+
+<!-- P5_L0_OPENING_DOKU_DECISION_START -->
+## 2026-06-05 - Entscheidung: P5-L0 Opening-Doku
+
+- Entscheidung: GO fuer P5-L0 Opening-Doku
+- Echter Learning-Loop: NO-GO
+- Overnight/Dauerlernen: NO-GO
+- Qwen-Autocut: NO-GO
+- Phase 5.5 Musik: locked
+- Phase 5.5 ist NICHT Learning
+- Blocker fuer echten Loop:
+  - Learning-Inventory fehlt
+  - Analyse-only Dry-run fehlt
+  - Style-Memory Write-Test fehlt
+  - Owner-GO fehlt
+- Naechster Schritt: P5-L0 Commit-Gate
+<!-- P5_L0_OPENING_DOKU_DECISION_END -->

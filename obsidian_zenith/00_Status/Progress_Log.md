@@ -152,3 +152,16 @@ Phase 5 jetzt ca. 84–85%.
 - Phase 5.5 bleibt locked bis separatem Opening-Gate
 - Kein Code, kein Render, kein Ingest, kein Qwen, keine Musik, kein Phase 5.5 Start
 <!-- PHASE5_FINAL_GO_PROGRESS_END -->
+
+<!-- P5_L0_OPENING_DOKU_PROGRESS_START -->
+## 2026-06-05 - P5-L0 Opening-Doku erstellt
+
+- P5-L0 Opening-Doku erstellt
+- Benennung korrigiert: Learning-Loop ist nicht Phase 5.5
+- Post-Phase-5 Learning-Loop als eigener Zwischenbereich dokumentiert
+- Phase 5.5 bleibt Musik-Integration und locked
+- Echter Learning-Loop bleibt NO-GO
+- Overnight bleibt NO-GO
+- Qwen-Autocut bleibt NO-GO
+- Render/Ingest/Musik bleiben NO-GO
+<!-- P5_L0_OPENING_DOKU_PROGRESS_END -->
