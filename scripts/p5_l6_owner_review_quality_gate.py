@@ -520,9 +520,9 @@ def make_summary_md(
 
 ## Lernqualität kurz erklärt
 
-P5-L2 hat den vorhandenen Lernkorpus nur analysiert.  
-P5-L3 hat daraus nur einen sicheren Reports-only Style-Memory-Kandidaten erzeugt.  
-P5-L4 hat Qwen nur als Analyse-Rolle bewertet, ohne Schneide-Rechte.  
+P5-L2 hat den vorhandenen Lernkorpus nur analysiert.
+P5-L3 hat daraus nur einen sicheren Reports-only Style-Memory-Kandidaten erzeugt.
+P5-L4 hat Qwen nur als Analyse-Rolle bewertet, ohne Schneide-Rechte.
 P5-L5 hat einen begrenzten Overnight-Dry-run mit max_items=5 durchgeführt, ohne echten Dauerloop.
 
 ## Qwen Wake-Up Check
@@ -541,7 +541,7 @@ P5-L5 hat einen begrenzten Overnight-Dry-run mit max_items=5 durchgeführt, ohne
 
 ## Darf P5-L7 vorbereitet werden?
 
-Nur wenn Ali Owner Review GO gibt und danach Master-GO kommt.  
+Nur wenn Ali Owner Review GO gibt und danach Master-GO kommt.
 P5-L7 darf vorbereitet werden, aber der echte kontrollierte Learning-Loop ist noch NICHT gestartet.
 
 ## Ali Owner Review Fragen
