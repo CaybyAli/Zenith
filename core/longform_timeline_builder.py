@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 import logging
+from typing import Any
 
 from models.analysis_result import AnalysisResult
 from models.energy_curve_result import EnergyCurveResult
@@ -58,6 +59,50 @@ class LongformTimelineBuilder:
 
     def _clamp_score(self, value: float) -> float:
         return round(max(0.0, min(1.0, float(value))), 3)
+
+    def _extract_style_dna_target_clip_seconds(
+        self,
+        style_dna_pacing_profile: dict[str, Any] | None = None,
+    ) -> float | None:
+        if not isinstance(style_dna_pacing_profile, dict):
+            return None
+
+        candidates: list[Any] = [
+            style_dna_pacing_profile.get("target_clip_seconds"),
+            style_dna_pacing_profile.get("style_dna_target_clip_seconds"),
+        ]
+
+        decision = style_dna_pacing_profile.get("style_dna_pacing_decision")
+        if isinstance(decision, dict):
+            candidates.append(decision.get("target_clip_seconds"))
+
+        def collect_from_profile(profile: dict[str, Any]) -> None:
+            duration_rules = profile.get("duration_rules")
+            if not isinstance(duration_rules, dict):
+                return
+
+            for action in ("KEEP", "REVIEW_KEEP", "REVIEW_TRIM", "UNKNOWN_REVIEW"):
+                rule = duration_rules.get(action)
+                if isinstance(rule, dict):
+                    candidates.append(rule.get("target"))
+                    candidates.append(rule.get("target_clip_seconds"))
+
+        collect_from_profile(style_dna_pacing_profile)
+
+        nested_profile = style_dna_pacing_profile.get("profile")
+        if isinstance(nested_profile, dict):
+            collect_from_profile(nested_profile)
+
+        for value in candidates:
+            try:
+                target = float(value)
+            except (TypeError, ValueError):
+                continue
+
+            if target > 0.0:
+                return target
+
+        return None
 
     def _below_duration_floor(
         self,
@@ -261,6 +306,7 @@ class LongformTimelineBuilder:
         gameplay_vision_result: GameplayVisionResult | None = None,
         facecam_reaction_result: FacecamReactionResult | None = None,
         consumer: TimelineSignalConsumer | None = None,
+        style_dna_target_clip_seconds: float | None = None,
     ) -> tuple[float, list[str]]:
         score = 0.0
         notes: list[str] = []
@@ -295,6 +341,14 @@ class LongformTimelineBuilder:
         if pacing_modifier != 0.0:
             score += pacing_modifier
             notes.extend(pacing_notes)
+
+        style_dna_modifier, style_dna_notes = self._apply_style_dna_timeline_score_modifier(
+            candidate,
+            style_dna_target_clip_seconds,
+        )
+        if style_dna_modifier != 0.0:
+            score += style_dna_modifier
+            notes.extend(style_dna_notes)
 
         if candidate.candidate_kind == "action_peak":
             score += 0.08
@@ -493,6 +547,37 @@ class LongformTimelineBuilder:
             modifier,
         )
         return modifier, notes
+
+    def _apply_style_dna_timeline_score_modifier(
+        self,
+        candidate: HighlightCandidate,
+        target_clip_seconds: float | None,
+    ) -> tuple[float, list[str]]:
+        if target_clip_seconds is None:
+            return 0.0, []
+
+        try:
+            target = float(target_clip_seconds)
+            duration = float(candidate.end_time) - float(candidate.start_time)
+        except (TypeError, ValueError):
+            return 0.0, []
+
+        if target <= 0.0 or duration <= 0.0:
+            return 0.0, []
+
+        distance_ratio = abs(duration - target) / max(target, 0.001)
+        if distance_ratio >= 1.0:
+            return 0.0, []
+
+        bonus = round((1.0 - distance_ratio) * 0.035, 4)
+        if bonus <= 0.0:
+            return 0.0, []
+
+        return bonus, [
+            "style_dna_timeline_influence_applied",
+            f"style_dna_target_clip_seconds={target:.3f}",
+            f"style_dna_duration_fit_bonus={bonus:.4f}",
+        ]
 
 
     def _apply_arc_ordering(
@@ -769,6 +854,7 @@ class LongformTimelineBuilder:
         gameplay_state_result: GameplayStateResult | None = None,
         universal_moment_result: UniversalMomentResult | dict | None = None,
         soft_decision_report=None,
+        style_dna_pacing_profile: dict[str, Any] | None = None,
     ) -> EditTimeline:
         if analysis_result.duration_seconds <= 0:
             raise ValidationError("Timeline builder needs positive duration")
@@ -786,6 +872,9 @@ class LongformTimelineBuilder:
             f"workers={_worker_count}"
         )
         timeline_signal_consumer = TimelineSignalConsumer.from_job(job)
+        style_dna_target_clip_seconds = self._extract_style_dna_target_clip_seconds(
+            style_dna_pacing_profile
+        )
         universal_moment_stats = self._universal_moment_stats(universal_moment_result)
         if universal_moment_stats is not None:
             print(
@@ -815,6 +904,7 @@ class LongformTimelineBuilder:
                 gameplay_vision_result=gameplay_vision_result,
                 facecam_reaction_result=facecam_reaction_result,
                 consumer=timeline_signal_consumer,
+                style_dna_target_clip_seconds=style_dna_target_clip_seconds,
             )
 
             if _fusion_engine is not None:
@@ -1541,6 +1631,18 @@ class LongformTimelineBuilder:
                 f"zoom_risk_windows={universal_moment_stats['zoom_risk_windows']} "
                 f"avg_moment_score={universal_moment_stats['avg_moment_score']:.3f} "
                 f"max_moment_score={universal_moment_stats['max_moment_score']:.3f}"
+            )
+
+        if style_dna_target_clip_seconds is not None:
+            style_dna_influenced_segments = sum(
+                "style_dna_timeline_influence_applied" in segment.notes
+                for segment in selected_segments
+            )
+            timeline_notes.append(
+                "Style-DNA timeline influence: "
+                f"applied={style_dna_influenced_segments > 0} "
+                f"influenced_segments={style_dna_influenced_segments} "
+                f"target_clip_seconds={style_dna_target_clip_seconds:.3f}"
             )
 
         boost_counts = self._count_analysis_boosts(selected_segments)

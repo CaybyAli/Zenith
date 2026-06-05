@@ -9885,6 +9885,13 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     # 4) Longform-Timeline  (nur wenn Voraussetzungen erfÃ¼llt)
     # ------------------------------------------------------------------
     edit_timeline = None
+    _style_dna_timeline_profile = None
+    _clip_duration_report_for_timeline = getattr(job, "clip_duration_report", None)
+    if isinstance(_clip_duration_report_for_timeline, dict):
+        _clip_duration_metadata_for_timeline = _clip_duration_report_for_timeline.get("metadata")
+        if isinstance(_clip_duration_metadata_for_timeline, dict):
+            _style_dna_timeline_profile = _clip_duration_metadata_for_timeline
+
     _fusion_timeline_note = None
     if (
         job.target_format == TargetFormat.LONGFORM
@@ -9907,6 +9914,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             round_phase_result=round_phase_result,
             gameplay_state_result=gameplay_state_result,
             universal_moment_result=universal_moment_result,
+            style_dna_pacing_profile=_style_dna_timeline_profile,
         )
         _postcut_timer = _log_postcut_timing(job, "longform_timeline", _postcut_timer)
         _timeline_notes = getattr(edit_timeline, "timeline_notes", []) or []
