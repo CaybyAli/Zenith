@@ -43,7 +43,26 @@ Ziel:
 
 ## Offene naechste Gates
 
-- 5D Qwen Kontrollrun, nur nach Master-GO.
+- 5D Qwen Kontrollrun: DONE.
+- 5E Abschlussbericht / Final Audit, nur nach Master-GO.
 - P5-L7 echter kontrollierter Learning-Loop, spaeter und nur nach eigenem Master-GO.
 - P5-L8 Abschlussbericht / Final Audit.
 - Phase 5.5 Musik bleibt locked.
+
+## 5D Qwen Kontrollrun
+
+Status: DONE.
+
+Code/Test Commit:
+- `a3af5e3 feat(P5-L6.5): add qwen control run`
+- Full Hash: `a3af5e3c8548bb9240e0377b3c8a2263796bbcc8`
+
+Beweis:
+- Modell: `qwen3.6:latest`.
+- `qwen_used=true`.
+- `qwen_visible_response=true`.
+- `qwen_role=analysis_only`.
+- `qwen_can_cut=false`.
+- `qwen_autocut_allowed=false`.
+- `dangerous_response_detected=false`.
+- Reports: lokal/untracked, nicht committed.

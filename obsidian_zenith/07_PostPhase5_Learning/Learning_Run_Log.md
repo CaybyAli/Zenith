@@ -88,3 +88,38 @@ Stand: 2026-06-06
 - Keine Musik.
 - Kein echter Learning-Loop.
 - Keine Phase 5.5.
+
+## P5-L6.5 5D Qwen Kontrollrun
+
+- Script: `scripts/p5_l65_qwen_control_run.py`.
+- Test: `tests/test_p5_l65_qwen_control_run.py`.
+- Code/Test Commit: `a3af5e3`.
+- Full Hash: `a3af5e3c8548bb9240e0377b3c8a2263796bbcc8`.
+- Modell: `qwen3.6:latest`.
+- Base URL: `http://127.0.0.1:11434`.
+- Status: `ok`.
+- `qwen_requested=true`.
+- `qwen_used=true`.
+- `qwen_visible_response=true`.
+- `qwen_role=analysis_only`.
+- `qwen_can_cut=false`.
+- `qwen_autocut_allowed=false`.
+- `dangerous_response_detected=false`.
+- `owner_review_required=true`.
+
+Reports:
+- `reports/p5_l65_qwen_control_run/qwen_control_manifest.json`
+- `reports/p5_l65_qwen_control_run/qwen_control_response.json`
+- `reports/p5_l65_qwen_control_run/qwen_control_summary.md`
+- Reports lokal/untracked, nicht committed.
+
+Safety:
+- `render_used=false`.
+- `ingest_used=false`.
+- `music_used=false`.
+- `autocut_used=false`.
+- `timeline_modified=false`.
+- `learning_loop_started=false`.
+- `phase_5_5_used=false`.
+- `external_network_used=false`.
+- `api_key_used=false`.

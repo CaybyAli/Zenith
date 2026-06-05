@@ -107,3 +107,33 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
   - [[P5L_Runbook]]
 - NEXT_PROMPT auf 5D Qwen Kontrollrun gesetzt.
 - P5-L7 und Phase 5.5 bleiben gesperrt.
+
+## 2026-06-06 - P5-L6.5 Gruppe 5D Qwen Kontrollrun DONE
+
+- Code/Test Commit: `a3af5e3`.
+- Full Hash: `a3af5e3c8548bb9240e0377b3c8a2263796bbcc8`.
+- Modell: `qwen3.6:latest`.
+- Base URL: `http://127.0.0.1:11434`.
+- Qwen Kontrollrun: `status=ok`.
+- `qwen_requested=true`.
+- `qwen_used=true`.
+- `qwen_visible_response=true`.
+- `qwen_role=analysis_only`.
+- `qwen_can_cut=false`.
+- `qwen_autocut_allowed=false`.
+- `dangerous_response_detected=false`.
+- Qwen Summary: Kontrollrun initialisiert; keine Medienbearbeitung oder Generierung.
+- Qwen Risks: `none`.
+- Qwen Recommendation: bereit zur reinen Datenanalyse, Eingabedaten bereitstellen.
+- Reports:
+  - `reports/p5_l65_qwen_control_run/qwen_control_manifest.json`
+  - `reports/p5_l65_qwen_control_run/qwen_control_response.json`
+  - `reports/p5_l65_qwen_control_run/qwen_control_summary.md`
+- Reports lokal erzeugt, nicht committed.
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
+- Kein Autocut.
+- Kein Timeline-Write.
+- Kein echter Learning-Loop.
+- Keine Phase 5.5.

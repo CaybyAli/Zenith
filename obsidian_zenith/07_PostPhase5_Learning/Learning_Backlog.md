@@ -16,7 +16,8 @@ Stand: 2026-06-06
 | P5-L6.5 5A | DONE | Codex Audit |
 | P5-L6.5 5B | DONE | Audit-Fixes |
 | P5-L6.5 5C | IN PROGRESS / THIS CLEANUP | Obsidian Audit + Aufraeumen |
-| P5-L6.5 5D | NEXT | Qwen Kontrollrun |
+| P5-L6.5 5D | DONE | Qwen Kontrollrun |
+| P5-L6.5 5E | NEXT | Abschlussbericht / Final Audit |
 | P5-L7 | LATER / LOCKED | Echter kontrollierter Learning-Loop |
 | P5-L8 | LATER | Abschlussbericht / Final Audit |
 | Phase 5.5 Musik | LOCKED | Nicht Learning, nicht gestartet |
@@ -38,7 +39,7 @@ Stand: 2026-06-06
 
 ## NEXT
 
-- 5D Qwen Kontrollrun.
+- 5E Abschlussbericht / Final Audit.
 - Nur nach Master-GO.
 - Kein Render.
 - Kein Ingest.
@@ -50,6 +51,16 @@ Stand: 2026-06-06
 
 - P5-L7 echter kontrollierter Learning-Loop.
 - P5-L8 Abschlussbericht / Final Audit.
+
+## 5D Ergebnis
+
+- Qwen Kontrollrun DONE.
+- Modell: `qwen3.6:latest`.
+- `qwen_used=true`.
+- `qwen_visible_response=true`.
+- `qwen_can_cut=false`.
+- `dangerous_response_detected=false`.
+- P5-L7 weiterhin nur nach Master-GO.
 
 ## LOCKED
 

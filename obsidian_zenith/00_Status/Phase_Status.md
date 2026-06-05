@@ -7,7 +7,7 @@ Stand: 2026-06-06
 | Bereich | Status | Harte Wahrheit |
 |---|---:|---|
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
-| P5-L | 90% / 100% | Learning-Vorbereitung bis 5B fertig, 5C Obsidian Cleanup in diesem Stand. |
+| P5-L | 95% / 100% | 5D Qwen Kontrollrun abgeschlossen und remote gesichert. |
 | P5-L7 | offen | Echter kontrollierter Learning-Loop ist noch NICHT gestartet. |
 | Phase 5.5 Musik | 0% / locked | Musik ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
@@ -24,14 +24,15 @@ Stand: 2026-06-06
 | P5-L6 | DONE | 85% | Owner Review + Quality Gate |
 | P5-L6.5 5A | DONE | 85% | Codex Audit |
 | P5-L6.5 5B | DONE | 90% | Audit-Fixes |
-| P5-L6.5 5C | IN PROGRESS / THIS CLEANUP | 90% | Obsidian Audit + Aufraeumen |
-| P5-L6.5 5D | NEXT | 90% | Qwen Kontrollrun |
+| P5-L6.5 5C | DONE | 90% | Obsidian Audit + Aufraeumen |
+| P5-L6.5 5D | DONE | 95% | Qwen Kontrollrun |
+| P5-L6.5 5E | NEXT | 95% | Abschlussbericht / Final Audit |
 | P5-L7 | OPEN | - | Echter kontrollierter Learning-Loop |
 | P5-L8 | LATER | - | Abschlussbericht / Final Audit |
 
 ## Naechster Gate
 
-P5-L6.5 Gruppe 5D - Qwen Kontrollrun, nur nach Master-GO.
+P5-L6.5 Gruppe 5E - Abschlussbericht / Final Audit, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -55,3 +56,18 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Code/Test Commit: `19e16d2`.
 - Obsidian Commit vor 5C: `c925724`.
 - Reports lokal erzeugt, nicht committed.
+
+## 5D Ergebnis
+
+- Qwen Kontrollrun sichtbar erfolgreich.
+- Modell: `qwen3.6:latest`.
+- Code/Test Commit: `a3af5e3`.
+- Full Hash: `a3af5e3c8548bb9240e0377b3c8a2263796bbcc8`.
+- `qwen_used=true`.
+- `qwen_visible_response=true`.
+- `qwen_role=analysis_only`.
+- `qwen_can_cut=false`.
+- `qwen_autocut_allowed=false`.
+- `dangerous_response_detected=false`.
+- P5-L7 weiterhin offen.
+- Phase 5.5 Musik locked.

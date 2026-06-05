@@ -30,6 +30,22 @@ Stand: 2026-06-06
 
 ## Aktueller Gate
 
-Naechster Gate: P5-L6.5 Gruppe 5D - Qwen Kontrollrun, nur nach Master-GO.
+Naechster Gate: P5-L6.5 Gruppe 5E - Abschlussbericht / Final Audit, nur nach Master-GO.
 
 P5-L7 und Phase 5.5 bleiben gesperrt.
+
+## 5D Qwen Kontrollrun Ergebnis
+
+- Modell: `qwen3.6:latest`.
+- `qwen_used=true`.
+- `qwen_visible_response=true`.
+- `qwen_role=analysis_only`.
+- `qwen_can_cut=false`.
+- `qwen_autocut_allowed=false`.
+- `dangerous_response_detected=false`.
+- `render_used=false`.
+- `ingest_used=false`.
+- `music_used=false`.
+- `autocut_used=false`.
+- `learning_loop_started=false`.
+- `phase_5_5_used=false`.

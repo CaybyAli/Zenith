@@ -7,10 +7,15 @@ Stand: 2026-06-06
 - Phase 5: 100% / DONE / FINAL-GO.
 - Alle 8 Phase-5-Endkriterien sind DONE.
 - K7 echter Production-Short Kontroll-Run + Ali-Freigabe ist DONE.
-- P5-L: 90% / 100%.
+- P5-L: 95% / 100%.
 - P5-L6.5 Gruppe 5A Codex Audit: DONE.
 - P5-L6.5 Gruppe 5B Audit-Fixes: DONE und remote gesichert.
-- P5-L6.5 Gruppe 5C Obsidian Audit + Aufraeumen: in diesem Stand abgeschlossen, sobald der 5C-Commit remote ist.
+- P5-L6.5 Gruppe 5C Obsidian Audit + Aufraeumen: DONE.
+- P5-L6.5 Gruppe 5D Qwen Kontrollrun: DONE und remote gesichert.
+- Qwen sichtbar geprueft: ja.
+- `qwen_role=analysis_only`.
+- `qwen_can_cut=false`.
+- `qwen_autocut_allowed=false`.
 - P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet.
 - Phase 5.5 Musik: 0% / locked.
 
@@ -25,9 +30,9 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-P5-L6.5 Gruppe 5D - Qwen Kontrollrun, nur nach Master-GO.
+P5-L6.5 Gruppe 5E - Abschlussbericht / Final Audit, nur nach Master-GO.
 
-Falls Master 5C NO-GO gibt, zuerst weiterer Obsidian-Fix. P5-L7 bleibt bis eigenes Master-GO gesperrt.
+P5-L7 bleibt bis eigenes Master-GO gesperrt.
 
 ## Harte NO-GOs
 
@@ -62,6 +67,20 @@ Falls Master 5C NO-GO gibt, zuerst weiterer Obsidian-Fix. P5-L7 bleibt bis eigen
 - P5-L4 core Importproblem behoben.
 - P5-L2 Output Guard hart auf `reports/p5_l2_analysis_only_dry_run` begrenzt.
 - Zieltests: `33 passed`.
+
+### P5-L6.5 5D Qwen Kontrollrun
+
+- Code/Test Commit: `a3af5e3`
+- Full Hash: `a3af5e3c8548bb9240e0377b3c8a2263796bbcc8`
+- Modell: `qwen3.6:latest`
+- `qwen_requested=true`
+- `qwen_used=true`
+- `qwen_visible_response=true`
+- `qwen_role=analysis_only`
+- `qwen_can_cut=false`
+- `qwen_autocut_allowed=false`
+- `dangerous_response_detected=false`
+- Reports: lokal/untracked, nicht committed.
 
 ## Wichtige Links
 

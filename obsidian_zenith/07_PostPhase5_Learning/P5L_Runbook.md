@@ -29,12 +29,13 @@ Dieses Runbook erklaert neuen Chats, wie P5-L-Gruppen ablaufen.
 
 ## P5-L aktueller Stand
 
-- P5-L: 90%.
+- P5-L: 95%.
 - P5-L0 bis P5-L6: DONE.
 - P5-L6.5 5A: DONE.
 - P5-L6.5 5B: DONE.
-- P5-L6.5 5C: Obsidian Cleanup.
-- Naechster Schritt: 5D Qwen Kontrollrun nach Master-GO.
+- P5-L6.5 5C: DONE.
+- P5-L6.5 5D: Qwen Kontrollrun DONE.
+- Naechster Schritt: 5E Abschlussbericht / Final Audit nach Master-GO.
 
 ## P5-L7 Status
 
