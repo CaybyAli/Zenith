@@ -83,9 +83,9 @@ Danach erst Phase 5 geordnet weiterführen.
 - [[Phase5_Endcriteria_Audit]]
 - Ergebnis: Phase 5 ca. 65–70%
 - K4 DONE
-- K1/K3/K6 PARTIAL
+- K3/K6 PARTIAL
 - K7 OPEN
-- Nächster Gate: K1 Skeleton/Core Final Proof
+- Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung
 
 ## K5 Update
 
@@ -97,7 +97,7 @@ Danach erst Phase 5 geordnet weiterführen.
 - Phase 5 jetzt ca. 72–75%.
 - Phase 5 Final-GO bleibt NEIN.
 - Phase 5.5 bleibt gesperrt.
-- Nächster Gate: K1 Skeleton/Core Final Proof.
+- Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung.
 
 ## K8 Update
 
@@ -111,7 +111,7 @@ Danach erst Phase 5 geordnet weiterführen.
 - Phase 5 jetzt ca. 80–82%.
 - Phase 5 Final-GO bleibt NEIN.
 - Phase 5.5 bleibt gesperrt.
-- Nächster Gate: K1 Skeleton/Core Final Proof.
+- Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung.
 ## K2 Update
 
 - [[K2_WhisperX_Lifeline]]
@@ -127,4 +127,28 @@ Danach erst Phase 5 geordnet weiterführen.
 - Phase 5 jetzt ca. 80–82%.
 - Phase 5 Final-GO bleibt NEIN.
 - Phase 5.5 bleibt gesperrt.
-- Nächster Gate: K1 Skeleton/Core Final Proof.
+- Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung.
+
+## K1 Skeleton/Core Final Proof — DONE
+
+Stand: 2026-06-05
+Proof-Commit: 9d4a159
+Phase 5: ca. 84–85%
+Phase 5.5: 0%, gesperrt
+Final-GO Phase 5: NEIN
+
+K1 ist technisch DONE.
+
+Beweise:
+- HEAD/origin/main: 9d4a159
+- tracked-only before/after leer
+- hardcoded ffmpeg/ffprobe Blocker in round_xfade/deadtime entfernt
+- round_xfade nutzt get_ffmpeg_path/get_ffprobe_path
+- deadtime nutzt get_ffmpeg_path
+- no-write Compile grün
+- Import-Smoke grün
+- JobStatus Enum grün
+- 26 targeted Tests grün
+- TimelineBuilder Introspection grün
+
+Nächster Gate: K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung, abhängig vom Masterplan.

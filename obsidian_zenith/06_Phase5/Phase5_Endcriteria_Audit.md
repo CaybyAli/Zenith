@@ -144,3 +144,29 @@ NEIN
 
 Phase 5.5:
 weiter 0% und gesperrt
+
+## K1 Update — Skeleton/Core Final Proof DONE
+
+K1 ist DONE.
+
+Proof-Commit: 9d4a159
+
+Beweise:
+- hardcoded ffmpeg/ffprobe Pfade in round_xfade/deadtime entfernt
+- zentrale K1-Dateien compilieren no-write
+- zentrale Imports grün
+- JobStatus Enum geprüft
+- 26 targeted Tests grün
+- TimelineBuilder Signatur geprüft
+- tracked-only clean
+- kein Render/Ingest/Qwen/Musik/Phase 5.5
+
+Endcriteria-Status nach K1:
+1. Skeleton sauber in core = DONE
+2. WhisperX stable Primary Engine = DONE
+3. Shorts-Captions OpusClips-nah = PARTIAL
+4. Style-DNA aus 53 Fingerprints = DONE
+5. Pipeline schneidet nach gelerntem Ali-Stil = DONE
+6. dynamischer Layout-/Fokus-Wechsel sichtbar = PARTIAL
+7. echter Kontroll-Run + Ali-Freigabe = OPEN
+8. LLMBrain Qwen Neben-Track = DONE

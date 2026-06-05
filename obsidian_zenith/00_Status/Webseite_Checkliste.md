@@ -41,7 +41,7 @@ Der letzte Haken bleibt offen, bis Claude wirklich geprüft hat.
 
 Hinweis:
 Phase-5-Endkriterien-Audit ist erledigt.
-Nächster Schritt ist K1 Skeleton/Core Final Proof, nicht Render und nicht Phase 5.5.
+Nächster Schritt ist K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung, nicht Render und nicht Phase 5.5.
 
 Hinweis:
 K8 Qwen Local Side-Track ist DONE.
@@ -50,4 +50,4 @@ Auf der HTML-Webseite darf nach diesem Obsidian-Update der Punkt "KI-Activation-
 
 K2 WhisperX Lifeline ist DONE.
 Phase 5 steht jetzt bei ca. 80–82%.
-Nächster Schritt ist K1 Skeleton/Core Final Proof, nicht Render und nicht Phase 5.5.
+Nächster Schritt ist K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung, nicht Render und nicht Phase 5.5.

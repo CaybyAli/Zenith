@@ -36,3 +36,20 @@ K1 Skeleton/Core Final Proof.
 
 Status: LOCKED
 Grund: Phase 5 ist noch nicht final.
+
+## Phase 5 Status nach K1
+
+Stand: 2026-06-05
+Phase 5: ca. 84–85%
+Phase 5.5: 0%, gesperrt
+Final-GO Phase 5: NEIN
+
+DONE:
+- K1 Skeleton/Core Final Proof
+- K2 WhisperX Lifeline
+- K5 Style-DNA Timeline Consumption
+- K8 Qwen Local Side-Track
+
+Offen:
+- K3/K6 Shorts-Captions/Layout/Fokus Final Proof
+- K7 echter Kontroll-Run + Ali-Freigabe

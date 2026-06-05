@@ -17,7 +17,7 @@ Ergebnis:
 - Phase 5 neu bewertet: ca. 65–70%
 - Phase 5.5 bleibt 0% und gesperrt
 - K4 DONE
-- K1/K3/K6 PARTIAL
+- K3/K6 PARTIAL
 - K7 OPEN
 
 Entscheidung:
@@ -100,3 +100,15 @@ Phase-Status:
 
 Nächster Gate:
 K1 Skeleton/Core Final Proof.
+
+## 2026-06-05 — K1 Skeleton/Core Final Proof DONE
+
+K1 wurde technisch abgeschlossen.
+
+Proof:
+- Commit 9d4a159 remote gesichert.
+- round_xfade/deadtime nutzen ffmpeg_helper statt hardcoded Pfade.
+- Final Proof grün: no-write compile, import smoke, JobStatus Enum, 26 targeted tests, TimelineBuilder introspection.
+- Kein Render/Ingest/Qwen/Musik/Phase 5.5.
+
+Phase 5 jetzt ca. 84–85%.

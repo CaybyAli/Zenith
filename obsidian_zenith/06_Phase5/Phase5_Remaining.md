@@ -22,3 +22,13 @@ speichern,
 vergleichen,
 wiederholen,
 bis Ali STOP sagt.
+
+## Remaining nach K1 DONE
+
+K1 Skeleton/Core Final Proof ist DONE.
+
+Noch offen:
+- K3/K6: Shorts-Captions/Layout/Fokus final beweisen.
+- K7: echter Kontroll-Run + Ali-Freigabe.
+- Phase 5 Final-GO bleibt NEIN.
+- Phase 5.5 bleibt gesperrt.

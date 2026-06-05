@@ -70,3 +70,11 @@ torchcodec-Warnung bleibt Beobachtungsrisiko.
 
 Nächster Gate:
 K1 Skeleton/Core Final Proof.
+
+## K1 Status
+
+K1 Skeleton/Core Final Proof: DONE
+Proof-Commit: 9d4a159
+Phase 5: ca. 84–85%
+Phase 5.5: 0%, gesperrt
+Nächster Gate: K3/K6 oder K7 nach Masterentscheidung.

@@ -68,7 +68,7 @@ c549586 feat(P5-K8): add local Qwen side-track adapter
 
 GO:
 - K8 als DONE dokumentieren
-- nächster Gate K1 Skeleton/Core Final Proof
+- nächster Gate K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung
 
 NO-GO:
 - Qwen Auto-Schnitt
@@ -86,7 +86,7 @@ WhisperX Primary Engine ist technisch bewiesen.
 
 GO:
 - K2 als DONE dokumentieren
-- nächster Gate K1 Skeleton/Core Final Proof
+- nächster Gate K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung
 
 NO-GO:
 - Phase 5 Final-GO
@@ -95,3 +95,11 @@ NO-GO:
 - Ingest ohne eigenes GO
 - Musik
 - Qwen Auto-Schnitt
+
+## GO — K1 Skeleton/Core Final Proof
+
+Status: GO / DONE
+Commit: 9d4a159
+Begründung: K1 Final Proof nach Minimal-Fix grün.
+Phase 5 Final-GO: weiterhin NEIN.
+Phase 5.5: gesperrt.
