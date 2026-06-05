@@ -3,11 +3,12 @@
 ## Phase 5
 
 Status: nicht final fertig
-Fortschritt: ca. 65–70%
+Fortschritt: ca. 72–75%
 
 ## Fertig / hart bewiesen
 
 - K4 Style-DNA aus 53 Fingerprints / Reference plausibel
+- K5 Style-DNA beeinflusst Timeline-Scoring
 - G3 Style-DNA Aggregation
 - G4 Style-DNA Adapter / Pacing Consumption
 - G5 Minimal Owner-No-Go Testgate
@@ -17,7 +18,6 @@ Fortschritt: ca. 65–70%
 - K1 Skeleton/Core
 - K2 WhisperX Primary Engine
 - K3 Shorts Captions OpusClips-nah
-- K5 Pipeline schneidet nach gelerntem Ali-Stil
 - K6 dynamischer Layout-/Fokus-Wechsel sichtbar
 
 ## Offen
@@ -27,6 +27,10 @@ Fortschritt: ca. 65–70%
 - Analyse-only KI-Track
 - Overnight-Learning-Loop
 - Style-Memory Prüfung
+
+## Nächster Gate
+
+K8 Qwen Activation Gate.
 
 ## Phase 5.5
 

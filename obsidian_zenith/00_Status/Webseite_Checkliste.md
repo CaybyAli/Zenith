@@ -41,4 +41,4 @@ Der letzte Haken bleibt offen, bis Claude wirklich geprüft hat.
 
 Hinweis:
 Phase-5-Endkriterien-Audit ist erledigt.
-Nächster Schritt ist K5 Consumption-Gate, nicht Qwen und nicht Render.
+Nächster Schritt ist K8 Qwen Activation Gate, nicht Render und nicht Phase 5.5.

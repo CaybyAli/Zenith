@@ -27,3 +27,24 @@ Phase 5.5 darf nicht geöffnet werden.
 Nächster Gate:
 K5 Consumption-Gate.
 Style-DNA muss Cut-/Timeline-Entscheidung messbar beeinflussen.
+## 2026-06-05 — K5 1C Style-DNA Timeline Scoring DONE
+
+Ergebnis:
+- K5 von PARTIAL auf DONE gesetzt.
+- Style-DNA beeinflusst Timeline-Scoring.
+- Test-Beweis vorhanden.
+- Pipeline-Handoff-Test vorhanden.
+
+Commit:
+7f0bfdf feat(P5-K5): apply style dna timeline scoring
+
+Remote full hash:
+7f0bfdf0105359764e995cab4ddc7aa7e48c7395
+
+Phase-Status:
+- Phase 5: ca. 72–75%
+- Phase 5.5: 0%, gesperrt
+- Phase 5 Final-GO: nein
+
+Nächster Gate:
+K8 Qwen Activation Gate.

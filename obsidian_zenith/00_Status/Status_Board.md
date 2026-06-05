@@ -24,3 +24,16 @@ Danach folgt Phase-5-Endkriterien-Audit.
 - keine Musik
 - kein Phase 5.5
 - keine KI-Schnittentscheidung
+
+## K5 Update
+
+K5 Style-DNA Timeline Consumption ist DONE.
+
+Commit:
+7f0bfdf feat(P5-K5): apply style dna timeline scoring
+
+Remote full hash:
+7f0bfdf0105359764e995cab4ddc7aa7e48c7395
+
+Nächster Gate:
+K8 Qwen Activation Gate.

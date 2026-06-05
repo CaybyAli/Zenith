@@ -14,7 +14,7 @@ Wenn du neu in Obsidian bist, öffne zuerst diese Dateien:
 
 ## Aktueller Stand
 
-- Phase 5: ca. 70–75%
+- Phase 5: ca. 72–75%
 - Phase 5.5: 0%, gesperrt
 - Aktueller Remote-Stand: `d028842`
 - Obsidian Second Brain: gebaut und geöffnet

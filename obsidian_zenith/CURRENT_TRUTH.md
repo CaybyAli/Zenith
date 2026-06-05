@@ -12,7 +12,7 @@ Truth owner: Ali / ChatGPT Senior-Master bis Claude zurück ist
 
 ## Aktuelle Phase
 
-- Phase 5: ca. 65–70%
+- Phase 5: ca. 72–75%
 - Phase 5.5: 0%
 - Status: Freeze erreicht, Obsidian wird aufgebaut
 - Phase 5 ist noch NICHT final fertig
@@ -83,6 +83,18 @@ Danach erst Phase 5 geordnet weiterführen.
 - [[Phase5_Endcriteria_Audit]]
 - Ergebnis: Phase 5 ca. 65–70%
 - K4 DONE
-- K1/K2/K3/K5/K6 PARTIAL
+- K1/K2/K3/K6 PARTIAL
 - K7/K8 OPEN
-- Nächster Gate: K5 Consumption-Gate
+- Nächster Gate: K8 Qwen Activation Gate
+
+## K5 Update
+
+- [[K5_Style_DNA_Timeline_Consumption]]
+- Status: DONE
+- Commit: 7f0bfdf
+- Remote full hash: 7f0bfdf0105359764e995cab4ddc7aa7e48c7395
+- Style-DNA beeinflusst Timeline-Scoring.
+- Phase 5 jetzt ca. 72–75%.
+- Phase 5 Final-GO bleibt NEIN.
+- Phase 5.5 bleibt gesperrt.
+- Nächster Gate: K8 Qwen Activation Gate.

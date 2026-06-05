@@ -2,33 +2,46 @@
 
 ## Aktueller nächster Auftrag
 
-K5 Consumption-Gate vorbereiten.
+K8 Qwen Activation Gate vorbereiten.
 
-## Ziel von K5
+## Warum K8 jetzt?
 
-Beweisen, ob Style-DNA nicht nur existiert, sondern Cut-/Timeline-Entscheidungen messbar beeinflusst.
+K5 ist DONE.
+Style-DNA beeinflusst Timeline-Scoring.
 
-## Wichtig
+Phase 5 ist aber nicht final, weil Qwen/LLMBrain als Neben-Track noch OPEN ist.
 
-Noch kein Render.
-Noch kein Ingest.
-Noch kein Qwen.
-Noch keine Musik.
-Noch keine Phase 5.5.
+## Ziel von K8
 
-## Erwarteter nächster Bauauftrag
+Qwen 3.6 27B / LLMBrain als sicheren Side-Track aktivieren.
 
-Nur lesend prüfen:
-- Wo Style-DNA in Pipeline/Runner/Selector/Timeline ankommt
-- Ob HighlightSelector oder LongformTimelineBuilder wirklich beeinflusst wird
-- Ob es Tests gibt, die mit Style-DNA andere Entscheidungen zeigen als ohne Style-DNA
-- Was fehlt, damit K5 von PARTIAL auf DONE gehen kann
+Wichtig:
+Qwen darf NICHT automatisch schneiden.
+Qwen darf NICHT final entscheiden.
+Qwen soll zuerst nur analysieren und strukturierte JSON-Vorschläge liefern.
+
+## Erlaubt im nächsten Gate
+
+- nur Diagnose / Aktivierungsprüfung
+- Ollama/Qwen Erreichbarkeit prüfen
+- JSON-Stabilität prüfen
+- no-silent-fallback prüfen
+- Side-Track-Grenzen prüfen
+
+## Verboten
+
+- Render starten
+- Ingest starten
+- Musik bauen
+- Phase 5.5 öffnen
+- Qwen automatische Schnittentscheidung erlauben
+- Full-Suite ohne GO
 
 ## Links
 
+- [[K5_Style_DNA_Timeline_Consumption]]
 - [[Phase5_Endcriteria_Audit]]
 - [[CURRENT_TRUTH]]
 - [[Phase_Status]]
-- [[G4_Style_DNA_Consumption]]
-- [[Style_DNA_Truth]]
-- [[Pipeline_Map]]
+- [[Qwen_Activation_Backlog]]
+- [[Overnight_Learning_Backlog]]

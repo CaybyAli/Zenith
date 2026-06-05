@@ -14,7 +14,7 @@ Lies als Projektwahrheit zuerst:
 5. NEXT_PROMPT.md
 
 Aktueller Stand:
-- Phase 5 ca. 70–75%
+- Phase 5 ca. 72–75%
 - Phase 5.5 0%, gesperrt
 - Freeze Commit: 413f264
 - Obsidian Second Brain ist die zentrale Wahrheit
