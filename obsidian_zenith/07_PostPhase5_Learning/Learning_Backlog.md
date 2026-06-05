@@ -2,133 +2,58 @@
 
 Stand: 2026-06-06
 
-## Reihenfolge
+## Statusuebersicht
 
-- P5-L0 — Opening-Doku + Schutzregeln
-- P5-L1 — Learning-Inventory
-- P5-L2 — Analyse-only Dry-run
-- P5-L3 — Style-Memory Write-Test
-- P5-L4 — Qwen Analyse-only Loop
-- P5-L5 — Overnight Dry-run
-- P5-L6 — Owner Review
-- P5-L7 — echter kontrollierter Learning-Loop
+| Bereich | Status | Ergebnis |
+|---|---:|---|
+| P5-L0 | DONE | Opening-Doku + Schutzregeln |
+| P5-L1 | DONE | Learning-Inventory |
+| P5-L2 | DONE | Analyse-only Dry-run |
+| P5-L3 | DONE | Style-Memory Safe Write |
+| P5-L4 | DONE | Qwen Analysis-only Evaluator |
+| P5-L5 | DONE | Bounded Overnight Dry-run |
+| P5-L6 | DONE | Owner Review + Quality Gate |
+| P5-L6.5 5A | DONE | Codex Audit |
+| P5-L6.5 5B | DONE | Audit-Fixes |
+| P5-L6.5 5C | IN PROGRESS / THIS CLEANUP | Obsidian Audit + Aufraeumen |
+| P5-L6.5 5D | NEXT | Qwen Kontrollrun |
+| P5-L7 | LATER / LOCKED | Echter kontrollierter Learning-Loop |
+| P5-L8 | LATER | Abschlussbericht / Final Audit |
+| Phase 5.5 Musik | LOCKED | Nicht Learning, nicht gestartet |
 
-## Aktuell
+## DONE
 
-P5-L6.5 Gruppe 5B Fixes sind DONE.
+- P5-L2: Output Guard gehaertet, reports-only.
+- P5-L3: Style-Memory Candidate blieb reports-only.
+- P5-L4: Qwen blieb analysis-only und can_cut=false.
+- P5-L5: bounded dry-run, kein echter Overnight-Dauerlauf.
+- P5-L6: Owner Review abgeschlossen.
+- 5A: Audit Findings dokumentiert.
+- 5B: Fixes umgesetzt, Commit `19e16d2`.
 
-Alle echten Ausfuehrungen bleiben gesperrt.
+## IN PROGRESS
 
-## P5-L Backlog Update
+- 5C Obsidian Audit + Aufraeumen.
+- Ziel: neuer Chat versteht Status, Scripts, Safety und Next Gate sofort.
 
-- P5-L2 Analyse-only Dry-run: DONE
-- P5-L3 Style-Memory Safe Write: DONE
-- P5-L3 Start: nur nach Master-GO
+## NEXT
 
-## P5-L3 Backlog Abschluss
+- 5D Qwen Kontrollrun.
+- Nur nach Master-GO.
+- Kein Render.
+- Kein Ingest.
+- Keine Musik.
+- Kein Qwen-Autocut.
+- Kein echter Learning-Loop.
 
-- P5-L3 — Style-Memory Write-Test: DONE
-- Ergebnis: sicherer Reports-only Candidate erzeugt
-- Code/Test Commit: 361505d
-- Reports: nicht committed
-- P5-L Fortschritt: 45%
-- P5-L4 — Qwen Analyse-only Evaluator: naechster offener Bereich, nur nach Master-GO
-- P5-L7 echter kontrollierter Learning-Loop: weiterhin gesperrt
-- Phase 5.5 Musik: locked
+## LATER
 
----
-## 2026-06-05 — P5-L4 abgeschlossen
+- P5-L7 echter kontrollierter Learning-Loop.
+- P5-L8 Abschlussbericht / Final Audit.
 
-DONE:
-- P5-L4 Qwen Analysis-only Evaluator
+## LOCKED
 
-Beweise:
-- Commit 1244f4c
-- Cleanup Commit aa04a99
-- pytest 10 passed
-- Mini-run status=ok
-- Reports lokal vorhanden, nicht committed
-
-Naechster offener Bereich:
-- P5-L5 Overnight Dry-run
-- Nur nach Master-GO
-- Kein echter Dauerloop
-- Kein Render
-- Kein Ingest
-- Kein Qwen-Autocut
-- Keine Musik
-- Kein Phase 5.5
-
-## 2026-06-05 — P5-L5 DONE
-
-Done:
-- P5-L5 Overnight Dry-run
-- bounded max_items=5
-- stop-file support vorhanden
-- reports-only output
-- kein echter Learning-Loop
-- kein echter Overnight-Dauerlauf
-
-Beweis:
-- Code/Test Commit: e0768b4
-- pytest: 9 passed
-- Mini-run: status=ok
-
-Next:
-- P5-L6 Owner Review + Lernqualitaet
-- nur nach Master-GO
-
-Locked:
-- Phase 5.5 Musik
-- Qwen-Autocut
-- Render/Ingest ohne eigenes Gate
-
-## 2026-06-05 ? P5-L6 DONE
-
-Done:
-- P5-L6 Owner Review + Lernqualit?t
-- Qwen Wake-Up Check sichtbar versucht und sauber skipped wegen Timeout
-- Owner Review durch Ali mit GO abgeschlossen
-- Reports-only Output erzeugt
-
-Beweis:
-- Feature Commit: 37bd5f8
-- Cleanup Commit: 45f57f1
-- pytest: 8 passed
-- Mini-run: status=ok
-- qwen_can_cut=false
-- dangerous_response_detected=false
-
-Next:
-- P5-L7 echter kontrollierter Learning-Loop
-- nur nach Master-GO
-- mit Enable-Flag, Stop-Schalter und Timeout
-
-Locked:
-- Phase 5.5 Musik
-- Qwen-Autocut
-- Render/Ingest ohne eigenes Gate
-
-## 2026-06-06 - P5-L6.5 Gruppe 5B DONE
-
-Done:
-- 5B Fixes DONE
-- P5-L6 Owner-GO manifestiert
-- P5-L4 core Importproblem behoben
-- P5-L2 Output Guard gehaertet
-- Code/Test remote gesichert
-
-Beweis:
-- Commit: 19e16d2
-- pytest Zieltests: 33 passed
-- Mini-Runs: P5-L2/P5-L4/P5-L6 status=ok
-
-Next:
-- 5C Obsidian Audit + Aufraeumen
-- nur nach Master-GO
-
-Locked:
-- echter Learning-Loop / P5-L7
-- Phase 5.5 Musik
-- Qwen-Autocut
-- Render/Ingest ohne eigenes Gate
+- Phase 5.5 Musik.
+- Qwen-Autocut.
+- Render/Ingest ohne eigenes Gate.
+- Reports committen ohne explizites GO.

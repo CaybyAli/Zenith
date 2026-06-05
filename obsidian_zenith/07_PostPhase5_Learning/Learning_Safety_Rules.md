@@ -1,28 +1,37 @@
-﻿# Learning Safety Rules - P5-L
+# Learning Safety Rules - P5-L
 
-Stand: 2026-06-05
+Stand: 2026-06-06
 
 ## Harte Regeln
 
-- Qwen immer nur `analysis_only`
-- Qwen immer `can_cut=false`
-- kein Qwen-Autocut
-- keine Musik
-- kein Render ohne eigenes Gate
-- kein Preview-Render ohne eigenes Gate
-- kein Ingest ohne eigenes Gate
-- kein Overnight ohne eigenes Gate
-- kein Dauerlernen ohne eigenes Gate
-- keine Datei-Loeschung
-- keine alten untracked Reports stagen
-- Learning-Outputs zuerst nur unter `reports/` oder `TEMP/`
-- Owner Review ist Pflicht
-- Manifest pro Lauf ist Pflicht
-- Stop-Schalter ist Pflicht
-- Timeout ist Pflicht
+- Qwen immer nur `analysis_only`.
+- Qwen immer `can_cut=false`.
+- Qwen darf nicht schneiden, rendern, ingesten, Musik nutzen oder Timelines bauen.
+- Kein Qwen-Autocut.
+- Keine Musik.
+- Keine Phase 5.5.
+- Kein Render ohne eigenes Gate.
+- Kein Preview-Render ohne eigenes Gate.
+- Kein Ingest ohne eigenes Gate.
+- Kein echter Overnight-Dauerlauf ohne eigenes Gate.
+- Kein echter Learning-Loop ohne Master-GO.
+- Keine Datei-Loeschung ohne ausdrueckliche Erlaubnis.
+- Keine alten untracked Reports stagen.
+- Reports bleiben untracked, ausser Master erlaubt explizit etwas anderes.
+- Keine Produktionsdateien ueberschreiben.
+- Owner Review bleibt Pflicht fuer Loop-Freigabe.
+- Manifest pro Lauf ist Pflicht.
+- Stop-Schalter und Timeout sind Pflicht fuer echte Loop-Arbeit.
 
 ## Schutzentscheidung
 
-P5-L darf erst nach separatem GO in echte Ausfuehrung gehen.
+P5-L darf erst nach separatem Master-GO in echte Ausfuehrung gehen.
 
 Diese Datei oeffnet keinen Loop.
+
+## Aktueller Stand
+
+- P5-L: 90%.
+- P5-L7: noch nicht gestartet.
+- Phase 5.5 Musik: locked.
+- Naechster Gate: 5D Qwen Kontrollrun nach Master-GO.

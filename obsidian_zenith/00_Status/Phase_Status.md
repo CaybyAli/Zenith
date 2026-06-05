@@ -2,151 +2,56 @@
 
 Stand: 2026-06-06
 
-## Phase 5
+## Gesamtstatus
 
-- Status: 100% / DONE / FINAL-GO
-- Alle 8 Phase-5-Endkriterien: DONE
-- K7 echter Kontroll-Run + Ali-Freigabe: DONE
-- Kein weiterer Phase-5-Code/Render noetig
+| Bereich | Status | Harte Wahrheit |
+|---|---:|---|
+| Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
+| P5-L | 90% / 100% | Learning-Vorbereitung bis 5B fertig, 5C Obsidian Cleanup in diesem Stand. |
+| P5-L7 | offen | Echter kontrollierter Learning-Loop ist noch NICHT gestartet. |
+| Phase 5.5 Musik | 0% / locked | Musik ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
-## P5-L - Post-Phase-5 Learning-Loop
+## P5-L Fortschritt
 
-- Status: 90% / P5-L6.5 5B Fixes abgeschlossen
-- P5-L ist ein eigener Zwischenbereich nach Phase 5.
-- Learning-Loop ist noch NICHT gestartet.
-- Overnight ist noch NICHT gestartet.
-- Dauerlernen ist noch NICHT gestartet.
-- Qwen-Autocut ist verboten.
-
-## Phase 5.5 Musik
-
-- Status: 0% / locked
-- Phase 5.5 ist Musik-Integration.
-- Phase 5.5 ist NICHT Learning.
-- Musik ist noch NICHT gestartet.
+| Schritt | Status | Prozent | Zweck |
+|---|---:|---:|---|
+| P5-L0 | DONE | 5% | Opening-Doku + Schutzregeln |
+| P5-L1 | DONE | 15% | Learning-Inventory |
+| P5-L2 | DONE | 30% | Analyse-only Dry-run |
+| P5-L3 | DONE | 45% | Style-Memory Safe Write |
+| P5-L4 | DONE | 60% | Qwen Analysis-only Evaluator |
+| P5-L5 | DONE | 75% | Bounded Overnight Dry-run |
+| P5-L6 | DONE | 85% | Owner Review + Quality Gate |
+| P5-L6.5 5A | DONE | 85% | Codex Audit |
+| P5-L6.5 5B | DONE | 90% | Audit-Fixes |
+| P5-L6.5 5C | IN PROGRESS / THIS CLEANUP | 90% | Obsidian Audit + Aufraeumen |
+| P5-L6.5 5D | NEXT | 90% | Qwen Kontrollrun |
+| P5-L7 | OPEN | - | Echter kontrollierter Learning-Loop |
+| P5-L8 | LATER | - | Abschlussbericht / Final Audit |
 
 ## Naechster Gate
 
-Gruppe 5C Obsidian Audit + Aufraeumen nur nach Master-GO.
+P5-L6.5 Gruppe 5D - Qwen Kontrollrun, nur nach Master-GO.
 
-## P5-L Fortschritt nach P5-L2
+## Aktuelle Sperren
 
-- P5-L0: DONE = 5%
-- P5-L1: DONE = 15%
-- P5-L2: DONE = 30%
-- P5-L3: offen
-- Phase 5.5 Musik: locked
+- P5-L7 echter Learning-Loop: NO-GO bis Master-GO.
+- Echter Overnight-Dauerlauf: NO-GO bis eigenes Gate.
+- Qwen-Autocut: NO-GO.
+- Render/Preview-Render: NO-GO in P5-L6.5.
+- Ingest: NO-GO in P5-L6.5.
+- Musik / Phase 5.5: locked.
+- Reports: bleiben untracked und werden nicht committed.
 
-## P5-L Fortschritt nach P5-L3
+## Historie / superseded
 
-- Phase 5: 100% / DONE / FINAL-GO
-- P5-L0: DONE
-- P5-L1: DONE
-- P5-L2: DONE
-- P5-L3: DONE / Style-Memory Safe Write / Code-Test remote gesichert
-- P5-L Fortschritt: 45%
-- P5-L4: naechster offener Bereich / Qwen Analyse-only Evaluator
-- echter Learning-Loop: weiterhin NO-GO
-- Phase 5.5 Musik: 0% / locked
+Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" oder Phase-5-Schaetzungen unter 100% sind historisch superseded. Die aktuelle Wahrheit steht oben in Gesamtstatus und P5-L Fortschritt.
 
----
-## 2026-06-05 — P5-L Status nach P5-L4
+## 5B Ergebnis
 
-- P5-L0: 5% / DONE
-- P5-L1: 15% / DONE
-- P5-L2: 30% / DONE
-- P5-L3: 45% / DONE
-- P5-L4: 60% / DONE
-- P5-L5: offen / nur nach Master-GO
-- Phase 5.5 Musik: 0% / locked
-
-P5-L4 Ergebnis:
-- Qwen Analysis-only Evaluator gebaut
-- Code/Test remote gesichert
-- Reports lokal erzeugt, nicht committed
-- Local-Qwen Smoke wurde sauber geskippt, kein Fake-Erfolg
-- Qwen bleibt analysis_only und can_cut=false
-
-## 2026-06-05 — P5-L5 Overnight Dry-run DONE
-
-Gesamt:
-- Phase 5: 100% / DONE
-- Post-Phase-5 Learning-Loop: 75% / 100%
-- Phase 5.5 Musik: 0% / locked
-
-P5-L Fortschritt:
-- P5-L0: DONE / 5%
-- P5-L1: DONE / 15%
-- P5-L2: DONE / 30%
-- P5-L3: DONE / 45%
-- P5-L4: DONE / 60%
-- P5-L5: DONE / 75%
-- P5-L6: offen / Owner Review + Lernqualitaet
-
-P5-L5 Beweis:
-- Code/Test Commit: e0768b4
-- pytest: 9 passed
-- Mini-run: status=ok
-- Reports: lokal erzeugt, nicht committed
-
-Safety:
-- Kein Render
-- Kein Ingest
-- Kein Qwen-Autocut
-- Keine Musik
-- Kein echter Overnight-Dauerlauf
-- Kein echter Learning-Loop
-- Phase 5.5 bleibt gesperrt
-
-## 2026-06-05 ? P5-L Status nach P5-L6
-
-Gesamt:
-- Phase 5: 100% / DONE
-- Post-Phase-5 Learning-Loop: 85% / 100%
-- Phase 5.5 Musik: 0% / locked
-
-P5-L Fortschritt:
-- P5-L0: DONE / 5%
-- P5-L1: DONE / 15%
-- P5-L2: DONE / 30%
-- P5-L3: DONE / 45%
-- P5-L4: DONE / 60%
-- P5-L5: DONE / 75%
-- P5-L6: DONE / 85%
-- P5-L7: offen / echter kontrollierter Learning-Loop nur nach Master-GO
-
-P5-L6 Ergebnis:
-- Owner Review + Lernqualit?t gebaut
-- Qwen Wake-Up sauber skipped wegen Timeout
-- Qwen blieb analysis_only und can_cut=false
-- Reports lokal erzeugt, nicht committed
-- echter Learning-Loop noch NICHT gestartet
-- Phase 5.5 Musik locked
-
-## 2026-06-06 - P5-L Status nach P5-L6.5 5B
-
-Gesamt:
-- Phase 5: 100% / DONE
-- Post-Phase-5 Learning-Loop: 90% / 100%
-- Phase 5.5 Musik: 0% / locked
-
-P5-L Fortschritt:
-- P5-L0: DONE / 5%
-- P5-L1: DONE / 15%
-- P5-L2: DONE / 30%
-- P5-L3: DONE / 45%
-- P5-L4: DONE / 60%
-- P5-L5: DONE / 75%
-- P5-L6: DONE / 85%
-- P5-L6.5 5A Codex Audit: DONE
-- P5-L6.5 5B Fixes: DONE / 90%
-- P5-L7: offen / echter kontrollierter Learning-Loop nur nach Master-GO
-
-5B Ergebnis:
-- P5-L6 Owner-GO manifestiert
-- P5-L4 core Importproblem behoben
-- P5-L2 Output Guard gehaertet
-- Code/Test remote gesichert
-- Reports lokal erzeugt, nicht committed
-- echter Learning-Loop noch NICHT gestartet
-- Phase 5.5 Musik locked
+- P5-L6 Owner-GO manifestiert.
+- P5-L4 core Importproblem behoben.
+- P5-L2 Output Guard gehaertet.
+- Code/Test Commit: `19e16d2`.
+- Obsidian Commit vor 5C: `c925724`.
+- Reports lokal erzeugt, nicht committed.

@@ -1,195 +1,46 @@
 # WEBSEITE CHECKLISTE
 
-## Was aktuell auf der HTML-Webseite angehakt sein darf
+Stand: 2026-06-06
 
-### Laufenden Pytest fertig laufen lassen
+## Darf als erledigt markiert sein
 
-- [x] Pytest bis zum Ende laufen lassen
-- [x] Git-Status danach prüfen
-- [x] Nach Pytest nicht weiterbauen
+- [x] Phase 5 Final-GO / 100% DONE.
+- [x] Alle 8 Phase-5-Endkriterien DONE.
+- [x] K7 echter Kontroll-Run + Ali-Freigabe DONE.
+- [x] K8 / Qwen Side-Track als analysis-only Neben-Track DONE.
+- [x] P5-L0 Opening-Doku + Schutzregeln.
+- [x] P5-L1 Learning-Inventory.
+- [x] P5-L2 Analyse-only Dry-run.
+- [x] P5-L3 Style-Memory Safe Write.
+- [x] P5-L4 Qwen Analysis-only Evaluator.
+- [x] P5-L5 bounded Overnight Dry-run.
+- [x] P5-L6 Owner Review + Quality Gate.
+- [x] P5-L6.5 5A Codex Audit.
+- [x] P5-L6.5 5B Audit-Fixes.
+- [x] P5-L6.5 5C Obsidian Audit + Aufraeumen, sobald dieser Commit remote ist.
 
-### ZENITH FREEZE GATE
+## Darf NICHT als erledigt markiert sein
 
-- [x] G4 Zieltests grün beweisen
-- [x] G5 Owner-No-Go Tests grün beweisen
-- [x] Full-Suite Baseline prüfen
-- [x] Git Wahrheit sichern
-- [x] Claude gibt FREEZE GO oder NO-GO
+- [ ] P5-L7 echter kontrollierter Learning-Loop.
+- [ ] Echter Overnight-Dauerlauf.
+- [ ] Dauerlernen.
+- [ ] Qwen-Autocut.
+- [ ] Render in P5-L6.5.
+- [ ] Ingest in P5-L6.5.
+- [ ] Musik.
+- [ ] Phase 5.5 Start.
 
-Hinweis:
-Claude war gesperrt.
-ChatGPT hat temporär Senior-Master-GO gegeben.
+## Aktueller Status fuer Webseite
 
-### Obsidian Second Brain bauen
+- Phase 5: 100% / DONE.
+- P5-L: 90% / 100%.
+- P5-L7: offen.
+- Phase 5.5 Musik: 0% / locked.
+- Naechster Gate: P5-L6.5 Gruppe 5D Qwen Kontrollrun nach Master-GO.
 
-- [x] Obsidian Ordnerstruktur anlegen
-- [x] CURRENT_TRUTH.md erstellen
-- [x] RULES_DO_NOT_BREAK.md erstellen
-- [x] AI_HANDOFF.md und NEXT_PROMPT.md erstellen
-- [x] GO/NO-GO, Bugs, Risiken und Tests übertragen
-- [ ] Claude prüft Obsidian-Struktur
+## Hinweise
 
-Der letzte Haken bleibt offen, bis Claude wirklich geprüft hat.
-
-### Phase 5 danach geordnet weiterführen
-
-- [x] Phase-5-Endkriterien gegen PDF prüfen
-- [x] KI-Activation-Gate
-- [ ] Analyse-Only KI-Track
-- [ ] Overnight-Learning-Loop
-- [ ] Style-Memory prüfen
-
-Hinweis:
-Phase-5-Endkriterien-Audit ist erledigt.
-Nächster Schritt ist K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung, nicht Render und nicht Phase 5.5.
-
-Hinweis:
-K8 Qwen Local Side-Track ist DONE.
-Auf der HTML-Webseite darf nach diesem Obsidian-Update der Punkt "KI-Activation-Gate" angehakt werden.
-## K2 Update
-
-K2 WhisperX Lifeline ist DONE.
-Phase 5 steht jetzt bei ca. 80–82%.
-Nächster Schritt ist K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung, nicht Render und nicht Phase 5.5.
-
-<!-- K7-1J_WEBSEITE_CHECKLISTE_START -->
-## K7 Abschluss - Webseite/Phase-5 Checkliste
-
-Stand: 2026-06-05
-
-- K7 echter Kontroll-Run + Ali-Freigabe: erledigt
-- K7-1I Production-Short Retry nach Friend-Caption-Fix: GO
-- Friend-Captions sichtbar: ja
-- Analyse-Only KI-Track / K8: erledigt, falls in dieser Checkliste als Phase-5 Analyse-Track gefuehrt
-
-Nicht als erledigt markieren:
-- Overnight-Learning-Loop
-- Dauerlernen
-- Phase 5.5
-- Final-GO als eigener spaeterer Schritt
-<!-- K7-1J_WEBSEITE_CHECKLISTE_END -->
-
-<!-- PHASE5_FINAL_GO_WEBSITE_START -->
-## Phase 5 Final-GO - Checkliste
-
-Stand: 2026-06-05
-
-Erledigt:
-- Phase 5 Final-GO / Endkriterien vollstaendig
-- Alle 8 Phase-5-Endkriterien DONE
-- K7 echter Kontroll-Run + Ali-Freigabe erledigt
-- Analyse-Only KI-Track / K8 erledigt, falls in dieser Checkliste gefuehrt
-
-Nicht erledigt / nicht starten:
-- Overnight-Learning-Loop
-- Dauerlernen
-- Phase 5.5 gestartet
-- Musik
-- Qwen-Autocut
-<!-- PHASE5_FINAL_GO_WEBSITE_END -->
-
-<!-- P5_L0_OPENING_DOKU_WEBSITE_START -->
-## P5-L0 Opening-Doku - Webseite/Checkliste
-
-Stand: 2026-06-05
-
-Darf als erledigt gelten:
-- Phase 5 final schliessen
-- K7 / Ali-Freigabe
-- P5-L Opening-Doku vorbereitet
-
-Nicht als erledigt markieren:
-- echter Learning-Loop
-- Overnight-Learning-Loop
-- Dauerlernen
-- Phase 5.5 / Musik
-- Qwen-Autocut
-- Render
-- Ingest
-
-Hinweis:
-P5-L ist der Post-Phase-5 Learning-Loop.
-Phase 5.5 bleibt Musik-Integration und locked.
-<!-- P5_L0_OPENING_DOKU_WEBSITE_END -->
-
-## P5-L2 Webseiten-Status
-
-- P5-L2 / Analyse-only Dry-run: erledigt
-- Echter Learning-Loop: NICHT erledigt
-- Overnight: NICHT erledigt
-- Musik / Phase 5.5: NICHT erledigt / locked
-
-## P5-L3 Webseite Status
-
-- P5-L3 Style-Memory Safe Write: erledigt
-- Output: Reports-only candidate
-- Produktionsnutzung: nein
-- Owner Review erforderlich: ja
-- Reports: lokal erzeugt, nicht committed
-- Echter Learning-Loop: weiterhin nicht gestartet
-- Phase 5.5 Musik: locked
-
----
-## 2026-06-05 — Webseite Checkliste P5-L4
-
-P5-L4 ist erledigt:
-- Qwen Analysis-only Evaluator gebaut
-- Tests gruen
-- Mini-run ohne Qwen gruen
-- Local-Qwen Smoke sauber geskippt
-- Code/Test remote gesichert
-
-Nicht erledigt und weiterhin gesperrt:
-- echter Learning-Loop
-- Overnight Dauerlauf
-- Qwen-Autocut
-- Render
-- Ingest
-- Musik
-- Phase 5.5
-
-## 2026-06-05 — P5-L5 Webseite-Status
-
-Erledigt:
-- P5-L5 bounded Overnight Dry-run
-- Reports-only Plan/Manifest/Summary
-- Safety-Flags dokumentiert
-
-Nicht erledigt / locked:
-- echter Overnight-Learning-Loop
-- Dauerlernen
-- Qwen-Autocut
-- Render
-- Ingest
-- Musik
-- Phase 5.5
-
-Status:
-- P5-L: 75%
-- Phase 5.5 Musik: 0% / locked
-
-## 2026-06-05 ? Webseiten-Checkliste Update P5-L6
-
-Erledigt:
-- P5-L6 Owner Review + Lernqualit?t
-- Qwen Wake-Up Check versucht und sauber skipped
-- Owner Review durch Ali mit GO
-
-Nicht erledigt:
-- echter Learning-Loop / P5-L7 noch offen
-- Musik / Phase 5.5 weiterhin locked
-
-## 2026-06-06 - Webseiten-Checkliste P5-L6.5 5B
-
-Erledigt:
-- P5-L6.5 5B Audit-Fixes
-- P5-L6 Owner-GO im Manifest maschinenlesbar
-- P5-L4 core Importproblem behoben
-- P5-L2 Output Guard gehaertet
-- Code/Test remote gesichert
-
-Nicht erledigt:
-- echter Learning-Loop / P5-L7 weiterhin offen
-- Musik / Phase 5.5 weiterhin locked
-- Qwen-Autocut weiterhin verboten
-- Render/Ingest weiterhin nicht gestartet
+- P5-L5 war nur ein bounded dry-run, kein echter Overnight-Dauerlauf.
+- P5-L6 Owner Review ist DONE, aber das startet keinen echten Loop.
+- Qwen darf analysieren, aber nicht schneiden.
+- Reports bleiben lokal/untracked und werden nicht committed.

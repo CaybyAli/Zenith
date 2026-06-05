@@ -1,290 +1,139 @@
 # GO / NO-GO LOG
 
-## 2026-06-05 — ZENITH FREEZE GATE
+Stand: 2026-06-06
 
-Decision: GO
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L steht bei 90%. P5-L7 echter Loop bleibt NO-GO bis Master-GO. Phase 5.5 Musik bleibt locked.
 
-Reason:
-Full-Suite zeigt nur bekannte 7 rote Tests.
-Keine neuen roten Tests.
-Keine Collection-Errors.
-Git tracked sauber.
-HEAD = origin/main = 413f264.
+## Phase 5 FINAL GO
 
-Allowed next:
-Obsidian Second Brain bauen.
+Entscheidung: GO.
 
-Forbidden:
-Zenith Feature-Arbeit, Render, Ingest, Musik, Phase 5.5.
-## 2026-06-05 — Phase-5-Endkriterien-Audit 1A
+Begruendung:
+- Alle 8 Phase-5-Endkriterien sind DONE.
+- K7 echter Kontroll-Run + Ali-Freigabe ist DONE.
+- Blocker: keine.
 
-Decision: GO für Audit-Ergebnis
+Grenzen:
+- Phase 5.5 wurde dadurch NICHT gestartet.
+- P5-L wurde als eigener Post-Phase-5-Bereich gestartet.
 
-Result:
-Phase 5 wird von ca. 70–75% auf ca. 65–70% korrigiert.
+## P5-L0 Opening-Doku GO
+
+Entscheidung: GO fuer Dokumentation und Schutzregeln.
 
 NO-GO:
-- Phase 5 Final-GO
-- Phase 5.5 öffnen
-- Musik
-- Full Render ohne eigenes GO
-- Qwen Auto-Schnitt
-
-Allowed next:
-K5 Consumption-Gate.
-## 2026-06-05 — K5 1C DONE
-
-Decision: GO für K5 DONE
-
-Result:
-Style-DNA beeinflusst Timeline-Scoring und ist testseitig bewiesen.
-
-Commit:
-7f0bfdf feat(P5-K5): apply style dna timeline scoring
-
-Remote full hash:
-7f0bfdf0105359764e995cab4ddc7aa7e48c7395
-
-GO:
-- K5 als DONE dokumentieren
-- nächster Gate K8 Qwen Activation
-
-NO-GO:
-- Phase 5 Final-GO
-- Phase 5.5 öffnen
-- Musik
-- Full Render ohne eigenes GO
-- Qwen Auto-Schnitt
-
-## 2026-06-05 — K8 DONE
-
-Decision: GO für K8 DONE
-
-Result:
-Qwen ist als lokaler Side-Track technisch aktiviert und abgesichert.
-
-Code Commit:
-c549586 feat(P5-K8): add local Qwen side-track adapter
-
-GO:
-- K8 als DONE dokumentieren
-- nächster Gate K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung
-
-NO-GO:
-- Qwen Auto-Schnitt
-- LLM_PRIMARY
-- Phase 5 Final-GO
-- Phase 5.5 öffnen
-- Musik
-- Full Render ohne eigenes GO
-## 2026-06-05 — K2 DONE
-
-Decision: GO für K2 DONE
-
-Result:
-WhisperX Primary Engine ist technisch bewiesen.
-
-GO:
-- K2 als DONE dokumentieren
-- nächster Gate K3/K6 Shorts-Captions/Layout/Fokus Final Proof oder K7 Kontroll-Run-Vorbereitung
-
-NO-GO:
-- Phase 5 Final-GO
-- Phase 5.5 öffnen
-- Render ohne eigenes GO
-- Ingest ohne eigenes GO
-- Musik
-- Qwen Auto-Schnitt
-
-## GO — K1 Skeleton/Core Final Proof
-
-Status: GO / DONE
-Commit: 9d4a159
-Begründung: K1 Final Proof nach Minimal-Fix grün.
-Phase 5 Final-GO: weiterhin NEIN.
-Phase 5.5: gesperrt.
-
-GO ? K3/K6 technical DONE accepted.
-
-NO-GO ? Phase 5 Final-GO still blocked until K7 control run and Ali approval.
-
-Rule ? K7 must use clean source without burned-in captions.
-
-<!-- K7-1J_GO_NO_GO_START -->
-## 2026-06-05 - Entscheidung: K7-1I Production-Short Retry nach Friend-Fix
-
-- Entscheidung: GO
-- Owner Review: GO
-- Ali-Freigabe: ja
-- Grund:
-  - Production-Short-Route aktiv
-  - korrektes Short-Layout laut Owner
-  - Audio vorhanden
-  - Ali-Captions sichtbar
-  - Friend-Captions sichtbar und gelb/klar unterscheidbar
-  - keine alten Testfilter als Quality-Route
-  - keine Safety-Verletzung
-- Beweis:
-  - Output: `reports\phase5\k7_control_run\production_retry_after_1h_20260605_175014\k7_control_preview.mp4`
-  - `renderer_route=ShortsRenderDriver.render_short`
-  - `GREEN_COUNT=105`
-  - `YELLOW_COUNT=36`
-  - `friend_words=36`
-- Phase 5 Final-GO wird dadurch vorbereitet, aber noch NICHT automatisch gestartet.
-- Phase 5.5 bleibt locked bis ausdruecklicher Master Final-GO.
-<!-- K7-1J_GO_NO_GO_END -->
-
-<!-- PHASE5_FINAL_GO_DECISION_START -->
-## 2026-06-05 - Entscheidung: PHASE 5 FINAL-GO
-
-- Entscheidung: GO
-- Phase 5 Status: 100% / DONE / FINAL-GO
-- Blocker: keine
-- Risiken: nur sauberer Uebergang in Phase 5.5
-- Alle 8 Endkriterien sind DONE
-- K7 echter Kontroll-Run + Ali-Freigabe ist DONE
-- Phase 5.5 ist noch NICHT gestartet
-- Entscheidung: Phase 5 abgeschlossen
-- Naechster Schritt: Post-Phase-5 Learning-Loop Opening-Gate / P5-L0
-<!-- PHASE5_FINAL_GO_DECISION_END -->
-
-<!-- P5_L0_OPENING_DOKU_DECISION_START -->
-## 2026-06-05 - Entscheidung: P5-L0 Opening-Doku
-
-- Entscheidung: GO fuer P5-L0 Opening-Doku
-- Echter Learning-Loop: NO-GO
-- Overnight/Dauerlernen: NO-GO
-- Qwen-Autocut: NO-GO
-- Phase 5.5 Musik: locked
-- Phase 5.5 ist NICHT Learning
-- Blocker fuer echten Loop:
-  - Learning-Inventory fehlt
-  - Analyse-only Dry-run fehlt
-  - Style-Memory Write-Test fehlt
-  - Owner-GO fehlt
-- Naechster Schritt: P5-L0 Commit-Gate
-<!-- P5_L0_OPENING_DOKU_DECISION_END -->
+- echter Learning-Loop
+- Overnight/Dauerlernen
+- Qwen-Autocut
+- Phase 5.5 Musik
 
 ## P5-L2 FINAL GO
 
-- Entscheidung: P5-L2 FINAL GO
-- Code/Test remote gesichert: ja
-- Echter Learning-Loop: weiterhin NO-GO
-- P5-L3: darf erst nach Master-GO starten
-- Phase 5.5 Musik: locked
+Entscheidung: GO.
 
-## P5-L3 FINAL-GO
-
-- Entscheidung: GO fuer Abschluss Gruppe 1 / P5-L3
-- Grundlage: 8 passed, Mini-Run status ok, Safety Flags false
-- Commit: 361505d
-- Full Hash: 361505d2b341b4fe569a6007b90604e312beccce
-- Reports-only Output bestaetigt
-- Kein Render
-- Kein Ingest
-- Kein Qwen
-- Kein Qwen-Autocut
-- Keine Musik
-- Kein Overnight
-- Kein echter Learning-Loop
-- Phase 5.5 bleibt 0% / locked
-- Naechster Schritt: P5-L4 nur nach Master-GO
-
----
-## 2026-06-05 — P5-L4 FINAL GO
-
-Entscheidung:
-- P5-L4 Qwen Analysis-only Evaluator: FINAL GO
-- Code/Test remote gesichert
-- P5-L Fortschritt: 60%
-
-Erlaubt:
-- P5-L5 Overnight Dry-run nur nach Master-GO
+Beweis:
+- Code/Test Commit: `af5a89c`.
+- Mini-run: `status=ok`.
+- Reports: nicht committed.
 
 Weiterhin NO-GO:
 - echter Learning-Loop
+- Phase 5.5 Musik
+
+## P5-L3 FINAL GO
+
+Entscheidung: GO.
+
+Beweis:
+- Code/Test Commit: `361505d`.
+- Pytest: 8 passed.
+- Mini-run: `status=ok`.
+- Output blieb Reports-only.
+
+## P5-L4 FINAL GO
+
+Entscheidung: GO.
+
+Beweis:
+- Feature Commit: `1244f4c`.
+- Cleanup Commit: `aa04a99`.
+- Pytest: 10 passed.
+- Qwen blieb `analysis_only`.
+- Qwen blieb `can_cut=false`.
+
+NO-GO:
 - Qwen-Autocut
 - Render
 - Ingest
 - Musik
 - Phase 5.5
 
-Qwen-Regel:
-- Qwen bleibt analysis_only
-- Qwen can_cut=false
-- Qwen darf nicht schneiden, rendern, ingest starten, Musik nutzen oder Timeline ausfuehren.
+## P5-L5 FINAL GO
 
-## 2026-06-05 — P5-L5 FINAL GO
-
-Entscheidung:
-- P5-L5 Overnight Dry-run: FINAL GO
-- Nur bounded dry-run, kein echter Dauerlauf.
-- Realer Learning-Loop bleibt NO-GO bis eigenes Gate.
-- P5-L6 Owner Review + Lernqualitaet ist naechster offener Schritt.
-- Phase 5.5 Musik bleibt locked.
+Entscheidung: GO fuer bounded dry-run.
 
 Beweis:
-- Code/Test Commit: e0768b4
-- pytest: 9 passed
-- Mini-run: status=ok
-- Safety Flags false
-
-Weiterhin verboten:
-- echter Overnight-Dauerlauf
-- Dauerlernen
-- Qwen-Autocut
-- Render
-- Ingest
-- Musik
-- Phase 5.5
-
-## 2026-06-05 ? P5-L6 FINAL GO
-
-Entscheidung:
-- P5-L6 Owner Review + Lernqualit?t: FINAL GO
-- Ali Owner Review: GO
-- P5-L Fortschritt: 85%
-
-Beweis:
-- Feature Commit: 37bd5f8
-- Cleanup Commit: 45f57f1
-- py_compile: gr?n
-- pytest: 8 passed
-- Mini-run: status=ok
-- Qwen Wake-Up: skipped_qwen_unavailable / timeout
-- qwen_can_cut=false
-- qwen_autocut_allowed=false
-- dangerous_response_detected=false
+- Code/Test Commit: `e0768b4`.
+- Pytest: 9 passed.
+- Mini-run: `status=ok`.
 
 Grenzen:
-- echter Learning-Loop wurde NICHT gestartet
-- P5-L7 darf erst nach Master-GO starten
-- Phase 5.5 Musik bleibt locked
+- Kein echter Overnight-Dauerlauf.
+- Kein echter Learning-Loop.
 
-## 2026-06-06 - P5-L6.5 Gruppe 5B FINAL GO
+## P5-L6 FINAL GO
 
-Entscheidung:
-- P5-L6.5 5B Audit-Fixes: FINAL GO
-- Code/Test remote gesichert
-- P5-L Fortschritt: 90%
+Entscheidung: GO.
 
 Beweis:
-- Code/Test Commit: 19e16d2
-- Full Hash: 19e16d2b2423ba7ee188021c5fb338a2ee0ce93a
-- py_compile: gruen
-- pytest Zieltests: 33 passed
-- Mini-Runs P5-L2/P5-L4/P5-L6: status=ok
+- Feature Commit: `37bd5f8`.
+- Cleanup Commit: `45f57f1`.
+- Pytest: 8 passed.
+- Mini-run: `status=ok`.
+- Ali Owner Review: GO.
+
+Grenzen:
+- P5-L7 wurde NICHT gestartet.
+- Phase 5.5 blieb locked.
+
+## P5-L6.5 Gruppe 5B FINAL GO
+
+Entscheidung: GO.
+
+Beweis:
+- Code/Test Commit: `19e16d2`.
+- Full Hash: `19e16d2b2423ba7ee188021c5fb338a2ee0ce93a`.
+- Zieltests: 33 passed.
+- Mini-Runs P5-L2/P5-L4/P5-L6: `status=ok`.
 
 Fixes:
-- P5-L6 Owner-GO maschinenlesbar im Manifest
-- P5-L4 core Importproblem behoben
-- P5-L2 Output Guard gehaertet
+- P5-L6 Owner-GO maschinenlesbar im Manifest.
+- P5-L4 core Importproblem behoben.
+- P5-L2 Output Guard gehaertet.
+
+## P5-L6.5 Gruppe 5C Obsidian Cleanup
+
+Entscheidung: GO-faehig, wenn Scope sauber bleibt und Commit remote ist.
+
+Erlaubt:
+- Obsidian aktualisieren.
+- Truth Store konsolidieren.
+- Index- und Runbook-Dateien erstellen.
+
+NO-GO:
+- Code aendern.
+- Tests aendern.
+- Reports committen.
+- Qwen starten.
+- Render/Ingest/Musik starten.
+- P5-L7 starten.
+- Phase 5.5 starten.
+
+## Naechster Gate
+
+P5-L6.5 Gruppe 5D - Qwen Kontrollrun, nur nach Master-GO.
 
 Weiterhin NO-GO:
-- echter Learning-Loop
-- P5-L7 Start ohne 5C/5D/5E und Master-GO
-- Qwen-Autocut
-- Render
-- Ingest
-- Musik
-- Phase 5.5
+- P5-L7 echter Learning-Loop.
+- Phase 5.5 Musik.
+- Qwen-Autocut.
