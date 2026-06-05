@@ -35,7 +35,20 @@ Dieses Runbook erklaert neuen Chats, wie P5-L-Gruppen ablaufen.
 - P5-L6.5 5B: DONE.
 - P5-L6.5 5C: DONE.
 - P5-L6.5 5D: Qwen Kontrollrun DONE.
-- Naechster Schritt: 5E Abschlussbericht / Final Audit nach Master-GO.
+- P5-L6.5 5E: Abschlussbericht / Final Audit DONE.
+- Naechster Schritt: Master-Entscheidung P5-L7 vs. P5-L-Close.
+
+## Entscheidungsweg nach 5E
+
+Option A: P5-L7 echter kontrollierter Learning-Loop.
+- Nur mit Master-GO.
+- Nur mit Enable-Flag, Stop-Schalter, Timeout, Manifest und klaren Output-Grenzen.
+- Kein Qwen-Autocut.
+- Keine Phase 5.5.
+
+Option B: P5-L als Vorbereitung schliessen.
+- Echter Schlaf-/Learning-Run bleibt separates Runtime-Gate.
+- Phase 5.5 Musik bleibt locked bis separater Master-GO erteilt ist.
 
 ## P5-L7 Status
 

@@ -7,7 +7,7 @@ Stand: 2026-06-06
 | Bereich | Status | Harte Wahrheit |
 |---|---:|---|
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
-| P5-L | 95% / 100% | 5D Qwen Kontrollrun abgeschlossen und remote gesichert. |
+| P5-L | 95% / 100% | 5E Final Audit / Handoff erstellt; P5-L-Close braucht Master-Entscheidung. |
 | P5-L7 | offen | Echter kontrollierter Learning-Loop ist noch NICHT gestartet. |
 | Phase 5.5 Musik | 0% / locked | Musik ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
@@ -26,13 +26,15 @@ Stand: 2026-06-06
 | P5-L6.5 5B | DONE | 90% | Audit-Fixes |
 | P5-L6.5 5C | DONE | 90% | Obsidian Audit + Aufraeumen |
 | P5-L6.5 5D | DONE | 95% | Qwen Kontrollrun |
-| P5-L6.5 5E | NEXT | 95% | Abschlussbericht / Final Audit |
+| P5-L6.5 5E | DONE | 95% | Abschlussbericht / Final Audit |
 | P5-L7 | OPEN | - | Echter kontrollierter Learning-Loop |
 | P5-L8 | LATER | - | Abschlussbericht / Final Audit |
 
 ## Naechster Gate
 
-P5-L6.5 Gruppe 5E - Abschlussbericht / Final Audit, nur nach Master-GO.
+Master-Entscheidung nach 5E:
+- Option A: P5-L7 echter kontrollierter Learning-Loop.
+- Option B: P5-L als Vorbereitung schliessen und Schlaf-/Learning-Run als separates Runtime-Gate fuehren.
 
 ## Aktuelle Sperren
 
@@ -70,4 +72,12 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - `qwen_autocut_allowed=false`.
 - `dangerous_response_detected=false`.
 - P5-L7 weiterhin offen.
+- Phase 5.5 Musik locked.
+
+## 5E Ergebnis
+
+- Final Audit Report erstellt: `obsidian_zenith/07_PostPhase5_Learning/P5L_Final_Audit_Report.md`.
+- Claude Senior Handoff erstellt: `obsidian_zenith/07_PostPhase5_Learning/Claude_Senior_Handoff.md`.
+- P5-L bleibt 95% bis Master P5-L-Close entscheidet.
+- P5-L7 weiterhin offen und nicht gestartet.
 - Phase 5.5 Musik locked.

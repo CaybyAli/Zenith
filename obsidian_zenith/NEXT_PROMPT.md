@@ -1,34 +1,28 @@
-PROJECT ZENITH - P5-L6.5 GRUPPE 5E - ABSCHLUSSBERICHT / FINAL AUDIT
+PROJECT ZENITH - MASTER-ENTSCHEIDUNG NACH 5E
 
-Nur nach Master-GO.
+Option A: P5-L7 echter kontrollierter Learning-Loop.
+
+Option B: P5-L als Vorbereitung schliessen und Schlaf-/Learning-Run als separates Runtime-Gate fuehren.
+
+Phase 5.5 Musik bleibt locked bis Master-GO.
 
 Aktueller Stand:
 - Phase 5: 100% / DONE / FINAL-GO.
 - P5-L: 95% / 100%.
-- P5-L6.5 Gruppe 5A Codex Audit: DONE.
-- P5-L6.5 Gruppe 5B Fixes: DONE / remote gesichert.
-- P5-L6.5 Gruppe 5C Obsidian Audit + Aufraeumen: DONE / remote gesichert.
-- P5-L6.5 Gruppe 5D Qwen Kontrollrun: DONE / remote gesichert.
-- Qwen sichtbar geprueft: ja.
-- Qwen blieb `analysis_only`.
-- Qwen blieb `can_cut=false`.
-- Qwen-Autocut blieb verboten.
+- P5-L6.5 Gruppe 5E Final Audit / Handoff: DONE.
+- Qwen Kontrollrun: DONE und sichtbar geprueft.
+- Qwen bleibt `analysis_only`.
+- Qwen bleibt `can_cut=false`.
 - P5-L7 echter kontrollierter Learning-Loop: noch NICHT gestartet.
 - Phase 5.5 Musik: 0% / locked.
 
-Ziel 5E:
-Abschlussbericht / Final Audit fuer P5-L6.5 vorbereiten.
-
-Strikte Verbote:
+Harte Verbote bis Master entscheidet:
 - Kein Render.
 - Kein Preview-Render.
 - Kein Ingest.
 - Keine Musik.
 - Kein Qwen-Autocut.
-- Kein echter Learning-Loop ohne eigenes Gate.
+- Kein echter Learning-Loop.
 - Keine Phase 5.5.
 - Kein P5-L7 Start.
 - Keine Reports committen, ausser Master erlaubt es explizit.
-
-Naechster Schritt:
-Master-GO einholen und dann Gruppe 5E Abschlussbericht / Final Audit starten.

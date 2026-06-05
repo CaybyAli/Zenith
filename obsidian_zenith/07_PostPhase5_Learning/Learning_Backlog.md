@@ -15,9 +15,9 @@ Stand: 2026-06-06
 | P5-L6 | DONE | Owner Review + Quality Gate |
 | P5-L6.5 5A | DONE | Codex Audit |
 | P5-L6.5 5B | DONE | Audit-Fixes |
-| P5-L6.5 5C | IN PROGRESS / THIS CLEANUP | Obsidian Audit + Aufraeumen |
+| P5-L6.5 5C | DONE | Obsidian Audit + Aufraeumen |
 | P5-L6.5 5D | DONE | Qwen Kontrollrun |
-| P5-L6.5 5E | NEXT | Abschlussbericht / Final Audit |
+| P5-L6.5 5E | DONE | Abschlussbericht / Final Audit |
 | P5-L7 | LATER / LOCKED | Echter kontrollierter Learning-Loop |
 | P5-L8 | LATER | Abschlussbericht / Final Audit |
 | Phase 5.5 Musik | LOCKED | Nicht Learning, nicht gestartet |
@@ -31,21 +31,18 @@ Stand: 2026-06-06
 - P5-L6: Owner Review abgeschlossen.
 - 5A: Audit Findings dokumentiert.
 - 5B: Fixes umgesetzt, Commit `19e16d2`.
+- 5C: Obsidian Audit + Aufraeumen abgeschlossen.
+- 5D: Qwen Kontrollrun abgeschlossen.
+- 5E: Final Audit Report und Claude Senior Handoff erstellt.
 
 ## IN PROGRESS
 
-- 5C Obsidian Audit + Aufraeumen.
-- Ziel: neuer Chat versteht Status, Scripts, Safety und Next Gate sofort.
+- Keine Runtime in Arbeit.
 
 ## NEXT
 
-- 5E Abschlussbericht / Final Audit.
+- Entscheidungs-Gate: P5-L7 echter kontrollierter Learning-Loop oder P5-L-Close.
 - Nur nach Master-GO.
-- Kein Render.
-- Kein Ingest.
-- Keine Musik.
-- Kein Qwen-Autocut.
-- Kein echter Learning-Loop.
 
 ## LATER
 
@@ -61,6 +58,13 @@ Stand: 2026-06-06
 - `qwen_can_cut=false`.
 - `dangerous_response_detected=false`.
 - P5-L7 weiterhin nur nach Master-GO.
+
+## 5E Ergebnis
+
+- Final Audit Report: `obsidian_zenith/07_PostPhase5_Learning/P5L_Final_Audit_Report.md`.
+- Claude Senior Handoff: `obsidian_zenith/07_PostPhase5_Learning/Claude_Senior_Handoff.md`.
+- Naechster Entscheidungs-Gate: P5-L7 oder P5-L-Close.
+- Phase 5.5 Musik bleibt locked.
 
 ## LOCKED
 
