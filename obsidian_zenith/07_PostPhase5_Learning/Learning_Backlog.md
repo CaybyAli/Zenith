@@ -1,4 +1,4 @@
-﻿# Learning Backlog - P5-L
+# Learning Backlog - P5-L
 
 Stand: 2026-06-05
 
@@ -22,5 +22,16 @@ Alle echten Ausfuehrungen bleiben gesperrt.
 ## P5-L Backlog Update
 
 - P5-L2 Analyse-only Dry-run: DONE
-- P5-L3 Style-Memory Safe Write: nächster offener Bereich
+- P5-L3 Style-Memory Safe Write: DONE
 - P5-L3 Start: nur nach Master-GO
+
+## P5-L3 Backlog Abschluss
+
+- P5-L3 — Style-Memory Write-Test: DONE
+- Ergebnis: sicherer Reports-only Candidate erzeugt
+- Code/Test Commit: 361505d
+- Reports: nicht committed
+- P5-L Fortschritt: 45%
+- P5-L4 — Qwen Analyse-only Evaluator: naechster offener Bereich, nur nach Master-GO
+- P5-L7 echter kontrollierter Learning-Loop: weiterhin gesperrt
+- Phase 5.5 Musik: locked

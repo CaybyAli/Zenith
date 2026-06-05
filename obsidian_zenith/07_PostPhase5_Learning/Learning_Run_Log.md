@@ -1,4 +1,4 @@
-﻿# Learning Run Log - P5-L
+# Learning Run Log - P5-L
 
 Stand: 2026-06-05
 
@@ -31,3 +31,30 @@ P5-L0 ist nur Dokumentation.
 - Kein Loop
 - Phase 5.5 nicht benutzt
 - deleted_files: []
+
+## P5-L3 Mini-Run Safe Write
+
+- Zeitpunkt: 2026-06-05 23:32:16
+- Status: ok
+- Modus: style_memory_safe_write
+- memory_write_target: reports_only_candidate
+- Outputs:
+  - reports/p5_l3_style_memory_safe_write/style_memory_candidate.json
+  - reports/p5_l3_style_memory_safe_write/style_memory_manifest.json
+  - reports/p5_l3_style_memory_safe_write/style_memory_summary.md
+- Counts:
+  - pair_fingerprints: 20
+  - top_solo_fingerprints: 30
+  - vlog_fingerprints: 3
+  - pair_truth_entries: 20
+- forbidden_inputs_used: []
+- warnings: []
+- deleted_files: []
+- qwen_used: false
+- render_used: false
+- ingest_used: false
+- music_used: false
+- autocut_used: false
+- overnight_started: false
+- learning_loop_started: false
+- phase_5_5_used: false

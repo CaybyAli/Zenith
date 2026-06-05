@@ -1,4 +1,4 @@
-﻿# WEBSEITE CHECKLISTE
+# WEBSEITE CHECKLISTE
 
 ## Was aktuell auf der HTML-Webseite angehakt sein darf
 
@@ -118,3 +118,13 @@ Phase 5.5 bleibt Musik-Integration und locked.
 - Echter Learning-Loop: NICHT erledigt
 - Overnight: NICHT erledigt
 - Musik / Phase 5.5: NICHT erledigt / locked
+
+## P5-L3 Webseite Status
+
+- P5-L3 Style-Memory Safe Write: erledigt
+- Output: Reports-only candidate
+- Produktionsnutzung: nein
+- Owner Review erforderlich: ja
+- Reports: lokal erzeugt, nicht committed
+- Echter Learning-Loop: weiterhin nicht gestartet
+- Phase 5.5 Musik: locked

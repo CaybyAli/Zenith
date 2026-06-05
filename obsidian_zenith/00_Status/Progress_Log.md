@@ -1,4 +1,4 @@
-﻿# PROGRESS LOG
+# PROGRESS LOG
 
 ## 2026-06-05
 
@@ -180,3 +180,17 @@ Phase 5 jetzt ca. 84–85%.
 - invalid_ali_sources: []
 - uses_forbidden_ali_reference: false
 - Reports nur dokumentiert, nicht committed
+
+## 2026-06-05 23:32:16 - P5-L3 Style-Memory Safe Write abgeschlossen
+
+- P5-L3 Code/Test Commit: 361505d
+- Full Hash: 361505d2b341b4fe569a6007b90604e312beccce
+- Pytest: 8 passed
+- Mini-Run: status ok
+- Manifest: reports/p5_l3_style_memory_safe_write/style_memory_manifest.json
+- Candidate: reports/p5_l3_style_memory_safe_write/style_memory_candidate.json
+- Summary: reports/p5_l3_style_memory_safe_write/style_memory_summary.md
+- Reports bleiben lokal/untracked und werden nicht committed.
+- Scope eingehalten: kein core, kein video_configs, kein learning_corpus, kein Obsidian durch Script.
+- Qwen/Render/Ingest/Musik/Autocut/Overnight/Learning-Loop nicht genutzt.
+- Phase 5.5 Musik bleibt locked.
