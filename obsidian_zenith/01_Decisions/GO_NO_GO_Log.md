@@ -189,3 +189,27 @@ Rule ? K7 must use clean source without burned-in captions.
 - Kein echter Learning-Loop
 - Phase 5.5 bleibt 0% / locked
 - Naechster Schritt: P5-L4 nur nach Master-GO
+
+---
+## 2026-06-05 — P5-L4 FINAL GO
+
+Entscheidung:
+- P5-L4 Qwen Analysis-only Evaluator: FINAL GO
+- Code/Test remote gesichert
+- P5-L Fortschritt: 60%
+
+Erlaubt:
+- P5-L5 Overnight Dry-run nur nach Master-GO
+
+Weiterhin NO-GO:
+- echter Learning-Loop
+- Qwen-Autocut
+- Render
+- Ingest
+- Musik
+- Phase 5.5
+
+Qwen-Regel:
+- Qwen bleibt analysis_only
+- Qwen can_cut=false
+- Qwen darf nicht schneiden, rendern, ingest starten, Musik nutzen oder Timeline ausfuehren.

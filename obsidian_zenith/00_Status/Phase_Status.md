@@ -48,3 +48,21 @@ P5-L0 Commit-Gate nach Opening-Doku.
 - P5-L4: naechster offener Bereich / Qwen Analyse-only Evaluator
 - echter Learning-Loop: weiterhin NO-GO
 - Phase 5.5 Musik: 0% / locked
+
+---
+## 2026-06-05 — P5-L Status nach P5-L4
+
+- P5-L0: 5% / DONE
+- P5-L1: 15% / DONE
+- P5-L2: 30% / DONE
+- P5-L3: 45% / DONE
+- P5-L4: 60% / DONE
+- P5-L5: offen / nur nach Master-GO
+- Phase 5.5 Musik: 0% / locked
+
+P5-L4 Ergebnis:
+- Qwen Analysis-only Evaluator gebaut
+- Code/Test remote gesichert
+- Reports lokal erzeugt, nicht committed
+- Local-Qwen Smoke wurde sauber geskippt, kein Fake-Erfolg
+- Qwen bleibt analysis_only und can_cut=false

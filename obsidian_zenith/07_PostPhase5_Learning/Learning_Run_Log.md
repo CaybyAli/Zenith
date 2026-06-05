@@ -58,3 +58,28 @@ P5-L0 ist nur Dokumentation.
 - overnight_started: false
 - learning_loop_started: false
 - phase_5_5_used: false
+
+---
+## 2026-06-05 — P5-L4 Analysis-only Evaluator Run
+
+Run-Art:
+- Qwen Analysis-only Evaluator
+- kein Render
+- kein Ingest
+- keine Musik
+- kein Autocut
+- kein Overnight
+- kein echter Learning-Loop
+- kein Phase 5.5
+
+Ergebnis:
+- Mini-run ohne Qwen: status=ok
+- Local-Qwen Smoke: sauber geskippt wegen Import-Kontext
+- Kein Fake-Erfolg
+- qwen_can_cut=false
+- qwen_autocut_allowed=false
+
+Report-Pfade:
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_report.json
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_manifest.json
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_summary.md

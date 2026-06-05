@@ -194,3 +194,40 @@ Phase 5 jetzt ca. 84–85%.
 - Scope eingehalten: kein core, kein video_configs, kein learning_corpus, kein Obsidian durch Script.
 - Qwen/Render/Ingest/Musik/Autocut/Overnight/Learning-Loop nicht genutzt.
 - Phase 5.5 Musik bleibt locked.
+
+---
+## 2026-06-05 — P5-L4 Qwen Analysis-only Evaluator DONE
+
+Commits:
+- 1244f4c feat(P5-L4): add qwen analysis-only evaluator
+- aa04a99 chore(P5-L4): clean qwen evaluator test eof
+
+Full Hash:
+- aa04a99a4c9acb4c045871825dda20c9a0206b31
+
+Test/Run:
+- py_compile gruen
+- pytest tests/test_p5_l4_qwen_analysis_only_evaluator.py -vv = 10 passed
+- Mini-run ohne Qwen: status=ok
+- qwen_requested=false, qwen_used=false
+- Local-Qwen Smoke: qwen_requested=true, qwen_used=false, skipped_import_unavailable
+- Kein Fake-Erfolg
+
+Reports:
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_report.json
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_manifest.json
+- reports/p5_l4_qwen_analysis_only_evaluator/qwen_analysis_summary.md
+- Reports wurden nicht committed.
+
+Safety:
+- qwen_role=analysis_only
+- qwen_can_cut=false
+- qwen_autocut_allowed=false
+- render_used=false
+- ingest_used=false
+- music_used=false
+- autocut_used=false
+- overnight_started=false
+- learning_loop_started=false
+- phase_5_5_used=false
+- deleted_files=[]

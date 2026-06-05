@@ -128,3 +128,22 @@ Phase 5.5 bleibt Musik-Integration und locked.
 - Reports: lokal erzeugt, nicht committed
 - Echter Learning-Loop: weiterhin nicht gestartet
 - Phase 5.5 Musik: locked
+
+---
+## 2026-06-05 — Webseite Checkliste P5-L4
+
+P5-L4 ist erledigt:
+- Qwen Analysis-only Evaluator gebaut
+- Tests gruen
+- Mini-run ohne Qwen gruen
+- Local-Qwen Smoke sauber geskippt
+- Code/Test remote gesichert
+
+Nicht erledigt und weiterhin gesperrt:
+- echter Learning-Loop
+- Overnight Dauerlauf
+- Qwen-Autocut
+- Render
+- Ingest
+- Musik
+- Phase 5.5
