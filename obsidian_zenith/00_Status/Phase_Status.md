@@ -1,14 +1,15 @@
-﻿# PHASE STATUS
+# PHASE STATUS
 
 ## Phase 5
 
 Status: nicht final fertig
-Fortschritt: ca. 72–75%
+Fortschritt: ca. 78–80%
 
 ## Fertig / hart bewiesen
 
 - K4 Style-DNA aus 53 Fingerprints / Reference plausibel
 - K5 Style-DNA beeinflusst Timeline-Scoring
+- K8 Qwen lokaler Side-Track über Ollama REST
 - G3 Style-DNA Aggregation
 - G4 Style-DNA Adapter / Pacing Consumption
 - G5 Minimal Owner-No-Go Testgate
@@ -23,14 +24,13 @@ Fortschritt: ca. 72–75%
 ## Offen
 
 - K7 echter Kontroll-Run Longform + Shorts mit Ali-Freigabe
-- K8 LLMBrain Qwen 3.6 27B Neben-Track
 - Analyse-only KI-Track
 - Overnight-Learning-Loop
 - Style-Memory Prüfung
 
 ## Nächster Gate
 
-K8 Qwen Activation Gate.
+K2 WhisperX Lifeline Gate.
 
 ## Phase 5.5
 

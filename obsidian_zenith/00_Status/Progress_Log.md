@@ -1,4 +1,4 @@
-﻿# PROGRESS LOG
+# PROGRESS LOG
 
 ## 2026-06-05
 
@@ -18,7 +18,7 @@ Ergebnis:
 - Phase 5.5 bleibt 0% und gesperrt
 - K4 DONE
 - K1/K2/K3/K5/K6 PARTIAL
-- K7/K8 OPEN
+- K7 OPEN
 
 Entscheidung:
 Phase 5 ist nicht final.
@@ -47,4 +47,26 @@ Phase-Status:
 - Phase 5 Final-GO: nein
 
 Nächster Gate:
-K8 Qwen Activation Gate.
+K2 WhisperX Lifeline Gate.
+
+## 2026-06-05 — K8 Qwen Local Side-Track DONE
+
+Ergebnis:
+- K8 von OPEN/PARTIAL auf DONE gesetzt.
+- LocalQwenSideTrack funktioniert gegen lokales Ollama.
+- qwen3.6:latest vorhanden.
+- JSON parsebar.
+- role=analysis_only.
+- can_cut=false.
+- SIDE_TRACK_GUARD_OK.
+
+Code Commit:
+c549586 feat(P5-K8): add local Qwen side-track adapter
+
+Phase-Status:
+- Phase 5: ca. 78–80%
+- Phase 5.5: 0%, gesperrt
+- Phase 5 Final-GO: nein
+
+Nächster Gate:
+K2 WhisperX Lifeline Gate.

@@ -1,4 +1,4 @@
-﻿# STATUS BOARD
+# STATUS BOARD
 
 ## Ampel
 
@@ -36,4 +36,20 @@ Remote full hash:
 7f0bfdf0105359764e995cab4ddc7aa7e48c7395
 
 Nächster Gate:
-K8 Qwen Activation Gate.
+K2 WhisperX Lifeline Gate.
+
+## K8 Update
+
+K8 Qwen Local Side-Track ist DONE.
+
+Commit:
+c549586 feat(P5-K8): add local Qwen side-track adapter
+
+Local-only:
+http://127.0.0.1:11434
+
+Sicherheitsgrenze:
+Qwen darf nur analysieren, nicht schneiden.
+
+Nächster Gate:
+K2 WhisperX Lifeline Gate.

@@ -1,4 +1,4 @@
-﻿# PHASE 5 ENDKRITERIEN AUDIT
+# PHASE 5 ENDKRITERIEN AUDIT
 
 Datum: 2026-06-05
 Audit: 1A
@@ -6,7 +6,7 @@ Status: akzeptiert durch ChatGPT Senior-Master
 
 ## Neue Fortschrittsbewertung
 
-- Phase 5: ca. 72–75%
+- Phase 5: ca. 78–80%
 - Phase 5.5: 0%
 - Phase 5 Final-GO: nein
 - Phase 5.5 öffnen: nein
@@ -22,7 +22,7 @@ Status: akzeptiert durch ChatGPT Senior-Master
 | 5 | Pipeline schneidet nach gelerntem Ali-Stil | DONE | Style-DNA beeinflusst Timeline-Scoring mit Test-Beweis. Commit: 7f0bfdf. |
 | 6 | dynamischer Layout-/Fokus-Wechsel sichtbar | PARTIAL | Code/Test-Spuren existieren, aber sichtbarer Render-Beweis fehlt. |
 | 7 | echter Kontroll-Run + Ali-Freigabe | OPEN | Kein finaler Longform+Shorts Kontroll-Run mit Ali-Freigabe. |
-| 8 | LLMBrain Qwen Neben-Track | OPEN | Qwen/LLMBrain ist Backlog, kein Aktivierungsbeweis. |
+| 8 | LLMBrain Qwen Neben-Track | DONE | Lokaler Qwen Side-Track über Ollama REST bewiesen. Commit: c549586. |
 
 ## Wirklich fertig
 
@@ -52,8 +52,7 @@ Status: akzeptiert durch ChatGPT Senior-Master
 
 ## Neue Reihenfolge
 
-1. K8 Qwen Activation Gate
-2. K2 WhisperX Lifeline Gate
+1. K2 WhisperX Lifeline Gate
 3. Analyse-only KI-Track
 4. Overnight-Learning-Loop
 5. Style-Memory Prüfung
@@ -85,6 +84,32 @@ Beweis:
 
 Neue Phase-5-Schätzung:
 ca. 72–75%
+
+Phase 5 Final-GO:
+NEIN
+
+Phase 5.5:
+weiter 0% und gesperrt
+
+## Update 2026-06-05 — K8 DONE
+
+K8 wurde von OPEN/PARTIAL auf DONE gesetzt.
+
+Beweis:
+- Code Commit: c549586
+- Message: feat(P5-K8): add local Qwen side-track adapter
+- Real-Adapter-Smoke gegen lokales Ollama war grün.
+- LocalQwenSideTrack funktioniert über http://127.0.0.1:11434.
+- qwen3.6:latest vorhanden.
+- JSON parsebar.
+- role=analysis_only.
+- can_cut=false.
+- SIDE_TRACK_GUARD_OK.
+- Mock Tests: 7 passed.
+- Keine Dateiänderung beim Real-Smoke.
+
+Neue Phase-5-Schätzung:
+ca. 78–80%
 
 Phase 5 Final-GO:
 NEIN

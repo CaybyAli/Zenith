@@ -1,4 +1,4 @@
-﻿# K5 STYLE-DNA TIMELINE CONSUMPTION
+# K5 STYLE-DNA TIMELINE CONSUMPTION
 
 Status: DONE
 Commit: 7f0bfdf
@@ -36,11 +36,11 @@ Weiterhin offen:
 - K3 Shorts Captions visueller Qualitätscheck
 - K6 Layout/Fokus sichtbarer Proof
 - K7 echter Kontroll-Run + Ali-Freigabe
-- K8 Qwen Neben-Track
+- K8 Qwen Neben-Track DONE
 
 ## Nächster Gate
 
-K8 Qwen Activation Gate.
+K2 WhisperX Lifeline Gate.
 
 Nicht:
 - Full Render

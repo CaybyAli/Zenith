@@ -1,4 +1,4 @@
-﻿# GO / NO-GO LOG
+# GO / NO-GO LOG
 
 ## 2026-06-05 — ZENITH FREEZE GATE
 
@@ -55,3 +55,25 @@ NO-GO:
 - Musik
 - Full Render ohne eigenes GO
 - Qwen Auto-Schnitt
+
+## 2026-06-05 — K8 DONE
+
+Decision: GO für K8 DONE
+
+Result:
+Qwen ist als lokaler Side-Track technisch aktiviert und abgesichert.
+
+Code Commit:
+c549586 feat(P5-K8): add local Qwen side-track adapter
+
+GO:
+- K8 als DONE dokumentieren
+- nächster Gate K2 WhisperX Lifeline
+
+NO-GO:
+- Qwen Auto-Schnitt
+- LLM_PRIMARY
+- Phase 5 Final-GO
+- Phase 5.5 öffnen
+- Musik
+- Full Render ohne eigenes GO
