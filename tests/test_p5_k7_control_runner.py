@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sys
@@ -283,3 +283,77 @@ def test_no_old_unsafe_entrypoint_called() -> None:
 
     for term in blocked_terms:
         assert term.casefold() not in source_text
+
+def test_real_run_ffmpeg_command_has_hard_duration_limit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _manifest_path, cmd = _run_enabled_with_mock(tmp_path, monkeypatch)
+
+    t_indices = [index for index, item in enumerate(cmd) if item == "-t"]
+    assert len(t_indices) >= 2
+    assert all(cmd[index + 1] == "60.000" for index in t_indices)
+
+
+def test_color_source_is_duration_limited() -> None:
+    filtergraph = runner.build_control_filter(60.0)
+
+    color_terms = [part for part in filtergraph.split(";") if part.startswith("color=")]
+    assert color_terms
+    assert all(":d=60.000" in term for term in color_terms)
+    assert "color=c=black:s=1080x1920[base]" not in filtergraph
+
+
+def test_overlay_or_filtergraph_uses_shortest_or_trim() -> None:
+    filtergraph = runner.build_control_filter(60.0)
+
+    assert "trim=duration=60.000" in filtergraph
+    assert "setpts=PTS-STARTPTS" in filtergraph
+    assert "shortest=1" in filtergraph
+
+
+def test_manifest_written_only_after_successful_ffmpeg(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    success_manifest_path, _cmd = _run_enabled_with_mock(tmp_path, monkeypatch)
+    assert success_manifest_path.exists()
+
+    success_manifest = json.loads(success_manifest_path.read_text(encoding="utf-8"))
+    assert success_manifest["status"] == "ok"
+
+    failing_source = _make_source(tmp_path, "failure/raw.mp4")
+    failing_output = _output_dir(tmp_path, "failure")
+
+    def fake_failed_run_ffmpeg_command(cmd: list[str]) -> None:
+        raise RuntimeError("K7_CONTROL_RUN_FAILED\nSTDOUT:\n\nSTDERR:\nfake ffmpeg failure")
+
+    monkeypatch.setattr(runner, "run_ffmpeg_command", fake_failed_run_ffmpeg_command)
+
+    with pytest.raises(RuntimeError, match="K7_CONTROL_RUN_FAILED"):
+        runner.main(
+            [
+                "--source",
+                str(failing_source),
+                "--output-dir",
+                str(failing_output),
+                "--duration",
+                "60",
+                "--pair-id",
+                "pair_001",
+                "--enable-real-run",
+            ]
+        )
+
+    assert not (failing_output / runner.MANIFEST_FILENAME).exists()
+
+
+def test_real_run_does_not_disable_audio(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _manifest_path, cmd = _run_enabled_with_mock(tmp_path, monkeypatch)
+
+    assert "-an" not in cmd
+    assert "-map" in cmd
+    assert "0:a:0" in cmd

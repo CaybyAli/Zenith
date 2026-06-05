@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import json
@@ -163,18 +163,22 @@ def write_plan(plan: dict[str, Any], output_dir: Path) -> Path:
     return write_json(plan, output_dir / PLAN_FILENAME)
 
 
-def build_control_filter() -> str:
+def build_control_filter(duration: float) -> str:
+    duration_text = f"{float(duration):.3f}"
+
     return (
         "[0:v]split=2[leftsrc][rightsrc];"
-        "[leftsrc]crop=iw/2:ih:0:0,"
+        f"[leftsrc]trim=duration={duration_text},setpts=PTS-STARTPTS,"
+        "crop=iw/2:ih:0:0,"
         "scale=1080:540:force_original_aspect_ratio=decrease,"
         "pad=1080:540:(ow-iw)/2:(oh-ih)/2[left];"
-        "[rightsrc]crop=iw/2:ih:iw/2:0,"
+        f"[rightsrc]trim=duration={duration_text},setpts=PTS-STARTPTS,"
+        "crop=iw/2:ih:iw/2:0,"
         "scale=1080:1080:force_original_aspect_ratio=increase,"
         "crop=1080:1080[right];"
-        "color=c=black:s=1080x1920[base];"
-        "[base][right]overlay=0:120[tmp];"
-        "[tmp][left]overlay=0:1260[v]"
+        f"color=c=black:s=1080x1920:r=30:d={duration_text}[base];"
+        "[base][right]overlay=0:120:shortest=1[tmp];"
+        "[tmp][left]overlay=0:1260:shortest=1[v]"
     )
 
 
@@ -200,11 +204,13 @@ def build_ffmpeg_command(
         "-i",
         str(source),
         "-filter_complex",
-        build_control_filter(),
+        build_control_filter(duration),
         "-map",
         "[v]",
         "-map",
         audio_map,
+        "-t",
+        f"{float(duration):.3f}",
         "-c:v",
         "libx264",
         "-preset",
@@ -219,6 +225,7 @@ def build_ffmpeg_command(
         "192k",
         "-ar",
         "48000",
+        "-shortest",
         "-movflags",
         "+faststart",
         str(output_video),
