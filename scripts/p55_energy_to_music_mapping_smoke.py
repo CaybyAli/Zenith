@@ -39,6 +39,7 @@ def _demo_segments() -> list[dict]:
             "highlight_score": 0.10,
             "speech_density": 0.10,
             "mood_tag": "neutral",
+            "channel_type": "main",
         },
         {
             "segment_id": "demo_calm_gameplay",
@@ -49,6 +50,7 @@ def _demo_segments() -> list[dict]:
             "highlight_score": 0.10,
             "speech_density": 0.20,
             "mood_tag": "calm",
+            "channel_type": "main",
         },
         {
             "segment_id": "demo_hype_highlight",
@@ -59,6 +61,7 @@ def _demo_segments() -> list[dict]:
             "highlight_score": 0.95,
             "speech_density": 0.50,
             "mood_tag": "hype",
+            "channel_type": "main",
         },
         {
             "segment_id": "demo_outro",
@@ -69,6 +72,51 @@ def _demo_segments() -> list[dict]:
             "highlight_score": 0.10,
             "speech_density": 0.10,
             "mood_tag": "victory",
+            "channel_type": "main",
+        },
+        {
+            "segment_id": "demo_main_funny_gameplay",
+            "start_sec": 60.0,
+            "end_sec": 75.0,
+            "segment_role": "gameplay",
+            "energy_score": 0.45,
+            "highlight_score": 0.20,
+            "speech_density": 0.20,
+            "mood_tag": "funny",
+            "channel_type": "main",
+        },
+        {
+            "segment_id": "demo_main_suspense_gameplay",
+            "start_sec": 75.0,
+            "end_sec": 90.0,
+            "segment_role": "gameplay",
+            "energy_score": 0.55,
+            "highlight_score": 0.30,
+            "speech_density": 0.15,
+            "mood_tag": "suspense",
+            "channel_type": "main",
+        },
+        {
+            "segment_id": "demo_main_emotional",
+            "start_sec": 90.0,
+            "end_sec": 105.0,
+            "segment_role": "gameplay",
+            "energy_score": 0.35,
+            "highlight_score": 0.20,
+            "speech_density": 0.25,
+            "mood_tag": "emotional",
+            "channel_type": "main",
+        },
+        {
+            "segment_id": "demo_uncut_highlight",
+            "start_sec": 105.0,
+            "end_sec": 120.0,
+            "segment_role": "highlight",
+            "energy_score": 1.0,
+            "highlight_score": 1.0,
+            "speech_density": 0.50,
+            "mood_tag": "hype",
+            "channel_type": "uncut",
         },
     ]
 
@@ -88,6 +136,9 @@ def _build_summary(manifest: dict) -> str:
         f"- external_download_used: {str(manifest['external_download_used']).lower()}",
         f"- api_key_used: {str(manifest['api_key_used']).lower()}",
         f"- music_files_committed: {str(manifest['music_files_committed']).lower()}",
+        f"- main_account_music_allowed: {str(manifest['main_account_music_allowed']).lower()}",
+        f"- uncut_music_allowed: {str(manifest['uncut_music_allowed']).lower()}",
+        f"- channel_rules_enforced: {str(manifest['channel_rules_enforced']).lower()}",
         f"- writes_only_under: {manifest['writes_only_under']}",
         "",
         "## Demo Mapping",
@@ -97,7 +148,8 @@ def _build_summary(manifest: dict) -> str:
             "- "
             f"{segment['segment_id']}: {segment['segment_role']} -> "
             f"{segment['music_category']} "
-            f"(energy_level={segment['energy_level']}, "
+            f"(music_allowed={str(segment['music_allowed']).lower()}, "
+            f"energy_level={segment['energy_level']}, "
             f"ducking_required={str(segment['ducking_required']).lower()})"
         )
     lines.append("")

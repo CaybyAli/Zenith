@@ -7,9 +7,23 @@ from core.music_contracts import ALLOWED_CATEGORIES
 
 
 ALLOWED_SEGMENT_ROLES = ("intro", "gameplay", "highlight", "outro")
-ALLOWED_MUSIC_CATEGORIES = ALLOWED_CATEGORIES
+ALLOWED_MUSIC_CATEGORIES = (*ALLOWED_CATEGORIES, "none")
 ALLOWED_ENERGY_LEVELS = ("low", "medium", "high", "peak")
-ALLOWED_MOOD_TAGS = ("calm", "neutral", "tense", "hype", "victory")
+ALLOWED_MOOD_TAGS = (
+    "funny",
+    "suspense",
+    "calm",
+    "hype",
+    "victory",
+    "emotional",
+    "intro",
+    "outro",
+    "background",
+    "peak",
+    "neutral",
+    "tense",
+)
+ALLOWED_CHANNEL_TYPES = ("main", "uncut")
 
 _Q_TOKEN = "qw" + "en"
 
@@ -28,6 +42,7 @@ class EnergySegment:
     highlight_score: float
     speech_density: float
     mood_tag: str
+    channel_type: str
 
 
 def _q_flag(name: str) -> str:
@@ -77,6 +92,7 @@ def _coerce_segment(segment: EnergySegment | Mapping[str, Any]) -> EnergySegment
         "highlight_score",
         "speech_density",
         "mood_tag",
+        "channel_type",
     )
     missing = [field for field in required if field not in segment]
     if missing:
@@ -90,6 +106,7 @@ def _coerce_segment(segment: EnergySegment | Mapping[str, Any]) -> EnergySegment
         highlight_score=float(segment["highlight_score"]),
         speech_density=float(segment["speech_density"]),
         mood_tag=str(segment["mood_tag"]),
+        channel_type=str(segment["channel_type"]),
     )
 
 
@@ -111,6 +128,8 @@ def validate_energy_segment(segment: EnergySegment | Mapping[str, Any]) -> dict[
         raise MusicEnergyMappingError(f"segment_role is not allowed: {item.segment_role}")
     if item.mood_tag not in ALLOWED_MOOD_TAGS:
         raise MusicEnergyMappingError(f"mood_tag is not allowed: {item.mood_tag}")
+    if item.channel_type not in ALLOWED_CHANNEL_TYPES:
+        raise MusicEnergyMappingError(f"channel_type is not allowed: {item.channel_type}")
     return {
         "segment_id": item.segment_id,
         "start_sec": item.start_sec,
@@ -120,27 +139,50 @@ def validate_energy_segment(segment: EnergySegment | Mapping[str, Any]) -> dict[
         "highlight_score": _validate_score("highlight_score", item.highlight_score),
         "speech_density": _validate_score("speech_density", item.speech_density),
         "mood_tag": item.mood_tag,
+        "channel_type": item.channel_type,
     }
 
 
 def map_segment_to_music(segment: EnergySegment | Mapping[str, Any]) -> dict[str, Any]:
     item = validate_energy_segment(segment)
+    energy_level = classify_energy_level(item["energy_score"])
+    if item["channel_type"] == "uncut":
+        return {
+            **item,
+            "energy_level": energy_level,
+            "music_allowed": False,
+            "music_category": "none",
+            "ducking_required": False,
+            "reason": "uncut_music_disabled",
+        }
     category = "background"
+    reason = "default_background"
     if item["segment_role"] == "intro":
         category = "intro"
+        reason = "intro_role"
     elif item["segment_role"] == "outro":
         category = "outro"
+        reason = "outro_role"
     elif (
         item["segment_role"] == "highlight"
         or item["highlight_score"] >= 0.75
         or item["energy_score"] >= 0.80
     ):
-        category = "peak"
+        category = "hype" if item["mood_tag"] == "hype" else "peak"
+        reason = "peak_signal"
+    elif item["mood_tag"] in ("funny", "suspense", "calm", "victory", "emotional"):
+        category = item["mood_tag"]
+        reason = "mood_specific"
+    elif item["mood_tag"] in ("background", "peak"):
+        category = item["mood_tag"]
+        reason = "mood_category"
     return {
         **item,
-        "energy_level": classify_energy_level(item["energy_score"]),
+        "energy_level": energy_level,
+        "music_allowed": True,
         "music_category": category,
         "ducking_required": item["speech_density"] >= 0.35,
+        "reason": reason,
     }
 
 
@@ -150,6 +192,10 @@ def build_music_mapping_plan(segments: list[EnergySegment | Mapping[str, Any]]) 
         "mode": "energy_to_music_mapping_only",
         "music_build_started": False,
         "music_inserted": False,
+        "main_account_music_allowed": True,
+        "uncut_music_allowed": False,
+        "uncut_music_category": "none",
+        "channel_rules_enforced": True,
         "segments": mapped_segments,
     }
     validate_music_mapping_plan(plan)
@@ -163,6 +209,14 @@ def validate_music_mapping_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
         raise MusicEnergyMappingError("music build must not be started")
     if plan.get("music_inserted") is not False:
         raise MusicEnergyMappingError("music must not be inserted")
+    if plan.get("main_account_music_allowed") is not True:
+        raise MusicEnergyMappingError("main account music must be allowed")
+    if plan.get("uncut_music_allowed") is not False:
+        raise MusicEnergyMappingError("uncut music must stay disabled")
+    if plan.get("uncut_music_category") != "none":
+        raise MusicEnergyMappingError("uncut music category must be none")
+    if plan.get("channel_rules_enforced") is not True:
+        raise MusicEnergyMappingError("channel rules must be enforced")
     segments = plan.get("segments")
     if not isinstance(segments, list):
         raise MusicEnergyMappingError("segments must be a list")
@@ -190,6 +244,11 @@ def build_empty_energy_mapping_manifest() -> dict[str, Any]:
         "allowed_music_categories": list(ALLOWED_MUSIC_CATEGORIES),
         "allowed_energy_levels": list(ALLOWED_ENERGY_LEVELS),
         "allowed_mood_tags": list(ALLOWED_MOOD_TAGS),
+        "allowed_channel_types": list(ALLOWED_CHANNEL_TYPES),
+        "main_account_music_allowed": True,
+        "uncut_music_allowed": False,
+        "uncut_music_category": "none",
+        "channel_rules_enforced": True,
         "ducking_is_flag_only": True,
         "writes_only_under": "reports/phase5_5_energy_to_music_mapping",
         "next_step": "5.5-4 Musik-Selector",

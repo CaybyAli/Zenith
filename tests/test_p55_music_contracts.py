@@ -22,6 +22,7 @@ def _item(**overrides):
         "owner_approved": True,
         "license_status": "owner_approved",
         "intended_use": "intro",
+        "channel_type": "main",
     }
     item.update(overrides)
     return item
@@ -30,6 +31,32 @@ def _item(**overrides):
 def test_allowed_categories_are_accepted(tmp_path):
     for category in ALLOWED_CATEGORIES:
         assert validate_music_item(_item(category=category), tmp_path)["category"] == category
+
+
+def test_new_mood_categories_are_accepted(tmp_path):
+    for category in ("funny", "suspense", "calm", "hype", "victory", "emotional"):
+        assert validate_music_item(_item(category=category), tmp_path)["category"] == category
+
+
+def test_none_category_is_blocked_for_real_music_items(tmp_path):
+    with pytest.raises(MusicContractError):
+        validate_music_item(_item(category="none"), tmp_path)
+
+
+def test_main_channel_type_is_accepted(tmp_path):
+    result = validate_music_item(_item(channel_type="main", category="hype"), tmp_path)
+    assert result["channel_type"] == "main"
+    assert result["category"] == "hype"
+
+
+def test_uncut_channel_type_is_blocked_for_music_items(tmp_path):
+    with pytest.raises(MusicContractError):
+        validate_music_item(_item(channel_type="uncut"), tmp_path)
+
+
+def test_wrong_channel_type_is_blocked_for_music_items(tmp_path):
+    with pytest.raises(MusicContractError):
+        validate_music_item(_item(channel_type="shorts"), tmp_path)
 
 
 def test_wrong_categories_are_blocked(tmp_path):

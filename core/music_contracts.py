@@ -5,7 +5,19 @@ from pathlib import Path, PureWindowsPath
 from typing import Any, Mapping
 
 
-ALLOWED_CATEGORIES = ("intro", "background", "peak", "outro")
+ALLOWED_CATEGORIES = (
+    "intro",
+    "background",
+    "peak",
+    "outro",
+    "funny",
+    "suspense",
+    "calm",
+    "hype",
+    "victory",
+    "emotional",
+)
+ALLOWED_CHANNEL_TYPES = ("main", "uncut")
 ALLOWED_LOCAL_ROOTS = (
     "local_assets/music",
     "assets/audio/gaming_main/music",
@@ -44,6 +56,7 @@ class MusicItem:
     owner_approved: bool
     license_status: str
     intended_use: str
+    channel_type: str
 
 
 def _as_repo_root(repo_root: str | Path) -> Path:
@@ -110,6 +123,7 @@ def _coerce_music_item(item: MusicItem | Mapping[str, Any]) -> MusicItem:
             "owner_approved",
             "license_status",
             "intended_use",
+            "channel_type",
         )
         if field not in item
     ]
@@ -122,11 +136,16 @@ def _coerce_music_item(item: MusicItem | Mapping[str, Any]) -> MusicItem:
         owner_approved=bool(item["owner_approved"]),
         license_status=str(item["license_status"]),
         intended_use=str(item["intended_use"]),
+        channel_type=str(item["channel_type"]),
     )
 
 
 def validate_music_item(item: MusicItem | Mapping[str, Any], repo_root: str | Path) -> dict[str, Any]:
     music_item = _coerce_music_item(item)
+    if music_item.channel_type not in ALLOWED_CHANNEL_TYPES:
+        raise MusicContractError(f"channel_type is not allowed: {music_item.channel_type}")
+    if music_item.channel_type == "uncut":
+        raise MusicContractError("music files for uncut are forbidden")
     if music_item.category not in ALLOWED_CATEGORIES:
         raise MusicContractError(f"category is not allowed: {music_item.category}")
     if not music_item.owner_approved:
@@ -147,6 +166,7 @@ def validate_music_item(item: MusicItem | Mapping[str, Any], repo_root: str | Pa
         "owner_approved": music_item.owner_approved,
         "license_status": music_item.license_status,
         "intended_use": music_item.intended_use,
+        "channel_type": music_item.channel_type,
     }
 
 
@@ -162,7 +182,12 @@ def build_empty_music_contract_manifest(repo_root: str | Path) -> dict[str, Any]
         "runtime_learning_locked": True,
         **SAFE_DEFAULT_FLAGS,
         "allowed_categories": list(ALLOWED_CATEGORIES),
+        "allowed_channel_types": list(ALLOWED_CHANNEL_TYPES),
         "allowed_roots": list(ALLOWED_LOCAL_ROOTS),
+        "main_account_music_allowed": True,
+        "uncut_music_allowed": False,
+        "uncut_music_category": "none",
+        "channel_rules_enforced": True,
         "requires_owner_approval": True,
         "requires_license_clear": True,
         "writes_only_under": "reports/phase5_5_music_contracts",
@@ -178,8 +203,18 @@ def validate_music_contract_manifest(manifest: Mapping[str, Any]) -> dict[str, A
             raise MusicContractError(f"unsafe manifest flag: {flag_name}")
     if manifest.get("allowed_categories") != list(ALLOWED_CATEGORIES):
         raise MusicContractError("allowed categories do not match contract")
+    if manifest.get("allowed_channel_types") != list(ALLOWED_CHANNEL_TYPES):
+        raise MusicContractError("allowed channel types do not match contract")
     if manifest.get("allowed_roots") != list(ALLOWED_LOCAL_ROOTS):
         raise MusicContractError("allowed roots do not match contract")
+    if manifest.get("main_account_music_allowed") is not True:
+        raise MusicContractError("main account music must be allowed")
+    if manifest.get("uncut_music_allowed") is not False:
+        raise MusicContractError("uncut music must stay disabled")
+    if manifest.get("uncut_music_category") != "none":
+        raise MusicContractError("uncut music category must be none")
+    if manifest.get("channel_rules_enforced") is not True:
+        raise MusicContractError("channel rules must be enforced")
     if manifest.get("requires_owner_approval") is not True:
         raise MusicContractError("owner approval must be required")
     if manifest.get("requires_license_clear") is not True:

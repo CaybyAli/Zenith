@@ -45,6 +45,9 @@ def _build_summary(manifest: dict) -> str:
         f"- external_download_used: {str(manifest['external_download_used']).lower()}",
         f"- api_key_used: {str(manifest['api_key_used']).lower()}",
         f"- music_files_committed: {str(manifest['music_files_committed']).lower()}",
+        f"- main_account_music_allowed: {str(manifest['main_account_music_allowed']).lower()}",
+        f"- uncut_music_allowed: {str(manifest['uncut_music_allowed']).lower()}",
+        f"- channel_rules_enforced: {str(manifest['channel_rules_enforced']).lower()}",
         f"- writes_only_under: {manifest['writes_only_under']}",
         f"- next_step: {manifest['next_step']}",
     ]
