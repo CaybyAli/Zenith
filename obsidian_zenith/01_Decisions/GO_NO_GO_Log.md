@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 15% / Musik-Inventory; Musik-Build bleibt NO-GO bis eigenes Master-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 30% / Musik-Contracts; Musik-Build bleibt NO-GO bis eigenes Master-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,7 +193,7 @@ Grenzen:
 
 ## Naechster Gate
 
-5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
+5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
@@ -247,6 +247,37 @@ Grenzen:
 - Kein Code.
 - Keine Reports committed.
 - Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-2 Musik-Contracts GO
+
+Entscheidung: GO fuer Code-Safety-Baustein / Contracts / Manifest-Struktur.
+
+Beweis:
+- Code/Safety Commit: `6e536ea`
+- Full Hash: `6e536ea130134405505820dae3a9c23b898550a4`
+- `core/music_contracts.py`
+- `scripts/p55_music_contracts_smoke.py`
+- `tests/test_p55_music_contracts.py`
+- Smoke Manifest: `reports/phase5_5_music_contracts/music_contracts_manifest.json`
+
+Ergebnis:
+- Phase 5.5 Musik: 30% / Musik-Contracts.
+- Pytest: 10 passed.
+- Smoke Run: `status=ok`.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Gate: 5.5-3 Energy-to-Music Mapping.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Reports nicht committed.
 - Kein Render.
 - Kein Ingest.
 - Kein Qwen gestartet.

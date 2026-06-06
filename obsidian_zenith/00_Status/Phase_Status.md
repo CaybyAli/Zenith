@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 15% / Musik-Inventory | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 30% / Musik-Contracts | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,7 @@ Stand: 2026-06-06
 
 ## Naechster Gate
 
-5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
+5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -109,7 +109,8 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 |---|---:|---:|---|
 | 5.5-0 Opening-Gate | DONE | 5% | Scope + Safety oeffnen |
 | 5.5-1 Musik-Inventory | DONE | 15% | lokale Musikquellen pruefen |
-| 5.5-2 Musik-Contracts | NEXT | 30% | Manifest + Safety-Flags |
+| 5.5-2 Musik-Contracts | DONE | 30% | Manifest + Safety-Flags |
+| 5.5-3 Energy-to-Music Mapping | NEXT | 45% | Stimmung/Energie zu Musik |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
 
@@ -123,3 +124,18 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Gate: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nur nach Master-GO.
+
+## Phase 5.5-2 Musik-Contracts Ergebnis
+
+- Phase 5.5 Musik: 30% / Musik-Contracts.
+- Code/Safety Commit: `6e536ea`.
+- `core/music_contracts.py` definiert Kategorien, Roots, Owner-/Lizenzpflicht und Safety-Manifest.
+- `.gitignore` schuetzt `local_assets/music/`, `.m4a`, `.aac`, `.ogg`, `.opus`.
+- Smoke Run: `status=ok`.
+- Pytest: 10 passed.
+- Musik-Build noch nicht gestartet.
+- Keine Musikdateien committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Gate: 5.5-3 Energy-to-Music Mapping nur nach Master-GO.

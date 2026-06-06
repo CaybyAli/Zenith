@@ -24,6 +24,7 @@ Stand: 2026-06-06
 - [x] P5-L Abschluss / 100% CLOSED als Vorbereitung.
 - [x] Phase 5.5 Opening-Gate.
 - [x] Phase 5.5-1 Musik-Inventory.
+- [x] Phase 5.5-2 Musik-Contracts.
 
 ## Darf NICHT als erledigt markiert sein
 
@@ -42,9 +43,9 @@ Stand: 2026-06-06
 - Phase 5: 100% / DONE.
 - P5-L: 100% / CLOSED.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 15% / Musik-Inventory.
+- Phase 5.5 Musik: 30% / Musik-Contracts.
 - Musik-Build: noch nicht gestartet.
-- Naechster Gate: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nach Master-GO.
+- Naechster Gate: 5.5-3 Energy-to-Music Mapping nach Master-GO.
 
 ## Hinweise
 

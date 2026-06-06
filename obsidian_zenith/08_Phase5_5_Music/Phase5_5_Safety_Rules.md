@@ -57,3 +57,18 @@ Musik darf:
 - Manifest Pflicht
 - Safety Flags Pflicht
 - Owner Review Pflicht
+
+## Contracts / Manifest
+
+- Contract-Code: `core/music_contracts.py`
+- Smoke Script: `scripts/p55_music_contracts_smoke.py`
+- Manifest-Pflicht: `music_contracts_manifest.json`
+- Safety-Flags muessen zeigen:
+  - `music_build_started=false`
+  - `music_inserted=false`
+  - `render_used=false`
+  - `preview_render_used=false`
+  - `ingest_used=false`
+  - `qwen_autocut_used=false`
+  - `runtime_learning_started=false`
+  - `music_files_committed=false`

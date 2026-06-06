@@ -209,3 +209,43 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt NO-GO bis eigenes Master-GO.
 - Naechster Schritt: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nur nach Master-GO.
+
+## 2026-06-06 - Phase 5.5-2 Musik-Contracts
+
+- Musik-Contracts abgeschlossen: Phase 5.5 Musik auf 30%.
+- Code/Safety Commit: `6e536ea`.
+- Full Hash: `6e536ea130134405505820dae3a9c23b898550a4`.
+- Neue/geaenderte Code-Safety-Dateien:
+  - `.gitignore`
+  - `core/music_contracts.py`
+  - `scripts/p55_music_contracts_smoke.py`
+  - `tests/test_p55_music_contracts.py`
+- Contract-Regeln:
+  - Kategorien: `intro`, `background`, `peak`, `outro`
+  - Roots: `local_assets/music`, `assets/audio/gaming_main/music`, `assets/music`
+  - Owner-Freigabe Pflicht.
+  - Lizenzklarheit Pflicht.
+  - Output nur unter `reports/phase5_5_music_contracts`.
+- Gitignore-Schutz ergaenzt:
+  - `local_assets/music/`
+  - `*.m4a`
+  - `*.aac`
+  - `*.ogg`
+  - `*.opus`
+- `py_compile`: gruen.
+- Pytest: 10 passed.
+- Smoke Run: `status=ok`.
+- Reports:
+  - `reports/phase5_5_music_contracts/music_contracts_manifest.json`
+  - `reports/phase5_5_music_contracts/music_contracts_summary.md`
+- Reports lokal erzeugt, nicht committed.
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musik-Build bleibt NO-GO bis eigenes Master-GO.
+- Naechster Schritt: 5.5-3 Energy-to-Music Mapping nur nach Master-GO.

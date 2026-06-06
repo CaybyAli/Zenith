@@ -41,10 +41,11 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 15% / Musik-Inventory.
+- 30% / Musik-Contracts.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
+- Musik-Contracts sind abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
@@ -62,6 +63,14 @@ Musik-Inventory:
 - Spaetere lokale Bibliothek empfohlen: `local_assets/music/`
 - Musikdateien bleiben ausserhalb Git.
 - Nur Metadaten/Manifeste duerfen spaeter kontrolliert dokumentiert werden.
+
+Musik-Contracts:
+- Erster Code-Safety-Baustein: `core/music_contracts.py`
+- Smoke/Manifest-Check: `scripts/p55_music_contracts_smoke.py`
+- Erlaubte Kategorien und lokale Roots sind zentral definiert.
+- Owner-/Lizenzpflicht ist zentral validiert.
+- Safety-Flags erzwingen: kein Musik-Build, kein Render, kein Ingest, kein Qwen-Autocut, kein Runtime Learning.
+- Reports gehen nur nach `reports/phase5_5_music_contracts` und bleiben untracked.
 
 ## Qwen
 

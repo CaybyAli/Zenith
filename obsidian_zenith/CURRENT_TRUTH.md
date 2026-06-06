@@ -16,8 +16,9 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 15% / Musik-Inventory abgeschlossen.
+- Phase 5.5 Musik: 30% / Musik-Contracts abgeschlossen.
 - Musik-Build: noch nicht gestartet.
+- Musikdateien nicht committed.
 - Qwen sichtbar geprueft: ja.
 - `qwen_role=analysis_only`.
 - `qwen_can_cut=false`.
@@ -36,7 +37,7 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
+5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -138,6 +139,33 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Render, kein Ingest, kein Qwen, kein Runtime Learning.
 - Musik-Build noch nicht gestartet.
 - Naechster Schritt: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nur nach Master-GO.
+
+### Phase 5.5-2 Musik-Contracts
+
+- Code/Safety Commit: `6e536ea`
+- Full Hash: `6e536ea130134405505820dae3a9c23b898550a4`
+- Contracts: `core/music_contracts.py`
+- Smoke Script: `scripts/p55_music_contracts_smoke.py`
+- Tests: `tests/test_p55_music_contracts.py`
+- Gitignore-Schutz erweitert:
+  - `local_assets/music/`
+  - `*.m4a`
+  - `*.aac`
+  - `*.ogg`
+  - `*.opus`
+- Smoke Manifest: `reports/phase5_5_music_contracts/music_contracts_manifest.json`
+- Smoke Summary: `reports/phase5_5_music_contracts/music_contracts_summary.md`
+- Reports lokal/untracked, nicht committed.
+- `py_compile`: gruen.
+- Pytest: 10 passed.
+- Smoke Run: `status=ok`.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build noch nicht gestartet.
+- Naechster Schritt: 5.5-3 Energy-to-Music Mapping nur nach Master-GO.
 
 ## Wichtige Links
 

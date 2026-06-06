@@ -36,6 +36,14 @@ Empfehlung:
 - nur Metadaten/Manifeste als Reports erzeugen
 - Reports bleiben untracked, ausser Master erlaubt es
 
+Aktueller Schutz nach 5.5-2:
+- `local_assets/music/`
+- `*.m4a`
+- `*.aac`
+- `*.ogg`
+- `*.opus`
+- bestehend: `*.wav`, `*.mp3`, `*.flac`, `assets/**/*.wav`, `assets/**/*.mp3`
+
 ## Pflicht-Metadaten spaeter
 
 Fuer jede Musikdatei spaeter dokumentieren:

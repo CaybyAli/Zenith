@@ -1,9 +1,9 @@
-PROJECT ZENITH - PHASE 5.5-2 - MUSIK-CONTRACTS / MANIFEST + SAFETY-FLAGS
+PROJECT ZENITH - PHASE 5.5-3 - ENERGY-TO-MUSIC MAPPING
 
 Nur nach Master-GO.
 
 Ziel:
-Code-Contracts und Manifest-Struktur fuer Musik planen/bauen.
+Energie-/Highlight-/Emotion-Daten auf Musik-Kategorien abbilden.
 Noch kein Render.
 Noch keine Musik einfuegen.
 Noch kein Preview-Run.

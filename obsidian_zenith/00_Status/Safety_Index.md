@@ -34,10 +34,10 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
+Naechster Gate: 5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 Musik-Inventory ist abgeschlossen: 15%.
+Phase 5.5 Musik-Contracts sind abgeschlossen: 30%.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -89,3 +89,23 @@ Musik-Build bleibt gesperrt.
 - `.gitignore` schuetzt bereits `.wav`, `.mp3`, `.flac`, `assets/**/*.wav`, `assets/**/*.mp3`, `tmp/`, `preprocessed/`, `data/` und `scratch/`.
 - Spaeteres Gitignore-Risiko: `local_assets/music/`, `.m4a`, `.aac`, `.ogg`, `.opus` brauchen vor Nutzung eigene Regeln.
 - Heute keine `.gitignore`-Aenderung.
+
+## Phase 5.5-2 Contracts Safety
+
+- Contract-Code: `core/music_contracts.py`
+- Smoke Script: `scripts/p55_music_contracts_smoke.py`
+- Manifest-Pflicht ist technisch vorbereitet.
+- Erlaubte Kategorien: `intro`, `background`, `peak`, `outro`.
+- Erlaubte Roots: `local_assets/music`, `assets/audio/gaming_main/music`, `assets/music`.
+- Owner-Freigabe Pflicht.
+- Lizenzklarheit Pflicht.
+- Forbidden License Status wird geblockt: `unknown`, `copyrighted_unknown`, `missing`.
+- Gitignore-Schutz jetzt vorhanden:
+  - `local_assets/music/`
+  - `*.m4a`
+  - `*.aac`
+  - `*.ogg`
+  - `*.opus`
+- Smoke Output ist auf `reports/phase5_5_music_contracts` begrenzt.
+- Reports bleiben untracked.
+- Musik-Build bleibt `false`.
