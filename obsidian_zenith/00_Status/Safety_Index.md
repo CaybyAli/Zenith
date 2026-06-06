@@ -34,10 +34,10 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
+Naechster Gate: 5.5-4 Musik-Selector, nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 Musik-Contracts sind abgeschlossen: 30%.
+Phase 5.5 Energy-to-Music Mapping ist abgeschlossen: 45%.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -107,5 +107,21 @@ Musik-Build bleibt gesperrt.
   - `*.ogg`
   - `*.opus`
 - Smoke Output ist auf `reports/phase5_5_music_contracts` begrenzt.
+- Reports bleiben untracked.
+- Musik-Build bleibt `false`.
+
+## Phase 5.5-3 Mapping Safety
+
+- Mapping-Code: `core/music_energy_mapping.py`
+- Mapping ist reine Logik: Segmentdaten -> Musik-Kategorie.
+- Kein Audio.
+- Keine Musikdateien lesen.
+- Keine Musikdateien auswaehlen.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen.
+- Ducking ist nur ein Planungs-Flag: `ducking_required`.
+- Smoke Output ist auf `reports/phase5_5_energy_to_music_mapping` begrenzt.
 - Reports bleiben untracked.
 - Musik-Build bleibt `false`.

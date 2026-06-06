@@ -72,3 +72,12 @@ Musik darf:
   - `qwen_autocut_used=false`
   - `runtime_learning_started=false`
   - `music_files_committed=false`
+
+## Energy-to-Music Mapping
+
+- Mapping-Code: `core/music_energy_mapping.py`
+- Energy-to-Music Mapping darf nur Kategorien planen.
+- Es darf keine Musik einfuegen.
+- Es darf keine Musikdatei lesen oder auswaehlen.
+- Es darf keinen Render oder Preview-Render starten.
+- Ducking bleibt nur ein Flag bis eigenes Gate.

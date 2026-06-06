@@ -249,3 +249,41 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt NO-GO bis eigenes Master-GO.
 - Naechster Schritt: 5.5-3 Energy-to-Music Mapping nur nach Master-GO.
+
+## 2026-06-06 - Phase 5.5-3 Energy-to-Music Mapping
+
+- Energy-to-Music Mapping abgeschlossen: Phase 5.5 Musik auf 45%.
+- Code Commit: `c14575d`.
+- Full Hash: `c14575d68fd91c4bfcef77b7757d81bdd0a6e216`.
+- Neue Code-Dateien:
+  - `core/music_energy_mapping.py`
+  - `scripts/p55_energy_to_music_mapping_smoke.py`
+  - `tests/test_p55_energy_to_music_mapping.py`
+- Mapping-Regeln:
+  - Intro-Segment -> `intro`
+  - ruhiges Gameplay -> `background`
+  - Highlight / Peak / hohe Energie -> `peak`
+  - Outro -> `outro`
+- Ducking-Hinweis ist nur Flag: `ducking_required`.
+- `py_compile`: gruen.
+- Pytest: 14 passed.
+- Smoke Run: `status=ok`.
+- Demo-Smoke:
+  - `demo_intro`: intro -> intro
+  - `demo_calm_gameplay`: gameplay -> background
+  - `demo_hype_highlight`: highlight -> peak, `ducking_required=true`
+  - `demo_outro`: outro -> outro
+- Reports:
+  - `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_manifest.json`
+  - `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_summary.md`
+- Reports lokal erzeugt, nicht committed.
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musik-Build bleibt NO-GO bis eigenes Master-GO.
+- Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.

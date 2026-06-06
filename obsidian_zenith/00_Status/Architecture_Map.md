@@ -41,11 +41,12 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 30% / Musik-Contracts.
+- 45% / Energy-to-Music Mapping.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
 - Musik-Contracts sind abgeschlossen.
+- Energy-to-Music Mapping ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
@@ -71,6 +72,14 @@ Musik-Contracts:
 - Owner-/Lizenzpflicht ist zentral validiert.
 - Safety-Flags erzwingen: kein Musik-Build, kein Render, kein Ingest, kein Qwen-Autocut, kein Runtime Learning.
 - Reports gehen nur nach `reports/phase5_5_music_contracts` und bleiben untracked.
+
+Energy-to-Music Mapping:
+- Mapping-Baustein: `core/music_energy_mapping.py`
+- Position: nach Musik-Contracts, vor Musik-Selector und Ducking.
+- Segmentrolle, Energie, Highlight-Score, Speech-Density und Mood werden validiert.
+- Ergebnis ist nur eine Musik-Kategorie: `intro`, `background`, `peak`, `outro`.
+- Ducking wird nur als Flag geplant, noch nicht gebaut.
+- Keine Musikdatei wird gelesen, gewaehlt oder eingefuegt.
 
 ## Qwen
 

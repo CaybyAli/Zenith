@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 30% / Musik-Contracts; Musik-Build bleibt NO-GO bis eigenes Master-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 45% / Energy-to-Music Mapping; Musik-Build bleibt NO-GO bis eigenes Master-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,7 +193,7 @@ Grenzen:
 
 ## Naechster Gate
 
-5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
+5.5-4 Musik-Selector, nur nach Master-GO.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
@@ -277,6 +277,38 @@ Ergebnis:
 Grenzen:
 - Keine Musik eingefuegt.
 - Keine Musikdateien erzeugt, kopiert oder committed.
+- Reports nicht committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-3 Energy-to-Music Mapping GO
+
+Entscheidung: GO fuer reine Mapping-Logik.
+
+Beweis:
+- Code Commit: `c14575d`
+- Full Hash: `c14575d68fd91c4bfcef77b7757d81bdd0a6e216`
+- `core/music_energy_mapping.py`
+- `scripts/p55_energy_to_music_mapping_smoke.py`
+- `tests/test_p55_energy_to_music_mapping.py`
+- Smoke Manifest: `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_manifest.json`
+
+Ergebnis:
+- Phase 5.5 Musik: 45% / Energy-to-Music Mapping.
+- Pytest: 14 passed.
+- Smoke Run: `status=ok`.
+- Mapping plant Kategorien, waehlt aber keine Musikdatei aus.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Gate: 5.5-4 Musik-Selector.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
 - Reports nicht committed.
 - Kein Render.
 - Kein Ingest.

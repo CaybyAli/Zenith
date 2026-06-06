@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 30% / Musik-Contracts | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 45% / Energy-to-Music Mapping | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,7 @@ Stand: 2026-06-06
 
 ## Naechster Gate
 
-5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
+5.5-4 Musik-Selector, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -110,7 +110,8 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 | 5.5-0 Opening-Gate | DONE | 5% | Scope + Safety oeffnen |
 | 5.5-1 Musik-Inventory | DONE | 15% | lokale Musikquellen pruefen |
 | 5.5-2 Musik-Contracts | DONE | 30% | Manifest + Safety-Flags |
-| 5.5-3 Energy-to-Music Mapping | NEXT | 45% | Stimmung/Energie zu Musik |
+| 5.5-3 Energy-to-Music Mapping | DONE | 45% | Stimmung/Energie zu Musik |
+| 5.5-4 Musik-Selector | NEXT | 60% | passende lokale Musik waehlen |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
 
@@ -139,3 +140,24 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Gate: 5.5-3 Energy-to-Music Mapping nur nach Master-GO.
+
+## Phase 5.5-3 Energy-to-Music Mapping Ergebnis
+
+- Phase 5.5 Musik: 45% / Energy-to-Music Mapping.
+- Code Commit: `c14575d`.
+- `core/music_energy_mapping.py` mappt Segmentrolle, Energie, Highlight-Score und Stimmung auf Musik-Kategorien.
+- Demo-Mapping:
+  - intro -> intro
+  - gameplay ruhig -> background
+  - highlight / peak -> peak
+  - outro -> outro
+- Ducking ist nur Flag: `ducking_required`.
+- Smoke Run: `status=ok`.
+- Pytest: 14 passed.
+- Musik-Build noch nicht gestartet.
+- Keine Musik eingefuegt.
+- Keine Musikdateien committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Gate: 5.5-4 Musik-Selector nur nach Master-GO.

@@ -16,7 +16,7 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 30% / Musik-Contracts abgeschlossen.
+- Phase 5.5 Musik: 45% / Energy-to-Music Mapping abgeschlossen.
 - Musik-Build: noch nicht gestartet.
 - Musikdateien nicht committed.
 - Qwen sichtbar geprueft: ja.
@@ -37,7 +37,7 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-5.5-3 Energy-to-Music Mapping, nur nach Master-GO.
+5.5-4 Musik-Selector, nur nach Master-GO.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -166,6 +166,33 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Runtime Learning gestartet.
 - Musik-Build noch nicht gestartet.
 - Naechster Schritt: 5.5-3 Energy-to-Music Mapping nur nach Master-GO.
+
+### Phase 5.5-3 Energy-to-Music Mapping
+
+- Code Commit: `c14575d`
+- Full Hash: `c14575d68fd91c4bfcef77b7757d81bdd0a6e216`
+- Mapping: `core/music_energy_mapping.py`
+- Smoke Script: `scripts/p55_energy_to_music_mapping_smoke.py`
+- Tests: `tests/test_p55_energy_to_music_mapping.py`
+- Mapping-Regeln:
+  - Intro-Segment -> `intro`
+  - ruhiges Gameplay -> `background`
+  - Highlight / Peak / hohe Energie -> `peak`
+  - Outro -> `outro`
+- Ducking ist nur Flag: `ducking_required`.
+- Smoke Manifest: `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_manifest.json`
+- Smoke Summary: `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_summary.md`
+- Reports lokal/untracked, nicht committed.
+- `py_compile`: gruen.
+- Pytest: 14 passed.
+- Smoke Run: `status=ok`.
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build noch nicht gestartet.
+- Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.
 
 ## Wichtige Links
 

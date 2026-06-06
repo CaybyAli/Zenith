@@ -1,9 +1,9 @@
-PROJECT ZENITH - PHASE 5.5-3 - ENERGY-TO-MUSIC MAPPING
+PROJECT ZENITH - PHASE 5.5-4 - MUSIK-SELECTOR
 
 Nur nach Master-GO.
 
 Ziel:
-Energie-/Highlight-/Emotion-Daten auf Musik-Kategorien abbilden.
+Aus erlaubten lokalen Musik-Metadaten passende Musik-Kandidaten auswaehlen.
 Noch kein Render.
 Noch keine Musik einfuegen.
 Noch kein Preview-Run.

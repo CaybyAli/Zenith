@@ -2,7 +2,7 @@
 
 ## Fortschritt
 
-- Phase 5.5 Gesamt: 30% / Musik-Contracts
+- Phase 5.5 Gesamt: 45% / Energy-to-Music Mapping
 - Musik-Build: noch nicht gestartet
 
 ## Schritte
@@ -12,12 +12,12 @@
 | 5.5-0 Opening-Gate | DONE | 5% | Scope + Safety oeffnen |
 | 5.5-1 Musik-Inventory | DONE | 15% | lokale Musikquellen pruefen |
 | 5.5-2 Musik-Contracts | DONE | 30% | Manifest + Safety-Flags |
-| 5.5-3 Energy-to-Music Mapping | NEXT | 45% | Stimmung/Energie zu Musik |
-| 5.5-4 Musik-Selector | LATER | 60% | passende lokale Musik waehlen |
+| 5.5-3 Energy-to-Music Mapping | DONE | 45% | Stimmung/Energie zu Musik |
+| 5.5-4 Musik-Selector | NEXT | 60% | passende lokale Musik waehlen |
 | 5.5-5 Ducking Plan | LATER | 75% | Stimme bleibt klar |
 | 5.5-6 Musik Preview-Run | LATER | 90% | kleiner kontrollierter Preview |
 | 5.5-7 Final Audit | LATER | 100% | Owner GO + Abschluss |
 
 ## Next
 
-5.5-3 Energy-to-Music Mapping nur nach Master-GO.
+5.5-4 Musik-Selector nur nach Master-GO.
