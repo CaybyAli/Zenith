@@ -13,6 +13,7 @@
 - keine copyrighted Musik automatisch verwenden
 - keine Produktionsdateien ueberschreiben
 - keine Musikdateien in Git committen
+- Uncut bekommt niemals Musik
 - keine Reports committen, ausser Master erlaubt es ausdruecklich
 
 ## Musik-Quellen
@@ -24,6 +25,17 @@ Erlaubt spaeter nur:
 - vom Owner bewusst bereitgestellt
 - klare Lizenz / Owner-Freigabe
 - keine automatischen Downloads
+- nur fuer Main Account
+
+## Channel-Regeln
+
+- Main Account darf spaeter Musik bekommen, nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut bekommt niemals Musik.
+- Uncut bekommt keine Intro-Musik.
+- Uncut bekommt keine Hintergrundmusik.
+- Uncut bekommt keine Peak-Musik.
+- Uncut bekommt keine Outro-Musik.
+- Uncut ignoriert Mood, Energy und Highlight fuer Musik.
 
 ## Qwen-Regeln
 
@@ -40,6 +52,7 @@ Qwen darf nicht:
 - Autocut ausloesen
 - Dateien frei aendern
 - externe Quellen nutzen
+- die Uncut-Musik-Sperre aendern
 
 ## Audio-Regeln
 
@@ -77,6 +90,8 @@ Musik darf:
 
 - Mapping-Code: `core/music_energy_mapping.py`
 - Energy-to-Music Mapping darf nur Kategorien planen.
+- Main Account darf spaeter Kategorien mappen.
+- Uncut muss immer `music_allowed=false` und `music_category=none` bleiben.
 - Es darf keine Musik einfuegen.
 - Es darf keine Musikdatei lesen oder auswaehlen.
 - Es darf keinen Render oder Preview-Render starten.

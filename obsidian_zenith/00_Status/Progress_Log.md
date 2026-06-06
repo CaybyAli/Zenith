@@ -287,3 +287,29 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt NO-GO bis eigenes Master-GO.
 - Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.
+
+## 2026-06-06 - Phase 5.5-3R Main/Uncut Mood Patch
+
+- Main/Uncut-Regel in Musik-Contracts und Energy-to-Music Mapping eingebaut.
+- Code Patch Commit: `cf75021`.
+- Full Hash: `cf750216e75f458bd2db670b44387adb4bd1032a`.
+- Main Account: Musik spaeter erlaubt, aber nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut: Musik dauerhaft verboten.
+- Uncut Mapping: `music_allowed=false`, `music_category=none`, `reason=uncut_music_disabled`.
+- Mood-Kategorien offiziell ergaenzt: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Tests:
+  - `python -m py_compile core\music_contracts.py core\music_energy_mapping.py scripts\p55_music_contracts_smoke.py scripts\p55_energy_to_music_mapping_smoke.py`
+  - `python -m pytest tests\test_p55_music_contracts.py tests\test_p55_energy_to_music_mapping.py -vv`
+  - Ergebnis: 35 passed.
+- Smoke Runs:
+  - `reports/phase5_5_music_contracts`
+  - `reports/phase5_5_energy_to_music_mapping`
+  - Patch Reports: `reports/phase5_5_main_uncut_mood_patch`
+- Reports lokal/untracked, nicht committed.
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build bleibt NO-GO bis eigenes Master-GO.
+- Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.

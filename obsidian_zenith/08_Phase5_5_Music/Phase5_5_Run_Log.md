@@ -108,3 +108,41 @@ Reports:
 
 Naechster Schritt:
 - 5.5-4 Musik-Selector nur nach Master-GO
+
+## 2026-06-06 - 5.5-3R Main/Uncut Mood Patch
+
+Status:
+- Main/Uncut-Regel gebaut
+- Mood-Kategorien erweitert
+- Main Account darf spaeter Musik mappen
+- Uncut bekommt niemals Musik
+- keine Musik eingefuegt
+- keine Musikdateien gelesen
+- keine Musikdateien erzeugt
+- keine Musikdateien kopiert
+- keine Musikdateien ausgewaehlt
+- keine Musikdateien committed
+- kein Render
+- kein Preview-Render
+- kein Ingest
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+
+Beweise:
+- Code Patch Commit: `cf75021`
+- Full Hash: `cf750216e75f458bd2db670b44387adb4bd1032a`
+- `py_compile`: gruen
+- Pytest: 35 passed
+- Contracts Smoke Run: `status=ok`
+- Energy Smoke Run: `status=ok`
+
+Reports:
+- `reports/phase5_5_music_contracts/music_contracts_manifest.json`
+- `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_manifest.json`
+- `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_manifest.json`
+- `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_summary.md`
+- Reports nicht committed
+
+Naechster Schritt:
+- 5.5-4 Musik-Selector nur nach Master-GO

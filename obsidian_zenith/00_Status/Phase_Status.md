@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 45% / Energy-to-Music Mapping | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 45% / Energy-Mood-Channel Mapping | Musik-Build ist noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -42,6 +42,7 @@ Stand: 2026-06-06
 - Render/Preview-Render: NO-GO ohne eigenes Gate.
 - Ingest: NO-GO ohne eigenes Gate.
 - Musik-Build / Preview-Run: NO-GO bis eigenes Master-Gate.
+- Uncut-Musik: dauerhaft NO-GO.
 - Reports: bleiben untracked und werden nicht committed.
 
 ## Historie / superseded
@@ -111,6 +112,7 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 | 5.5-1 Musik-Inventory | DONE | 15% | lokale Musikquellen pruefen |
 | 5.5-2 Musik-Contracts | DONE | 30% | Manifest + Safety-Flags |
 | 5.5-3 Energy-to-Music Mapping | DONE | 45% | Stimmung/Energie zu Musik |
+| 5.5-3R Main/Uncut Mood Patch | DONE | 45% | Main-only Musikregel + Mood-Kategorien |
 | 5.5-4 Musik-Selector | NEXT | 60% | passende lokale Musik waehlen |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
@@ -154,6 +156,26 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Ducking ist nur Flag: `ducking_required`.
 - Smoke Run: `status=ok`.
 - Pytest: 14 passed.
+- Musik-Build noch nicht gestartet.
+- Keine Musik eingefuegt.
+- Keine Musikdateien committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Gate: 5.5-4 Musik-Selector nur nach Master-GO.
+
+## Phase 5.5-3R Main/Uncut Mood Patch Ergebnis
+
+- Phase 5.5 Musik: 45% / Energy-Mood-Channel Mapping.
+- Code Patch Commit: `cf75021`.
+- Full Hash: `cf750216e75f458bd2db670b44387adb4bd1032a`.
+- Main Account: Musik-Mapping spaeter erlaubt, nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut-Musik: dauerhaft verboten.
+- `core/music_contracts.py` blockiert echte Musikitems mit `channel_type=uncut`.
+- `core/music_energy_mapping.py` setzt Uncut immer auf `music_allowed=false` und `music_category=none`.
+- Mood-Kategorien ergaenzt: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Smoke Run: `status=ok`.
+- Pytest: 35 passed.
 - Musik-Build noch nicht gestartet.
 - Keine Musik eingefuegt.
 - Keine Musikdateien committed.

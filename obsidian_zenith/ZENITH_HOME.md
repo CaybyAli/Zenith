@@ -20,8 +20,10 @@ Wenn du neu in diesem Projekt bist, lies in dieser Reihenfolge:
 - P5-L: 100% / CLOSED.
 - P5-L6.5 5F P5-L Close: DONE.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 45% / Energy-to-Music Mapping.
+- Phase 5.5 Musik: 45% / Energy-Mood-Channel Mapping.
 - Musik-Build: noch nicht gestartet.
+- Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut: Musik dauerhaft verboten.
 
 ## Wichtigste Regel
 

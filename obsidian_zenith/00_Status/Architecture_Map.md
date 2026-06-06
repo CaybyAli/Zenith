@@ -41,12 +41,13 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 45% / Energy-to-Music Mapping.
+- 45% / Energy-Mood-Channel Mapping.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
 - Musik-Contracts sind abgeschlossen.
 - Energy-to-Music Mapping ist abgeschlossen.
+- Main/Uncut Mood Patch ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
@@ -55,6 +56,7 @@ Geplanter Bereich:
 - lokale Musikquellen inventarisieren
 - Musik-Manifest und Safety-Flags definieren
 - Energie/Emotion/Highlight zu Musik abbilden
+- Main Account und Uncut als getrennte Channel-Regeln validieren
 - Ducking und Audio-Mix-Regeln vorbereiten
 - kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
 
@@ -77,7 +79,10 @@ Energy-to-Music Mapping:
 - Mapping-Baustein: `core/music_energy_mapping.py`
 - Position: nach Musik-Contracts, vor Musik-Selector und Ducking.
 - Segmentrolle, Energie, Highlight-Score, Speech-Density und Mood werden validiert.
-- Ergebnis ist nur eine Musik-Kategorie: `intro`, `background`, `peak`, `outro`.
+- Ergebnis ist nur eine Musik-Kategorie: `intro`, `background`, `peak`, `outro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional` oder fuer Uncut `none`.
+- Channel-Regel:
+  - Main Account darf spaeter Musik mappen, nur mit Safety/Owner/Lizenz/Manifest.
+  - Uncut blockiert Musik immer: `music_allowed=false`, `music_category=none`.
 - Ducking wird nur als Flag geplant, noch nicht gebaut.
 - Keine Musikdatei wird gelesen, gewaehlt oder eingefuegt.
 

@@ -8,6 +8,7 @@ Stand: 2026-06-06
 - Kein Preview-Render in P5-L6.5.
 - Kein Ingest in P5-L6.5.
 - Kein Musik-Build ohne eigenes Master-GO.
+- Uncut-Musik dauerhaft verboten.
 - Kein Preview-Render ohne eigenes Gate.
 - Kein echter Learning-Loop.
 - Kein echter Overnight-Dauerlauf.
@@ -37,7 +38,7 @@ Runtime Learning Gate: locked / later.
 Naechster Gate: 5.5-4 Musik-Selector, nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 Energy-to-Music Mapping ist abgeschlossen: 45%.
+Phase 5.5 Energy-Mood-Channel Mapping ist abgeschlossen: 45%.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -72,13 +73,15 @@ Musik-Build bleibt gesperrt.
 - Safety-Regeln: [[Phase5_5_Safety_Rules]]
 - Library-Regeln: [[Phase5_5_Music_Library_Rules]]
 - Musikquellen spaeter nur lokal und Owner-freigegeben.
+- Main Account darf spaeter Musik bekommen, nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut bekommt niemals Musik.
 - Keine externen Musikdownloads.
 - Keine API-Keys.
 - Keine copyrighted Musik automatisch verwenden.
 - Keine Musikdateien in Git committen.
 - Qwen bleibt ohne Autocut-Rechte.
 - Qwen darf spaeter hoechstens Stimmung, Energie, Risiken und Vorschlaege beschreiben.
-- Qwen darf nicht schneiden, rendern, Musik final auswaehlen oder externe Quellen nutzen.
+- Qwen darf nicht schneiden, rendern, Musik final auswaehlen, externe Quellen nutzen oder die Uncut-Musik-Sperre aendern.
 - Vor jedem Musik-Run: Enable-Flag, klarer Output-Ordner, Manifest, Safety Flags, Owner Review.
 
 ## Phase 5.5-1 Inventory Safety
@@ -95,7 +98,7 @@ Musik-Build bleibt gesperrt.
 - Contract-Code: `core/music_contracts.py`
 - Smoke Script: `scripts/p55_music_contracts_smoke.py`
 - Manifest-Pflicht ist technisch vorbereitet.
-- Erlaubte Kategorien: `intro`, `background`, `peak`, `outro`.
+- Erlaubte Kategorien: `intro`, `background`, `peak`, `outro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`.
 - Erlaubte Roots: `local_assets/music`, `assets/audio/gaming_main/music`, `assets/music`.
 - Owner-Freigabe Pflicht.
 - Lizenzklarheit Pflicht.
@@ -108,6 +111,17 @@ Musik-Build bleibt gesperrt.
   - `*.opus`
 - Smoke Output ist auf `reports/phase5_5_music_contracts` begrenzt.
 - Reports bleiben untracked.
+- Musik-Build bleibt `false`.
+
+## Phase 5.5-3R Main/Uncut Mood Safety
+
+- Main Account Musik: spaeter erlaubt, nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut-Musik: dauerhaft verboten.
+- `channel_type=uncut` darf keine echte Musikdatei validieren.
+- Uncut Mapping bleibt immer `music_allowed=false`.
+- Uncut Mapping bleibt immer `music_category=none`.
+- Mood/Energy/Highlight duerfen fuer Uncut keine Musik aktivieren.
+- Qwen darf diese Regel nicht aendern.
 - Musik-Build bleibt `false`.
 
 ## Phase 5.5-3 Mapping Safety

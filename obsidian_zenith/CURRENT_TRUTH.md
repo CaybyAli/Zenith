@@ -16,7 +16,9 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 45% / Energy-to-Music Mapping abgeschlossen.
+- Phase 5.5 Musik: 45% / Energy-Mood-Channel Mapping abgeschlossen.
+- Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest erlaubt.
+- Uncut: Musik dauerhaft verboten.
 - Musik-Build: noch nicht gestartet.
 - Musikdateien nicht committed.
 - Qwen sichtbar geprueft: ja.
@@ -38,6 +40,7 @@ Stand: 2026-06-06
 ## Naechster Schritt
 
 5.5-4 Musik-Selector, nur nach Master-GO.
+Uncut bleibt ohne Musik.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -186,6 +189,31 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - `py_compile`: gruen.
 - Pytest: 14 passed.
 - Smoke Run: `status=ok`.
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build noch nicht gestartet.
+- Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.
+
+### Phase 5.5-3R Main/Uncut Mood Patch
+
+- Code Patch Commit: `cf75021`
+- Full Hash: `cf750216e75f458bd2db670b44387adb4bd1032a`
+- Contracts: `core/music_contracts.py`
+- Mapping: `core/music_energy_mapping.py`
+- Main Account: Musik-Mapping spaeter erlaubt, nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut: Musik dauerhaft verboten.
+- Uncut Mapping: `music_allowed=false`, `music_category=none`, `reason=uncut_music_disabled`.
+- Mood-Kategorien offiziell: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Patch Reports:
+  - `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_manifest.json`
+  - `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_summary.md`
+- Reports lokal/untracked, nicht committed.
+- `py_compile`: gruen.
+- Pytest: 35 passed.
+- Smoke Runs: `status=ok`.
 - Keine Musik eingefuegt.
 - Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
 - Kein Render, kein Preview-Render, kein Ingest.

@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 45% / Energy-to-Music Mapping; Musik-Build bleibt NO-GO bis eigenes Master-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 45% / Energy-Mood-Channel Mapping; Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
 
 ## Phase 5 FINAL GO
 
@@ -198,6 +198,7 @@ Grenzen:
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
 - Musik-Build.
+- Uncut-Musik.
 - Preview-Render.
 - Qwen-Autocut.
 
@@ -247,6 +248,44 @@ Grenzen:
 - Kein Code.
 - Keine Reports committed.
 - Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-3R Main/Uncut Mood Patch GO
+
+Entscheidung: GO fuer Main-only Musikregel und Mood-Kategorien.
+
+Beweis:
+- Code Patch Commit: `cf75021`
+- Full Hash: `cf750216e75f458bd2db670b44387adb4bd1032a`
+- `core/music_contracts.py`
+- `core/music_energy_mapping.py`
+- `scripts/p55_music_contracts_smoke.py`
+- `scripts/p55_energy_to_music_mapping_smoke.py`
+- `tests/test_p55_music_contracts.py`
+- `tests/test_p55_energy_to_music_mapping.py`
+- Patch Manifest: `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_manifest.json`
+
+Ergebnis:
+- Main Account Musik: spaeter erlaubt, nur mit Safety/Owner/Lizenz/Manifest.
+- Uncut-Musik: dauerhaft NO-GO.
+- Uncut Mapping: `music_allowed=false`, `music_category=none`.
+- Channel Rules: enforced.
+- Mood-Kategorien: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Pytest: 35 passed.
+- Smoke Runs: `status=ok`.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Gate: 5.5-4 Musik-Selector.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
+- Reports nicht committed.
 - Kein Render.
 - Kein Ingest.
 - Kein Qwen gestartet.

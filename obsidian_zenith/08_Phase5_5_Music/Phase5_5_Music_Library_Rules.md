@@ -11,9 +11,27 @@ Musik darf nur verwendet werden, wenn sie lokal vorhanden und vom Owner bewusst 
 - lizenzklare Musik
 - klare Kategorien:
   - intro
+  - funny
+  - suspense
+  - calm
+  - hype
+  - victory
+  - emotional
   - background
   - peak
   - outro
+
+Empfohlene lokale Struktur spaeter:
+- `local_assets/music/main_account/intro/`
+- `local_assets/music/main_account/funny/`
+- `local_assets/music/main_account/suspense/`
+- `local_assets/music/main_account/hype/`
+- `local_assets/music/main_account/calm/`
+- `local_assets/music/main_account/victory/`
+- `local_assets/music/main_account/emotional/`
+- `local_assets/music/main_account/background/`
+- `local_assets/music/main_account/peak/`
+- `local_assets/music/main_account/outro/`
 
 ## Verboten
 
@@ -25,6 +43,8 @@ Musik darf nur verwendet werden, wenn sie lokal vorhanden und vom Owner bewusst 
 - Musikdateien in Git committen
 - Musik ohne Manifest verwenden
 - Musik ohne Owner Review finalisieren
+- Uncut-Musikordner anlegen oder verwenden
+- Musik fuer Uncut auswaehlen
 
 ## Git-Regel
 
@@ -55,3 +75,8 @@ Fuer jede Musikdatei spaeter dokumentieren:
 - Dauer
 - Lautstaerkepruefung
 - Einsatzbereich
+- Channel: nur `main`
+
+## Uncut-Regel
+
+Uncut bleibt original/naturbelassen und bekommt keine Musik. Es werden keine Uncut-Musikordner verwendet.
