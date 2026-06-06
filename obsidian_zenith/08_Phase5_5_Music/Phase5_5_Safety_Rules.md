@@ -17,6 +17,8 @@
 
 ## Musik-Quellen
 
+Library-Regeln: [[Phase5_5_Music_Library_Rules]]
+
 Erlaubt spaeter nur:
 - lokale Musikdateien
 - vom Owner bewusst bereitgestellt

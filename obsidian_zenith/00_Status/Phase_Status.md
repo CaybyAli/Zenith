@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 5% / Opening-Gate | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 15% / Musik-Inventory | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,7 @@ Stand: 2026-06-06
 
 ## Naechster Gate
 
-5.5-1 Musik-Inventory, nur nach Master-GO.
+5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -102,3 +102,24 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Gate: 5.5-1 Musik-Inventory nur nach Master-GO.
+
+## Phase 5.5 Fortschritt
+
+| Schritt | Status | Prozent | Zweck |
+|---|---:|---:|---|
+| 5.5-0 Opening-Gate | DONE | 5% | Scope + Safety oeffnen |
+| 5.5-1 Musik-Inventory | DONE | 15% | lokale Musikquellen pruefen |
+| 5.5-2 Musik-Contracts | NEXT | 30% | Manifest + Safety-Flags |
+
+## Phase 5.5-1 Musik-Inventory Ergebnis
+
+- Phase 5.5 Musik: 15% / Musik-Inventory.
+- Musik-Build noch nicht gestartet.
+- Lokale Musik-Kandidaten gefunden:
+  - `assets/audio/gaming_main/music/main_calm_bed.mp3`
+  - `assets/audio/gaming_main/music/main_intro_bed.mp3`
+- Keine Musikdateien committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Gate: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nur nach Master-GO.

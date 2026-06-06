@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 5% / Opening-Gate; Musik-Build bleibt NO-GO bis eigenes Master-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 15% / Musik-Inventory; Musik-Build bleibt NO-GO bis eigenes Master-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,7 +193,7 @@ Grenzen:
 
 ## Naechster Gate
 
-5.5-1 Musik-Inventory, nur nach Master-GO.
+5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
@@ -225,4 +225,30 @@ Grenzen:
 - Kein Ingest.
 - Keine Musik gestartet.
 - Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-1 Musik-Inventory GO
+
+Entscheidung: GO fuer Obsidian-Inventory / lokale Musikquellen-Pruefung.
+
+Beweis:
+- `obsidian_zenith/08_Phase5_5_Music/Phase5_5_Music_Inventory.md`
+- `obsidian_zenith/08_Phase5_5_Music/Phase5_5_Music_Library_Rules.md`
+
+Ergebnis:
+- Phase 5.5 Musik: 15% / Musik-Inventory.
+- Lokale Musik-Kandidaten gefunden, aber nicht verwendet.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Gate: 5.5-2 Musik-Contracts / Manifest + Safety-Flags.
+
+Grenzen:
+- Kein Code.
+- Keine Reports committed.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.

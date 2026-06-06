@@ -16,7 +16,7 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 5% / Opening-Gate.
+- Phase 5.5 Musik: 15% / Musik-Inventory abgeschlossen.
 - Musik-Build: noch nicht gestartet.
 - Qwen sichtbar geprueft: ja.
 - `qwen_role=analysis_only`.
@@ -36,7 +36,7 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-5.5-1 Musik-Inventory, nur nach Master-GO.
+5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -123,6 +123,22 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Musik-Build noch nicht gestartet.
 - Naechster Schritt: 5.5-1 Musik-Inventory nur nach Master-GO.
 
+### Phase 5.5-1 Musik-Inventory
+
+- Inventory: [[Phase5_5_Music_Inventory]]
+- Library-Regeln: [[Phase5_5_Music_Library_Rules]]
+- Phase 5.5 Musik: 15% / Musik-Inventory abgeschlossen.
+- Gefundene Musik-Kandidaten:
+  - `assets/audio/gaming_main/music/main_calm_bed.mp3`
+  - `assets/audio/gaming_main/music/main_intro_bed.mp3`
+- Gefundene Musik-Kandidaten sind nicht tracked und durch `.gitignore` ignoriert.
+- Getrackte Audio-Dateien existieren nur als SFX/Test-Fixtures, nicht als Musikbibliothek.
+- Kein Code geaendert.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render, kein Ingest, kein Qwen, kein Runtime Learning.
+- Musik-Build noch nicht gestartet.
+- Naechster Schritt: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nur nach Master-GO.
+
 ## Wichtige Links
 
 - [[ZENITH_HOME]]
@@ -148,4 +164,6 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - [[Phase5_5_Safety_Rules]]
 - [[Phase5_5_Backlog]]
 - [[Phase5_5_Run_Log]]
+- [[Phase5_5_Music_Inventory]]
+- [[Phase5_5_Music_Library_Rules]]
 - [[NEXT_PROMPT]]

@@ -34,10 +34,10 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-1 Musik-Inventory, nur nach Master-GO.
+Naechster Gate: 5.5-2 Musik-Contracts / Manifest + Safety-Flags, nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 ist nur als Planungsbereich geoeffnet: 5% / Opening-Gate.
+Phase 5.5 Musik-Inventory ist abgeschlossen: 15%.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -70,6 +70,7 @@ Musik-Build bleibt gesperrt.
 ## Phase 5.5 Musik Safety
 
 - Safety-Regeln: [[Phase5_5_Safety_Rules]]
+- Library-Regeln: [[Phase5_5_Music_Library_Rules]]
 - Musikquellen spaeter nur lokal und Owner-freigegeben.
 - Keine externen Musikdownloads.
 - Keine API-Keys.
@@ -79,3 +80,12 @@ Musik-Build bleibt gesperrt.
 - Qwen darf spaeter hoechstens Stimmung, Energie, Risiken und Vorschlaege beschreiben.
 - Qwen darf nicht schneiden, rendern, Musik final auswaehlen oder externe Quellen nutzen.
 - Vor jedem Musik-Run: Enable-Flag, klarer Output-Ordner, Manifest, Safety Flags, Owner Review.
+
+## Phase 5.5-1 Inventory Safety
+
+- Gefundene Musik-Kandidaten sind nicht tracked und duerfen nicht committed werden.
+- Getrackte Audio-Dateien sind SFX/Test-Fixtures, keine Musikbibliothek.
+- Lokale Musik nur mit Owner-Freigabe und klarem Lizenzstatus.
+- `.gitignore` schuetzt bereits `.wav`, `.mp3`, `.flac`, `assets/**/*.wav`, `assets/**/*.mp3`, `tmp/`, `preprocessed/`, `data/` und `scratch/`.
+- Spaeteres Gitignore-Risiko: `local_assets/music/`, `.m4a`, `.aac`, `.ogg`, `.opus` brauchen vor Nutzung eigene Regeln.
+- Heute keine `.gitignore`-Aenderung.

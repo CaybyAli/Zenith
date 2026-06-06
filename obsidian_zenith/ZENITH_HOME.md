@@ -20,7 +20,7 @@ Wenn du neu in diesem Projekt bist, lies in dieser Reihenfolge:
 - P5-L: 100% / CLOSED.
 - P5-L6.5 5F P5-L Close: DONE.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 5% / Opening-Gate.
+- Phase 5.5 Musik: 15% / Musik-Inventory.
 - Musik-Build: noch nicht gestartet.
 
 ## Wichtigste Regel
@@ -65,6 +65,8 @@ Vor jeder Arbeit:
 - [[Phase5_5_Safety_Rules]]
 - [[Phase5_5_Backlog]]
 - [[Phase5_5_Run_Log]]
+- [[Phase5_5_Music_Inventory]]
+- [[Phase5_5_Music_Library_Rules]]
 
 ### Historie und Webseite
 - [[Progress_Log]]

@@ -41,9 +41,10 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 5% / Opening-Gate.
+- 15% / Musik-Inventory.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
+- Musik-Inventory ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
@@ -54,6 +55,13 @@ Geplanter Bereich:
 - Energie/Emotion/Highlight zu Musik abbilden
 - Ducking und Audio-Mix-Regeln vorbereiten
 - kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
+
+Musik-Inventory:
+- Lokale Musik-Kandidaten: `assets/audio/gaming_main/music/*.mp3`
+- Leerer Platzhalter: `assets/music/.gitkeep`
+- Spaetere lokale Bibliothek empfohlen: `local_assets/music/`
+- Musikdateien bleiben ausserhalb Git.
+- Nur Metadaten/Manifeste duerfen spaeter kontrolliert dokumentiert werden.
 
 ## Qwen
 
@@ -89,4 +97,6 @@ Wichtige Dateien:
 - [[Phase5_5_Safety_Rules]]
 - [[Phase5_5_Backlog]]
 - [[Phase5_5_Run_Log]]
+- [[Phase5_5_Music_Inventory]]
+- [[Phase5_5_Music_Library_Rules]]
 - [[NEXT_PROMPT]]

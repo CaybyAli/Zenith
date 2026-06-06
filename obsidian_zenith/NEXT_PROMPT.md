@@ -1,19 +1,17 @@
-PROJECT ZENITH - PHASE 5.5-1 - MUSIK-INVENTORY / LOKALE MUSIKQUELLEN PRUEFEN
+PROJECT ZENITH - PHASE 5.5-2 - MUSIK-CONTRACTS / MANIFEST + SAFETY-FLAGS
 
 Nur nach Master-GO.
 
 Ziel:
-Lokale Musikquellen und erlaubte Ordner pruefen.
+Code-Contracts und Manifest-Struktur fuer Musik planen/bauen.
 Noch kein Render.
 Noch keine Musik einfuegen.
 Noch kein Preview-Run.
 
 Verboten:
-- kein Download
+- kein Musikdownload
 - keine externen Dienste
 - keine API-Keys
-- keine copyrighted Musik automatisch verwenden
-- kein Render
-- kein Ingest
+- keine Musikdateien committen
 - kein Qwen-Autocut
 - kein Runtime Learning

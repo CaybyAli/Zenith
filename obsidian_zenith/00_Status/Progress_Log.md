@@ -186,3 +186,26 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt NO-GO bis eigenes Master-GO.
 - Naechster Schritt: 5.5-1 Musik-Inventory nur nach Master-GO.
+
+## 2026-06-06 - Phase 5.5-1 Musik-Inventory
+
+- Musik-Inventory abgeschlossen: Phase 5.5 Musik auf 15%.
+- Gefundene lokale Musik-Kandidaten:
+  - `assets/audio/gaming_main/music/main_calm_bed.mp3`
+  - `assets/audio/gaming_main/music/main_intro_bed.mp3`
+- `assets/music/` enthaelt nur `.gitkeep`, keine Musikdateien.
+- Getrackte Audiodateien existieren als SFX/Test-Fixtures, nicht als Musikbibliothek.
+- Gitignore schuetzt `.wav`, `.mp3`, `.flac`, `assets/**/*.wav`, `assets/**/*.mp3`, `tmp/`, `preprocessed/`, `data/` und `scratch/`.
+- Gitignore-Risiko fuer spaeter: `local_assets/music/` sowie `.m4a`, `.aac`, `.ogg`, `.opus` sind noch nicht explizit dokumentiert.
+- Neue Obsidian-Dateien:
+  - [[Phase5_5_Music_Inventory]]
+  - [[Phase5_5_Music_Library_Rules]]
+- Kein Code geaendert.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build bleibt NO-GO bis eigenes Master-GO.
+- Naechster Schritt: 5.5-2 Musik-Contracts / Manifest + Safety-Flags nur nach Master-GO.
