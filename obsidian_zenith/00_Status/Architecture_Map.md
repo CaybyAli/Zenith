@@ -41,13 +41,14 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 45% / Energy-Mood-Channel Mapping.
+- 60% / Musik-Selector.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
 - Musik-Contracts sind abgeschlossen.
 - Energy-to-Music Mapping ist abgeschlossen.
 - Main/Uncut Mood Patch ist abgeschlossen.
+- Musik-Selector ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
@@ -57,6 +58,7 @@ Geplanter Bereich:
 - Musik-Manifest und Safety-Flags definieren
 - Energie/Emotion/Highlight zu Musik abbilden
 - Main Account und Uncut als getrennte Channel-Regeln validieren
+- passende Main-Account-Musik-Metadaten selektieren
 - Ducking und Audio-Mix-Regeln vorbereiten
 - kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
 
@@ -85,6 +87,15 @@ Energy-to-Music Mapping:
   - Uncut blockiert Musik immer: `music_allowed=false`, `music_category=none`.
 - Ducking wird nur als Flag geplant, noch nicht gebaut.
 - Keine Musikdatei wird gelesen, gewaehlt oder eingefuegt.
+
+Musik-Selector:
+- Selector-Baustein: `core/music_selector.py`
+- Position: Contracts -> Energy/Mood/Channel Mapping -> Selector -> Ducking -> Preview.
+- Der Selector arbeitet nur mit Metadaten.
+- Main Account kann sichere Kandidaten selektieren.
+- Uncut wird immer blockiert.
+- Missing Category erzeugt `missing_candidate`, ohne heimlichen Fallback.
+- Keine Musikdatei wird gelesen, geoeffnet, kopiert oder eingefuegt.
 
 ## Qwen
 

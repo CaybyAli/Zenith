@@ -27,6 +27,7 @@ Stand: 2026-06-06
 - [x] Phase 5.5-2 Musik-Contracts.
 - [x] Phase 5.5-3 Energy-to-Music Mapping.
 - [x] Phase 5.5-3R Main/Uncut Mood Patch.
+- [x] Phase 5.5-4 Musik-Selector.
 
 ## Darf NICHT als erledigt markiert sein
 
@@ -38,6 +39,8 @@ Stand: 2026-06-06
 - [ ] Ingest in P5-L6.5.
 - [ ] Musik-Build.
 - [ ] Musik fuer Uncut.
+- [ ] Phase 5.5-5 Ducking Plan.
+- [ ] Musik-Aktivierung.
 - [ ] Phase 5.5 Preview-Run.
 - [ ] Phase 5.5 Final-GO.
 
@@ -46,9 +49,9 @@ Stand: 2026-06-06
 - Phase 5: 100% / DONE.
 - P5-L: 100% / CLOSED.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 45% / Energy-Mood-Channel Mapping.
+- Phase 5.5 Musik: 60% / Musik-Selector.
 - Musik-Build: noch nicht gestartet.
-- Naechster Gate: 5.5-4 Musik-Selector nach Master-GO.
+- Naechster Gate: 5.5-5 Ducking Plan nach Master-GO.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest.
 - Uncut: Musik dauerhaft verboten.
 

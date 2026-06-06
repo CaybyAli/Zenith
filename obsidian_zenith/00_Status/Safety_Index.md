@@ -35,10 +35,10 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-4 Musik-Selector, nur nach Master-GO.
+Naechster Gate: 5.5-5 Ducking Plan, nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 Energy-Mood-Channel Mapping ist abgeschlossen: 45%.
+Phase 5.5 Musik-Selector ist abgeschlossen: 60%.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -111,6 +111,21 @@ Musik-Build bleibt gesperrt.
   - `*.opus`
 - Smoke Output ist auf `reports/phase5_5_music_contracts` begrenzt.
 - Reports bleiben untracked.
+- Musik-Build bleibt `false`.
+
+## Phase 5.5-4 Selector Safety
+
+- Selector-Code: `core/music_selector.py`
+- Selector arbeitet nur mit Metadaten.
+- Selector liest keine Musikdateien.
+- Selector fuegt keine Musikdateien ein.
+- Selector kopiert keine Musikdateien.
+- Selector startet keinen Render.
+- Selector startet keinen Preview-Render.
+- Selector nutzt kein Qwen.
+- Selector blockiert Uncut immer.
+- Main Account Auswahl nur mit Owner-Freigabe, erlaubter Lizenz, erlaubter Kategorie und erlaubtem Root.
+- Missing Category darf nicht heimlich fallbacken.
 - Musik-Build bleibt `false`.
 
 ## Phase 5.5-3R Main/Uncut Mood Safety

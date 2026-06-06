@@ -313,3 +313,33 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt NO-GO bis eigenes Master-GO.
 - Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.
+
+## 2026-06-06 - Phase 5.5-4 Musik-Selector
+
+- Musik-Selector als reine Metadaten-Selektion gebaut.
+- Code Commit: `7ca03f0`.
+- Full Hash: `7ca03f0e8806253d787d03b58e9cfa7d0aa75f69`.
+- Neue Dateien:
+  - `core/music_selector.py`
+  - `scripts/p55_music_selector_smoke.py`
+  - `tests/test_p55_music_selector.py`
+- Main Account Selector vorhanden.
+- Uncut bleibt ohne Musik.
+- Missing Category fuehrt zu `missing_candidate`, ohne heimlichen Fallback.
+- Prioritaet: hoechste `priority` gewinnt, Gleichstand stabil nach `candidate_id`.
+- Tests:
+  - `python -m py_compile core\music_selector.py scripts\p55_music_selector_smoke.py`
+  - `python -m pytest tests\test_p55_music_selector.py -vv`
+  - Ergebnis: 16 passed.
+- Smoke Run:
+  - `reports/phase5_5_music_selector/music_selector_manifest.json`
+  - `reports/phase5_5_music_selector/music_selector_summary.md`
+  - Ergebnis: `status=ok`.
+- Reports lokal/untracked, nicht committed.
+- Keine Musik eingefuegt.
+- Keine Musikdateien gelesen, erzeugt, kopiert, ausgewaehlt oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build bleibt NO-GO bis eigenes Master-GO.
+- Naechster Schritt: 5.5-5 Ducking Plan nur nach Master-GO.

@@ -1,10 +1,9 @@
-PROJECT ZENITH - PHASE 5.5-4 - MUSIK-SELECTOR
+PROJECT ZENITH - PHASE 5.5-5 - DUCKING PLAN / AUDIO-MIX SAFETY
 
 Nur nach Master-GO.
 
 Ziel:
-Aus erlaubten lokalen Main-Account-Musik-Metadaten passende Musik-Kandidaten auswaehlen.
-Uncut bleibt ohne Musik.
+Ducking-/Lautstaerkeplan bauen, damit Musik spaeter Ali/Friend-Stimmen nicht ueberdeckt.
 Noch kein Render.
 Noch keine Musik einfuegen.
 Noch kein Preview-Run.
@@ -14,6 +13,6 @@ Verbote:
 - keine externen Dienste
 - keine API-Keys
 - keine Musikdateien committen
+- keine Musik fuer Uncut
 - kein Qwen-Autocut
 - kein Runtime Learning
-- keine Musik fuer Uncut

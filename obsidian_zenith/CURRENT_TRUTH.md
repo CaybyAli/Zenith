@@ -16,8 +16,9 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 45% / Energy-Mood-Channel Mapping abgeschlossen.
+- Phase 5.5 Musik: 60% / Musik-Selector abgeschlossen.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest erlaubt.
+- Main Account Selector vorhanden.
 - Uncut: Musik dauerhaft verboten.
 - Musik-Build: noch nicht gestartet.
 - Musikdateien nicht committed.
@@ -39,7 +40,7 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-5.5-4 Musik-Selector, nur nach Master-GO.
+5.5-5 Ducking Plan, nur nach Master-GO.
 Uncut bleibt ohne Musik.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
@@ -221,6 +222,35 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Runtime Learning gestartet.
 - Musik-Build noch nicht gestartet.
 - Naechster Schritt: 5.5-4 Musik-Selector nur nach Master-GO.
+
+### Phase 5.5-4 Musik-Selector
+
+- Code Commit: `7ca03f0`
+- Full Hash: `7ca03f0e8806253d787d03b58e9cfa7d0aa75f69`
+- Selector: `core/music_selector.py`
+- Smoke Script: `scripts/p55_music_selector_smoke.py`
+- Tests: `tests/test_p55_music_selector.py`
+- Main Account Selector vorhanden.
+- Selector arbeitet nur mit Metadaten.
+- Selector liest keine Musikdateien.
+- Selector fuegt keine Musik ein.
+- Uncut bleibt ohne Musik.
+- Uncut Selection: `music_allowed=false`, `selected_category=none`, `selection_status=blocked`.
+- Missing Category: `selection_status=missing_candidate`, kein heimlicher Fallback.
+- Prioritaet: hoechste `priority` gewinnt, Gleichstand stabil nach `candidate_id`.
+- Smoke Manifest: `reports/phase5_5_music_selector/music_selector_manifest.json`
+- Smoke Summary: `reports/phase5_5_music_selector/music_selector_summary.md`
+- Reports lokal/untracked, nicht committed.
+- `py_compile`: gruen.
+- Pytest: 16 passed.
+- Smoke Run: `status=ok`.
+- Keine Musik eingefuegt.
+- Keine Musikdateien gelesen, erzeugt, kopiert, ausgewaehlt oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build noch nicht gestartet.
+- Naechster Schritt: 5.5-5 Ducking Plan nur nach Master-GO.
 
 ## Wichtige Links
 

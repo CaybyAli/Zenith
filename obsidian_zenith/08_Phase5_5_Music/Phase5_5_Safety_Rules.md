@@ -96,3 +96,16 @@ Musik darf:
 - Es darf keine Musikdatei lesen oder auswaehlen.
 - Es darf keinen Render oder Preview-Render starten.
 - Ducking bleibt nur ein Flag bis eigenes Gate.
+
+## Musik-Selector
+
+- Selector-Code: `core/music_selector.py`
+- Selector darf nur Metadaten waehlen.
+- Selector darf keine Musikdateien lesen.
+- Selector darf keine Musikdateien oeffnen.
+- Selector darf keine Musikdateien kopieren.
+- Selector darf keine Musikdateien einfuegen.
+- Selector darf keine echte Videoauswahl finalisieren.
+- Main Account ist erlaubt, wenn Owner, Lizenz, Root und Kategorie passen.
+- Uncut wird immer blockiert.
+- Missing Category darf nicht heimlich fallbacken.

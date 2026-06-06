@@ -80,3 +80,11 @@ Fuer jede Musikdatei spaeter dokumentieren:
 ## Uncut-Regel
 
 Uncut bleibt original/naturbelassen und bekommt keine Musik. Es werden keine Uncut-Musikordner verwendet.
+
+## Selector-Regel
+
+- Selector nutzt nur Metadaten.
+- Selector ist Main Account only.
+- Uncut wird blockiert.
+- Missing Category darf nicht heimlich fallbacken.
+- Selector darf keine Musikdateien lesen, kopieren, einfuegen oder final fuer echte Videos aktivieren.

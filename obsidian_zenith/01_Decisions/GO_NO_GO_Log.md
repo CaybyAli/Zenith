@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 45% / Energy-Mood-Channel Mapping; Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 60% / Musik-Selector; Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,7 +193,7 @@ Grenzen:
 
 ## Naechster Gate
 
-5.5-4 Musik-Selector, nur nach Master-GO.
+5.5-5 Ducking Plan, nur nach Master-GO.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
@@ -285,6 +285,40 @@ Ergebnis:
 Grenzen:
 - Keine Musik eingefuegt.
 - Keine Musikdateien erzeugt, kopiert, ausgewaehlt oder committed.
+- Reports nicht committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-4 Musik-Selector GO
+
+Entscheidung: GO fuer reine Main-Account-Metadaten-Selektion.
+
+Beweis:
+- Code Commit: `7ca03f0`
+- Full Hash: `7ca03f0e8806253d787d03b58e9cfa7d0aa75f69`
+- `core/music_selector.py`
+- `scripts/p55_music_selector_smoke.py`
+- `tests/test_p55_music_selector.py`
+- Smoke Manifest: `reports/phase5_5_music_selector/music_selector_manifest.json`
+
+Ergebnis:
+- Phase 5.5 Musik: 60% / Musik-Selector.
+- Main Account Selector vorhanden.
+- Uncut-Musik bleibt dauerhaft NO-GO.
+- Missing Category: `missing_candidate`, kein Fallback.
+- Pytest: 16 passed.
+- Smoke Run: `status=ok`.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Gate: 5.5-5 Ducking Plan.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien gelesen, erzeugt, kopiert, ausgewaehlt oder committed.
 - Reports nicht committed.
 - Kein Render.
 - Kein Ingest.

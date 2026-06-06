@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 45% / Energy-Mood-Channel Mapping | Musik-Build ist noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 60% / Musik-Selector | Musik-Build ist noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,7 @@ Stand: 2026-06-06
 
 ## Naechster Gate
 
-5.5-4 Musik-Selector, nur nach Master-GO.
+5.5-5 Ducking Plan, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -113,7 +113,8 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 | 5.5-2 Musik-Contracts | DONE | 30% | Manifest + Safety-Flags |
 | 5.5-3 Energy-to-Music Mapping | DONE | 45% | Stimmung/Energie zu Musik |
 | 5.5-3R Main/Uncut Mood Patch | DONE | 45% | Main-only Musikregel + Mood-Kategorien |
-| 5.5-4 Musik-Selector | NEXT | 60% | passende lokale Musik waehlen |
+| 5.5-4 Musik-Selector | DONE | 60% | passende lokale Musik-Metadaten waehlen |
+| 5.5-5 Ducking Plan | NEXT | 75% | Stimme bleibt klar |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
 
@@ -183,3 +184,22 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Gate: 5.5-4 Musik-Selector nur nach Master-GO.
+
+## Phase 5.5-4 Musik-Selector Ergebnis
+
+- Phase 5.5 Musik: 60% / Musik-Selector.
+- Code Commit: `7ca03f0`.
+- Full Hash: `7ca03f0e8806253d787d03b58e9cfa7d0aa75f69`.
+- Main Account Selector vorhanden.
+- `core/music_selector.py` waehlt nur aus sicheren Main-Account-Metadaten.
+- Uncut-Musik bleibt dauerhaft verboten.
+- Missing Category fuehrt zu `missing_candidate`, ohne heimlichen Fallback.
+- Smoke Run: `status=ok`.
+- Pytest: 16 passed.
+- Musik-Build noch nicht gestartet.
+- Keine Musik eingefuegt.
+- Keine Musikdateien gelesen, ausgewaehlt oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Gate: 5.5-5 Ducking Plan nur nach Master-GO.
