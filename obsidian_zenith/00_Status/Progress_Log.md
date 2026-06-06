@@ -343,3 +343,29 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt NO-GO bis eigenes Master-GO.
 - Naechster Schritt: 5.5-5 Ducking Plan nur nach Master-GO.
+
+## 2026-06-06 - Phase 5.5-4A Lokale Main-Musikordner
+
+- Lokale Main-Account-Musikordner fuer Epidemic Sound vorbereitet.
+- Erstellt unter `local_assets/music/main_account/`:
+  - `intro`
+  - `funny`
+  - `suspense`
+  - `calm`
+  - `hype`
+  - `victory`
+  - `emotional`
+  - `background`
+  - `peak`
+  - `outro`
+- Ali fuellt spaeter manuell Epidemic-Sound-Musik ein.
+- `local_assets/music/` ist gitignored.
+- Uncut bekommt keine Musik.
+- Kein `local_assets/music/uncut` erstellt.
+- Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Code geaendert.
+- Keine Tests geaendert.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: Ali kopiert Musikdateien manuell ein, danach 5.5-4B Musikordner-Verifikation.

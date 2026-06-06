@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 60% / Musik-Selector | Musik-Build ist noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 60% / Musik-Selector + lokale Main-Musikordner | Musik-Build ist noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,8 @@ Stand: 2026-06-06
 
 ## Naechster Gate
 
-5.5-5 Ducking Plan, nur nach Master-GO.
+Ali kopiert spaeter manuell Epidemic-Sound-Musik in `local_assets/music/main_account/`.
+Danach 5.5-4B Musikordner-Verifikation oder 5.5-5 Ducking Plan nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -114,7 +115,9 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 | 5.5-3 Energy-to-Music Mapping | DONE | 45% | Stimmung/Energie zu Musik |
 | 5.5-3R Main/Uncut Mood Patch | DONE | 45% | Main-only Musikregel + Mood-Kategorien |
 | 5.5-4 Musik-Selector | DONE | 60% | passende lokale Musik-Metadaten waehlen |
-| 5.5-5 Ducking Plan | NEXT | 75% | Stimme bleibt klar |
+| 5.5-4A Lokale Main-Musikordner | DONE | 60% | Ordner fuer manuelles Epidemic-Sound-Einsortieren |
+| 5.5-4B Musikordner-Verifikation | NEXT | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
+| 5.5-5 Ducking Plan | LATER | 75% | Stimme bleibt klar |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
 
@@ -203,3 +206,20 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Gate: 5.5-5 Ducking Plan nur nach Master-GO.
+
+## Phase 5.5-4A Lokale Main-Musikordner Ergebnis
+
+- Lokale Main-Account-Musikordner fuer Epidemic Sound vorbereitet.
+- Ordnerpfad: `local_assets/music/main_account/`.
+- Kategorien: `intro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `background`, `peak`, `outro`.
+- Ali fuellt spaeter manuell Musikdateien ein.
+- Uncut-Musik bleibt dauerhaft verboten.
+- Kein `local_assets/music/uncut` erstellt.
+- `local_assets/music/` ist gitignored.
+- Musikdateien bleiben lokal und werden nicht committed.
+- Keine Musikdateien erzeugt oder kopiert.
+- Kein Code geaendert.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Schritt: manuelles Befuellen durch Ali, danach 5.5-4B Musikordner-Verifikation.

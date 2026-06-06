@@ -35,10 +35,11 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-5 Ducking Plan, nur nach Master-GO.
+Naechster Gate: Ali manuell Musikdateien einfuegen, danach 5.5-4B Musikordner-Verifikation.
 
 Runtime Learning Gate bleibt gesperrt.
 Phase 5.5 Musik-Selector ist abgeschlossen: 60%.
+Lokale Main-Account-Musikordner sind vorbereitet.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -127,6 +128,18 @@ Musik-Build bleibt gesperrt.
 - Main Account Auswahl nur mit Owner-Freigabe, erlaubter Lizenz, erlaubter Kategorie und erlaubtem Root.
 - Missing Category darf nicht heimlich fallbacken.
 - Musik-Build bleibt `false`.
+
+## Phase 5.5-4A Local Folder Safety
+
+- Lokale Ordner unter `local_assets/music/main_account/` sind vorbereitet.
+- Zweck: Ali sortiert spaeter manuell Epidemic-Sound-Musik ein.
+- `local_assets/music/` ist gitignored.
+- Keine Musikdateien in Git committen.
+- Keine Musikdateien automatisch erzeugen.
+- Keine Musikdateien downloaden.
+- Keine Musikdateien kopieren durch Agent ohne eigenes Master-GO.
+- Kein Uncut-Musikordner.
+- Uncut bekommt niemals Musik.
 
 ## Phase 5.5-3R Main/Uncut Mood Safety
 

@@ -33,6 +33,20 @@ Empfohlene lokale Struktur spaeter:
 - `local_assets/music/main_account/peak/`
 - `local_assets/music/main_account/outro/`
 
+Vorbereitet fuer manuelles Einsortieren durch Ali:
+- `local_assets/music/main_account/intro/`
+- `local_assets/music/main_account/funny/`
+- `local_assets/music/main_account/suspense/`
+- `local_assets/music/main_account/calm/`
+- `local_assets/music/main_account/hype/`
+- `local_assets/music/main_account/victory/`
+- `local_assets/music/main_account/emotional/`
+- `local_assets/music/main_account/background/`
+- `local_assets/music/main_account/peak/`
+- `local_assets/music/main_account/outro/`
+
+Ali fuellt diese Ordner spaeter manuell mit Epidemic-Sound-Musik. Musikdateien bleiben lokal und werden nicht committed.
+
 ## Verboten
 
 - automatische Downloads
@@ -80,6 +94,7 @@ Fuer jede Musikdatei spaeter dokumentieren:
 ## Uncut-Regel
 
 Uncut bleibt original/naturbelassen und bekommt keine Musik. Es werden keine Uncut-Musikordner verwendet.
+`local_assets/music/uncut/` wird nicht erstellt.
 
 ## Selector-Regel
 

@@ -2,7 +2,7 @@
 
 Stand: 2026-06-06
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 60% / Musik-Selector; Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 60% / Musik-Selector; lokale Main-Musikordner sind vorbereitet. Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,7 +193,7 @@ Grenzen:
 
 ## Naechster Gate
 
-5.5-5 Ducking Plan, nur nach Master-GO.
+Ali manuell Musikdateien einfuegen, danach 5.5-4B Musikordner-Verifikation.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
@@ -248,6 +248,36 @@ Grenzen:
 - Kein Code.
 - Keine Reports committed.
 - Keine Musikdateien erzeugt, kopiert oder committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-4A Lokale Main-Musikordner GO
+
+Entscheidung: GO fuer lokale Ordner-Vorbereitung.
+
+Beweis:
+- Ordner unter `local_assets/music/main_account/` erstellt.
+- Kategorien: `intro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `background`, `peak`, `outro`.
+- `.gitignore` ignoriert `local_assets/music/`.
+
+Ergebnis:
+- Ali kann spaeter manuell Epidemic-Sound-Musik einsortieren.
+- Uncut-Musik bleibt dauerhaft NO-GO.
+- Kein `local_assets/music/uncut` erstellt.
+- Keine Musikdateien erzeugt oder kopiert.
+- Musikdateien bleiben lokal und werden nicht committed.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Schritt: 5.5-4B Musikordner-Verifikation nach manuellem Befuellen.
+
+Grenzen:
+- Kein Code.
+- Keine Tests.
+- Keine Reports committed.
 - Kein Render.
 - Kein Ingest.
 - Kein Qwen gestartet.

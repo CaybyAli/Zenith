@@ -17,6 +17,7 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 60% / Musik-Selector abgeschlossen.
+- Phase 5.5-4A: lokale Main-Account-Musikordner fuer Epidemic Sound vorbereitet.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest erlaubt.
 - Main Account Selector vorhanden.
 - Uncut: Musik dauerhaft verboten.
@@ -40,7 +41,8 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-5.5-5 Ducking Plan, nur nach Master-GO.
+Ali kopiert spaeter manuell Epidemic-Sound-Musik in die lokalen Main-Account-Ordner.
+Danach: 5.5-4B Musikordner-Verifikation oder 5.5-5 Ducking Plan nur nach Master-GO.
 Uncut bleibt ohne Musik.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
@@ -251,6 +253,31 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Runtime Learning gestartet.
 - Musik-Build noch nicht gestartet.
 - Naechster Schritt: 5.5-5 Ducking Plan nur nach Master-GO.
+
+### Phase 5.5-4A Lokale Main-Musikordner
+
+- Lokale Ordner unter `local_assets/music/main_account/` vorbereitet:
+  - `intro`
+  - `funny`
+  - `suspense`
+  - `calm`
+  - `hype`
+  - `victory`
+  - `emotional`
+  - `background`
+  - `peak`
+  - `outro`
+- Zweck: Ali kann spaeter manuell Epidemic-Sound-Musik einsortieren.
+- `local_assets/music/` ist gitignored.
+- Keine Musikdateien erzeugt.
+- Keine Musikdateien kopiert.
+- Keine Musikdateien committed.
+- Kein `local_assets/music/uncut` erstellt.
+- Kein Code geaendert.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: Ali kopiert Musikdateien manuell ein, danach 5.5-4B Musikordner-Verifikation.
 
 ## Wichtige Links
 
