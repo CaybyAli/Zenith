@@ -31,7 +31,7 @@ Diese Datei oeffnet keinen Loop.
 
 ## Aktueller Stand
 
-- P5-L: 90%.
+- P5-L: 100% / CLOSED.
 - P5-L7: noch nicht gestartet.
 - Phase 5.5 Musik: locked.
 - Naechster Gate: 5D Qwen Kontrollrun nach Master-GO.
