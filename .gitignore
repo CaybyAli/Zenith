@@ -47,6 +47,10 @@ tokens/
 *.wav
 *.mp3
 *.flac
+*.m4a
+*.aac
+*.ogg
+*.opus
 
 # === Zenith: Sensible Daten ===
 client.json
@@ -83,6 +87,9 @@ _temp_*.py
 
 # Runtime preprocessing output
 preprocessed/
+
+# Phase 5.5 local music library
+local_assets/music/
 
 # Phase 1 asset media hygiene
 assets/**/*.wav
