@@ -11,7 +11,8 @@ Wenn du neu in diesem Projekt bist, lies in dieser Reihenfolge:
 3. [[Safety_Index]]
 4. [[Script_Index]]
 5. [[P5L_Runbook]]
-6. [[NEXT_PROMPT]]
+6. [[Phase5_5_Opening_Gate]]
+7. [[NEXT_PROMPT]]
 
 ## Aktueller Stand
 
@@ -19,7 +20,8 @@ Wenn du neu in diesem Projekt bist, lies in dieser Reihenfolge:
 - P5-L: 100% / CLOSED.
 - P5-L6.5 5F P5-L Close: DONE.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 0% / locked.
+- Phase 5.5 Musik: 5% / Opening-Gate.
+- Musik-Build: noch nicht gestartet.
 
 ## Wichtigste Regel
 
@@ -57,6 +59,12 @@ Vor jeder Arbeit:
 - [[Codex_Audit_Log]]
 - [[P5L_Close_Report]]
 - [[Runtime_Learning_Gate]]
+
+### Phase 5.5 Musik
+- [[Phase5_5_Opening_Gate]]
+- [[Phase5_5_Safety_Rules]]
+- [[Phase5_5_Backlog]]
+- [[Phase5_5_Run_Log]]
 
 ### Historie und Webseite
 - [[Progress_Log]]

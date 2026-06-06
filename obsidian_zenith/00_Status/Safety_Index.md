@@ -7,8 +7,8 @@ Stand: 2026-06-06
 - Kein Render in P5-L6.5.
 - Kein Preview-Render in P5-L6.5.
 - Kein Ingest in P5-L6.5.
-- Keine Musik.
-- Keine Phase 5.5.
+- Kein Musik-Build ohne eigenes Master-GO.
+- Kein Preview-Render ohne eigenes Gate.
 - Kein echter Learning-Loop.
 - Kein echter Overnight-Dauerlauf.
 - Kein Qwen-Autocut.
@@ -34,9 +34,11 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
+Naechster Gate: 5.5-1 Musik-Inventory, nur nach Master-GO.
 
-Runtime Learning Gate und Phase 5.5 Musik bleiben gesperrt.
+Runtime Learning Gate bleibt gesperrt.
+Phase 5.5 ist nur als Planungsbereich geoeffnet: 5% / Opening-Gate.
+Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
 
@@ -64,3 +66,16 @@ Runtime Learning Gate und Phase 5.5 Musik bleiben gesperrt.
 - Kein Ingest.
 - Keine Musik.
 - Kein echter Learning-Loop.
+
+## Phase 5.5 Musik Safety
+
+- Safety-Regeln: [[Phase5_5_Safety_Rules]]
+- Musikquellen spaeter nur lokal und Owner-freigegeben.
+- Keine externen Musikdownloads.
+- Keine API-Keys.
+- Keine copyrighted Musik automatisch verwenden.
+- Keine Musikdateien in Git committen.
+- Qwen bleibt ohne Autocut-Rechte.
+- Qwen darf spaeter hoechstens Stimmung, Energie, Risiken und Vorschlaege beschreiben.
+- Qwen darf nicht schneiden, rendern, Musik final auswaehlen oder externe Quellen nutzen.
+- Vor jedem Musik-Run: Enable-Flag, klarer Output-Ordner, Manifest, Safety Flags, Owner Review.

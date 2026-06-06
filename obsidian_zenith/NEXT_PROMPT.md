@@ -1,15 +1,19 @@
-PROJECT ZENITH - PHASE 5.5 OPENING-GATE - MUSIK-INTEGRATION VORBEREITEN
+PROJECT ZENITH - PHASE 5.5-1 - MUSIK-INVENTORY / LOKALE MUSIKQUELLEN PRUEFEN
 
 Nur nach Master-GO.
-Phase 5.5 ist Musik-Integration.
-P5-L ist geschlossen.
-Runtime Learning Gate bleibt locked/later.
+
+Ziel:
+Lokale Musikquellen und erlaubte Ordner pruefen.
+Noch kein Render.
+Noch keine Musik einfuegen.
+Noch kein Preview-Run.
 
 Verboten:
-- Kein Render.
-- Kein Ingest.
-- Kein echter Musik-Build ohne Gate.
-- Kein Qwen-Autocut.
-- Kein echter Learning-Loop.
-- Kein Overnight.
-- Keine Produktionsaenderungen ohne Diagnose.
+- kein Download
+- keine externen Dienste
+- keine API-Keys
+- keine copyrighted Musik automatisch verwenden
+- kein Render
+- kein Ingest
+- kein Qwen-Autocut
+- kein Runtime Learning

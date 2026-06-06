@@ -22,6 +22,7 @@ Stand: 2026-06-06
 - [x] P5-L6.5 5E Final Audit / Handoff.
 - [x] P5-L6.5 5F P5-L Close.
 - [x] P5-L Abschluss / 100% CLOSED als Vorbereitung.
+- [x] Phase 5.5 Opening-Gate.
 
 ## Darf NICHT als erledigt markiert sein
 
@@ -31,16 +32,18 @@ Stand: 2026-06-06
 - [ ] Qwen-Autocut.
 - [ ] Render in P5-L6.5.
 - [ ] Ingest in P5-L6.5.
-- [ ] Musik.
-- [ ] Phase 5.5 Start.
+- [ ] Musik-Build.
+- [ ] Phase 5.5 Preview-Run.
+- [ ] Phase 5.5 Final-GO.
 
 ## Aktueller Status fuer Webseite
 
 - Phase 5: 100% / DONE.
 - P5-L: 100% / CLOSED.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 0% / locked.
-- Naechster Gate: Phase 5.5 Opening-Gate Musik-Integration nach Master-GO.
+- Phase 5.5 Musik: 5% / Opening-Gate.
+- Musik-Build: noch nicht gestartet.
+- Naechster Gate: 5.5-1 Musik-Inventory nach Master-GO.
 
 ## Hinweise
 

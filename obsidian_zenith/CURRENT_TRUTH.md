@@ -16,12 +16,13 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
+- Phase 5.5 Musik: 5% / Opening-Gate.
+- Musik-Build: noch nicht gestartet.
 - Qwen sichtbar geprueft: ja.
 - `qwen_role=analysis_only`.
 - `qwen_can_cut=false`.
 - `qwen_autocut_allowed=false`.
 - P5-L7 / Schlaf-Learning-Run: Runtime Learning Gate / later / locked.
-- Phase 5.5 Musik: 0% / locked.
 
 ## Klare Trennung
 
@@ -35,7 +36,7 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
+5.5-1 Musik-Inventory, nur nach Master-GO.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -48,7 +49,7 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Ingest.
 - Kein Qwen-Autocut.
 - Keine Musik.
-- Kein Phase-5.5-Start.
+- Kein Musik-Build.
 - Keine Reports committen.
 
 ## Wichtigste Beweise
@@ -109,6 +110,19 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein echter Learning-Loop.
 - Phase 5.5 Musik bleibt locked.
 
+### Phase 5.5 Opening-Gate
+
+- Opening-Gate: [[Phase5_5_Opening_Gate]]
+- Safety-Regeln: [[Phase5_5_Safety_Rules]]
+- Backlog: [[Phase5_5_Backlog]]
+- Run Log: [[Phase5_5_Run_Log]]
+- Kein Code geaendert.
+- Kein Render, kein Ingest, keine Musik.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build noch nicht gestartet.
+- Naechster Schritt: 5.5-1 Musik-Inventory nur nach Master-GO.
+
 ## Wichtige Links
 
 - [[ZENITH_HOME]]
@@ -130,4 +144,8 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - [[Claude_Senior_Handoff]]
 - [[P5L_Close_Report]]
 - [[Runtime_Learning_Gate]]
+- [[Phase5_5_Opening_Gate]]
+- [[Phase5_5_Safety_Rules]]
+- [[Phase5_5_Backlog]]
+- [[Phase5_5_Run_Log]]
 - [[NEXT_PROMPT]]

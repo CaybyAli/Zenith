@@ -41,9 +41,19 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 0% / locked.
+- 5% / Opening-Gate.
 - Phase 5.5 ist NICHT Learning.
-- Musik wurde NICHT gestartet.
+- Phase 5.5 ist als Planungsbereich geoeffnet.
+- Musik-Build wurde NICHT gestartet.
+- Preview-Run wurde NICHT gestartet.
+- Runtime Learning bleibt getrennt und locked / later.
+
+Geplanter Bereich:
+- lokale Musikquellen inventarisieren
+- Musik-Manifest und Safety-Flags definieren
+- Energie/Emotion/Highlight zu Musik abbilden
+- Ducking und Audio-Mix-Regeln vorbereiten
+- kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
 
 ## Qwen
 
@@ -75,4 +85,8 @@ Wichtige Dateien:
 - [[P5L_Runbook]]
 - [[P5L_Close_Report]]
 - [[Runtime_Learning_Gate]]
+- [[Phase5_5_Opening_Gate]]
+- [[Phase5_5_Safety_Rules]]
+- [[Phase5_5_Backlog]]
+- [[Phase5_5_Run_Log]]
 - [[NEXT_PROMPT]]

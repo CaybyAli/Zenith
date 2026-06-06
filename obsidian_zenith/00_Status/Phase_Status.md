@@ -9,7 +9,7 @@ Stand: 2026-06-06
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 0% / locked | Musik ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
+| Phase 5.5 Musik | 5% / Opening-Gate | Musik-Build ist noch NICHT gestartet. Phase 5.5 ist NICHT Learning. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,7 @@ Stand: 2026-06-06
 
 ## Naechster Gate
 
-Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
+5.5-1 Musik-Inventory, nur nach Master-GO.
 
 ## Aktuelle Sperren
 
@@ -41,7 +41,7 @@ Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
 - Qwen-Autocut: NO-GO.
 - Render/Preview-Render: NO-GO ohne eigenes Gate.
 - Ingest: NO-GO ohne eigenes Gate.
-- Musik / Phase 5.5: locked.
+- Musik-Build / Preview-Run: NO-GO bis eigenes Master-Gate.
 - Reports: bleiben untracked und werden nicht committed.
 
 ## Historie / superseded
@@ -88,3 +88,17 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein neuer Run.
 - Phase 5.5 Musik locked.
 - Naechster Gate: Phase 5.5 Opening-Gate Musik-Integration, nur nach Master-GO.
+
+## Phase 5.5 Opening-Gate Ergebnis
+
+- Phase 5.5 Musik: 5% / Opening-Gate.
+- Opening-Gate dokumentiert:
+  - `obsidian_zenith/08_Phase5_5_Music/Phase5_5_Opening_Gate.md`
+  - `obsidian_zenith/08_Phase5_5_Music/Phase5_5_Safety_Rules.md`
+  - `obsidian_zenith/08_Phase5_5_Music/Phase5_5_Backlog.md`
+  - `obsidian_zenith/08_Phase5_5_Music/Phase5_5_Run_Log.md`
+- Musik-Build nicht gestartet.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Gate: 5.5-1 Musik-Inventory nur nach Master-GO.
