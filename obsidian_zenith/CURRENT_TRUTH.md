@@ -16,7 +16,7 @@ Stand: 2026-06-09
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 60% / Ali-Musikordner-Taxonomie remote gesichert.
+- Phase 5.5 Musik: 60% / lokale Main-Musikbibliothek verifiziert.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -25,7 +25,7 @@ Stand: 2026-06-09
 - Main Account Selector vorhanden.
 - Uncut: Musik dauerhaft verboten.
 - Musik-Build: noch nicht gestartet.
-- Musikdateien nicht committed.
+- Musikdateien lokal eingefuegt, ignored und nicht committed.
 - Qwen sichtbar geprueft: ja.
 - `qwen_role=analysis_only`.
 - `qwen_can_cut=false`.
@@ -44,8 +44,9 @@ Stand: 2026-06-09
 
 ## Naechster Schritt
 
-Ali kopiert spaeter manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ordner.
-Danach: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren nur nach Master-GO.
+Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ordner einsortiert.
+5.5-4B Musikordner-Verifikation ist abgeschlossen.
+Naechster Schritt: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
 Uncut bleibt ohne Musik.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
@@ -302,6 +303,29 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Render, kein Preview-Render, kein Ingest, kein Qwen, kein Runtime Learning.
 - Reports lokal/untracked, nicht committed.
 - Naechster Schritt: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren.
+
+### Phase 5.5-4B Lokale Main-Musikbibliothek
+
+- Epidemic-Sound-Musik wurde manuell lokal eingefuegt.
+- Offizielle Kategorien geprueft: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- Alle offiziellen Ordner existieren unter `local_assets/music/main_account/`.
+- Anzahl Musikdateien gesamt: 87.
+- Anzahl pro Ordner: `intro=4`, `outro=5`, `vlog_background=8`, `funny_gaming_background=34`, `fail=15`, `hype=15`, `sad=6`.
+- Anzahl pro Endung: `.mp3=87`, `.wav=0`, `.flac=0`, `.m4a=0`, `.aac=0`, `.ogg=0`, `.opus=0`.
+- Ungueltige Dateitypen: keine.
+- Musikdateien ausserhalb `local_assets/music/main_account/`: keine.
+- `local_assets/music/uncut` existiert nicht.
+- `local_assets/music/` ist gitignored.
+- `git ls-files local_assets/music` ist leer.
+- Musikdateien bleiben lokal und ignored.
+- Keine Musikdateien wurden committed.
+- Report: `reports/phase5_5_music_folder_verification/music_folder_verification_summary.md` lokal/untracked, nicht committed.
+- Kein Code geaendert.
+- Keine Tests geaendert.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
 
 ## Wichtige Links
 

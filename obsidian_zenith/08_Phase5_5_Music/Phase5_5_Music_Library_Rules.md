@@ -38,7 +38,7 @@ Vorbereitet fuer manuelles Einsortieren durch Ali:
 - `local_assets/music/main_account/hype/`
 - `local_assets/music/main_account/sad/`
 
-Ali fuellt diese Ordner spaeter manuell mit Epidemic-Sound-Musik. Musikdateien bleiben lokal und werden nicht committed.
+Ali hat diese Ordner manuell mit Epidemic-Sound-Musik gefuellt. Musikdateien bleiben lokal und werden nicht committed.
 
 Deprecated alte Ordner, falls lokal vorhanden:
 - `local_assets/music/main_account/funny/`
@@ -82,6 +82,16 @@ Aktueller Schutz nach 5.5-2:
 - `*.opus`
 - bestehend: `*.wav`, `*.mp3`, `*.flac`, `assets/**/*.wav`, `assets/**/*.mp3`
 
+Verifikation nach 5.5-4B:
+- `local_assets/music/` ist ignored.
+- `git ls-files local_assets/music` ist leer.
+- Musikdateien tracked: nein.
+- Musikdateien staged: nein.
+- Anzahl lokal gepruefter Musikdateien: 87.
+- Dateitypen: 87 x `.mp3`.
+- `local_assets/music/uncut/` existiert nicht.
+- Musikdateien wurden nicht geoeffnet, gelesen, abgespielt, konvertiert oder gerendert.
+
 ## Pflicht-Metadaten spaeter
 
 Fuer jede Musikdatei spaeter dokumentieren:
@@ -118,3 +128,8 @@ Uncut bleibt original/naturbelassen und bekommt keine Musik. Es werden keine Unc
 - Uncut wird blockiert.
 - Missing Category darf nicht heimlich fallbacken.
 - Selector darf keine Musikdateien lesen, kopieren, einfuegen oder final fuer echte Videos aktivieren.
+
+## Naechster Gate
+
+- 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+- Weiterhin kein Musik-Build ohne eigenes Master-GO.

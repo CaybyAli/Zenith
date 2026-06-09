@@ -1,32 +1,31 @@
-PROJECT ZENITH - PHASE 5.5-4B - MUSIKORDNER-VERIFIKATION
+PROJECT ZENITH - PHASE 5.5-5 - DUCKING PLAN / AUDIO-MIX SAFETY
 
 Nur nach Master-GO.
 
 Ziel:
-Pruefen, welche Epidemic-Sound-Musikdateien Ali manuell in die offiziellen Main-Account-Ordner einsortiert hat:
-- `local_assets/music/main_account/intro/`
-- `local_assets/music/main_account/outro/`
-- `local_assets/music/main_account/vlog_background/`
-- `local_assets/music/main_account/funny_gaming_background/`
-- `local_assets/music/main_account/fail/`
-- `local_assets/music/main_account/hype/`
-- `local_assets/music/main_account/sad/`
+Plan fuer Ducking / Audio-Mix Safety entwerfen, ohne Musik einzubauen und ohne Render.
 
-Deprecated alte Ordner nur dokumentieren, nicht loeschen:
-- `funny`
-- `suspense`
-- `calm`
-- `victory`
-- `emotional`
-- `background`
-- `peak`
+Aktueller Stand:
+- Phase 5: 100% / DONE
+- P5-L: 100% / CLOSED
+- Phase 5.5: 60% / lokale Main-Musikbibliothek verifiziert
+- Epidemic-Sound-Musik wurde manuell lokal eingefuegt
+- Offizielle Kategorien geprueft: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`
+- Musikdateien bleiben lokal und ignored
+- Uncut bleibt ohne Musik
+- Keine Musikdateien wurden committed
+- Kein Render, kein Qwen, kein Runtime Learning
 
-Nur Main Account.
-Uncut bleibt ohne Musik.
-Noch kein Musik-Build.
-Noch kein Render.
-Noch keine Musik einfuegen.
-Noch kein Preview-Run.
+Naechster Auftrag:
+- Ducking-Regeln planen
+- Audio-Mix-Safety definieren
+- Manifest-/Owner-Gate fuer spaetere Musiknutzung vorbereiten
+- keine Musikdateien lesen, kopieren, verschieben oder committen
+- kein Render
+- kein Preview-Render
+- kein Ingest
+- kein Qwen
+- kein Runtime Learning
 
 Verbote:
 - kein Musikdownload
@@ -34,8 +33,13 @@ Verbote:
 - keine API-Keys
 - keine Musikdateien committen
 - keine Musik fuer Uncut
+- keine Musikdateien lesen
 - keine Musikdateien kopieren
 - keine Musikdateien verschieben
-- keine deprecated Ordner loeschen
+- keine Musikdateien konvertieren
+- kein Render
+- kein Preview-Render
+- kein Ingest
+- kein Qwen
 - kein Qwen-Autocut
 - kein Runtime Learning
