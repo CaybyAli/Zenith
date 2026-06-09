@@ -31,6 +31,7 @@ Stand: 2026-06-09
 - [x] Phase 5.5-4B lokale Main-Musikbibliothek verifiziert.
 - [x] Phase 5.5-5 Ducking Plan.
 - [x] Phase 5.5-6 Controlled Music Preview Gate.
+- [x] Phase 5.5-7 Final Audit.
 
 ## Darf NICHT als erledigt markiert sein
 
@@ -51,11 +52,11 @@ Stand: 2026-06-09
 - Phase 5: 100% / DONE.
 - P5-L: 100% / CLOSED.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 90% / Controlled Music Preview Gate abgeschlossen.
+- Phase 5.5 Musik: 100% / Final Audit GO.
 - Musik-Build: noch nicht gestartet.
 - Echter Audio-Mix: noch nicht gestartet.
 - Echter Render: noch nicht gestartet.
-- Naechster Gate: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
+- Naechster Gate: Controlled Music Preview Run nur nach Master-GO und Owner Review.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest.
 - Main Account Ducking Plan vorhanden.
 - Main Account Preview Gate vorhanden.

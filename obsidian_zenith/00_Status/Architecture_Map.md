@@ -41,7 +41,7 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 90% / Controlled Music Preview Gate abgeschlossen.
+- 100% / Final Audit GO.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
@@ -53,6 +53,8 @@ Status:
 - Lokale Main-Musikbibliothek ist verifiziert.
 - Ducking Plan ist abgeschlossen.
 - Controlled Music Preview Gate ist abgeschlossen.
+- Final Audit ist abgeschlossen.
+- Musik-Infrastruktur ist abgeschlossen und bereit fuer separaten Controlled Preview Run.
 - Musik-Build wurde NICHT gestartet.
 - Echter Audio-Mix wurde NICHT gestartet.
 - Echter Render wurde NICHT gestartet.
@@ -67,7 +69,8 @@ Geplanter Bereich:
 - passende Main-Account-Musik-Metadaten selektieren
 - Ducking und Audio-Mix-Regeln vorbereiten
 - Preview Gate validieren
-- Final Audit oder kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
+- Final Audit abschliessen
+- Controlled Preview Run als separaten Bereich nur mit eigenem Master-GO starten
 
 Musik-Inventory:
 - Lokale Musik-Kandidaten: `assets/audio/gaming_main/music/*.mp3`
@@ -135,6 +138,13 @@ Preview Gate:
 - Render Request, Audio-Mix Request, Qwen Request, Runtime Learning, externe Downloads, API-Keys und staged/tracked Musikdateien blockieren das Gate.
 - Smoke/Manifest-Check: `scripts/p55_music_preview_gate_smoke.py`
 - Reports gehen nur nach `reports/phase5_5_music_preview_gate` und bleiben untracked.
+
+Final Audit:
+- Final-Audit-Report: `reports/phase5_5_final_audit/phase5_5_final_audit_summary.md`
+- Final-Audit-Manifest: `reports/phase5_5_final_audit/phase5_5_final_audit_manifest.json`
+- Phase 5.5 Musik-Infrastruktur ist abgeschlossen.
+- Naechster separater Bereich: Controlled Preview Run.
+- Final Audit startet keinen Render, keinen Audio-Mix und keinen Musik-Build.
 
 Lokale Main-Account-Musikstruktur:
 - Offizielle Ordner unter `local_assets/music/main_account/`:

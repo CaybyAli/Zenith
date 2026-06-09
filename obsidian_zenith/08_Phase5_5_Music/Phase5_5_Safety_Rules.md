@@ -159,3 +159,13 @@ Musik darf:
 - Uncut wird immer blockiert: `uncut_music_disabled`.
 - Smoke Output nur unter `reports/phase5_5_music_preview_gate`.
 - Fuer echten Musik-Preview-Run braucht es separaten Master-GO und Owner Review.
+
+## Final Audit
+
+- Phase 5.5 100% heisst Infrastruktur bereit, nicht automatischer Musik-Render.
+- Controlled Preview Run bleibt separater Owner/Master-GO-Gate.
+- Kein Musik-Build ohne separaten Preview-Run-GO.
+- Kein echter Audio-Mix ohne separaten Preview-Run-GO.
+- Kein Render oder Preview-Render ohne separaten Preview-Run-GO.
+- Owner Review bleibt Pflicht.
+- Uncut-Musik bleibt dauerhaft verboten.

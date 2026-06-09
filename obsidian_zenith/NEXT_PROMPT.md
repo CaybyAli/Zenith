@@ -1,14 +1,17 @@
-PROJECT ZENITH - PHASE 5.5-7 - FINAL AUDIT / CONTROLLED PREVIEW DECISION
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - OWNER-GATED
 
 Nur nach Master-GO.
 
 Ziel:
-Final pruefen, ob Phase 5.5 bereit ist fuer einen streng kontrollierten Main-Account-Musik-Preview-Run.
+Einen streng kontrollierten Main-Account-Musik-Preview-Run vorbereiten/ausfuehren.
 Uncut bleibt ohne Musik.
 
 Wichtig:
-Noch kein automatischer Final-Render.
-Echter Preview-Run nur mit separatem Master-GO und Owner Review.
+- Nur ein kurzer kontrollierter Test
+- Owner Review Pflicht
+- Kein Final-Auto-Upload
+- Kein Runtime Learning
+- Kein Qwen-Autocut
 
 Verbote:
 - kein Musikdownload
