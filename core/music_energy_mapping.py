@@ -12,16 +12,13 @@ ALLOWED_ENERGY_LEVELS = ("low", "medium", "high", "peak")
 ALLOWED_MOOD_TAGS = (
     "funny",
     "suspense",
+    "fail",
+    "sad",
     "calm",
     "hype",
-    "victory",
-    "emotional",
     "intro",
     "outro",
-    "background",
-    "peak",
     "neutral",
-    "tense",
 )
 ALLOWED_CHANNEL_TYPES = ("main", "uncut")
 
@@ -155,8 +152,8 @@ def map_segment_to_music(segment: EnergySegment | Mapping[str, Any]) -> dict[str
             "ducking_required": False,
             "reason": "uncut_music_disabled",
         }
-    category = "background"
-    reason = "default_background"
+    category = "vlog_background"
+    reason = "default_vlog_background"
     if item["segment_role"] == "intro":
         category = "intro"
         reason = "intro_role"
@@ -168,14 +165,26 @@ def map_segment_to_music(segment: EnergySegment | Mapping[str, Any]) -> dict[str
         or item["highlight_score"] >= 0.75
         or item["energy_score"] >= 0.80
     ):
-        category = "hype" if item["mood_tag"] == "hype" else "peak"
-        reason = "peak_signal"
-    elif item["mood_tag"] in ("funny", "suspense", "calm", "victory", "emotional"):
-        category = item["mood_tag"]
+        category = "hype"
+        reason = "hype_signal"
+    elif item["mood_tag"] == "hype":
+        category = "hype"
         reason = "mood_specific"
-    elif item["mood_tag"] in ("background", "peak"):
-        category = item["mood_tag"]
-        reason = "mood_category"
+    elif item["mood_tag"] == "suspense":
+        category = "hype"
+        reason = "deprecated_suspense_alias"
+    elif item["mood_tag"] == "funny":
+        category = "funny_gaming_background"
+        reason = "mood_specific"
+    elif item["mood_tag"] == "fail":
+        category = "fail"
+        reason = "mood_specific"
+    elif item["mood_tag"] == "sad":
+        category = "sad"
+        reason = "mood_specific"
+    elif item["mood_tag"] in ("calm", "neutral"):
+        category = "vlog_background"
+        reason = "vlog_background_alias"
     return {
         **item,
         "energy_level": energy_level,

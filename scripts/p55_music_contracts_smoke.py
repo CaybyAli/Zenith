@@ -47,6 +47,7 @@ def _build_summary(manifest: dict) -> str:
         f"- music_files_committed: {str(manifest['music_files_committed']).lower()}",
         f"- main_account_music_allowed: {str(manifest['main_account_music_allowed']).lower()}",
         f"- uncut_music_allowed: {str(manifest['uncut_music_allowed']).lower()}",
+        f"- allowed_categories: {', '.join(manifest['allowed_categories'])}",
         f"- channel_rules_enforced: {str(manifest['channel_rules_enforced']).lower()}",
         f"- writes_only_under: {manifest['writes_only_under']}",
         f"- next_step: {manifest['next_step']}",

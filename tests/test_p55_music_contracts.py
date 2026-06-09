@@ -16,7 +16,7 @@ from scripts.p55_music_contracts_smoke import run
 
 def _item(**overrides):
     item = {
-        "file_path": "local_assets/music/intro/test.mp3",
+        "file_path": "local_assets/music/main_account/intro/test.mp3",
         "category": "intro",
         "source": "owner_local",
         "owner_approved": True,
@@ -33,9 +33,16 @@ def test_allowed_categories_are_accepted(tmp_path):
         assert validate_music_item(_item(category=category), tmp_path)["category"] == category
 
 
-def test_new_mood_categories_are_accepted(tmp_path):
-    for category in ("funny", "suspense", "calm", "hype", "victory", "emotional"):
-        assert validate_music_item(_item(category=category), tmp_path)["category"] == category
+def test_official_main_account_categories_are_exact():
+    assert ALLOWED_CATEGORIES == (
+        "intro",
+        "outro",
+        "vlog_background",
+        "funny_gaming_background",
+        "fail",
+        "hype",
+        "sad",
+    )
 
 
 def test_none_category_is_blocked_for_real_music_items(tmp_path):
@@ -60,16 +67,27 @@ def test_wrong_channel_type_is_blocked_for_music_items(tmp_path):
 
 
 def test_wrong_categories_are_blocked(tmp_path):
-    for category in ("random", "song", "beat"):
+    for category in (
+        "random",
+        "song",
+        "beat",
+        "suspense",
+        "calm",
+        "victory",
+        "emotional",
+        "background",
+        "peak",
+        "funny",
+    ):
         with pytest.raises(MusicContractError):
             validate_music_item(_item(category=category), tmp_path)
 
 
 def test_allowed_roots_are_accepted(tmp_path):
     paths = (
-        "local_assets/music/intro/test.mp3",
+        "local_assets/music/main_account/intro/test.mp3",
         "assets/audio/gaming_main/music/main_intro_bed.mp3",
-        "assets/music/background/test.m4a",
+        "assets/music/intro/test.m4a",
     )
     for path in paths:
         assert validate_music_path(tmp_path, path) == path
@@ -79,6 +97,7 @@ def test_paths_outside_allowed_roots_are_blocked(tmp_path):
     for path in (
         "video_configs/test.mp3",
         "learning_corpus/test.mp3",
+        "local_assets/music/uncut/test.mp3",
         "../secret.mp3",
         r"C:\Users\Ali\Music\test.mp3",
     ):

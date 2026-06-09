@@ -7,15 +7,12 @@ from typing import Any, Mapping
 
 ALLOWED_CATEGORIES = (
     "intro",
-    "background",
-    "peak",
     "outro",
-    "funny",
-    "suspense",
-    "calm",
+    "vlog_background",
+    "funny_gaming_background",
+    "fail",
     "hype",
-    "victory",
-    "emotional",
+    "sad",
 )
 ALLOWED_CHANNEL_TYPES = ("main", "uncut")
 ALLOWED_LOCAL_ROOTS = (
@@ -102,6 +99,8 @@ def normalize_music_path(repo_root: str | Path, path: str | Path) -> str:
 
 def validate_music_path(repo_root: str | Path, path: str | Path) -> str:
     normalized = normalize_music_path(repo_root, path)
+    if normalized == "local_assets/music/uncut" or normalized.startswith("local_assets/music/uncut/"):
+        raise MusicContractError("local uncut music path is forbidden")
     allowed = any(
         normalized == allowed_root or normalized.startswith(f"{allowed_root}/")
         for allowed_root in ALLOWED_LOCAL_ROOTS

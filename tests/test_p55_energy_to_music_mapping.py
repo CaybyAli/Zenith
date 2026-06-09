@@ -44,20 +44,20 @@ def test_outro_role_maps_to_outro():
     assert map_segment_to_music(_segment(segment_role="outro"))["music_category"] == "outro"
 
 
-def test_highlight_role_maps_to_peak():
-    assert map_segment_to_music(_segment(segment_role="highlight"))["music_category"] == "peak"
+def test_highlight_role_maps_to_hype():
+    assert map_segment_to_music(_segment(segment_role="highlight"))["music_category"] == "hype"
 
 
-def test_gameplay_without_highlight_maps_to_background():
+def test_gameplay_without_highlight_maps_to_vlog_background():
     low = map_segment_to_music(_segment(energy_score=0.20, highlight_score=0.10))
     medium = map_segment_to_music(_segment(energy_score=0.50, highlight_score=0.20))
-    assert low["music_category"] == "background"
-    assert medium["music_category"] == "background"
+    assert low["music_category"] == "vlog_background"
+    assert medium["music_category"] == "vlog_background"
 
 
-def test_high_energy_or_high_highlight_maps_to_peak():
-    assert map_segment_to_music(_segment(energy_score=0.80))["music_category"] == "peak"
-    assert map_segment_to_music(_segment(highlight_score=0.75))["music_category"] == "peak"
+def test_high_energy_or_high_highlight_maps_to_hype():
+    assert map_segment_to_music(_segment(energy_score=0.80))["music_category"] == "hype"
+    assert map_segment_to_music(_segment(highlight_score=0.75))["music_category"] == "hype"
 
 
 def test_speech_density_sets_ducking_flag():
@@ -85,7 +85,7 @@ def test_wrong_roles_and_moods_are_blocked():
     for role in ("song", "beat", "random"):
         with pytest.raises(MusicEnergyMappingError):
             validate_energy_segment(_segment(segment_role=role))
-    for mood in ("sad", "angry", "unknown"):
+    for mood in ("angry", "unknown", "victory", "emotional", "background", "peak", "tense"):
         with pytest.raises(MusicEnergyMappingError):
             validate_energy_segment(_segment(mood_tag=mood))
 
@@ -93,7 +93,7 @@ def test_wrong_roles_and_moods_are_blocked():
 def test_main_channel_type_can_map_music():
     mapped = map_segment_to_music(_segment(channel_type="main", mood_tag="funny"))
     assert mapped["music_allowed"] is True
-    assert mapped["music_category"] == "funny"
+    assert mapped["music_category"] == "funny_gaming_background"
 
 
 def test_uncut_channel_type_disables_music():
@@ -124,18 +124,20 @@ def test_uncut_ignores_mood_energy_and_highlight():
 
 def test_main_mood_specific_mapping():
     expected = {
-        "funny": "funny",
-        "suspense": "suspense",
-        "calm": "calm",
-        "emotional": "emotional",
-        "victory": "victory",
+        "funny": "funny_gaming_background",
+        "suspense": "hype",
+        "fail": "fail",
+        "sad": "sad",
+        "calm": "vlog_background",
+        "neutral": "vlog_background",
+        "hype": "hype",
     }
     for mood, category in expected.items():
         assert map_segment_to_music(_segment(mood_tag=mood))["music_category"] == category
 
 
-def test_main_highlight_or_high_energy_maps_to_peak_or_hype():
-    assert map_segment_to_music(_segment(segment_role="highlight"))["music_category"] == "peak"
+def test_main_highlight_or_high_energy_maps_to_hype():
+    assert map_segment_to_music(_segment(segment_role="highlight"))["music_category"] == "hype"
     assert map_segment_to_music(_segment(energy_score=0.90, mood_tag="hype"))["music_category"] == "hype"
 
 

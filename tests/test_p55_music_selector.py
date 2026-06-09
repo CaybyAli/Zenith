@@ -48,30 +48,68 @@ def test_main_request_selects_intro_candidate(tmp_path):
     assert result["selected_category"] == "intro"
 
 
+def test_all_new_categories_are_valid_candidates(tmp_path):
+    mood_by_category = {
+        "intro": ["intro"],
+        "outro": ["outro"],
+        "vlog_background": ["neutral"],
+        "funny_gaming_background": ["funny"],
+        "fail": ["fail"],
+        "hype": ["hype"],
+        "sad": ["sad"],
+    }
+    for category, mood_tags in mood_by_category.items():
+        result = validate_music_candidate(
+            _candidate(
+                candidate_id=f"main_{category}",
+                category=category,
+                file_path=f"local_assets/music/main_account/{category}/demo.mp3",
+                mood_tags=mood_tags,
+            ),
+            str(tmp_path),
+        )
+        assert result["category"] == category
+
+
 def test_main_request_selects_funny_candidate(tmp_path):
     result = select_music_for_mapping(
-        _mapping(requested_category="funny", mood_tag="funny"),
-        [_candidate(candidate_id="main_funny", category="funny", mood_tags=["funny"])],
+        _mapping(requested_category="funny_gaming_background", mood_tag="funny"),
+        [
+            _candidate(
+                candidate_id="main_funny_gaming_background",
+                category="funny_gaming_background",
+                file_path="local_assets/music/main_account/funny_gaming_background/demo.mp3",
+                mood_tags=["funny"],
+            )
+        ],
         str(tmp_path),
     )
     assert result["selection_status"] == "selected"
-    assert result["selected_candidate_id"] == "main_funny"
+    assert result["selected_candidate_id"] == "main_funny_gaming_background"
 
 
-def test_main_request_selects_peak_candidate(tmp_path):
+def test_main_request_selects_hype_candidate(tmp_path):
     result = select_music_for_mapping(
-        _mapping(requested_category="peak", mood_tag="hype", energy_level="peak"),
-        [_candidate(candidate_id="main_peak", category="peak", mood_tags=["peak"], priority=30)],
+        _mapping(requested_category="hype", mood_tag="hype", energy_level="peak"),
+        [
+            _candidate(
+                candidate_id="main_hype",
+                category="hype",
+                file_path="local_assets/music/main_account/hype/demo.mp3",
+                mood_tags=["hype"],
+                priority=30,
+            )
+        ],
         str(tmp_path),
     )
     assert result["selection_status"] == "selected"
-    assert result["selected_candidate_id"] == "main_peak"
+    assert result["selected_candidate_id"] == "main_hype"
 
 
 def test_uncut_request_is_always_blocked(tmp_path):
     result = select_music_for_mapping(
-        _mapping(channel_type="uncut", requested_category="peak", mood_tag="hype", energy_level="peak"),
-        [_candidate(category="peak")],
+        _mapping(channel_type="uncut", requested_category="none", mood_tag="hype", energy_level="peak"),
+        [_candidate(category="hype", file_path="local_assets/music/main_account/hype/demo.mp3")],
         str(tmp_path),
     )
     assert result["music_allowed"] is False
@@ -88,7 +126,7 @@ def test_uncut_candidate_is_blocked_even_with_owner_approval(tmp_path):
             _candidate(
                 candidate_id="bad_uncut",
                 channel_type="uncut",
-                category="peak",
+                category="hype",
                 file_path="local_assets/music/uncut/bad_uncut.mp3",
                 owner_approved=True,
             ),
@@ -111,12 +149,19 @@ def test_none_category_is_blocked_for_real_candidates(tmp_path):
         validate_music_candidate(_candidate(category="none"), str(tmp_path))
 
 
+def test_old_real_music_categories_are_blocked(tmp_path):
+    for category in ("suspense", "calm", "victory", "emotional", "background", "peak", "funny"):
+        with pytest.raises(MusicSelectorError):
+            validate_music_candidate(_candidate(category=category), str(tmp_path))
+
+
 def test_candidate_outside_allowed_roots_is_blocked(tmp_path):
     for file_path in (
         r"C:\Users\Ali\Music\test.mp3",
         "../secret.mp3",
         "video_configs/test.mp3",
         "learning_corpus/test.mp3",
+        "local_assets/music/uncut/test.mp3",
     ):
         with pytest.raises(MusicSelectorError):
             validate_music_candidate(_candidate(file_path=file_path), str(tmp_path))
@@ -124,7 +169,7 @@ def test_candidate_outside_allowed_roots_is_blocked(tmp_path):
 
 def test_missing_requested_category_has_no_fallback(tmp_path):
     result = select_music_for_mapping(
-        _mapping(requested_category="suspense", mood_tag="suspense"),
+        _mapping(requested_category="sad", mood_tag="sad"),
         [_candidate(category="intro")],
         str(tmp_path),
     )
