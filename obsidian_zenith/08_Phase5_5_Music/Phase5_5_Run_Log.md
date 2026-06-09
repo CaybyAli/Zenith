@@ -372,3 +372,48 @@ Reports:
 
 Naechster Schritt:
 - 5.5-6 Controlled Music Preview Gate nur nach Master-GO
+
+## 2026-06-09 - 5.5-6 Controlled Music Preview Gate
+
+Status:
+- Controlled Music Preview Gate gebaut
+- reine Gate-Validierung / Planungslogik gebaut
+- Main Account Preview Gate vorhanden
+- Owner Preview GO Pflicht gebaut
+- Uncut bleibt ohne Musik
+- keine Musik eingefuegt
+- kein Musik-Build gestartet
+- kein echter Audio-Mix gestartet
+- keine Musikdateien gelesen
+- keine Musikdateien geoeffnet
+- keine Musikdateien kopiert
+- keine Musikdateien geloescht
+- keine Musikdateien konvertiert
+- keine Musikdateien committed
+- kein Render
+- kein Preview-Render
+- kein Ingest
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+
+Beweise:
+- Code Commit: `fada35c`
+- Full Hash: `fada35cdfb25f1a142d752ce93a4e8984884eecb`
+- `py_compile`: gruen
+- Pytest: 21 passed
+- Smoke Run: `status=ok`
+
+Demo Decisions:
+- `main_without_owner_go`: `waiting_for_owner_go`
+- `main_with_owner_go_but_render_requested`: `blocked`
+- `main_clean_gate`: `ready_for_controlled_preview`
+- `uncut_gate`: `blocked`
+
+Reports:
+- `reports/phase5_5_music_preview_gate/music_preview_gate_manifest.json`
+- `reports/phase5_5_music_preview_gate/music_preview_gate_summary.md`
+- Reports nicht committed
+
+Naechster Schritt:
+- 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO

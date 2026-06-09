@@ -80,6 +80,8 @@ Musik darf:
 - Manifest Pflicht
 - Safety Flags Pflicht
 - Owner Review Pflicht
+- Ready for controlled preview ist kein automatischer Render.
+- Fuer echten Musik-Preview-Run braucht es separaten Master-GO.
 
 ## Contracts / Manifest
 
@@ -139,3 +141,21 @@ Musik darf:
 - Hype/Fail/Funny duerfen Musik nicht automatisch zu laut setzen.
 - Missing Candidate erzeugt `no_selected_music`.
 - Smoke Output nur unter `reports/phase5_5_ducking_plan`.
+
+## Controlled Music Preview Gate
+
+- Preview Gate Code: `core/music_preview_gate.py`
+- Preview Gate darf nur Gate-Validierung, Planungslogik und Safety-Manifest bauen.
+- Keine echte Audioverarbeitung.
+- Kein echter Audio-Mix.
+- Kein Render.
+- Kein Preview-Render.
+- Keine Musikdateien lesen, oeffnen, kopieren, loeschen oder konvertieren.
+- Owner Preview GO ist Pflicht.
+- Main Account kann nur bei sauberem Gate `ready_for_controlled_preview` werden.
+- `ready_for_controlled_preview` startet keinen Musik-Build.
+- `ready_for_controlled_preview` startet keinen Render.
+- `ready_for_controlled_preview` startet keinen Audio-Mix.
+- Uncut wird immer blockiert: `uncut_music_disabled`.
+- Smoke Output nur unter `reports/phase5_5_music_preview_gate`.
+- Fuer echten Musik-Preview-Run braucht es separaten Master-GO und Owner Review.

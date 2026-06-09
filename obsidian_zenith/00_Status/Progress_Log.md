@@ -486,3 +486,36 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+
+## 2026-06-09 - Phase 5.5-6 Controlled Music Preview Gate
+
+- Controlled Music Preview Gate abgeschlossen: Phase 5.5 Musik auf 90%.
+- Code/Test Commit: `fada35c`.
+- Full Hash: `fada35cdfb25f1a142d752ce93a4e8984884eecb`.
+- Neue Code-Dateien:
+  - `core/music_preview_gate.py`
+  - `scripts/p55_music_preview_gate_smoke.py`
+  - `tests/test_p55_music_preview_gate.py`
+- Main Account Preview Gate vorhanden.
+- Owner Preview GO ist Pflicht.
+- Main clean gate wird `ready_for_controlled_preview`.
+- Uncut bleibt ohne Musik und wird blockiert.
+- Render Request und Audio-Mix Request blockieren das Gate.
+- Tests:
+  - `python -m py_compile core\music_preview_gate.py scripts\p55_music_preview_gate_smoke.py`
+  - `python -m pytest tests\test_p55_music_preview_gate.py -vv`
+  - Ergebnis: 21 passed.
+- Smoke Run:
+  - `reports/phase5_5_music_preview_gate/music_preview_gate_manifest.json`
+  - `reports/phase5_5_music_preview_gate/music_preview_gate_summary.md`
+  - Ergebnis: `status=ok`.
+- Reports lokal/untracked, nicht committed.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.

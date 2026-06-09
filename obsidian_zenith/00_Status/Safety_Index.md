@@ -9,6 +9,7 @@ Stand: 2026-06-09
 - Kein Ingest in P5-L6.5.
 - Kein Musik-Build ohne eigenes Master-GO.
 - Kein echter Audio-Mix ohne eigenes Master-GO.
+- Ready for controlled preview bedeutet keinen automatischen Render und keinen Audio-Mix.
 - Uncut-Musik dauerhaft verboten.
 - Ali/Friend-Stimmen haben Vorrang vor Musik.
 - Kein Preview-Render ohne eigenes Gate.
@@ -37,11 +38,12 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+Naechster Gate: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 Ducking Plan ist abgeschlossen: 75%.
+Phase 5.5 Controlled Music Preview Gate ist abgeschlossen: 90%.
 Lokale Main-Musikbibliothek ist verifiziert.
+Main Account Preview Gate ist vorhanden.
 Musik-Build bleibt gesperrt.
 Echter Audio-Mix bleibt gesperrt.
 
@@ -202,6 +204,29 @@ Echter Audio-Mix bleibt gesperrt.
 - Reports bleiben untracked.
 - Musik-Build bleibt `false`.
 - Naechster Gate: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+
+## Phase 5.5-6 Controlled Music Preview Gate Safety
+
+- Preview Gate Code: `core/music_preview_gate.py`
+- Smoke Script: `scripts/p55_music_preview_gate_smoke.py`
+- Main Account Preview Gate ist vorhanden.
+- Owner Preview GO ist Pflicht.
+- Main darf nur `ready_for_controlled_preview` werden, wenn Phase 5 fertig, P5-L geschlossen, lokale Musikbibliothek verifiziert, Selector bereit und Ducking Plan bereit sind.
+- Ready for controlled preview bedeutet keinen automatischen Render.
+- Ready for controlled preview bedeutet keinen automatischen Audio-Mix.
+- Musik-Build bleibt `false`.
+- Musik eingefuegt bleibt `false`.
+- Audio-Mix gestartet bleibt `false`.
+- Echter Audio geaendert bleibt `false`.
+- Render und Preview-Render bleiben `false`.
+- Uncut bleibt immer blockiert: `uncut_music_disabled`.
+- Render Request blockiert das Gate.
+- Audio-Mix Request blockiert das Gate.
+- Qwen, Runtime Learning, externe Downloads und API-Keys blockieren das Gate.
+- Musikdateien tracked oder staged blockieren das Gate.
+- Smoke Output ist auf `reports/phase5_5_music_preview_gate` begrenzt.
+- Reports bleiben untracked.
+- Naechster Gate: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 
 ## Phase 5.5-3R Main/Uncut Mood Safety
 

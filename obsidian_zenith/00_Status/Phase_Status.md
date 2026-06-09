@@ -9,7 +9,7 @@ Stand: 2026-06-09
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 75% / Ducking Plan abgeschlossen | Musik-Build und echter Audio-Mix sind noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Offizielle Main-Kategorien sind `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`. |
+| Phase 5.5 Musik | 90% / Controlled Music Preview Gate abgeschlossen | Musik-Build, echter Audio-Mix und echter Render sind noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Offizielle Main-Kategorien sind `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`. |
 
 ## P5-L Fortschritt
 
@@ -32,7 +32,7 @@ Stand: 2026-06-09
 
 ## Naechster Gate
 
-5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Musik-Build und echter Audio-Mix bleiben bis eigenes Gate NO-GO.
 
@@ -121,8 +121,8 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 | 5.5-4A-R Ali-Musikordner-Taxonomie | DONE | 60% | echte Main-Account-Ordnerstruktur patchen |
 | 5.5-4B Musikordner-Verifikation | DONE | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
 | 5.5-5 Ducking Plan | DONE | 75% | Stimme bleibt klar |
-| 5.5-6 Controlled Music Preview Gate | NEXT | 90% | kleiner kontrollierter Preview |
-| 5.5-7 Final Audit | LATER | 100% | Owner GO + Abschluss |
+| 5.5-6 Controlled Music Preview Gate | DONE | 90% | kleiner kontrollierter Preview-Gate |
+| 5.5-7 Final Audit | NEXT | 100% | Final Audit oder Preview-Run-Freigabe |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
 
@@ -275,3 +275,27 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+
+## Phase 5.5-6 Controlled Music Preview Gate Ergebnis
+
+- Phase 5.5 Musik: 90% / Controlled Music Preview Gate abgeschlossen.
+- Code Commit: `fada35c`.
+- Full Hash: `fada35cdfb25f1a142d752ce93a4e8984884eecb`.
+- `core/music_preview_gate.py` validiert Main/Uncut, Owner Preview GO, Bibliothek, Selector, Ducking Plan und harte Safety-Flags.
+- Main Account Preview Gate vorhanden.
+- Main clean gate: `ready_for_controlled_preview`.
+- Ready for controlled preview startet keinen Musik-Build, keinen Audio-Mix und keinen Render.
+- Uncut-Musik bleibt dauerhaft verboten.
+- `py_compile`: gruen.
+- Pytest: 21 passed.
+- Smoke Run: `status=ok`.
+- Reports:
+  - `reports/phase5_5_music_preview_gate/music_preview_gate_manifest.json`
+  - `reports/phase5_5_music_preview_gate/music_preview_gate_summary.md`
+- Reports lokal/untracked, nicht committed.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Schritt: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.

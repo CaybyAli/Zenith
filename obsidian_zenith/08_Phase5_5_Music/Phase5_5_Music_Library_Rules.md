@@ -40,6 +40,7 @@ Vorbereitet fuer manuelles Einsortieren durch Ali:
 - `local_assets/music/main_account/sad/`
 
 Ali hat diese Ordner manuell mit Epidemic-Sound-Musik gefuellt. Musikdateien bleiben lokal und werden nicht committed.
+Das Preview Gate darf keine Musikdateien committen und darf Musikdateien nicht lesen, oeffnen, kopieren, loeschen oder konvertieren.
 
 Deprecated alte Ordner, falls lokal vorhanden:
 - `local_assets/music/main_account/funny/`
@@ -132,5 +133,8 @@ Uncut bleibt original/naturbelassen und bekommt keine Musik. Es werden keine Unc
 
 ## Naechster Gate
 
-- 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+- 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 - Weiterhin kein Musik-Build ohne eigenes Master-GO.
+- Weiterhin kein echter Audio-Mix ohne eigenes Master-GO.
+- Musik bleibt lokal und ignored.
+- Preview Gate darf keine Musikdateien committen.

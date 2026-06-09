@@ -41,7 +41,7 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 75% / Ducking Plan abgeschlossen.
+- 90% / Controlled Music Preview Gate abgeschlossen.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
@@ -52,8 +52,10 @@ Status:
 - Ali-Musikordner-Taxonomie ist abgeschlossen.
 - Lokale Main-Musikbibliothek ist verifiziert.
 - Ducking Plan ist abgeschlossen.
+- Controlled Music Preview Gate ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Echter Audio-Mix wurde NICHT gestartet.
+- Echter Render wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
 
@@ -64,7 +66,8 @@ Geplanter Bereich:
 - Main Account und Uncut als getrennte Channel-Regeln validieren
 - passende Main-Account-Musik-Metadaten selektieren
 - Ducking und Audio-Mix-Regeln vorbereiten
-- kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
+- Preview Gate validieren
+- Final Audit oder kontrollierten Musik-Preview spaeter nur mit eigenem Master-GO starten
 
 Musik-Inventory:
 - Lokale Musik-Kandidaten: `assets/audio/gaming_main/music/*.mp3`
@@ -98,7 +101,7 @@ Energy-to-Music Mapping:
 
 Musik-Selector:
 - Selector-Baustein: `core/music_selector.py`
-- Position: Contracts -> Energy/Mood/Channel Mapping -> Selector -> Ducking Plan -> Controlled Preview.
+- Position: Contracts -> Energy/Mood/Channel Mapping -> Selector -> Ducking Plan -> Preview Gate -> Final Audit / Controlled Preview.
 - Der Selector arbeitet nur mit Metadaten.
 - Main Account kann sichere Kandidaten selektieren.
 - Uncut wird immer blockiert.
@@ -107,7 +110,7 @@ Musik-Selector:
 
 Ducking Plan:
 - Ducking-Baustein: `core/music_ducking_plan.py`
-- Position: Contracts -> Mapping -> Selector -> Ducking Plan -> Controlled Preview.
+- Position: Contracts -> Mapping -> Selector -> Ducking Plan -> Preview Gate -> Final Audit / Controlled Preview.
 - Der Ducking Plan arbeitet nur mit Segment-/Selection-Metadaten.
 - Main Account kann sichere Ducking-Werte planen.
 - Uncut wird immer blockiert: `music_allowed=false`, `selected_category=none`, `plan_status=blocked`.
@@ -121,6 +124,17 @@ Ducking Plan:
 - `max_music_gain_db` darf nie lauter als `-14.0` werden.
 - Keine Musikdatei wird gelesen, geoeffnet, kopiert oder eingefuegt.
 - Kein echter Audio-Mix wird gestartet.
+
+Preview Gate:
+- Preview-Gate-Baustein: `core/music_preview_gate.py`
+- Position: Contracts -> Mapping -> Selector -> Ducking Plan -> Preview Gate -> Final Audit / Controlled Preview.
+- Das Gate validiert nur Safety und Planungsbereitschaft.
+- Main Account kann `ready_for_controlled_preview` werden, wenn Owner Preview GO und alle Safety-Voraussetzungen vorliegen.
+- `ready_for_controlled_preview` startet keinen Musik-Build, keinen Audio-Mix und keinen Render.
+- Uncut wird immer blockiert: `uncut_music_disabled`.
+- Render Request, Audio-Mix Request, Qwen Request, Runtime Learning, externe Downloads, API-Keys und staged/tracked Musikdateien blockieren das Gate.
+- Smoke/Manifest-Check: `scripts/p55_music_preview_gate_smoke.py`
+- Reports gehen nur nach `reports/phase5_5_music_preview_gate` und bleiben untracked.
 
 Lokale Main-Account-Musikstruktur:
 - Offizielle Ordner unter `local_assets/music/main_account/`:

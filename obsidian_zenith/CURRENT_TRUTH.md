@@ -16,7 +16,7 @@ Stand: 2026-06-09
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 75% / Ducking Plan abgeschlossen.
+- Phase 5.5 Musik: 90% / Controlled Music Preview Gate abgeschlossen.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -24,6 +24,7 @@ Stand: 2026-06-09
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest erlaubt.
 - Main Account Selector vorhanden.
 - Main Account Ducking Plan vorhanden.
+- Main Account Preview Gate vorhanden.
 - Uncut: Musik dauerhaft verboten.
 - Musik-Build: noch nicht gestartet.
 - Echter Audio-Mix: noch nicht gestartet.
@@ -49,9 +50,10 @@ Stand: 2026-06-09
 Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ordner einsortiert.
 5.5-4B Musikordner-Verifikation ist abgeschlossen.
 5.5-5 Ducking Plan / Audio-Mix Safety ist abgeschlossen.
-Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+5.5-6 Controlled Music Preview Gate ist abgeschlossen.
+Naechster Schritt: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 Uncut bleibt ohne Musik.
-Musik-Build und echter Audio-Mix sind weiterhin nicht gestartet.
+Musik-Build, echter Audio-Mix und echter Render sind weiterhin nicht gestartet.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -363,6 +365,36 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+
+### Phase 5.5-6 Controlled Music Preview Gate
+
+- Code Commit: `fada35c`
+- Full Hash: `fada35cdfb25f1a142d752ce93a4e8984884eecb`
+- Preview Gate: `core/music_preview_gate.py`
+- Smoke Script: `scripts/p55_music_preview_gate_smoke.py`
+- Tests: `tests/test_p55_music_preview_gate.py`
+- Main Account Preview Gate vorhanden.
+- Owner Preview GO ist Pflicht.
+- Main clean gate: `gate_status=ready_for_controlled_preview`.
+- Ready for controlled preview bedeutet keinen automatischen Render und keinen Audio-Mix.
+- Uncut bleibt ohne Musik: `gate_status=blocked`, `reason=uncut_music_disabled`.
+- Render Request blockiert: `reason=render_not_allowed_in_gate`.
+- Audio-Mix Request blockiert: `reason=audio_mix_not_allowed_in_gate`.
+- Smoke Manifest: `reports/phase5_5_music_preview_gate/music_preview_gate_manifest.json`
+- Smoke Summary: `reports/phase5_5_music_preview_gate/music_preview_gate_summary.md`
+- Reports lokal/untracked, nicht committed.
+- `py_compile`: gruen.
+- Pytest: 21 passed.
+- Smoke Run: `status=ok`.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Kein echter Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 
 ## Wichtige Links
 

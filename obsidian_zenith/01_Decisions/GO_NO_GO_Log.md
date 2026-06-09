@@ -2,7 +2,7 @@
 
 Stand: 2026-06-09
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 75% / Ducking Plan abgeschlossen. Musik-Build und echter Audio-Mix bleiben NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 90% / Controlled Music Preview Gate abgeschlossen. Musik-Build, echter Audio-Mix und echter Render bleiben NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,7 +193,7 @@ Grenzen:
 
 ## Naechster Gate
 
-5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
@@ -526,6 +526,42 @@ Ergebnis:
 - Musik-Build weiterhin NO-GO.
 - Echter Audio-Mix weiterhin NO-GO.
 - Naechster Gate: 5.5-6 Controlled Music Preview Gate.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien gelesen, geoeffnet, erzeugt, kopiert, geloescht, konvertiert oder committed.
+- Reports nicht committed.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-6 Controlled Music Preview Gate GO
+
+Entscheidung: GO fuer reine Gate-Validierung / Controlled Preview Safety.
+
+Beweis:
+- Code Commit: `fada35c`
+- Full Hash: `fada35cdfb25f1a142d752ce93a4e8984884eecb`
+- `core/music_preview_gate.py`
+- `scripts/p55_music_preview_gate_smoke.py`
+- `tests/test_p55_music_preview_gate.py`
+- Smoke Manifest: `reports/phase5_5_music_preview_gate/music_preview_gate_manifest.json`
+
+Ergebnis:
+- Phase 5.5 Musik: 90% / Controlled Music Preview Gate abgeschlossen.
+- Main Account Preview Gate vorhanden.
+- Owner Preview GO ist Pflicht.
+- Main clean gate wird `ready_for_controlled_preview`.
+- Ready for controlled preview ist kein automatischer Render und kein Audio-Mix.
+- Uncut-Musik bleibt NO-GO.
+- Pytest: 21 passed.
+- Smoke Run: `status=ok`.
+- Musik-Build weiterhin NO-GO bis separater Master-GO.
+- Echter Audio-Mix weiterhin NO-GO.
+- Naechster Gate: 5.5-7 Final Audit oder kontrollierter Preview-Run.
 
 Grenzen:
 - Keine Musik eingefuegt.

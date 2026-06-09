@@ -1,6 +1,6 @@
 # WEBSEITE CHECKLISTE
 
-Stand: 2026-06-06
+Stand: 2026-06-09
 
 ## Darf als erledigt markiert sein
 
@@ -30,6 +30,7 @@ Stand: 2026-06-06
 - [x] Phase 5.5-4 Musik-Selector.
 - [x] Phase 5.5-4B lokale Main-Musikbibliothek verifiziert.
 - [x] Phase 5.5-5 Ducking Plan.
+- [x] Phase 5.5-6 Controlled Music Preview Gate.
 
 ## Darf NICHT als erledigt markiert sein
 
@@ -41,7 +42,6 @@ Stand: 2026-06-06
 - [ ] Ingest in P5-L6.5.
 - [ ] Musik-Build.
 - [ ] Musik fuer Uncut.
-- [ ] Phase 5.5-6 Controlled Music Preview Gate.
 - [ ] Musik-Aktivierung.
 - [ ] Phase 5.5 Preview-Run.
 - [ ] Phase 5.5 Final-GO.
@@ -51,12 +51,14 @@ Stand: 2026-06-06
 - Phase 5: 100% / DONE.
 - P5-L: 100% / CLOSED.
 - Runtime Learning Gate: later / locked.
-- Phase 5.5 Musik: 75% / Ducking Plan abgeschlossen.
+- Phase 5.5 Musik: 90% / Controlled Music Preview Gate abgeschlossen.
 - Musik-Build: noch nicht gestartet.
 - Echter Audio-Mix: noch nicht gestartet.
-- Naechster Gate: 5.5-6 Controlled Music Preview Gate nach Master-GO.
+- Echter Render: noch nicht gestartet.
+- Naechster Gate: 5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest.
 - Main Account Ducking Plan vorhanden.
+- Main Account Preview Gate vorhanden.
 - Uncut: Musik dauerhaft verboten.
 
 ## Hinweise

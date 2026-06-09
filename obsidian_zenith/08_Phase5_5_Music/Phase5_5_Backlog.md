@@ -2,7 +2,7 @@
 
 ## Fortschritt
 
-- Phase 5.5 Gesamt: 75% / Ducking Plan abgeschlossen
+- Phase 5.5 Gesamt: 90% / Controlled Music Preview Gate abgeschlossen
 - Musik-Build: noch nicht gestartet
 - Echter Audio-Mix: noch nicht gestartet
 - Offizielle Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`
@@ -21,12 +21,12 @@
 | 5.5-4A-R Ali-Musikordner-Taxonomie | DONE | 60% | echte Main-Account-Ordnerstruktur patchen |
 | 5.5-4B Musikordner-Verifikation | DONE | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
 | 5.5-5 Ducking Plan | DONE | 75% | Stimme bleibt klar |
-| 5.5-6 Controlled Music Preview Gate | NEXT | 90% | kleiner kontrollierter Preview |
-| 5.5-7 Final Audit | LATER | 100% | Owner GO + Abschluss |
+| 5.5-6 Controlled Music Preview Gate | DONE | 90% | kleiner kontrollierter Preview-Gate |
+| 5.5-7 Final Audit | NEXT | 100% | Final Audit oder Preview-Run-Freigabe |
 
 ## Next
 
-5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+5.5-7 Final Audit oder kontrollierter Preview-Run nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Musik-Build bleibt gesperrt.
 Echter Audio-Mix bleibt gesperrt.
