@@ -332,3 +332,43 @@ Report:
 
 Naechster Schritt:
 - 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO
+
+## 2026-06-09 - 5.5-5 Ducking Plan / Audio-Mix Safety
+
+Status:
+- Ducking Plan gebaut
+- reine Planungslogik gebaut
+- Speech Priority / Ducking Safety gebaut
+- Main Account Ducking Plan vorhanden
+- Uncut bleibt ohne Musik
+- Missing Candidate erzeugt `no_selected_music`
+- keine Musik eingefuegt
+- kein Musik-Build gestartet
+- kein echter Audio-Mix gestartet
+- keine Musikdateien gelesen
+- keine Musikdateien geoeffnet
+- keine Musikdateien kopiert
+- keine Musikdateien geloescht
+- keine Musikdateien konvertiert
+- keine Musikdateien committed
+- kein Render
+- kein Preview-Render
+- kein Ingest
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+
+Beweise:
+- Code Commit: `80e361f`
+- Full Hash: `80e361f753d77c44eab1c0708a30e744c8cf6671`
+- `py_compile`: gruen
+- Pytest: 17 passed
+- Smoke Run: `status=ok`
+
+Reports:
+- `reports/phase5_5_ducking_plan/ducking_plan_manifest.json`
+- `reports/phase5_5_ducking_plan/ducking_plan_summary.md`
+- Reports nicht committed
+
+Naechster Schritt:
+- 5.5-6 Controlled Music Preview Gate nur nach Master-GO

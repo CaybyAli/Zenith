@@ -9,7 +9,7 @@ Stand: 2026-06-09
 | Phase 5 | 100% / DONE / FINAL-GO | Alle 8 Endkriterien sind DONE. |
 | P5-L | 100% / CLOSED | 5F Close abgeschlossen; P5-L ist Vorbereitung, kein Runtime-Run. |
 | Runtime Learning Gate | later / locked | P5-L7 / Schlaf-Learning-Run ist spaeteres eigenes Gate. |
-| Phase 5.5 Musik | 60% / Ali-Musikordner-Taxonomie remote gesichert | Musik-Build ist noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Offizielle Main-Kategorien sind `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`. |
+| Phase 5.5 Musik | 75% / Ducking Plan abgeschlossen | Musik-Build und echter Audio-Mix sind noch NICHT gestartet. Uncut-Musik ist dauerhaft verboten. Offizielle Main-Kategorien sind `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`. |
 
 ## P5-L Fortschritt
 
@@ -32,8 +32,9 @@ Stand: 2026-06-09
 
 ## Naechster Gate
 
-Ali kopiert spaeter manuell Epidemic-Sound-Musik in `local_assets/music/main_account/`.
-Danach 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren nur nach Master-GO.
+5.5-6 Controlled Music Preview Gate nur nach Master-GO.
+Uncut bleibt ohne Musik.
+Musik-Build und echter Audio-Mix bleiben bis eigenes Gate NO-GO.
 
 ## Aktuelle Sperren
 
@@ -43,6 +44,7 @@ Danach 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren nur nach Mast
 - Render/Preview-Render: NO-GO ohne eigenes Gate.
 - Ingest: NO-GO ohne eigenes Gate.
 - Musik-Build / Preview-Run: NO-GO bis eigenes Master-Gate.
+- Echter Audio-Mix: NO-GO bis eigenes Master-Gate.
 - Uncut-Musik: dauerhaft NO-GO.
 - Reports: bleiben untracked und werden nicht committed.
 
@@ -117,8 +119,10 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 | 5.5-4 Musik-Selector | DONE | 60% | passende lokale Musik-Metadaten waehlen |
 | 5.5-4A Lokale Main-Musikordner | DONE | 60% | Ordner fuer manuelles Epidemic-Sound-Einsortieren |
 | 5.5-4A-R Ali-Musikordner-Taxonomie | DONE | 60% | echte Main-Account-Ordnerstruktur patchen |
-| 5.5-4B Musikordner-Verifikation | NEXT | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
-| 5.5-5 Ducking Plan | LATER | 75% | Stimme bleibt klar |
+| 5.5-4B Musikordner-Verifikation | DONE | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
+| 5.5-5 Ducking Plan | DONE | 75% | Stimme bleibt klar |
+| 5.5-6 Controlled Music Preview Gate | NEXT | 90% | kleiner kontrollierter Preview |
+| 5.5-7 Final Audit | LATER | 100% | Owner GO + Abschluss |
 
 ## Phase 5.5-1 Musik-Inventory Ergebnis
 
@@ -242,3 +246,32 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Schritt: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren.
+
+## Phase 5.5-5 Ducking Plan Ergebnis
+
+- Phase 5.5 Musik: 75% / Ducking Plan abgeschlossen.
+- Code Commit: `80e361f`.
+- Full Hash: `80e361f753d77c44eab1c0708a30e744c8cf6671`.
+- `core/music_ducking_plan.py` plant sichere Lautstaerke-/Ducking-Werte ohne Audioverarbeitung.
+- Speech Priority:
+  - low: base `-17.0`, duck `-22.0`, max `-15.0`
+  - medium: base `-20.0`, duck `-26.0`, max `-18.0`
+  - high: base `-23.0`, duck `-30.0`, max `-21.0`
+  - very_high: base `-26.0`, duck `-34.0`, max `-24.0`
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Uncut-Musik bleibt dauerhaft verboten.
+- Missing Candidate erzeugt `no_selected_music`.
+- `py_compile`: gruen.
+- Pytest: 17 passed.
+- Smoke Run: `status=ok`.
+- Reports:
+  - `reports/phase5_5_ducking_plan/ducking_plan_manifest.json`
+  - `reports/phase5_5_ducking_plan/ducking_plan_summary.md`
+- Reports lokal/untracked, nicht committed.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Runtime Learning Gate bleibt later / locked.
+- Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.

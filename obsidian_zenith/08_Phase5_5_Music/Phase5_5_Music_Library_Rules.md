@@ -3,6 +3,7 @@
 ## Grundregel
 
 Musik darf nur verwendet werden, wenn sie lokal vorhanden und vom Owner bewusst freigegeben ist.
+Musik darf Ali/Friend-Stimmen niemals ueberdecken.
 
 ## Erlaubt spaeter
 

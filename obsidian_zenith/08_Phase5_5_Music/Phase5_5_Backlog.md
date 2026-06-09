@@ -2,8 +2,9 @@
 
 ## Fortschritt
 
-- Phase 5.5 Gesamt: 60% / Ali-Musikordner-Taxonomie remote gesichert
+- Phase 5.5 Gesamt: 75% / Ducking Plan abgeschlossen
 - Musik-Build: noch nicht gestartet
+- Echter Audio-Mix: noch nicht gestartet
 - Offizielle Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`
 
 ## Schritte
@@ -18,13 +19,14 @@
 | 5.5-4 Musik-Selector | DONE | 60% | passende lokale Musik-Metadaten waehlen |
 | 5.5-4A Lokale Main-Musikordner | DONE | 60% | Ordner fuer manuelles Epidemic-Sound-Einsortieren |
 | 5.5-4A-R Ali-Musikordner-Taxonomie | DONE | 60% | echte Main-Account-Ordnerstruktur patchen |
-| 5.5-4B Musikordner-Verifikation | NEXT | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
-| 5.5-5 Ducking Plan | LATER | 75% | Stimme bleibt klar |
-| 5.5-6 Musik Preview-Run | LATER | 90% | kleiner kontrollierter Preview |
+| 5.5-4B Musikordner-Verifikation | DONE | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
+| 5.5-5 Ducking Plan | DONE | 75% | Stimme bleibt klar |
+| 5.5-6 Controlled Music Preview Gate | NEXT | 90% | kleiner kontrollierter Preview |
 | 5.5-7 Final Audit | LATER | 100% | Owner GO + Abschluss |
 
 ## Next
 
-Ali kopiert Musikdateien manuell in die offiziellen Main-Account-Ordner ein, danach 5.5-4B Musikordner-Verifikation.
+5.5-6 Controlled Music Preview Gate nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Musik-Build bleibt gesperrt.
+Echter Audio-Mix bleibt gesperrt.

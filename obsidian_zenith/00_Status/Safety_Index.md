@@ -8,7 +8,9 @@ Stand: 2026-06-09
 - Kein Preview-Render in P5-L6.5.
 - Kein Ingest in P5-L6.5.
 - Kein Musik-Build ohne eigenes Master-GO.
+- Kein echter Audio-Mix ohne eigenes Master-GO.
 - Uncut-Musik dauerhaft verboten.
+- Ali/Friend-Stimmen haben Vorrang vor Musik.
 - Kein Preview-Render ohne eigenes Gate.
 - Kein echter Learning-Loop.
 - Kein echter Overnight-Dauerlauf.
@@ -35,13 +37,13 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+Naechster Gate: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
 
 Runtime Learning Gate bleibt gesperrt.
-Phase 5.5 Musik-Selector ist abgeschlossen: 60%.
-Ali-Musikordner-Taxonomie ist remote gesichert.
+Phase 5.5 Ducking Plan ist abgeschlossen: 75%.
 Lokale Main-Musikbibliothek ist verifiziert.
 Musik-Build bleibt gesperrt.
+Echter Audio-Mix bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
 
@@ -174,6 +176,32 @@ Musik-Build bleibt gesperrt.
 - Kein Runtime Learning gestartet.
 - Musik-Build bleibt `false`.
 - Naechster Gate: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+
+## Phase 5.5-5 Ducking Plan Safety
+
+- Ducking Plan Code: `core/music_ducking_plan.py`
+- Smoke Script: `scripts/p55_ducking_plan_smoke.py`
+- Ducking Plan ist reine Planungslogik.
+- Keine Audioverarbeitung.
+- Kein echter Audio-Mix.
+- Keine Musikdateien lesen.
+- Keine Musikdateien oeffnen.
+- Keine Musikdateien kopieren.
+- Keine Musikdateien loeschen.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Ali/Friend-Stimmen haben Vorrang.
+- Speech Priority bestimmt base, ducking und max music gain.
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Hype/Fail/Funny duerfen Musik nicht automatisch zu laut setzen.
+- Intro/Outro duerfen nur planen und muessen Sprache respektieren.
+- Uncut bleibt immer `music_allowed=false`.
+- Missing Candidate erzeugt `no_selected_music`.
+- Smoke Output ist auf `reports/phase5_5_ducking_plan` begrenzt.
+- Reports bleiben untracked.
+- Musik-Build bleibt `false`.
+- Naechster Gate: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
 
 ## Phase 5.5-3R Main/Uncut Mood Safety
 

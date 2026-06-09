@@ -41,7 +41,7 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 60% / Ali-Musikordner-Taxonomie remote gesichert.
+- 75% / Ducking Plan abgeschlossen.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
@@ -50,7 +50,10 @@ Status:
 - Main/Uncut Mood Patch ist abgeschlossen.
 - Musik-Selector ist abgeschlossen.
 - Ali-Musikordner-Taxonomie ist abgeschlossen.
+- Lokale Main-Musikbibliothek ist verifiziert.
+- Ducking Plan ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
+- Echter Audio-Mix wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
 
@@ -95,12 +98,29 @@ Energy-to-Music Mapping:
 
 Musik-Selector:
 - Selector-Baustein: `core/music_selector.py`
-- Position: Contracts -> Energy/Mood/Channel Mapping -> Selector -> Ducking -> Preview.
+- Position: Contracts -> Energy/Mood/Channel Mapping -> Selector -> Ducking Plan -> Controlled Preview.
 - Der Selector arbeitet nur mit Metadaten.
 - Main Account kann sichere Kandidaten selektieren.
 - Uncut wird immer blockiert.
 - Missing Category erzeugt `missing_candidate`, ohne heimlichen Fallback.
 - Keine Musikdatei wird gelesen, geoeffnet, kopiert oder eingefuegt.
+
+Ducking Plan:
+- Ducking-Baustein: `core/music_ducking_plan.py`
+- Position: Contracts -> Mapping -> Selector -> Ducking Plan -> Controlled Preview.
+- Der Ducking Plan arbeitet nur mit Segment-/Selection-Metadaten.
+- Main Account kann sichere Ducking-Werte planen.
+- Uncut wird immer blockiert: `music_allowed=false`, `selected_category=none`, `plan_status=blocked`.
+- Missing Candidate erzeugt `no_selected_music`.
+- Speech Priority:
+  - low: base `-17.0`, duck `-22.0`, max `-15.0`
+  - medium: base `-20.0`, duck `-26.0`, max `-18.0`
+  - high: base `-23.0`, duck `-30.0`, max `-21.0`
+  - very_high: base `-26.0`, duck `-34.0`, max `-24.0`
+- Ali/Friend-Stimmen haben Vorrang.
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Keine Musikdatei wird gelesen, geoeffnet, kopiert oder eingefuegt.
+- Kein echter Audio-Mix wird gestartet.
 
 Lokale Main-Account-Musikstruktur:
 - Offizielle Ordner unter `local_assets/music/main_account/`:

@@ -2,7 +2,7 @@
 
 Stand: 2026-06-09
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 60% / Ali-Musikordner-Taxonomie remote gesichert. Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 75% / Ducking Plan abgeschlossen. Musik-Build und echter Audio-Mix bleiben NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
 
 ## Phase 5 FINAL GO
 
@@ -193,11 +193,12 @@ Grenzen:
 
 ## Naechster Gate
 
-Ali manuell Musikdateien einfuegen, danach 5.5-4B Musikordner-Verifikation.
+5.5-6 Controlled Music Preview Gate nur nach Master-GO.
 
 Weiterhin NO-GO:
 - Runtime Learning Gate / echter Learning-Loop.
 - Musik-Build.
+- Echter Audio-Mix.
 - Uncut-Musik.
 - Preview-Render.
 - Qwen-Autocut.
@@ -494,6 +495,42 @@ Grenzen:
 - Keine Musikdateien kopiert.
 - Keine Musikdateien geloescht.
 - Keine Musikdateien konvertiert.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-5 Ducking Plan GO
+
+Entscheidung: GO fuer reine Ducking-Planung / Audio-Mix-Safety.
+
+Beweis:
+- Code Commit: `80e361f`
+- Full Hash: `80e361f753d77c44eab1c0708a30e744c8cf6671`
+- `core/music_ducking_plan.py`
+- `scripts/p55_ducking_plan_smoke.py`
+- `tests/test_p55_ducking_plan.py`
+- Smoke Manifest: `reports/phase5_5_ducking_plan/ducking_plan_manifest.json`
+
+Ergebnis:
+- Phase 5.5 Musik: 75% / Ducking Plan abgeschlossen.
+- Main Account Ducking Plan vorhanden.
+- Ali/Friend-Stimmen haben Vorrang.
+- Uncut-Musik bleibt NO-GO.
+- Missing Candidate erzeugt `no_selected_music`.
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Pytest: 17 passed.
+- Smoke Run: `status=ok`.
+- Musik-Build weiterhin NO-GO.
+- Echter Audio-Mix weiterhin NO-GO.
+- Naechster Gate: 5.5-6 Controlled Music Preview Gate.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien gelesen, geoeffnet, erzeugt, kopiert, geloescht, konvertiert oder committed.
+- Reports nicht committed.
 - Kein Render.
 - Kein Preview-Render.
 - Kein Ingest.

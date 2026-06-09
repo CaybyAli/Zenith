@@ -453,3 +453,36 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+
+## 2026-06-09 - Phase 5.5-5 Ducking Plan / Audio-Mix Safety
+
+- Ducking Plan abgeschlossen: Phase 5.5 Musik auf 75%.
+- Code/Test Commit: `80e361f`.
+- Full Hash: `80e361f753d77c44eab1c0708a30e744c8cf6671`.
+- Neue Code-Dateien:
+  - `core/music_ducking_plan.py`
+  - `scripts/p55_ducking_plan_smoke.py`
+  - `tests/test_p55_ducking_plan.py`
+- Main Account Ducking Plan vorhanden.
+- Ali/Friend-Stimmen haben Vorrang.
+- Speech Priority Regeln fuer low, medium, high und very_high gebaut.
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Uncut bleibt ohne Musik: `music_allowed=false`, `selected_category=none`, `plan_status=blocked`.
+- Missing Candidate erzeugt `plan_status=no_selected_music`.
+- Tests:
+  - `python -m py_compile core\music_ducking_plan.py scripts\p55_ducking_plan_smoke.py`
+  - `python -m pytest tests\test_p55_ducking_plan.py -vv`
+  - Ergebnis: 17 passed.
+- Smoke Run:
+  - `reports/phase5_5_ducking_plan/ducking_plan_manifest.json`
+  - `reports/phase5_5_ducking_plan/ducking_plan_summary.md`
+  - Ergebnis: `status=ok`.
+- Reports lokal/untracked, nicht committed.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Keine Musikdateien gelesen, geoeffnet, kopiert, geloescht, konvertiert oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.

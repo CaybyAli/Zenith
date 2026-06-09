@@ -16,15 +16,17 @@ Stand: 2026-06-09
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 60% / lokale Main-Musikbibliothek verifiziert.
+- Phase 5.5 Musik: 75% / Ducking Plan abgeschlossen.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
 - `suspense` ist nur noch Mood-Alias und mappt auf `hype`.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest erlaubt.
 - Main Account Selector vorhanden.
+- Main Account Ducking Plan vorhanden.
 - Uncut: Musik dauerhaft verboten.
 - Musik-Build: noch nicht gestartet.
+- Echter Audio-Mix: noch nicht gestartet.
 - Musikdateien lokal eingefuegt, ignored und nicht committed.
 - Qwen sichtbar geprueft: ja.
 - `qwen_role=analysis_only`.
@@ -46,8 +48,10 @@ Stand: 2026-06-09
 
 Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ordner einsortiert.
 5.5-4B Musikordner-Verifikation ist abgeschlossen.
-Naechster Schritt: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+5.5-5 Ducking Plan / Audio-Mix Safety ist abgeschlossen.
+Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
 Uncut bleibt ohne Musik.
+Musik-Build und echter Audio-Mix sind weiterhin nicht gestartet.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
@@ -61,6 +65,7 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen-Autocut.
 - Keine Musik.
 - Kein Musik-Build.
+- Kein echter Audio-Mix.
 - Keine Reports committen.
 
 ## Wichtigste Beweise
@@ -326,6 +331,38 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: 5.5-5 Ducking Plan / Audio-Mix Safety nur nach Master-GO.
+
+### Phase 5.5-5 Ducking Plan
+
+- Code Commit: `80e361f`
+- Full Hash: `80e361f753d77c44eab1c0708a30e744c8cf6671`
+- Ducking Plan: `core/music_ducking_plan.py`
+- Smoke Script: `scripts/p55_ducking_plan_smoke.py`
+- Tests: `tests/test_p55_ducking_plan.py`
+- Main Account Ducking Plan vorhanden.
+- Speech Priority Regeln:
+  - low: base `-17.0`, duck `-22.0`, max `-15.0`
+  - medium: base `-20.0`, duck `-26.0`, max `-18.0`
+  - high: base `-23.0`, duck `-30.0`, max `-21.0`
+  - very_high: base `-26.0`, duck `-34.0`, max `-24.0`
+- Ali/Friend-Stimmen haben Vorrang.
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Uncut bleibt ohne Musik: `music_allowed=false`, `selected_category=none`, `plan_status=blocked`.
+- Missing Candidate fuehrt zu `plan_status=no_selected_music`.
+- Smoke Manifest: `reports/phase5_5_ducking_plan/ducking_plan_manifest.json`
+- Smoke Summary: `reports/phase5_5_ducking_plan/ducking_plan_summary.md`
+- Reports lokal/untracked, nicht committed.
+- `py_compile`: gruen.
+- Pytest: 17 passed.
+- Smoke Run: `status=ok`.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Keine Musikdateien gelesen, geoeffnet, kopiert, geloescht, konvertiert oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: 5.5-6 Controlled Music Preview Gate nur nach Master-GO.
 
 ## Wichtige Links
 

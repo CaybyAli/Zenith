@@ -71,6 +71,7 @@ Musik darf:
 - Friend nicht unverstaendlich machen
 - nicht uebersteuern
 - keine harten Lautstaerke-Spruenge erzeugen
+- Der Ducking Plan darf nur Lautstaerke planen, keine Audio-Dateien veraendern.
 
 ## Pflicht vor jedem Musik-Run
 
@@ -124,3 +125,17 @@ Musik darf:
 - Main Account ist erlaubt, wenn Owner, Lizenz, Root und Kategorie passen.
 - Uncut wird immer blockiert.
 - Missing Category darf nicht heimlich fallbacken.
+
+## Ducking Plan
+
+- Ducking Plan Code: `core/music_ducking_plan.py`
+- Ducking Plan darf nur Lautstaerke planen, keine Audio-Dateien veraendern.
+- Kein echter Audio-Mix.
+- Keine Musikdateien lesen, oeffnen, kopieren, loeschen oder konvertieren.
+- Main Account darf Ducking planen.
+- Uncut wird immer blockiert.
+- Ali/Friend-Stimmen haben Vorrang.
+- `max_music_gain_db` darf nie lauter als `-14.0` werden.
+- Hype/Fail/Funny duerfen Musik nicht automatisch zu laut setzen.
+- Missing Candidate erzeugt `no_selected_music`.
+- Smoke Output nur unter `reports/phase5_5_ducking_plan`.
