@@ -2,8 +2,9 @@
 
 ## Fortschritt
 
-- Phase 5.5 Gesamt: 60% / Musik-Selector + lokale Main-Musikordner
+- Phase 5.5 Gesamt: 60% / Ali-Musikordner-Taxonomie remote gesichert
 - Musik-Build: noch nicht gestartet
+- Offizielle Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`
 
 ## Schritte
 
@@ -16,6 +17,7 @@
 | 5.5-3R Main/Uncut Mood Patch | DONE | 45% | Main-only Musikregel + Mood-Kategorien |
 | 5.5-4 Musik-Selector | DONE | 60% | passende lokale Musik-Metadaten waehlen |
 | 5.5-4A Lokale Main-Musikordner | DONE | 60% | Ordner fuer manuelles Epidemic-Sound-Einsortieren |
+| 5.5-4A-R Ali-Musikordner-Taxonomie | DONE | 60% | echte Main-Account-Ordnerstruktur patchen |
 | 5.5-4B Musikordner-Verifikation | NEXT | 60% | lokale Main-Musikordner nach manuellem Befuellen pruefen |
 | 5.5-5 Ducking Plan | LATER | 75% | Stimme bleibt klar |
 | 5.5-6 Musik Preview-Run | LATER | 90% | kleiner kontrollierter Preview |
@@ -23,5 +25,6 @@
 
 ## Next
 
-Ali kopiert Musikdateien manuell ein, danach 5.5-4B Musikordner-Verifikation.
+Ali kopiert Musikdateien manuell in die offiziellen Main-Account-Ordner ein, danach 5.5-4B Musikordner-Verifikation.
 Uncut bleibt ohne Musik.
+Musik-Build bleibt gesperrt.

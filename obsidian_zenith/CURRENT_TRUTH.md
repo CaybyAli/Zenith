@@ -1,6 +1,6 @@
 # CURRENT TRUTH - PROJECT ZENITH
 
-Stand: 2026-06-06
+Stand: 2026-06-09
 
 ## Aktuelle Wahrheit
 
@@ -16,8 +16,11 @@ Stand: 2026-06-06
 - P5-L6.5 Gruppe 5E Abschlussbericht / Final Audit: erstellt.
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
-- Phase 5.5 Musik: 60% / Musik-Selector abgeschlossen.
-- Phase 5.5-4A: lokale Main-Account-Musikordner fuer Epidemic Sound vorbereitet.
+- Phase 5.5 Musik: 60% / Ali-Musikordner-Taxonomie remote gesichert.
+- Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
+- Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- `hype` bedeutet spannend / Action / Peak / Clutch.
+- `suspense` ist nur noch Mood-Alias und mappt auf `hype`.
 - Main Account: Musik spaeter nur mit Safety/Owner/Lizenz/Manifest erlaubt.
 - Main Account Selector vorhanden.
 - Uncut: Musik dauerhaft verboten.
@@ -41,8 +44,8 @@ Stand: 2026-06-06
 
 ## Naechster Schritt
 
-Ali kopiert spaeter manuell Epidemic-Sound-Musik in die lokalen Main-Account-Ordner.
-Danach: 5.5-4B Musikordner-Verifikation oder 5.5-5 Ducking Plan nur nach Master-GO.
+Ali kopiert spaeter manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ordner.
+Danach: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren nur nach Master-GO.
 Uncut bleibt ohne Musik.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
@@ -182,8 +185,8 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Tests: `tests/test_p55_energy_to_music_mapping.py`
 - Mapping-Regeln:
   - Intro-Segment -> `intro`
-  - ruhiges Gameplay -> `background`
-  - Highlight / Peak / hohe Energie -> `peak`
+  - ruhiges Gameplay -> historisch `background`, superseded durch `vlog_background`
+  - Highlight / Peak / hohe Energie -> historisch `peak`, superseded durch `hype`
   - Outro -> `outro`
 - Ducking ist nur Flag: `ducking_required`.
 - Smoke Manifest: `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_manifest.json`
@@ -209,7 +212,9 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Main Account: Musik-Mapping spaeter erlaubt, nur mit Safety/Owner/Lizenz/Manifest.
 - Uncut: Musik dauerhaft verboten.
 - Uncut Mapping: `music_allowed=false`, `music_category=none`, `reason=uncut_music_disabled`.
-- Mood-Kategorien offiziell: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Mood-Kategorien dieser alten Patch-Stufe sind durch Phase 5.5-4A-R superseded.
+- Neue offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- Deprecated Mood-Alias: `suspense` mappt auf `hype`.
 - Patch Reports:
   - `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_manifest.json`
   - `reports/phase5_5_main_uncut_mood_patch/main_uncut_mood_patch_summary.md`
@@ -258,15 +263,13 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
 - Lokale Ordner unter `local_assets/music/main_account/` vorbereitet:
   - `intro`
-  - `funny`
-  - `suspense`
-  - `calm`
-  - `hype`
-  - `victory`
-  - `emotional`
-  - `background`
-  - `peak`
   - `outro`
+  - `vlog_background`
+  - `funny_gaming_background`
+  - `fail`
+  - `hype`
+  - `sad`
+- Deprecated alte Ordner, falls lokal vorhanden: `funny`, `suspense`, `calm`, `victory`, `emotional`, `background`, `peak`.
 - Zweck: Ali kann spaeter manuell Epidemic-Sound-Musik einsortieren.
 - `local_assets/music/` ist gitignored.
 - Keine Musikdateien erzeugt.
@@ -278,6 +281,27 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Ali kopiert Musikdateien manuell ein, danach 5.5-4B Musikordner-Verifikation.
+
+### Phase 5.5-4A-R Ali-Musikordner-Taxonomie
+
+- Code Commit: `ce0af0c`
+- Full Hash: `ce0af0c1787cc0d266b4cbeb837d8f91130aacdb`
+- Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- Mapping:
+  - `funny` -> `funny_gaming_background`
+  - `suspense` -> `hype`
+  - `hype` -> `hype`
+  - `sad` -> `sad`
+  - `fail` -> `fail`
+  - `calm`, `neutral`, default gameplay -> `vlog_background`
+  - `intro` / `outro` bleiben `intro` / `outro`
+  - `uncut` bleibt `music_allowed=false`, `category=none`
+- Alte Ordner `calm`, `victory`, `emotional`, `background`, `peak`, `suspense`, `funny` sind deprecated, nicht geloescht und nicht verschoben.
+- Musik-Build noch nicht gestartet.
+- Keine Musikdateien gelesen, kopiert, verschoben oder committed.
+- Kein Render, kein Preview-Render, kein Ingest, kein Qwen, kein Runtime Learning.
+- Reports lokal/untracked, nicht committed.
+- Naechster Schritt: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren.
 
 ## Wichtige Links
 

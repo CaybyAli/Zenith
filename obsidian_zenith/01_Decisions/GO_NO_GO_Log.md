@@ -1,8 +1,8 @@
 # GO / NO-GO LOG
 
-Stand: 2026-06-06
+Stand: 2026-06-09
 
-Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 60% / Musik-Selector; lokale Main-Musikordner sind vorbereitet. Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
+Aktuelle Entscheidungslage: Phase 5 ist FINAL GO. P5-L ist 100% / CLOSED. Runtime Learning Gate bleibt NO-GO bis Master-GO. Phase 5.5 Musik ist 60% / Ali-Musikordner-Taxonomie remote gesichert. Musik-Build bleibt NO-GO bis eigenes Master-GO. Uncut-Musik ist dauerhaft NO-GO.
 
 ## Phase 5 FINAL GO
 
@@ -261,6 +261,7 @@ Entscheidung: GO fuer lokale Ordner-Vorbereitung.
 Beweis:
 - Ordner unter `local_assets/music/main_account/` erstellt.
 - Kategorien: `intro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `background`, `peak`, `outro`.
+- Diese Kategorie-Liste ist durch 5.5-4A-R superseded.
 - `.gitignore` ignoriert `local_assets/music/`.
 
 Ergebnis:
@@ -278,6 +279,48 @@ Grenzen:
 - Kein Code.
 - Keine Tests.
 - Keine Reports committed.
+- Kein Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+
+## Phase 5.5-4A-R Ali-Musikordner-Taxonomie GO
+
+Entscheidung: GO fuer Code-/Test-Patch und Obsidian-Dokumentation der echten Ali-Ordnerstruktur.
+
+Beweis:
+- Code Commit: `ce0af0c`
+- Full Hash: `ce0af0c1787cc0d266b4cbeb837d8f91130aacdb`
+- `core/music_contracts.py`
+- `core/music_energy_mapping.py`
+- `core/music_selector.py`
+- `scripts/p55_music_contracts_smoke.py`
+- `scripts/p55_energy_to_music_mapping_smoke.py`
+- `scripts/p55_music_selector_smoke.py`
+- `tests/test_p55_music_contracts.py`
+- `tests/test_p55_energy_to_music_mapping.py`
+- `tests/test_p55_music_selector.py`
+
+Ergebnis:
+- Neue offizielle Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- `hype` bedeutet spannend / Action / Peak / Clutch.
+- `suspense` wird als Mood auf `hype` gemappt.
+- `calm`, `neutral`, default gameplay mappen auf `vlog_background`.
+- `funny` mappt auf `funny_gaming_background`.
+- `fail` und `sad` mappen direkt.
+- Uncut bleibt dauerhaft NO-GO: `music_allowed=false`, `category=none`.
+- Pytest: 53 passed.
+- Smoke Runs: `status=ok`.
+- Musik-Build weiterhin NO-GO.
+- Preview-Render weiterhin NO-GO.
+- Runtime Learning Gate weiterhin locked / later.
+- Naechster Gate: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren.
+
+Grenzen:
+- Keine Musikdateien gelesen, erzeugt, kopiert, verschoben oder committed.
+- Alte Ordner wurden nicht geloescht und nicht verschoben.
+- Reports nicht committed.
 - Kein Render.
 - Kein Ingest.
 - Kein Qwen gestartet.
@@ -304,7 +347,7 @@ Ergebnis:
 - Uncut-Musik: dauerhaft NO-GO.
 - Uncut Mapping: `music_allowed=false`, `music_category=none`.
 - Channel Rules: enforced.
-- Mood-Kategorien: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Damalige Mood-Kategorien sind durch 5.5-4A-R superseded.
 - Pytest: 35 passed.
 - Smoke Runs: `status=ok`.
 - Musik-Build weiterhin NO-GO.

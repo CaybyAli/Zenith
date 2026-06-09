@@ -216,3 +216,60 @@ Ordner:
 
 Naechster Schritt:
 - Ali kopiert Musikdateien manuell ein, danach 5.5-4B Musikordner-Verifikation
+
+## 2026-06-09 - 5.5-4A-R Ali-Musikordner-Taxonomie
+
+Status:
+- Main-Account-Musik-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht
+- offizielle Kategorien gesetzt: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`
+- `hype` bedeutet spannend / Action / Peak / Clutch
+- `suspense` wird als Mood auf `hype` gemappt
+- Uncut bleibt ohne Musik
+- keine Musik eingefuegt
+- keine Musikdateien gelesen
+- keine Musikdateien erzeugt
+- keine Musikdateien kopiert
+- keine Musikdateien verschoben
+- keine Musikdateien committed
+- kein Render
+- kein Preview-Render
+- kein Ingest
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+
+Beweise:
+- Code Commit: `ce0af0c`
+- Full Hash: `ce0af0c1787cc0d266b4cbeb837d8f91130aacdb`
+- `py_compile`: gruen
+- Pytest: 53 passed
+- Contracts Smoke Run: `status=ok`
+- Mapping Smoke Run: `status=ok`
+- Selector Smoke Run: `status=ok`
+
+Ordner:
+- `local_assets/music/main_account/intro`
+- `local_assets/music/main_account/outro`
+- `local_assets/music/main_account/vlog_background`
+- `local_assets/music/main_account/funny_gaming_background`
+- `local_assets/music/main_account/fail`
+- `local_assets/music/main_account/hype`
+- `local_assets/music/main_account/sad`
+
+Deprecated, falls lokal vorhanden:
+- `local_assets/music/main_account/funny`
+- `local_assets/music/main_account/suspense`
+- `local_assets/music/main_account/calm`
+- `local_assets/music/main_account/victory`
+- `local_assets/music/main_account/emotional`
+- `local_assets/music/main_account/background`
+- `local_assets/music/main_account/peak`
+
+Reports:
+- `reports/phase5_5_music_contracts/music_contracts_manifest.json`
+- `reports/phase5_5_energy_to_music_mapping/energy_to_music_mapping_manifest.json`
+- `reports/phase5_5_music_selector/music_selector_manifest.json`
+- Reports nicht committed
+
+Naechster Schritt:
+- 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren

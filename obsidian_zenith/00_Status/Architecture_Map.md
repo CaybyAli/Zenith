@@ -1,6 +1,6 @@
 # ARCHITECTURE MAP
 
-Stand: 2026-06-06
+Stand: 2026-06-09
 
 ## Drei getrennte Bereiche
 
@@ -41,7 +41,7 @@ Status:
 Phase 5.5 ist Musik-Integration.
 
 Status:
-- 60% / Musik-Selector.
+- 60% / Ali-Musikordner-Taxonomie remote gesichert.
 - Phase 5.5 ist NICHT Learning.
 - Phase 5.5 ist als Planungsbereich geoeffnet.
 - Musik-Inventory ist abgeschlossen.
@@ -49,6 +49,7 @@ Status:
 - Energy-to-Music Mapping ist abgeschlossen.
 - Main/Uncut Mood Patch ist abgeschlossen.
 - Musik-Selector ist abgeschlossen.
+- Ali-Musikordner-Taxonomie ist abgeschlossen.
 - Musik-Build wurde NICHT gestartet.
 - Preview-Run wurde NICHT gestartet.
 - Runtime Learning bleibt getrennt und locked / later.
@@ -81,7 +82,11 @@ Energy-to-Music Mapping:
 - Mapping-Baustein: `core/music_energy_mapping.py`
 - Position: nach Musik-Contracts, vor Musik-Selector und Ducking.
 - Segmentrolle, Energie, Highlight-Score, Speech-Density und Mood werden validiert.
-- Ergebnis ist nur eine Musik-Kategorie: `intro`, `background`, `peak`, `outro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional` oder fuer Uncut `none`.
+- Ergebnis ist nur eine Musik-Kategorie: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad` oder fuer Uncut `none`.
+- Deprecated Mood-Aliasse:
+  - `suspense` -> `hype`
+  - `calm`, `neutral`, default gameplay -> `vlog_background`
+  - `funny` -> `funny_gaming_background`
 - Channel-Regel:
   - Main Account darf spaeter Musik mappen, nur mit Safety/Owner/Lizenz/Manifest.
   - Uncut blockiert Musik immer: `music_allowed=false`, `music_category=none`.
@@ -96,6 +101,19 @@ Musik-Selector:
 - Uncut wird immer blockiert.
 - Missing Category erzeugt `missing_candidate`, ohne heimlichen Fallback.
 - Keine Musikdatei wird gelesen, geoeffnet, kopiert oder eingefuegt.
+
+Lokale Main-Account-Musikstruktur:
+- Offizielle Ordner unter `local_assets/music/main_account/`:
+  - `intro`
+  - `outro`
+  - `vlog_background`
+  - `funny_gaming_background`
+  - `fail`
+  - `hype`
+  - `sad`
+- `hype` bedeutet spannend / Action / Peak / Clutch.
+- Alte Ordner `funny`, `suspense`, `calm`, `victory`, `emotional`, `background`, `peak` sind deprecated, falls lokal vorhanden.
+- Kein `local_assets/music/uncut`.
 
 ## Qwen
 

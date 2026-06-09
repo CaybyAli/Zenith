@@ -11,41 +11,45 @@ Musik darf nur verwendet werden, wenn sie lokal vorhanden und vom Owner bewusst 
 - lizenzklare Musik
 - klare Kategorien:
   - intro
-  - funny
-  - suspense
-  - calm
-  - hype
-  - victory
-  - emotional
-  - background
-  - peak
   - outro
+  - vlog_background
+  - funny_gaming_background
+  - fail
+  - hype
+  - sad
+- `hype` bedeutet spannend / Action / Peak / Clutch
+- `suspense` ist kein echter Ordner mehr, sondern nur Mood-Alias zu `hype`
 
 Empfohlene lokale Struktur spaeter:
 - `local_assets/music/main_account/intro/`
-- `local_assets/music/main_account/funny/`
-- `local_assets/music/main_account/suspense/`
-- `local_assets/music/main_account/hype/`
-- `local_assets/music/main_account/calm/`
-- `local_assets/music/main_account/victory/`
-- `local_assets/music/main_account/emotional/`
-- `local_assets/music/main_account/background/`
-- `local_assets/music/main_account/peak/`
 - `local_assets/music/main_account/outro/`
+- `local_assets/music/main_account/vlog_background/`
+- `local_assets/music/main_account/funny_gaming_background/`
+- `local_assets/music/main_account/fail/`
+- `local_assets/music/main_account/hype/`
+- `local_assets/music/main_account/sad/`
 
 Vorbereitet fuer manuelles Einsortieren durch Ali:
 - `local_assets/music/main_account/intro/`
+- `local_assets/music/main_account/outro/`
+- `local_assets/music/main_account/vlog_background/`
+- `local_assets/music/main_account/funny_gaming_background/`
+- `local_assets/music/main_account/fail/`
+- `local_assets/music/main_account/hype/`
+- `local_assets/music/main_account/sad/`
+
+Ali fuellt diese Ordner spaeter manuell mit Epidemic-Sound-Musik. Musikdateien bleiben lokal und werden nicht committed.
+
+Deprecated alte Ordner, falls lokal vorhanden:
 - `local_assets/music/main_account/funny/`
 - `local_assets/music/main_account/suspense/`
 - `local_assets/music/main_account/calm/`
-- `local_assets/music/main_account/hype/`
 - `local_assets/music/main_account/victory/`
 - `local_assets/music/main_account/emotional/`
 - `local_assets/music/main_account/background/`
 - `local_assets/music/main_account/peak/`
-- `local_assets/music/main_account/outro/`
 
-Ali fuellt diese Ordner spaeter manuell mit Epidemic-Sound-Musik. Musikdateien bleiben lokal und werden nicht committed.
+Deprecated Ordner werden nicht automatisch geloescht, verschoben oder bereinigt.
 
 ## Verboten
 
@@ -90,6 +94,17 @@ Fuer jede Musikdatei spaeter dokumentieren:
 - Lautstaerkepruefung
 - Einsatzbereich
 - Channel: nur `main`
+
+## Mapping-Aliasse
+
+- `funny` -> `funny_gaming_background`
+- `suspense` -> `hype`
+- `hype` -> `hype`
+- `sad` -> `sad`
+- `fail` -> `fail`
+- `calm`, `neutral`, default gameplay -> `vlog_background`
+- `intro` / `outro` -> `intro` / `outro`
+- Uncut -> `music_allowed=false`, `category=none`
 
 ## Uncut-Regel
 

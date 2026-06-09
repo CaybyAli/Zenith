@@ -1,6 +1,6 @@
 # SAFETY INDEX
 
-Stand: 2026-06-06
+Stand: 2026-06-09
 
 ## Zentrale Safety-Regeln
 
@@ -35,11 +35,11 @@ P5-L ist geschlossen: 100% / CLOSED.
 
 Runtime Learning Gate: locked / later.
 
-Naechster Gate: Ali manuell Musikdateien einfuegen, danach 5.5-4B Musikordner-Verifikation.
+Naechster Gate: Ali manuell Musikdateien einsortieren, danach 5.5-4B Musikordner-Verifikation.
 
 Runtime Learning Gate bleibt gesperrt.
 Phase 5.5 Musik-Selector ist abgeschlossen: 60%.
-Lokale Main-Account-Musikordner sind vorbereitet.
+Ali-Musikordner-Taxonomie ist remote gesichert.
 Musik-Build bleibt gesperrt.
 
 ## 5D Qwen Kontrollrun Ergebnis
@@ -99,7 +99,7 @@ Musik-Build bleibt gesperrt.
 - Contract-Code: `core/music_contracts.py`
 - Smoke Script: `scripts/p55_music_contracts_smoke.py`
 - Manifest-Pflicht ist technisch vorbereitet.
-- Erlaubte Kategorien: `intro`, `background`, `peak`, `outro`, `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`.
+- Erlaubte Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - Erlaubte Roots: `local_assets/music`, `assets/audio/gaming_main/music`, `assets/music`.
 - Owner-Freigabe Pflicht.
 - Lizenzklarheit Pflicht.
@@ -132,6 +132,9 @@ Musik-Build bleibt gesperrt.
 ## Phase 5.5-4A Local Folder Safety
 
 - Lokale Ordner unter `local_assets/music/main_account/` sind vorbereitet.
+- Offizielle Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- `hype` bedeutet spannend / Action / Peak / Clutch.
+- Alte Ordner `funny`, `suspense`, `calm`, `victory`, `emotional`, `background`, `peak` sind deprecated, falls lokal vorhanden.
 - Zweck: Ali sortiert spaeter manuell Epidemic-Sound-Musik ein.
 - `local_assets/music/` ist gitignored.
 - Keine Musikdateien in Git committen.
@@ -140,6 +143,19 @@ Musik-Build bleibt gesperrt.
 - Keine Musikdateien kopieren durch Agent ohne eigenes Master-GO.
 - Kein Uncut-Musikordner.
 - Uncut bekommt niemals Musik.
+
+## Phase 5.5-4A-R Ali Taxonomy Safety
+
+- Code Commit: `ce0af0c`.
+- `core/music_contracts.py` akzeptiert nur die sieben offiziellen Main-Kategorien.
+- `core/music_energy_mapping.py` mappt `suspense` als Mood auf `hype`.
+- `calm`, `neutral` und default gameplay mappen auf `vlog_background`.
+- `funny` mappt auf `funny_gaming_background`.
+- `fail` und `sad` mappen auf gleichnamige Kategorien.
+- `core/music_selector.py` selektiert nur erlaubte Main-Account-Kategorien.
+- `local_assets/music/uncut` ist als Musikpfad verboten.
+- Musik-Build bleibt `false`.
+- Reports bleiben untracked.
 
 ## Phase 5.5-3R Main/Uncut Mood Safety
 

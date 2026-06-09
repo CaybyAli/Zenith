@@ -26,6 +26,15 @@ Erlaubt spaeter nur:
 - klare Lizenz / Owner-Freigabe
 - keine automatischen Downloads
 - nur fuer Main Account
+- nur offizielle Kategorien:
+  - `intro`
+  - `outro`
+  - `vlog_background`
+  - `funny_gaming_background`
+  - `fail`
+  - `hype`
+  - `sad`
+- `hype` bedeutet spannend / Action / Peak / Clutch
 
 ## Channel-Regeln
 
@@ -33,7 +42,7 @@ Erlaubt spaeter nur:
 - Uncut bekommt niemals Musik.
 - Uncut bekommt keine Intro-Musik.
 - Uncut bekommt keine Hintergrundmusik.
-- Uncut bekommt keine Peak-Musik.
+- Uncut bekommt keine Hype-/Action-/Peak-Musik.
 - Uncut bekommt keine Outro-Musik.
 - Uncut ignoriert Mood, Energy und Highlight fuer Musik.
 
@@ -90,6 +99,11 @@ Musik darf:
 
 - Mapping-Code: `core/music_energy_mapping.py`
 - Energy-to-Music Mapping darf nur Kategorien planen.
+- Offizielle Zielkategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
+- Deprecated Mood-Aliasse:
+  - `suspense` -> `hype`
+  - `funny` -> `funny_gaming_background`
+  - `calm`, `neutral`, default gameplay -> `vlog_background`
 - Main Account darf spaeter Kategorien mappen.
 - Uncut muss immer `music_allowed=false` und `music_category=none` bleiben.
 - Es darf keine Musik einfuegen.
@@ -101,6 +115,7 @@ Musik darf:
 
 - Selector-Code: `core/music_selector.py`
 - Selector darf nur Metadaten waehlen.
+- Selector darf nur die offiziellen Main-Kategorien selektieren.
 - Selector darf keine Musikdateien lesen.
 - Selector darf keine Musikdateien oeffnen.
 - Selector darf keine Musikdateien kopieren.

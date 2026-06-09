@@ -1,6 +1,6 @@
 # PROGRESS LOG
 
-Stand: 2026-06-06
+Stand: 2026-06-09
 
 Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phase_Status]].
 
@@ -296,7 +296,7 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Main Account: Musik spaeter erlaubt, aber nur mit Safety/Owner/Lizenz/Manifest.
 - Uncut: Musik dauerhaft verboten.
 - Uncut Mapping: `music_allowed=false`, `music_category=none`, `reason=uncut_music_disabled`.
-- Mood-Kategorien offiziell ergaenzt: `funny`, `suspense`, `calm`, `hype`, `victory`, `emotional`, `intro`, `outro`, `background`, `peak`.
+- Damalige Mood-Kategorien ergaenzt; durch 5.5-4A-R superseded.
 - Tests:
   - `python -m py_compile core\music_contracts.py core\music_energy_mapping.py scripts\p55_music_contracts_smoke.py scripts\p55_energy_to_music_mapping_smoke.py`
   - `python -m pytest tests\test_p55_music_contracts.py tests\test_p55_energy_to_music_mapping.py -vv`
@@ -369,3 +369,42 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Ali kopiert Musikdateien manuell ein, danach 5.5-4B Musikordner-Verifikation.
+
+## 2026-06-09 - Phase 5.5-4A-R Ali-Musikordner-Taxonomie
+
+- Main-Account-Musik-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
+- Code Commit: `ce0af0c`.
+- Full Hash: `ce0af0c1787cc0d266b4cbeb837d8f91130aacdb`.
+- Neue offizielle Kategorien:
+  - `intro`
+  - `outro`
+  - `vlog_background`
+  - `funny_gaming_background`
+  - `fail`
+  - `hype`
+  - `sad`
+- Mapping aktualisiert:
+  - `funny` -> `funny_gaming_background`
+  - `suspense` -> `hype`
+  - `hype` -> `hype`
+  - `sad` -> `sad`
+  - `fail` -> `fail`
+  - `calm`, `neutral`, default gameplay -> `vlog_background`
+  - `intro` / `outro` -> `intro` / `outro`
+  - `uncut` -> `music_allowed=false`, `category=none`
+- Alte Ordner `funny`, `suspense`, `calm`, `victory`, `emotional`, `background`, `peak` sind deprecated, nicht geloescht und nicht verschoben.
+- Tests:
+  - `python -m py_compile core\music_contracts.py core\music_energy_mapping.py core\music_selector.py scripts\p55_music_contracts_smoke.py scripts\p55_energy_to_music_mapping_smoke.py scripts\p55_music_selector_smoke.py`
+  - `python -m pytest tests\test_p55_music_contracts.py tests\test_p55_energy_to_music_mapping.py tests\test_p55_music_selector.py -vv`
+  - Ergebnis: 53 passed.
+- Smoke Runs:
+  - `reports/phase5_5_music_contracts`: `status=ok`
+  - `reports/phase5_5_energy_to_music_mapping`: `status=ok`
+  - `reports/phase5_5_music_selector`: `status=ok`
+- Reports lokal/untracked, nicht committed.
+- Keine Musikdateien gelesen, erzeugt, kopiert, verschoben oder committed.
+- Kein Render, kein Preview-Render, kein Ingest.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musik-Build bleibt NO-GO.
+- Naechster Schritt: 5.5-4B Musikordner-Verifikation nach manuellem Einsortieren.
