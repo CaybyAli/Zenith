@@ -707,3 +707,38 @@ Grenzen:
 - Keine Produktionsdateien geaendert.
 - Musikdateien nicht committed.
 - Reports/MP4 nicht committed.
+
+## Controlled Music Preview Run Schritt 3 Content-Type-Fix
+
+Entscheidung: Owner Review = FIX. Code-GO nur fuer Content-Type-Musik-Policy, kein neuer Render.
+
+Beweis:
+- Code-Commit: `a40f505` / `a40f505feeb04c9ce414b9136760ba6ae8037d64`.
+- Policy-Datei: `core/music_content_type_policy.py`.
+- Tests:
+  - `tests/test_music_content_type_policy.py`
+  - `tests/test_controlled_music_preview_render.py`
+- Lokaler Report: `reports/controlled_music_preview_run/step3_owner_review_fix_content_policy/content_type_policy_fix_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step3_owner_review_fix_content_policy/content_type_policy_fix_summary.md`.
+
+Ergebnis:
+- `gaming_main` blockiert `vlog_background`.
+- `vlog_main` blockiert `funny_gaming_background`, `fail`, `hype`.
+- `uncut` blockiert Musik komplett.
+- `gaming_main` Default Preview Kategorie: `funny_gaming_background`.
+- `vlog_main` Default Preview Kategorie: `vlog_background`.
+- K7/Rocket-League-Input ist im Preview-Script auf `content_type=gaming_main` begrenzt.
+- Dry-Run zeigt `music_category=funny_gaming_background`.
+- Naechster Schritt: Controlled Music Preview Schritt 4 Re-Render nur nach Master-GO.
+
+Grenzen:
+- Kein neuer Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.

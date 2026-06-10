@@ -577,3 +577,46 @@ Reports:
 Naechster Schritt:
 - Controlled Music Preview Run Schritt 3 Owner Review durch Ali Auge/Ohr
 - Kein neuer Render ohne Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 3 Content-Type-Fix
+
+Status:
+- Owner Review Ergebnis: FIX
+- Grund: `vlog_background` passte nicht zu Rocket League / `gaming_main`
+- Content-Type-Musik-Policy gebaut
+- Preview-Render-Script abgesichert
+- kein neuer Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Musikdateien committed
+
+Regeln:
+- `gaming_main` erlaubt `intro`, `outro`, `funny_gaming_background`, `fail`, `hype`, `sad`
+- `gaming_main` blockiert `vlog_background`
+- `vlog_main` erlaubt `intro`, `outro`, `vlog_background`, `sad`
+- `vlog_main` blockiert `funny_gaming_background`, `fail`, `hype`
+- `uncut` erlaubt nur `none`
+- Unknown content_type wird blockiert, kein Silent Fallback
+
+Beweise:
+- Code-Commit: `a40f505`
+- Full Hash: `a40f505feeb04c9ce414b9136760ba6ae8037d64`
+- Policy: `core/music_content_type_policy.py`
+- Tests: `tests/test_music_content_type_policy.py`, `tests/test_controlled_music_preview_render.py`
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`
+- Dry-Run-Output-Ordner: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_145600/`
+- Dry-Run MP4 erzeugt: nein
+- Report: `reports/controlled_music_preview_run/step3_owner_review_fix_content_policy/content_type_policy_fix_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step3_owner_review_fix_content_policy/content_type_policy_fix_summary.md`
+
+Tests / Runs:
+- `python -m py_compile core\music_content_type_policy.py scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_music_content_type_policy.py tests\test_controlled_music_preview_render.py -vv`: 29 passed
+- Forbidden Search: keine Treffer
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 4 Re-Render mit `content_type=gaming_main` nur nach Master-GO

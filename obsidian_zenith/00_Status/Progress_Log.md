@@ -634,3 +634,39 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Controlled Music Preview Run Schritt 3 Owner Review durch Ali Auge/Ohr.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 3 Content-Type-Fix
+
+- Owner Review Ergebnis: FIX.
+- Grund: `vlog_background` passte nicht zu Rocket League / `gaming_main`.
+- Code-Commit: `a40f505` / `a40f505feeb04c9ce414b9136760ba6ae8037d64`.
+- Neue Policy: `core/music_content_type_policy.py`.
+- `gaming_main` blockiert `vlog_background`.
+- `vlog_main` blockiert `funny_gaming_background`, `fail`, `hype`.
+- `uncut` blockiert Musik komplett.
+- Default Preview Kategorie `gaming_main`: `funny_gaming_background`.
+- Default Preview Kategorie `vlog_main`: `vlog_background`.
+- Preview-Render-Script kennt jetzt `--content-type`.
+- K7/Rocket-League-Input ist hart auf `content_type=gaming_main` gebunden.
+- Dry-Run:
+  - `status=dry_run`
+  - `content_type=gaming_main`
+  - `music_category=funny_gaming_background`
+  - `vlog_background_blocked_for_gaming_main=true`
+  - kein MP4 erzeugt
+- Report:
+  - `reports/controlled_music_preview_run/step3_owner_review_fix_content_policy/content_type_policy_fix_manifest.json`
+  - `reports/controlled_music_preview_run/step3_owner_review_fix_content_policy/content_type_policy_fix_summary.md`
+- Tests:
+  - `python -m py_compile core\music_content_type_policy.py scripts\controlled_music_preview_render.py`: gruen.
+  - `python -m pytest tests\test_music_content_type_policy.py tests\test_controlled_music_preview_render.py -vv`: 29 passed.
+- Kein neuer Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 4 Re-Render nur nach Master-GO.
