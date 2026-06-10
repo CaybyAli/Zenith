@@ -1193,3 +1193,53 @@ Naechster Schritt:
 - Controlled Music Preview Schritt 12B Fix after Owner NO-GO nur nach Master-GO.
 - Erst gezielt fixen, danach Dry-Run.
 - Kein Execute Render ohne weiteres Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 12B Visually Valid Proper Run Search
+
+- Step-12A Ergebnis bestaetigt: Der vorherige Proper Run war selbst Facecam fullscreen.
+- Kein Video-Mapping-Fix noetig.
+- Ziel von Step 12B: visuell gueltigen Proper-Run-Input finden.
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+
+Top 3 visuell gueltige Kandidaten:
+1. `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
+   - Dauer: `528.348813s` / ca. 8.81min
+   - Groesse: `1625626346` Bytes
+   - Gameplay sichtbar: ja
+   - Facecam fullscreen: nein
+   - Screenshots: `candidate10_010s.png`, `candidate10_060s.png`, `candidate10_180s.png`
+2. `exports/gaming_main/job_059053a7fa2a/job_059053a7fa2a_v1_final.mp4`
+   - Dauer: `528.301729s` / ca. 8.81min
+   - Groesse: `1681659259` Bytes
+   - Gameplay sichtbar: ja
+   - Facecam fullscreen: nein
+   - Screenshots: `candidate7_010s.png`, `candidate7_060s.png`, `candidate7_180s.png`
+3. `exports/gaming_main/job_a78b3b182979/job_a78b3b182979_v1_final.mp4`
+   - Dauer: `536.401729s` / ca. 8.94min
+   - Groesse: `1726384033` Bytes
+   - Gameplay sichtbar: ja
+   - Facecam fullscreen: nein
+   - Screenshots: `candidate9_010s.png`, `candidate9_060s.png`, `candidate9_180s.png`
+
+Empfehlung:
+- `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
+- Begruendung: Rocket-League-Gameplay ist an allen geprueften Punkten sichtbar, Facecam ist nur Overlay, Laufzeit ist lang genug, kein Short/raw/uncut/controlled-preview Output.
+
+Reports:
+- `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/step12b_manifest.json`
+- `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/step12b_summary.md`
+
+Audio-Hinweis:
+- Manifest-Gains nicht direkt im FFmpeg-Command bestaetigt.
+- Speech-aware Ducking nicht bestaetigt.
+- Audio-Thema bleibt offen.
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 12C visuell gueltigen Proper Run auswaehlen nur nach Master-GO.
+- Noch kein Render.

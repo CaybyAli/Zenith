@@ -41,6 +41,7 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 11B: DONE / Proper Run mit finalem Musik-Tuning lokal gerendert / Owner Review Schritt 12 Pflicht.
 - Controlled Music Preview Run Schritt 12: Owner Review = NO-GO.
 - Controlled Music Preview Run Schritt 12A: DONE / Owner-NO-GO diagnostiziert / kein Render / kein Code-Fix.
+- Controlled Music Preview Run Schritt 12B: DONE / visuell gueltige Proper-Run-Kandidaten gesucht / kein Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -169,7 +170,16 @@ FFmpeg Video Mapping: `-map 0:v:0` und `-c:v copy`.
 Audio Diagnose: Manifest enthaelt `-27/-32/-25`, aber der echte ffmpeg command nutzt statisch `volume=0.08` plus `sidechaincompress`.
 Audio Root Cause: geplante Manifest-Gains werden nicht direkt im ffmpeg command angewendet; echte transcript-/speaker-/friend-aware Ducking-Kurve ist nicht bestaetigt.
 Volumedetect 60-90s: Input `mean=-32.8 dB`, `max=-18.6 dB`; Output `mean=-37.8 dB`, `max=-22.8 dB`.
-Naechster Fixvorschlag: Step 12B nach Master-GO: richtigen Gameplay-Proper-Run waehlen/fixen und Audio-Command so korrigieren, dass deutlich niedrigere echte Musik-Gains plus verlaessliche Speech/Friend-Ducking-Logik greifen.
+Step 12A Entscheidung bestaetigt: Kein Video-Mapping-Fix noetig; die falsche Testdatei wurde genommen.
+Schritt 12B hat visuell gueltige Proper-Run-Kandidaten gesucht.
+Top 3 visuell gueltige Kandidaten:
+1. `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4` - 528.348813s / ca. 8.81min / Gameplay sichtbar / Facecam nicht fullscreen.
+2. `exports/gaming_main/job_059053a7fa2a/job_059053a7fa2a_v1_final.mp4` - 528.301729s / ca. 8.81min / Gameplay sichtbar / Facecam nicht fullscreen.
+3. `exports/gaming_main/job_a78b3b182979/job_a78b3b182979_v1_final.mp4` - 536.401729s / ca. 8.94min / Gameplay sichtbar / Facecam nicht fullscreen.
+Empfohlener Kandidat: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+Screenshot-Belege lokal: `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/`.
+Audio-Thema bleibt offen: Manifest-Gains nicht direkt im FFmpeg-Command; speech-aware Ducking nicht bestaetigt.
+Naechster Schritt: Step 12C visuell gueltigen Proper Run auswaehlen nur nach Master-GO.
 Kein Render, kein Audio-Mix, kein Upload, kein Qwen, kein Runtime Learning.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
@@ -974,6 +984,28 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen.
 - Kein Runtime Learning.
 - Naechster Schritt: Controlled Music Preview Step 12B Fix after Owner NO-GO nur nach Master-GO.
+
+### Controlled Music Preview Step 12B - Find Visually Valid Proper Run
+
+- Status: visuell gueltige Proper-Run-Kandidaten gesucht und lokal dokumentiert.
+- Step-12A Ergebnis bestaetigt: Der falsche Input war selbst Facecam fullscreen.
+- Video-Mapping-Fix noetig: nein.
+- Alter falscher Input nicht mehr nutzen: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Top 3:
+  1. `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4` - 528.348813s / Gameplay sichtbar / Facecam nicht fullscreen.
+  2. `exports/gaming_main/job_059053a7fa2a/job_059053a7fa2a_v1_final.mp4` - 528.301729s / Gameplay sichtbar / Facecam nicht fullscreen.
+  3. `exports/gaming_main/job_a78b3b182979/job_a78b3b182979_v1_final.mp4` - 536.401729s / Gameplay sichtbar / Facecam nicht fullscreen.
+- Empfehlung: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Screenshot-Belege lokal: `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/`.
+- Lokaler Report: `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/step12b_summary.md`.
+- Audio-Thema bleibt offen: Manifest-Gains nicht direkt im FFmpeg-Command; speech-aware Ducking nicht bestaetigt.
+- Naechster Schritt: Controlled Music Preview Step 12C visuell gueltigen Proper Run auswaehlen nur nach Master-GO.
 
 ## Wichtige Links
 

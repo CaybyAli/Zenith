@@ -895,6 +895,57 @@ Naechster Schritt:
 - Danach erst Dry-Run.
 - Kein Execute Render ohne weiteres Master-GO.
 
+## Controlled Music Preview Run Schritt 12B Find Visually Valid Proper Run
+
+Entscheidung: Step-12A-Ergebnis bestaetigt. Kein Video-Mapping-Fix. Step 12B sucht nur visuell gueltige Proper-Run-Kandidaten. Kein Render.
+
+Beweis:
+- Alter falscher Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Alter Input war Facecam fullscreen: ja.
+- Video-Mapping-Fix noetig: nein.
+- Lokaler Report: `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/step12b_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/step12b_summary.md`.
+- Screenshot-Belege lokal: `reports/controlled_music_preview_run/step12b_find_visually_valid_proper_run/`.
+
+Top 3:
+1. `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
+   - Dauer: `528.348813s`.
+   - Gameplay sichtbar: ja.
+   - Facecam fullscreen: nein.
+2. `exports/gaming_main/job_059053a7fa2a/job_059053a7fa2a_v1_final.mp4`
+   - Dauer: `528.301729s`.
+   - Gameplay sichtbar: ja.
+   - Facecam fullscreen: nein.
+3. `exports/gaming_main/job_a78b3b182979/job_a78b3b182979_v1_final.mp4`
+   - Dauer: `536.401729s`.
+   - Gameplay sichtbar: ja.
+   - Facecam fullscreen: nein.
+
+Empfehlung:
+- `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+
+Grenzen:
+- Kein Code-Fix.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Keine Musikdateien committed.
+- Reports/Screenshots nicht committed.
+
+Audio-Hinweis:
+- Manifest-Gains nicht direkt im FFmpeg-Command bestaetigt.
+- Speech-aware Ducking nicht bestaetigt.
+- Audio-Thema bleibt offen.
+
+Naechster Schritt:
+- Controlled Music Preview Step 12C visuell gueltigen Proper Run auswaehlen nur nach Master-GO.
+- Noch kein Render.
+
 ## Controlled Music Preview Run Schritt 10A Find Proper Run Input
 
 Entscheidung: Owner Review Schritt 10 = Musik-Tuning grundsaetzlich gut, aber Testmedium nicht ausreichend. Kein Render. Nur passenden richtigen Run suchen.

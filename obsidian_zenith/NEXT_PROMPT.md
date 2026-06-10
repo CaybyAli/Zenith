@@ -1,10 +1,14 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 12B - FIX AFTER OWNER NO-GO
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 12C - SELECT VISUALLY VALID PROPER RUN
 
 Nur nach Master-GO.
 
 Ziel:
-Auf Basis der Step-12A-Diagnose gezielt fixen:
-1. Facecam fullscreen / falsches Video-Mapping beheben
-2. Musik global und bei Sprache deutlich leiser machen
-3. Danach erst Dry-Run
-4. Kein Execute Render ohne weiteren Master-GO
+Visuell gueltigen Proper Run auswaehlen.
+Gameplay sichtbar.
+Nicht Facecam fullscreen.
+Kein Short/raw/uncut.
+Noch kein Render.
+
+Danach:
+Allowlist falls noetig, dann Render mit Musik.
+Audio-Ducking-Thema bleibt separat zu pruefen.
