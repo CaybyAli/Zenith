@@ -25,6 +25,9 @@ def _repo_fixture(tmp_path: Path) -> Path:
     input_path = tmp_path / preview.CONFIRMED_INPUT_VIDEO
     input_path.parent.mkdir(parents=True, exist_ok=True)
     input_path.write_bytes(b"video")
+    new_input_path = tmp_path / preview.SELECTED_NEW_INPUT_VIDEO
+    new_input_path.parent.mkdir(parents=True, exist_ok=True)
+    new_input_path.write_bytes(b"new video")
 
     music_dir = tmp_path / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
     music_dir.mkdir(parents=True, exist_ok=True)
@@ -116,7 +119,7 @@ def test_script_never_auto_boosts_intro(tmp_path):
 
 def test_only_confirmed_input_is_allowed(tmp_path):
     repo_root = _repo_fixture(tmp_path)
-    with pytest.raises(preview.ControlledMusicPreviewError):
+    with pytest.raises(preview.ControlledMusicPreviewError, match="input_not_in_allowed_controlled_preview_inputs"):
         preview.run(
             repo_root=repo_root,
             input_video="reports/other.mp4",
@@ -124,6 +127,54 @@ def test_only_confirmed_input_is_allowed(tmp_path):
             content_type=CONTENT_TYPE_GAMING_MAIN,
             output_root=preview.EXPECTED_OUTPUT_ROOT,
         )
+
+
+def test_selected_new_clip_is_allowed(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.SELECTED_NEW_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP9_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["input_video_path"] == preview.SELECTED_NEW_INPUT_VIDEO.as_posix()
+    assert manifest["input_video_path"] != preview.CONFIRMED_INPUT_VIDEO.as_posix()
+    assert manifest["content_type"] == CONTENT_TYPE_GAMING_MAIN
+    assert manifest["music_category"] == CATEGORY_FUNNY_GAMING_BACKGROUND
+    assert manifest["vlog_background_blocked_for_gaming_main"] is True
+    assert manifest["music_start_offset_sec"] == 30.0
+    assert manifest["intro_boost_used"] is False
+    assert manifest["low_speech_base_music_gain_db"] == -27.0
+    assert manifest["low_speech_ducking_gain_db"] == -32.0
+    assert manifest["low_speech_max_music_gain_db"] == -25.0
+    assert manifest["owner_execute_required"] is True
+    assert not list((repo_root / preview.STEP9_OUTPUT_ROOT).rglob("*.mp4"))
+
+
+def test_disallowed_controlled_preview_inputs_are_blocked(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    blocked_inputs = (
+        "learning_corpus/pairs/pair_001/raw.mp4",
+        "local_assets/music/main_account/funny_gaming_background/test.mp3",
+        "video_configs/something.mp4",
+        "reports/controlled_music_preview_run/irgendwas.mp4",
+    )
+
+    for blocked_input in blocked_inputs:
+        with pytest.raises(
+            preview.ControlledMusicPreviewError,
+            match="input_not_in_allowed_controlled_preview_inputs",
+        ):
+            preview.run(
+                repo_root=repo_root,
+                input_video=blocked_input,
+                channel_type="main",
+                content_type=CONTENT_TYPE_GAMING_MAIN,
+                output_root=preview.EXPECTED_OUTPUT_ROOT,
+            )
 
 
 def test_only_main_channel_is_allowed_and_uncut_is_blocked(tmp_path):

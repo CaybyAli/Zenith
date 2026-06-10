@@ -24,7 +24,19 @@ from core.music_intro_offset_policy import MusicIntroAnalysis, build_intro_offse
 CONFIRMED_INPUT_VIDEO = Path(
     "reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4"
 )
+SELECTED_NEW_INPUT_VIDEO = Path(
+    "exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4"
+)
+ALLOWED_CONTROLLED_PREVIEW_INPUTS = {
+    "k7_control_preview": CONFIRMED_INPUT_VIDEO,
+    "g2_emoji_position_preview": SELECTED_NEW_INPUT_VIDEO,
+}
 EXPECTED_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step2_preview_render")
+STEP9_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step9_new_clip_final_tuning_render")
+ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
+    "step2_preview_render": EXPECTED_OUTPUT_ROOT,
+    "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
+}
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
 OUTPUT_FILENAME = "controlled_music_preview_main.mp4"
 CONFIRMED_INPUT_CONTENT_TYPE = CONTENT_TYPE_GAMING_MAIN
@@ -68,15 +80,16 @@ def _repo_relative_path(repo_root: Path, raw_path: str | Path) -> Path:
     return Path(str(candidate).replace("\\", "/"))
 
 
-def _assert_expected_input(repo_root: Path, input_video: str | Path) -> Path:
+def _assert_allowed_input(repo_root: Path, input_video: str | Path) -> Path:
     rel_input = _repo_relative_path(repo_root, input_video)
-    if rel_input.as_posix() != CONFIRMED_INPUT_VIDEO.as_posix():
+    allowed_paths = {path.as_posix() for path in ALLOWED_CONTROLLED_PREVIEW_INPUTS.values()}
+    if rel_input.as_posix() not in allowed_paths:
         raise ControlledMusicPreviewError(
-            f"input-video must be exactly {CONFIRMED_INPUT_VIDEO.as_posix()}"
+            "input_not_in_allowed_controlled_preview_inputs"
         )
     full_input = repo_root / rel_input
     if not full_input.exists():
-        raise ControlledMusicPreviewError(f"confirmed input video does not exist: {rel_input.as_posix()}")
+        raise ControlledMusicPreviewError(f"allowed input video does not exist: {rel_input.as_posix()}")
     return full_input
 
 
@@ -89,9 +102,10 @@ def _assert_channel_type(channel_type: str) -> None:
 
 def _assert_output_root(repo_root: Path, output_root: str | Path) -> Path:
     rel_output = _repo_relative_path(repo_root, output_root)
-    if rel_output.as_posix() != EXPECTED_OUTPUT_ROOT.as_posix():
+    allowed_roots = {path.as_posix() for path in ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS.values()}
+    if rel_output.as_posix() not in allowed_roots:
         raise ControlledMusicPreviewError(
-            f"output-root must be exactly {EXPECTED_OUTPUT_ROOT.as_posix()}"
+            "output-root must be an allowed controlled preview output root"
         )
     return repo_root / rel_output
 
@@ -102,7 +116,7 @@ def _assert_content_type_for_input(content_type: str) -> str:
         raise ControlledMusicPreviewError("uncut content_type is blocked for music preview")
     if normalized != CONFIRMED_INPUT_CONTENT_TYPE:
         raise ControlledMusicPreviewError(
-            f"confirmed K7/Rocket-League input requires content_type={CONFIRMED_INPUT_CONTENT_TYPE}"
+            f"controlled preview input requires content_type={CONFIRMED_INPUT_CONTENT_TYPE}"
         )
     return normalized
 
@@ -288,7 +302,7 @@ def build_manifest(
         "owner_execute_required": not owner_go,
         "channel_type": "main",
         "content_type": content_type,
-        "input_video_path": CONFIRMED_INPUT_VIDEO.as_posix(),
+        "input_video_path": input_video.relative_to(repo_root).as_posix(),
         "output_video_path": output_video.relative_to(repo_root).as_posix(),
         "music_category": music_category,
         "default_preview_category": music_category,
@@ -368,7 +382,7 @@ def run(
 ) -> dict:
     root = Path(repo_root).resolve()
     _assert_channel_type(channel_type)
-    full_input = _assert_expected_input(root, input_video)
+    full_input = _assert_allowed_input(root, input_video)
     normalized_content_type = _assert_content_type_for_input(content_type)
     full_output_root = _assert_output_root(root, output_root)
     selected_music, music_category = select_music_file(root, normalized_content_type)
