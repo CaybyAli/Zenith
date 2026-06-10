@@ -1,6 +1,6 @@
 # CURRENT TRUTH - PROJECT ZENITH
 
-Stand: 2026-06-09
+Stand: 2026-06-10
 
 ## Aktuelle Wahrheit
 
@@ -17,6 +17,8 @@ Stand: 2026-06-09
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
+- Controlled Music Preview Run: Schritt 0 Input-Auswahl / Diagnose vorbereitet.
+- Controlled Music Preview Run Schritt 1: gesperrt bis Ali einen Input-Kandidaten bestaetigt und Master-GO gibt.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -54,7 +56,10 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-6 Controlled Music Preview Gate ist abgeschlossen.
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
-Naechster Schritt: Controlled Music Preview Run nur nach Master-GO und Owner Review.
+Controlled Music Preview Run Schritt 0 Input-Auswahl / Diagnose ist vorbereitet.
+Empfohlene Input-Kandidaten stehen lokal in `reports/controlled_music_preview_input_selection/input_selection_summary.md`.
+Ali muss einen Input-Kandidaten bestaetigen.
+Naechster Schritt: Controlled Music Preview Run Schritt 1 nur nach Master-GO und Owner Review.
 Uncut bleibt ohne Musik.
 Musik-Build, echter Audio-Mix und echter Render sind weiterhin nicht gestartet.
 
@@ -72,6 +77,19 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Musik-Build.
 - Kein echter Audio-Mix.
 - Keine Reports committen.
+
+### Controlled Music Preview Run Schritt 0
+
+- Diagnose-Report lokal/untracked: `reports/controlled_music_preview_input_selection/input_selection_summary.md`
+- Top Empfehlung: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Alternative Main-Account-Pfad: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Musikbibliothek Check: `local_assets/music/` ignored, `git ls-files local_assets/music` leer.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Ali muss Input-Kandidat bestaetigen.
 
 ## Wichtigste Beweise
 

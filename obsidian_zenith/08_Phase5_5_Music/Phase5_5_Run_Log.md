@@ -452,3 +452,33 @@ Reports:
 
 Naechster Schritt:
 - Controlled Music Preview Run nur nach separatem Master-GO und Owner Review
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 0 Input-Auswahl
+
+Status:
+- Schritt 0 gestartet
+- reine Input-Auswahl / Diagnose
+- kein Preview-Run gestartet
+- kein Render gestartet
+- kein Preview-Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- Ali muss Input-Kandidat bestaetigen
+
+Beweise:
+- Diagnose-Report: `reports/controlled_music_preview_input_selection/input_selection_summary.md`
+- Video-Kandidaten aus `reports/`, `outputs/`, `preview/`, `exports/`, `learning_corpus/` gesucht
+- `video_configs/` nur auf Pfadlisten geprueft
+- Musikbibliothek: `local_assets/music/` ignored
+- Musikdateien tracked: nein
+
+Top Empfehlungen:
+- `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- `reports/phase5/g2_real_shorts_stage_layout_preview/g2_real_stage_layout_pair001_340_360/shorts/g2_real_stage_layout_pair001_340_360_short_0.mp4`
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 1 nur nach Master-GO und bestaetigtem Input-Kandidaten

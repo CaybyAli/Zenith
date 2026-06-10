@@ -548,3 +548,27 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Controlled Music Preview Run nur nach separatem Master-GO und Owner Review.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 0 Input-Auswahl / Diagnose
+
+- Controlled Music Preview Run Schritt 0 gestartet und als reine Input-Auswahl / Diagnose vorbereitet.
+- Ziel: geeignetes Main-Account-Testvideo fuer spaeteren Musik-Preview-Run finden.
+- Video-Kandidaten nur nach Dateiname, Pfad, Groesse und Datum bewertet.
+- Lokaler Diagnose-Report: `reports/controlled_music_preview_input_selection/input_selection_summary.md`.
+- Top Empfehlung: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Weitere Empfehlung: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
+- Musikbibliothek Check: `local_assets/music/` ignored, `git ls-files local_assets/music` leer.
+- Report lokal/untracked, nicht committed.
+- Kein Code geaendert.
+- Keine Tests geaendert.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein echter Audio-Mix gestartet.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Ali muss Input-Kandidat bestaetigen.
+- Naechster Schritt: Controlled Music Preview Run Schritt 1 nur nach Master-GO.

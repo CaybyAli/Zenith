@@ -609,3 +609,31 @@ Grenzen:
 - Kein Qwen gestartet.
 - Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.
+
+## Controlled Music Preview Run Schritt 0 Input-Auswahl DIAGNOSE
+
+Entscheidung: GO nur fuer Diagnose / Input-Auswahl, kein Preview-Run.
+
+Beweis:
+- Diagnose-Report: `reports/controlled_music_preview_input_selection/input_selection_summary.md`
+- Top Empfehlung: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Alternative Main-Account-Pfad: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Musikbibliothek: `local_assets/music/` ignored, `git ls-files local_assets/music` leer.
+
+Ergebnis:
+- Controlled Music Preview Run: Input-Auswahl vorbereitet.
+- Ali muss einen Input-Kandidaten bestaetigen.
+- Schritt 1 bleibt NO-GO bis separatem Master-GO.
+- Nur Main Account darf spaeter Musik bekommen.
+- Uncut-Musik bleibt dauerhaft NO-GO.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Keine Musikdateien geoeffnet, abgespielt, konvertiert oder committed.
+- Reports nicht committed.
+- Kein Render.
+- Kein Preview-Render.
+- Kein echter Audio-Mix.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
