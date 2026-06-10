@@ -59,6 +59,60 @@ def test_default_is_dry_run_and_starts_no_render(tmp_path, monkeypatch):
     assert not list((repo_root / preview.EXPECTED_OUTPUT_ROOT).rglob("*.mp4"))
 
 
+def test_dry_run_reports_intro_offset_policy(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.CONFIRMED_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.EXPECTED_OUTPUT_ROOT,
+    )
+    assert manifest["intro_offset_policy_used"] is True
+
+
+def test_dry_run_reports_demo_quiet_intro_trim_without_boost(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.CONFIRMED_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.EXPECTED_OUTPUT_ROOT,
+    )
+    assert manifest["quiet_intro_detected"] is True
+    assert manifest["music_start_offset_sec"] == 30.0
+    assert manifest["intro_trim_used"] is True
+    assert manifest["intro_boost_used"] is False
+    assert manifest["intro_boost_gain_db"] == 0.0
+
+
+def test_dry_run_reports_lower_low_speech_gains(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.CONFIRMED_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.EXPECTED_OUTPUT_ROOT,
+    )
+    assert manifest["low_speech_base_music_gain_db"] == -22.0
+    assert manifest["low_speech_ducking_gain_db"] == -27.0
+    assert manifest["low_speech_max_music_gain_db"] == -20.0
+
+
+def test_script_never_auto_boosts_intro(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.CONFIRMED_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.EXPECTED_OUTPUT_ROOT,
+    )
+    assert manifest["intro_boost_used"] is False
+
+
 def test_only_confirmed_input_is_allowed(tmp_path):
     repo_root = _repo_fixture(tmp_path)
     with pytest.raises(preview.ControlledMusicPreviewError):

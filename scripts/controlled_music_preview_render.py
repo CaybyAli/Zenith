@@ -18,6 +18,8 @@ from core.music_content_type_policy import (
     normalize_content_type,
     validate_music_category_for_content_type,
 )
+from core.music_ducking_plan import build_ducking_plan_item
+from core.music_intro_offset_policy import MusicIntroAnalysis, build_intro_offset_decision
 
 CONFIRMED_INPUT_VIDEO = Path(
     "reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4"
@@ -45,6 +47,10 @@ SAFE_MANIFEST_FLAGS = {
     "final_render_used": False,
     "owner_review_required": True,
 }
+
+DEMO_FIRST_USABLE_AUDIO_SEC = 30.0
+DEMO_MUSIC_DURATION_SEC = 120.0
+LOW_SPEECH_DENSITY = 0.10
 
 
 class ControlledMusicPreviewError(ValueError):
@@ -146,7 +152,12 @@ def create_run_dir(output_root: Path, now: datetime | None = None) -> Path:
     return run_dir
 
 
-def build_ffmpeg_command(input_video: Path, music_file: Path, output_video: Path) -> list[str]:
+def build_ffmpeg_command(
+    input_video: Path,
+    music_file: Path,
+    output_video: Path,
+    music_start_offset_sec: float = 0.0,
+) -> list[str]:
     filter_complex = (
         "[1:a]volume=0.08[musicquiet];"
         "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
@@ -160,6 +171,10 @@ def build_ffmpeg_command(input_video: Path, music_file: Path, output_video: Path
         str(input_video),
         "-stream_loop",
         "-1",
+    ]
+    if music_start_offset_sec > 0.0:
+        command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
+    command.extend([
         "-i",
         str(music_file),
         "-filter_complex",
@@ -176,7 +191,51 @@ def build_ffmpeg_command(input_video: Path, music_file: Path, output_video: Path
         "160k",
         "-shortest",
         str(output_video),
-    ]
+    ])
+    return command
+
+
+def build_demo_intro_offset_decision(music_file: Path) -> dict:
+    decision = build_intro_offset_decision(
+        MusicIntroAnalysis(
+            music_path=str(music_file),
+            duration_sec=DEMO_MUSIC_DURATION_SEC,
+            first_usable_audio_sec=DEMO_FIRST_USABLE_AUDIO_SEC,
+            quiet_intro_detected=True,
+            analysis_status="demo_policy_analysis",
+            reason="owner_review_quiet_intro_demo",
+        )
+    )
+    return {
+        "intro_offset_policy_used": True,
+        "music_start_offset_sec": decision.start_offset_sec,
+        "quiet_intro_detected": decision.use_start_offset,
+        "intro_trim_used": decision.trim_intro,
+        "intro_boost_used": decision.boost_intro,
+        "intro_boost_gain_db": decision.boost_gain_db,
+        "intro_offset_reason": decision.reason,
+    }
+
+
+def build_low_speech_gain_probe(music_category: str) -> dict:
+    plan = build_ducking_plan_item(
+        {
+            "segment_id": "step6_low_speech_probe",
+            "channel_type": "main",
+            "selected_category": music_category,
+            "selection_status": "selected",
+            "selected_candidate_id": "step6_demo_music",
+            "speech_density": LOW_SPEECH_DENSITY,
+            "energy_score": 0.30,
+            "highlight_score": 0.10,
+            "mood_tag": "hype",
+        }
+    )
+    return {
+        "low_speech_base_music_gain_db": plan["base_music_gain_db"],
+        "low_speech_ducking_gain_db": plan["ducking_gain_db"],
+        "low_speech_max_music_gain_db": plan["max_music_gain_db"],
+    }
 
 
 def build_manifest(
@@ -190,6 +249,8 @@ def build_manifest(
     music_category: str,
     owner_go: bool,
     dry_run: bool,
+    intro_offset: dict,
+    low_speech_gains: dict,
     error: str | None = None,
 ) -> dict:
     manifest = {
@@ -210,6 +271,8 @@ def build_manifest(
         "uncut_music_allowed": False,
         "owner_go": owner_go,
     }
+    manifest.update(intro_offset)
+    manifest.update(low_speech_gains)
     manifest.update(SAFE_MANIFEST_FLAGS)
     if error:
         manifest["error"] = error
@@ -234,6 +297,14 @@ def build_summary(manifest: dict) -> str:
         f"- vlog_background_blocked_for_gaming_main: "
         f"{str(manifest['vlog_background_blocked_for_gaming_main']).lower()}",
         f"- music_file_path: `{manifest['music_file_path']}`",
+        f"- intro_offset_policy_used: {str(manifest['intro_offset_policy_used']).lower()}",
+        f"- quiet_intro_detected: {str(manifest['quiet_intro_detected']).lower()}",
+        f"- music_start_offset_sec: {manifest['music_start_offset_sec']}",
+        f"- intro_trim_used: {str(manifest['intro_trim_used']).lower()}",
+        f"- intro_boost_used: {str(manifest['intro_boost_used']).lower()}",
+        f"- low_speech_base_music_gain_db: {manifest['low_speech_base_music_gain_db']}",
+        f"- low_speech_ducking_gain_db: {manifest['low_speech_ducking_gain_db']}",
+        f"- low_speech_max_music_gain_db: {manifest['low_speech_max_music_gain_db']}",
         f"- upload_started: {str(manifest['upload_started']).lower()}",
         f"- runtime_learning_started: {str(manifest['runtime_learning_started']).lower()}",
         f"- {_q_flag('used')}: {str(manifest[_q_flag('used')]).lower()}",
@@ -272,10 +343,17 @@ def run(
     normalized_content_type = _assert_content_type_for_input(content_type)
     full_output_root = _assert_output_root(root, output_root)
     selected_music, music_category = select_music_file(root, normalized_content_type)
+    intro_offset = build_demo_intro_offset_decision(selected_music)
+    low_speech_gains = build_low_speech_gain_probe(music_category)
 
     run_dir = create_run_dir(full_output_root)
     output_video = run_dir / OUTPUT_FILENAME
-    command = build_ffmpeg_command(full_input, selected_music, output_video)
+    command = build_ffmpeg_command(
+        full_input,
+        selected_music,
+        output_video,
+        music_start_offset_sec=float(intro_offset["music_start_offset_sec"]),
+    )
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 
     if not execute_owner_go:
@@ -291,6 +369,8 @@ def run(
             music_category=music_category,
             owner_go=False,
             dry_run=True,
+            intro_offset=intro_offset,
+            low_speech_gains=low_speech_gains,
         )
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
@@ -311,6 +391,8 @@ def run(
             music_category=music_category,
             owner_go=True,
             dry_run=False,
+            intro_offset=intro_offset,
+            low_speech_gains=low_speech_gains,
             error=f"ffmpeg exited with {completed.returncode}",
         )
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
@@ -327,6 +409,8 @@ def run(
         music_category=music_category,
         owner_go=True,
         dry_run=False,
+        intro_offset=intro_offset,
+        low_speech_gains=low_speech_gains,
     )
     _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))

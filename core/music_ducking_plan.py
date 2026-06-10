@@ -191,7 +191,7 @@ def _gain_profile(speech_priority: str) -> tuple[float, float, float]:
     if speech_priority == "medium":
         return -20.0, -26.0, -18.0
     if speech_priority == "low":
-        return -17.0, -22.0, -15.0
+        return -22.0, -27.0, -20.0
     raise MusicDuckingPlanError(f"speech_priority is invalid: {speech_priority}")
 
 
