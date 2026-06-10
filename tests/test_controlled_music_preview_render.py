@@ -31,6 +31,9 @@ def _repo_fixture(tmp_path: Path) -> Path:
     proper_run_path = tmp_path / preview.PROPER_RUN_INPUT_VIDEO
     proper_run_path.parent.mkdir(parents=True, exist_ok=True)
     proper_run_path.write_bytes(b"proper run video")
+    visual_proper_run_path = tmp_path / preview.VISUAL_PROPER_RUN_INPUT_VIDEO
+    visual_proper_run_path.parent.mkdir(parents=True, exist_ok=True)
+    visual_proper_run_path.write_bytes(b"visual proper run video")
 
     music_dir = tmp_path / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
     music_dir.mkdir(parents=True, exist_ok=True)
@@ -185,6 +188,71 @@ def test_step11_output_root_is_allowed(tmp_path):
     assert manifest["output_root"] == preview.STEP11_OUTPUT_ROOT.as_posix()
 
 
+def test_visual_proper_run_input_is_allowed(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["input_video_path"] == preview.VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix()
+
+
+def test_step13_output_root_is_allowed_for_visual_proper_run(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["output_root"] == preview.STEP13_OUTPUT_ROOT.as_posix()
+
+
+def test_step13_dry_run_with_visual_proper_run_uses_audio_gain_fix(tmp_path, monkeypatch):
+    repo_root = _repo_fixture(tmp_path)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("ffmpeg must not start in dry-run")
+
+    monkeypatch.setattr(preview.subprocess, "run", fail_if_called)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert not list((repo_root / preview.STEP13_OUTPUT_ROOT).rglob("*.mp4"))
+    assert manifest["input_video_path"] == preview.VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix()
+    assert manifest["output_root"] == preview.STEP13_OUTPUT_ROOT.as_posix()
+    assert manifest["content_type"] == CONTENT_TYPE_GAMING_MAIN
+    assert manifest["music_category"] == CATEGORY_FUNNY_GAMING_BACKGROUND
+    assert manifest["vlog_background_blocked_for_gaming_main"] is True
+    assert manifest["music_start_offset_sec"] == 30.0
+    assert manifest["intro_trim_used"] is True
+    assert manifest["intro_boost_used"] is False
+    assert manifest["low_speech_base_music_gain_db"] == -27.0
+    assert manifest["low_speech_ducking_gain_db"] == -32.0
+    assert manifest["low_speech_max_music_gain_db"] == -25.0
+    assert manifest["ffmpeg_music_volume_gain_db"] == -27.0
+    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0447, abs=0.0001)
+    assert manifest["ffmpeg_music_volume_source"] == "low_speech_base_music_gain_db"
+    assert manifest["manifest_gains_applied_to_ffmpeg_command"] is True
+    assert manifest["speech_aware_ducking_confirmed"] is False
+    assert manifest["sidechaincompress_used"] is True
+    assert manifest["owner_execute_required"] is True
+
+
 def test_step11_dry_run_with_proper_run_uses_final_music_tuning(tmp_path, monkeypatch):
     repo_root = _repo_fixture(tmp_path)
 
@@ -212,6 +280,34 @@ def test_step11_dry_run_with_proper_run_uses_final_music_tuning(tmp_path, monkey
     assert manifest["low_speech_base_music_gain_db"] == -27.0
     assert manifest["low_speech_ducking_gain_db"] == -32.0
     assert manifest["low_speech_max_music_gain_db"] == -25.0
+
+
+def test_visual_proper_run_has_no_k7_short_or_old_facecam_fallback(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["input_video_path"] == preview.VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix()
+    assert manifest["input_video_path"] != preview.CONFIRMED_INPUT_VIDEO.as_posix()
+    assert manifest["input_video_path"] != preview.SELECTED_NEW_INPUT_VIDEO.as_posix()
+    assert manifest["input_video_path"] != preview.PROPER_RUN_INPUT_VIDEO.as_posix()
+
+
+def test_old_facecam_proper_run_cannot_use_step13_output_root(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    with pytest.raises(preview.ControlledMusicPreviewError, match="input/output pair is not allowed"):
+        preview.run(
+            repo_root=repo_root,
+            input_video=preview.PROPER_RUN_INPUT_VIDEO,
+            channel_type="main",
+            content_type=CONTENT_TYPE_GAMING_MAIN,
+            output_root=preview.STEP13_OUTPUT_ROOT,
+        )
 
 
 def test_proper_run_has_no_k7_or_short_fallback(tmp_path):
@@ -387,6 +483,51 @@ def test_ffmpeg_command_with_intro_offset_is_complete(tmp_path):
     assert "-filter_complex" in command
     assert "-map" in command
     assert command[-1] == str(output_path)
+    filter_complex = command[command.index("-filter_complex") + 1]
+    assert "volume=0.08" not in filter_complex
+    assert "volume=-27.0dB" in filter_complex
+    assert "sidechaincompress" in filter_complex
+
+
+def test_db_to_linear_converts_planned_preview_gain():
+    assert preview.db_to_linear(-27.0) == pytest.approx(0.0447, abs=0.0001)
+
+
+def test_ffmpeg_music_volume_manifest_fields_match_low_speech_base_gain(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["ffmpeg_music_volume_gain_db"] == manifest["low_speech_base_music_gain_db"]
+    assert manifest["ffmpeg_music_volume_gain_db"] == -27.0
+    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0447, abs=0.0001)
+    assert manifest["ffmpeg_music_volume_source"] == "low_speech_base_music_gain_db"
+    assert manifest["manifest_gains_applied_to_ffmpeg_command"] is True
+    assert manifest["speech_aware_ducking_confirmed"] is False
+
+
+def test_manifest_gains_claim_requires_matching_ffmpeg_command(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    input_video = repo_root / preview.VISUAL_PROPER_RUN_INPUT_VIDEO
+    music_path, _category = preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
+    output_path = repo_root / preview.STEP13_OUTPUT_ROOT / "run_test" / preview.OUTPUT_FILENAME
+
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_path,
+        output_path,
+        music_start_offset_sec=30.0,
+        music_volume_gain_db=-27.0,
+    )
+
+    filter_complex = command[command.index("-filter_complex") + 1]
+    assert "volume=-27.0dB" in filter_complex
+    assert "volume=0.08" not in filter_complex
 
 
 def test_ffmpeg_command_without_output_is_rejected(tmp_path):

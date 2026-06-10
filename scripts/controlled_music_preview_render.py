@@ -30,18 +30,30 @@ SELECTED_NEW_INPUT_VIDEO = Path(
 PROPER_RUN_INPUT_VIDEO = Path(
     "exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4"
 )
+VISUAL_PROPER_RUN_INPUT_VIDEO = Path(
+    "exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4"
+)
 ALLOWED_CONTROLLED_PREVIEW_INPUTS = {
     "k7_control_preview": CONFIRMED_INPUT_VIDEO,
     "g2_emoji_position_preview": SELECTED_NEW_INPUT_VIDEO,
     "proper_run_job_323bf29c60e4": PROPER_RUN_INPUT_VIDEO,
+    "visual_proper_run_job_aa2953e15914": VISUAL_PROPER_RUN_INPUT_VIDEO,
 }
 EXPECTED_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step2_preview_render")
 STEP9_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step9_new_clip_final_tuning_render")
 STEP11_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step11_proper_run_final_music_render")
+STEP13_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step13_visual_proper_run_music_render")
 ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step2_preview_render": EXPECTED_OUTPUT_ROOT,
     "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
     "step11_proper_run_final_music_render": STEP11_OUTPUT_ROOT,
+    "step13_visual_proper_run_music_render": STEP13_OUTPUT_ROOT,
+}
+ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS = {
+    CONFIRMED_INPUT_VIDEO.as_posix(): {EXPECTED_OUTPUT_ROOT.as_posix()},
+    SELECTED_NEW_INPUT_VIDEO.as_posix(): {STEP9_OUTPUT_ROOT.as_posix()},
+    PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP11_OUTPUT_ROOT.as_posix()},
+    VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP13_OUTPUT_ROOT.as_posix()},
 }
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
 OUTPUT_FILENAME = "controlled_music_preview_main.mp4"
@@ -69,6 +81,7 @@ SAFE_MANIFEST_FLAGS = {
 DEMO_FIRST_USABLE_AUDIO_SEC = 30.0
 DEMO_MUSIC_DURATION_SEC = 120.0
 LOW_SPEECH_DENSITY = 0.10
+FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
 
 
 class ControlledMusicPreviewError(ValueError):
@@ -114,6 +127,14 @@ def _assert_output_root(repo_root: Path, output_root: str | Path) -> Path:
             "output-root must be an allowed controlled preview output root"
         )
     return repo_root / rel_output
+
+
+def _assert_allowed_input_output_pair(repo_root: Path, input_video: Path, output_root: Path) -> None:
+    rel_input = input_video.relative_to(repo_root).as_posix()
+    rel_output = output_root.relative_to(repo_root).as_posix()
+    allowed_outputs = ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS.get(rel_input, set())
+    if rel_output not in allowed_outputs:
+        raise ControlledMusicPreviewError("input/output pair is not allowed for controlled preview")
 
 
 def _assert_content_type_for_input(content_type: str) -> str:
@@ -172,11 +193,47 @@ def create_run_dir(output_root: Path, now: datetime | None = None) -> Path:
     return run_dir
 
 
+def db_to_linear(gain_db: float) -> float:
+    return 10 ** (gain_db / 20)
+
+
+def build_ffmpeg_music_volume_probe(low_speech_gains: dict) -> dict:
+    gain_db = float(low_speech_gains[FFMPEG_MUSIC_VOLUME_SOURCE])
+    return {
+        "ffmpeg_music_volume_gain_db": gain_db,
+        "ffmpeg_music_volume_linear": db_to_linear(gain_db),
+        "ffmpeg_music_volume_source": FFMPEG_MUSIC_VOLUME_SOURCE,
+        "manifest_gains_applied_to_ffmpeg_command": True,
+        "speech_aware_ducking_confirmed": False,
+        "sidechaincompress_used": True,
+    }
+
+
+def _filter_complex_from_command(command: list[str]) -> str:
+    if "-filter_complex" not in command:
+        return ""
+    filter_index = command.index("-filter_complex") + 1
+    if filter_index >= len(command):
+        return ""
+    return command[filter_index]
+
+
+def _assert_command_uses_music_gain(command: list[str], gain_db: float) -> None:
+    filter_complex = _filter_complex_from_command(command)
+    gain_token = f"volume={gain_db:.1f}dB"
+    linear_token = f"volume={db_to_linear(gain_db):.4f}"
+    if gain_token not in filter_complex and linear_token not in filter_complex:
+        raise ControlledMusicPreviewError(
+            "manifest_gains_applied_to_ffmpeg_command requires ffmpeg volume gain"
+        )
+
+
 def build_ffmpeg_command(
     input_video: Path,
     music_file: Path,
     output_video: Path,
     music_start_offset_sec: float = 0.0,
+    music_volume_gain_db: float = -27.0,
 ) -> list[str]:
     if not str(music_file).strip():
         raise ControlledMusicPreviewError("music input is required")
@@ -186,7 +243,7 @@ def build_ffmpeg_command(
         raise ControlledMusicPreviewError("music_start_offset_sec must not be negative")
 
     filter_complex = (
-        "[1:a]volume=0.08[musicquiet];"
+        f"[1:a]volume={music_volume_gain_db:.1f}dB[musicquiet];"
         "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
         "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
     )
@@ -219,7 +276,9 @@ def build_ffmpeg_command(
         "-shortest",
         str(output_video),
     ])
-    return validate_ffmpeg_command(command, music_file=music_file, output_video=output_video)
+    command = validate_ffmpeg_command(command, music_file=music_file, output_video=output_video)
+    _assert_command_uses_music_gain(command, music_volume_gain_db)
+    return command
 
 
 def validate_ffmpeg_command(command: list[str], *, music_file: Path, output_video: Path) -> list[str]:
@@ -300,6 +359,7 @@ def build_manifest(
     dry_run: bool,
     intro_offset: dict,
     low_speech_gains: dict,
+    ffmpeg_music_volume: dict,
     error: str | None = None,
 ) -> dict:
     manifest = {
@@ -323,6 +383,7 @@ def build_manifest(
     }
     manifest.update(intro_offset)
     manifest.update(low_speech_gains)
+    manifest.update(ffmpeg_music_volume)
     manifest.update(SAFE_MANIFEST_FLAGS)
     if error:
         manifest["error"] = error
@@ -357,6 +418,13 @@ def build_summary(manifest: dict) -> str:
         f"- low_speech_ducking_gain_db: {manifest['low_speech_ducking_gain_db']}",
         f"- low_speech_max_music_gain_db: {manifest['low_speech_max_music_gain_db']}",
         f"- low_speech_volume_reduced_total_db: {manifest['low_speech_volume_reduced_total_db']}",
+        f"- ffmpeg_music_volume_gain_db: {manifest['ffmpeg_music_volume_gain_db']}",
+        f"- ffmpeg_music_volume_linear: {manifest['ffmpeg_music_volume_linear']}",
+        f"- ffmpeg_music_volume_source: {manifest['ffmpeg_music_volume_source']}",
+        f"- manifest_gains_applied_to_ffmpeg_command: "
+        f"{str(manifest['manifest_gains_applied_to_ffmpeg_command']).lower()}",
+        f"- speech_aware_ducking_confirmed: {str(manifest['speech_aware_ducking_confirmed']).lower()}",
+        f"- sidechaincompress_used: {str(manifest['sidechaincompress_used']).lower()}",
         f"- upload_started: {str(manifest['upload_started']).lower()}",
         f"- runtime_learning_started: {str(manifest['runtime_learning_started']).lower()}",
         f"- {_q_flag('used')}: {str(manifest[_q_flag('used')]).lower()}",
@@ -394,9 +462,11 @@ def run(
     full_input = _assert_allowed_input(root, input_video)
     normalized_content_type = _assert_content_type_for_input(content_type)
     full_output_root = _assert_output_root(root, output_root)
+    _assert_allowed_input_output_pair(root, full_input, full_output_root)
     selected_music, music_category = select_music_file(root, normalized_content_type)
     intro_offset = build_demo_intro_offset_decision(selected_music)
     low_speech_gains = build_low_speech_gain_probe(music_category)
+    ffmpeg_music_volume = build_ffmpeg_music_volume_probe(low_speech_gains)
 
     run_dir = create_run_dir(full_output_root)
     output_video = run_dir / OUTPUT_FILENAME
@@ -405,6 +475,7 @@ def run(
         selected_music,
         output_video,
         music_start_offset_sec=float(intro_offset["music_start_offset_sec"]),
+        music_volume_gain_db=float(ffmpeg_music_volume["ffmpeg_music_volume_gain_db"]),
     )
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 
@@ -424,6 +495,7 @@ def run(
             dry_run=True,
             intro_offset=intro_offset,
             low_speech_gains=low_speech_gains,
+            ffmpeg_music_volume=ffmpeg_music_volume,
         )
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
@@ -447,6 +519,7 @@ def run(
             dry_run=False,
             intro_offset=intro_offset,
             low_speech_gains=low_speech_gains,
+            ffmpeg_music_volume=ffmpeg_music_volume,
             error=f"ffmpeg exited with {completed.returncode}",
         )
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
@@ -466,6 +539,7 @@ def run(
         dry_run=False,
         intro_offset=intro_offset,
         low_speech_gains=low_speech_gains,
+        ffmpeg_music_volume=ffmpeg_music_volume,
     )
     _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
