@@ -777,6 +777,44 @@ Naechster Schritt:
 - Controlled Music Preview Schritt 12D Allowlist + Audio Readiness nur nach Master-GO.
 - Noch kein Execute Render ohne separates Master-GO.
 
+## 2026-06-10 - Controlled Music Preview Run Schritt 12D Allowlist + Audio Readiness
+
+Entscheidung: Der visuell gueltige Proper Run und der Step-13 Output-Root sind exakt allowlisted; die Musiklautstaerke im FFmpeg-Command ist an den geplanten `-27.0 dB` Gain gekoppelt. Step 13 bleibt render-gesperrt bis Master-GO.
+
+Beweis:
+- Code-Commit: `bb078a1` / `bb078a13eeedf3ccedb7191081ea3b6f2ac0678f`.
+- Visual Proper Run Input erlaubt: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Step-13 Output-Root erlaubt: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Beliebige exports erlaubt: nein.
+- Alter K7-Fallback: nein.
+- Short-Fallback: nein.
+- Alter Facecam-Proper-Run-Fallback fuer Step 13: nein.
+- Dry-Run Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260610_222701/preview_render_manifest.json`.
+- Lokaler Step-12D-Report: `reports/controlled_music_preview_run/step12d_allowlist_audio_readiness/step12d_manifest.json`.
+
+Audio-Readiness:
+- Hardcoded `volume=0.08` im Musik-Volume-Pfad entfernt/nicht mehr genutzt.
+- FFmpeg-Musiklautstaerke an `ffmpeg_music_volume_gain_db=-27.0` gekoppelt.
+- `ffmpeg_music_volume_linear=0.0446683592150963`.
+- `ffmpeg_music_volume_source=low_speech_base_music_gain_db`.
+- `manifest_gains_applied_to_ffmpeg_command=true`.
+- `speech_aware_ducking_confirmed=false`.
+- `sidechaincompress_used=true`.
+
+Tests:
+- `python -m py_compile scripts\controlled_music_preview_render.py`.
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv` -> 40 passed.
+
+Grenzen:
+- Kein Execute Render gestartet.
+- Kein MP4 erzeugt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 13 Render Visual Proper Run nur nach Master-GO.
+
 ## Controlled Music Preview Run Schritt 10B Proper Run Selection
 
 Entscheidung: Ali/Master hat den richtigen `gaming_main` Run fuer den finalen Musik-Review ausgewaehlt. Kein Render-GO in Schritt 10B.

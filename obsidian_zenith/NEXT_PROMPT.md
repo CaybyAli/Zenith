@@ -1,13 +1,23 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 12D - ALLOWLIST + AUDIO READINESS FOR VISUAL PROPER RUN
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 13 - RENDER VISUAL PROPER RUN WITH AUDIO-GAIN FIX
 
 Nur nach Master-GO.
 
 Ziel:
-Vor neuem Render:
-1. ausgewaehlten visuellen Proper Run erlauben
-2. passenden Output-Root erlauben
-3. Audio-Gain/Ducking-Readiness klaeren, weil Step 12A zeigte:
-   Manifest-Gains werden nicht direkt im FFmpeg-Command angewendet
-   speech-aware Ducking ist nicht bestaetigt
+Visuell gueltigen gaming_main Proper Run rendern:
+exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
 
-Noch kein Execute Render ohne separates Master-GO.
+Output:
+reports/controlled_music_preview_run/step13_visual_proper_run_music_render
+
+Regeln:
+- content_type=gaming_main
+- channel_type=main
+- music_category=funny_gaming_background
+- vlog_background verboten
+- intro offset 30s
+- intro boost false
+- Musik-Volume im FFmpeg-Command an -27.0 dB gekoppelt
+- kein Upload
+- kein Runtime Learning
+- kein Qwen
+- Uncut verboten

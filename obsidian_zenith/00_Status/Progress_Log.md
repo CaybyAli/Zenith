@@ -1277,3 +1277,47 @@ Reports:
 Naechster Schritt:
 - Controlled Music Preview Schritt 12D Allowlist + Audio Readiness nur nach Master-GO.
 - Noch kein Execute Render ohne separates Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 12D Allowlist + Audio Readiness
+
+- Step 12D hat den visuellen Proper Run exakt erlaubt.
+- Visual Proper Run: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Step-13 Output-Root erlaubt: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Beliebige exports erlaubt: nein.
+- Alter K7-Fallback: nein.
+- Short-Fallback: nein.
+- Alter Facecam-Proper-Run-Fallback fuer Step 13: nein.
+- Code-Commit: `bb078a1` / `bb078a13eeedf3ccedb7191081ea3b6f2ac0678f`.
+
+Audio Readiness:
+- Hardcoded `volume=0.08` im Musik-Volume-Pfad entfernt/nicht mehr genutzt.
+- FFmpeg-Musiklautstaerke an `-27.0 dB` gekoppelt.
+- `ffmpeg_music_volume_linear=0.0446683592150963`.
+- `ffmpeg_music_volume_source=low_speech_base_music_gain_db`.
+- Manifest-Gains werden im FFmpeg-Command angewendet: ja.
+- Speech-aware Ducking bestaetigt: nein.
+- `sidechaincompress_used=true`.
+
+Tests / Dry-Run:
+- `python -m py_compile scripts\controlled_music_preview_render.py`
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv` -> 40 passed.
+- Dry-Run mit visuellem Proper Run: ok.
+- Dry-Run Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260610_222701/preview_render_manifest.json`.
+- Dry-Run Command nutzt `volume=-27.0dB`.
+- Kein MP4 erzeugt.
+
+Safety:
+- Kein Execute Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+
+Reports:
+- `reports/controlled_music_preview_run/step12d_allowlist_audio_readiness/step12d_manifest.json`
+- `reports/controlled_music_preview_run/step12d_allowlist_audio_readiness/step12d_summary.md`
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 13 Visual Proper Run Render nur nach Master-GO.

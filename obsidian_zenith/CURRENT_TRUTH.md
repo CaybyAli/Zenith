@@ -1031,6 +1031,30 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Lokaler Report: `reports/controlled_music_preview_run/step12c_select_visually_valid_proper_run/step12c_summary.md`.
 - Naechster Schritt: Controlled Music Preview Step 12D Allowlist + Audio Readiness nur nach Master-GO.
 
+### Controlled Music Preview Step 12D - Allowlist + Audio Readiness
+
+- Status: Allowlist und Audio-Readiness remote gesichert.
+- Code-Commit: `bb078a1` / `bb078a13eeedf3ccedb7191081ea3b6f2ac0678f`.
+- Visual Proper Run erlaubt: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Step-13 Output-Root erlaubt: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Keine beliebigen exports erlaubt.
+- Kein Fallback auf K7, Short oder alten Facecam-Proper-Run fuer Step 13.
+- Hardcoded `volume=0.08` im Musik-Volume-Pfad entfernt/nicht mehr genutzt.
+- FFmpeg-Musiklautstaerke an `low_speech_base_music_gain_db=-27.0` gekoppelt.
+- `ffmpeg_music_volume_linear=0.0446683592150963`.
+- `manifest_gains_applied_to_ffmpeg_command=true`.
+- `sidechaincompress_used=true`.
+- Speech-aware Ducking ehrlich nicht bestaetigt: `speech_aware_ducking_confirmed=false`.
+- Tests: `python -m py_compile scripts\controlled_music_preview_render.py`; `python -m pytest tests\test_controlled_music_preview_render.py -vv` mit 40 passed.
+- Dry-Run: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260610_222701/`.
+- Kein Execute Render gestartet.
+- Kein MP4 erzeugt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Lokaler Report: `reports/controlled_music_preview_run/step12d_allowlist_audio_readiness/step12d_summary.md`.
+- Naechster Schritt: Controlled Music Preview Step 13 Visual Proper Run Render nur nach Master-GO.
+
 ## Wichtige Links
 
 - [[ZENITH_HOME]]

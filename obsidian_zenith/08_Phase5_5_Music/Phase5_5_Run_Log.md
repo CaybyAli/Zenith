@@ -1287,3 +1287,50 @@ Reports:
 Naechster Schritt:
 - Step 12D Allowlist + Audio Readiness nur nach Master-GO.
 - Noch kein Execute Render ohne separates Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 12D Allowlist + Audio Readiness
+
+Status:
+- Visual Proper Run allowlisted: ja.
+- Visual Proper Run: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Step-13 Output-Root allowlisted: ja.
+- Step-13 Output-Root: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Beliebige exports erlaubt: nein.
+- K7-Fallback: nein.
+- Short-Fallback: nein.
+- Alter Facecam-Proper-Run-Fallback fuer Step 13: nein.
+- Code-Commit: `bb078a1` / `bb078a13eeedf3ccedb7191081ea3b6f2ac0678f`.
+
+Audio Readiness:
+- Hardcoded `volume=0.08` im Musik-Volume-Pfad entfernt/nicht mehr genutzt.
+- FFmpeg-Musiklautstaerke: `-27.0 dB`.
+- Linear: `0.0446683592150963`.
+- Quelle: `low_speech_base_music_gain_db`.
+- Manifest-Gains applied to FFmpeg command: ja.
+- Speech-aware Ducking bestaetigt: nein.
+- Sidechaincompress genutzt: ja.
+
+Dry-Run:
+- Dry-Run ok: ja.
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Output Root: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Run Dir: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260610_222701/`.
+- MP4 erzeugt: nein.
+
+Tests:
+- `python -m py_compile scripts\controlled_music_preview_render.py`.
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv` -> 40 passed.
+
+Safety:
+- Kein Execute Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+
+Naechster Schritt:
+- Step 13 Visual Proper Run Render nur nach Master-GO.
