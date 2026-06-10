@@ -934,3 +934,49 @@ Tests / Runs:
 
 Naechster Schritt:
 - Controlled Music Preview Schritt 9B Render neuer Clip nach Input-Fix nur nach Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 9B-R Neuer Clip gerendert
+
+Status:
+- Schritt 9B erster Versuch war NO-GO wegen nicht erlaubtem Output-Root.
+- Schritt 9B-R hat den bestehenden erlaubten Output-Root genutzt.
+- Neuer bestaetigter Clip wurde lokal gerendert.
+- Alter K7-Clip wurde nicht genutzt.
+- Owner Review ist jetzt Pflicht.
+
+Render:
+- Input: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Output Root: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render`
+- Output-MP4: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/run_20260610_203039/controlled_music_preview_main.mp4`
+- Output-Groesse: `93774185` Bytes
+- Content Type: `gaming_main`
+- Channel Type: `main`
+- Musik-Kategorie: `funny_gaming_background`
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`
+- `vlog_background` genutzt: nein
+- Intro Offset: `30.0`
+- Intro Trim: true
+- Intro Boost: false
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`
+
+Safety:
+- Upload gestartet: nein
+- Final-Render gestartet: nein
+- Runtime Learning gestartet: nein
+- Qwen gestartet: nein
+- Qwen-Autocut: nein
+- Uncut genutzt: nein
+- Produktionsdateien geaendert: nein
+- Musikdateien committed: nein
+- Reports/MP4 committed: nein
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 28 passed
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt
+- Execute-Render: `status=ok`
+- Manifest Status: `ok`
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 10 Owner Review New Clip Final Tuning
+- Kein neuer Render ohne Master-GO

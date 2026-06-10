@@ -969,3 +969,33 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 9B Render neuer Clip nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 9B-R Neuer Clip gerendert mit erlaubtem Output-Root
+
+- Schritt 9B erster Versuch: NO-GO, weil `reports/controlled_music_preview_run/step9b_new_clip_after_input_fix_render` nicht als Output-Root erlaubt war.
+- Schritt 9B-R: DONE.
+- Genutzter erlaubter Output-Root: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render`.
+- Neuer Input: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
+- Alter K7-Clip genutzt: nein.
+- Output-MP4: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/run_20260610_203039/controlled_music_preview_main.mp4`.
+- Output-Groesse: `93774185` Bytes.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- `vlog_background` genutzt: nein.
+- Intro Offset: `30.0`.
+- Intro Trim: true.
+- Intro Boost: false.
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`.
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt.
+- Execute-Render: `status=ok`.
+- Manifest Status: `ok`.
+- Kein Upload gestartet.
+- Kein Final-Render gestartet.
+- Kein Runtime Learning gestartet.
+- Kein Qwen gestartet.
+- Keine Uncut-Musik genutzt.
+- Reports/MP4 lokal/untracked, nicht committed.
+- Owner Review ist jetzt Pflicht.
+- Naechster Schritt: Controlled Music Preview Run Schritt 10 Owner Review New Clip Final Tuning.

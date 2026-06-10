@@ -32,6 +32,8 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 8B: DONE / neuer Clip festgeschrieben / kein Render.
 - Controlled Music Preview Run Schritt 9: NO-GO / Script erlaubte nur alten K7-Input.
 - Controlled Music Preview Run Schritt 9A: DONE / neuer bestaetigter Clip per Allowlist erlaubt / kein Render.
+- Controlled Music Preview Run Schritt 9B: NO-GO / neuer Output-Root war nicht erlaubt.
+- Controlled Music Preview Run Schritt 9B-R: DONE / neuer Clip mit bestehendem erlaubtem Output-Root lokal gerendert / Owner Review Pflicht.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -94,10 +96,24 @@ Neue Clip-Kandidaten wurden gesucht.
 Schritt 8B bestaetigt den neuen Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
 Schritt 9 war NO-GO, weil das Script nur den alten K7-Input erlaubt hat.
 Schritt 9A erlaubt den neuen bestaetigten Clip sicher per Allowlist.
+Schritt 9B erster Versuch war NO-GO, weil `reports/controlled_music_preview_run/step9b_new_clip_after_input_fix_render` nicht als Output-Root erlaubt war.
+Schritt 9B-R nutzte den bestehenden erlaubten Output-Root: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render`.
+Neuer Clip wurde lokal gerendert: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/run_20260610_203039/controlled_music_preview_main.mp4`.
+Output-Groesse: `93774185` Bytes.
 Kein Fallback auf alten K7-Clip.
 Keine beliebigen Inputs erlaubt.
-Kein Execute-Render gestartet und kein MP4 erzeugt.
-Naechster Schritt: Controlled Music Preview Run Schritt 9B neuen Clip rendern nur nach Master-GO.
+Alter K7-Clip wurde nicht genutzt.
+Content Type: `gaming_main`.
+Channel Type: `main`.
+Musik-Kategorie: `funny_gaming_background`.
+Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+`vlog_background` wurde nicht genutzt.
+Intro Offset: `30.0`.
+Intro Trim: `true`.
+Intro Boost: `false`.
+Low-Speech Gains: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
+Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
+Naechster Schritt: Controlled Music Preview Run Schritt 10 Owner Review New Clip Final Tuning.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.

@@ -744,6 +744,48 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 9B-R Render New Clip With Allowed Output Root
+
+Entscheidung: Master-GO fuer Step 9B-R. Kein Code-Fix, kein neuer Output-Root. Neuer bestaetigter Clip wird mit bestehendem erlaubtem Output-Root gerendert.
+
+Beweis:
+- Schritt 9B erster Versuch: NO-GO, weil `reports/controlled_music_preview_run/step9b_new_clip_after_input_fix_render` nicht erlaubt war.
+- Genutzter Output-Root: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render`.
+- Input: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
+- Alter K7-Clip genutzt: nein.
+- Output-MP4: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/run_20260610_203039/controlled_music_preview_main.mp4`.
+- Output-Groesse: `93774185` Bytes.
+- Manifest: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/run_20260610_203039/preview_render_manifest.json`.
+- Step-9B-R-Report: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/step9b_retry_manifest.json`.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- `vlog_background` genutzt: nein.
+- `music_start_offset_sec=30.0`.
+- `intro_trim_used=true`.
+- `intro_boost_used=false`.
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`.
+- Manifest Status: `ok`.
+
+Ergebnis:
+- Controlled Music Preview Run Schritt 9B-R ausgefuehrt.
+- Neuer Clip wurde lokal gerendert.
+- Owner Review ist jetzt Pflicht.
+- Naechster Schritt: Controlled Music Preview Run Schritt 10 Owner Review New Clip Final Tuning.
+
+Grenzen:
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Produktionsdateien geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.
+
 ## Controlled Music Preview Run Schritt 9A Input-Allowlist-Fix
 
 Entscheidung: Schritt 9 = NO-GO wegen hardcoded altem K7-Input. Code-GO nur fuer Step 9A Input-Allowlist-Fix, kein Render.
