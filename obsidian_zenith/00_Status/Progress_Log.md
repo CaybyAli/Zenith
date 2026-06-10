@@ -790,3 +790,49 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 7B Re-Render nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 7B Re-Render nach FFmpeg-Command-Fix
+
+- Schritt 7B nach Master-GO ausgefuehrt.
+- Bestehendes Render-Script genutzt, kein Code geaendert.
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`.
+- Output-Groesse: `107953864` Bytes.
+- Channel Type: `main`.
+- Content Type: `gaming_main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- `vlog_background` genutzt: nein.
+- `music_start_offset_sec=30.0`.
+- `intro_trim_used=true`.
+- `intro_boost_used=false`.
+- Low-Speech Musik ca. 5 dB leiser:
+  - `low_speech_base_music_gain_db=-22.0`
+  - `low_speech_ducking_gain_db=-27.0`
+  - `low_speech_max_music_gain_db=-20.0`
+- Manifest: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/preview_render_manifest.json`.
+- Summary: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/preview_render_summary.md`.
+- Step-7B-Report:
+  - `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_manifest.json`
+  - `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_summary.md`
+- Manifest Status: `ok`.
+- `preview_render_used=true`.
+- `final_render_used=false`.
+- `upload_started=false`.
+- `runtime_learning_started=false`.
+- `qwen_used=false`.
+- `qwen_autocut_used=false`.
+- `uncut_music_allowed=false`.
+- `owner_review_required=true`.
+- Dry-Run: `status=dry_run`, `music_category=funny_gaming_background`, kein MP4 erzeugt.
+- Execute-Render: `status=ok`.
+- Reports und MP4 lokal/untracked, nicht committed.
+- Musikdateien ignored und nicht committed.
+- Keine Produktionsdateien geaendert.
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: Controlled Music Preview Run Schritt 8 Owner Review Intro/Volume Tuning.

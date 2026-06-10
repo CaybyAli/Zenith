@@ -1,16 +1,17 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 7B - RE-RENDER AFTER FFMPEG COMMAND FIX
-
-Nur nach Master-GO.
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 8 - OWNER REVIEW INTRO/VOLUME TUNING
 
 Ziel:
-Re-Render erneut ausfuehren:
-content_type=gaming_main
-music_category=funny_gaming_background
-intro offset 30s
-low-speech music -5 dB
-vlog_background verboten
-Uncut verboten
+Ali prueft den neuen Musik-Preview mit Auge/Ohr.
 
-Kein Upload.
-Kein Runtime Learning.
-Kein Qwen.
+Bewertung:
+- Startet die Musik jetzt direkt brauchbar?
+- Ist die Musik bei wenig Sprache nicht mehr zu laut?
+- Stimme klar?
+- Musik passt zu Rocket League?
+- Keine Audio-Spruenge?
+- Gesamtgefuehl besser?
+
+Entscheidung:
+GO / FIX / NO-GO
+
+Kein neuer Render ohne Master-GO.

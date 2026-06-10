@@ -757,3 +757,55 @@ Command Safety:
 
 Naechster Schritt:
 - Controlled Music Preview Schritt 7B Re-Render nach FFmpeg-Command-Fix nur nach Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 7B Re-Render nach FFmpeg-Command-Fix
+
+Status:
+- Schritt 7B nach Master-GO erledigt
+- genau ein kontrollierter Main-Account-Musik-Preview-Re-Render erzeugt
+- Content Type: `gaming_main`
+- Musik-Kategorie: `funny_gaming_background`
+- `vlog_background` nicht genutzt
+- Intro Offset: `30.0`
+- Intro Trim: true
+- Intro Boost: false
+- Low-Speech Musik ca. 5 dB leiser
+- kein Upload gestartet
+- kein Final-Render gestartet
+- kein Ingest gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Uncut-Musik genutzt
+- keine Produktionsdateien geaendert
+- Owner Review ist Pflicht
+
+Beweise:
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`
+- Output-Groesse: `107953864` Bytes
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`
+- Manifest Status: `ok`
+- `preview_render_used=true`
+- `final_render_used=false`
+- `upload_started=false`
+- `runtime_learning_started=false`
+- `qwen_used=false`
+- `qwen_autocut_used=false`
+- `uncut_music_allowed=false`
+- `owner_review_required=true`
+
+Runs:
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`, kein MP4
+- Execute-Render: `status=ok`
+
+Reports:
+- `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/preview_render_manifest.json`
+- `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/preview_render_summary.md`
+- `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_manifest.json`
+- `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_summary.md`
+- Reports und MP4 lokal/untracked, nicht committed
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 8 Owner Review Intro/Volume Tuning
+- Kein neuer Render ohne Master-GO

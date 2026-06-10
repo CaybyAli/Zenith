@@ -17,7 +17,7 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 7A FFmpeg-Command-Fix remote gesichert.
+- Controlled Music Preview Run: Schritt 7B Re-Render nach FFmpeg-Command-Fix lokal erzeugt.
 - Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 - Controlled Music Preview Run Schritt 2: technisch GO, Owner Review = FIX wegen falscher Musik-Kategorie.
 - Controlled Music Preview Run Schritt 3: DONE / Content-Type-Fix remote gesichert.
@@ -26,6 +26,7 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 6: DONE / Intro-Offset + Low-Speech-Volume-Fix remote gesichert.
 - Controlled Music Preview Run Schritt 7: NO-GO / FFmpeg-Command war nach `-stream_loop -1` abgeschnitten.
 - Controlled Music Preview Run Schritt 7A: DONE / FFmpeg-Command-Builder repariert und remote gesichert.
+- Controlled Music Preview Run Schritt 7B: DONE / Re-Render lokal erzeugt / Owner Review Pflicht.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -70,9 +71,9 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-6 Controlled Music Preview Gate ist abgeschlossen.
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
-Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix ist remote gesichert.
+Controlled Music Preview Run Schritt 7B Re-Render nach FFmpeg-Command-Fix ist lokal erzeugt.
 Input-Kandidat ist bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
-Letztes Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/controlled_music_preview_main.mp4`.
+Letztes Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`.
 Owner Review Schritt 5: GO mit Tuning-Fix.
 Problem 1: viele Songs beginnen zu leise, brauchbarer Start erst nach ca. 30 Sekunden.
 Loesung: Intro-Offset/Trim-Policy mit `music_start_offset_sec=30.0`, kein automatischer Boost.
@@ -80,7 +81,8 @@ Problem 2: Musik bei Low-Speech/No-Speech ca. 5 dB zu laut.
 Loesung: Low-Speech Gains reduziert auf `base=-22.0`, `ducking=-27.0`, `max=-20.0`.
 Schritt 7 Re-Render ist mit `ffmpeg_command_truncated_after_stream_loop` gescheitert.
 Schritt 7A repariert den FFmpeg-Command-Builder; Dry-Run zeigt vollstaendigen Command mit Musik-Input, `-filter_complex`, Maps und Output-Pfad.
-Naechster Schritt: Controlled Music Preview Run Schritt 7B Re-Render nur nach Master-GO.
+Schritt 7B Re-Render ist mit `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`, `intro_trim_used=true`, `intro_boost_used=false` lokal erzeugt.
+Naechster Schritt: Controlled Music Preview Run Schritt 8 Owner Review Intro/Volume Tuning.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -297,6 +299,40 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 7B Re-Render nur nach Master-GO.
+
+### Controlled Music Preview Run Schritt 7B
+
+- Schritt 7B Re-Render nach FFmpeg-Command-Fix wurde ausgefuehrt.
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Output MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`
+- Output Groesse: `107953864` Bytes.
+- Channel Type: `main`.
+- Content Type: `gaming_main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- `vlog_background` genutzt: nein.
+- `music_start_offset_sec=30.0`.
+- `intro_trim_used=true`.
+- `intro_boost_used=false`.
+- Low-Speech Base Gain: `-22.0`.
+- Low-Speech Ducking Gain: `-27.0`.
+- Low-Speech Max Gain: `-20.0`.
+- Manifest Status: `ok`.
+- Preview Render used: true.
+- Final Render used: false.
+- Upload gestartet: nein.
+- Runtime Learning gestartet: nein.
+- Qwen gestartet: nein.
+- Qwen-Autocut: nein.
+- Ingest gestartet: nein.
+- Uncut genutzt: nein.
+- Produktionsdateien geaendert: nein.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.
+- Step-7B-Report lokal/untracked: `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_manifest.json`
+- Step-7B-Summary lokal/untracked: `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_summary.md`
+- Owner Review ist jetzt Pflicht.
+- Naechster Schritt: Controlled Music Preview Schritt 8 Owner Review Intro/Volume Tuning.
 
 ## Wichtigste Beweise
 

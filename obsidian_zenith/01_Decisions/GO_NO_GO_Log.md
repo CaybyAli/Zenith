@@ -780,6 +780,46 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 7B Re-Render nach FFmpeg-Command-Fix
+
+Entscheidung: Master-GO fuer genau einen kontrollierten Main-Account-Musik-Preview-Re-Render nach Step-7A-FFmpeg-Command-Fix.
+
+Beweis:
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`.
+- Output-Groesse: `107953864` Bytes.
+- Manifest: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/preview_render_manifest.json`.
+- Summary: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/preview_render_summary.md`.
+- Step-7B-Report: `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_manifest.json`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- Channel Type: `main`.
+- Content Type: `gaming_main`.
+- Manifest Status: `ok`.
+
+Ergebnis:
+- Controlled Music Preview Run Schritt 7B ausgefuehrt.
+- Genau ein neuer Preview-Re-Render wurde erzeugt.
+- `vlog_background` wurde nicht genutzt.
+- `music_start_offset_sec=30.0`.
+- `intro_trim_used=true`.
+- `intro_boost_used=false`.
+- Low-Speech Gains bleiben `-22.0`, `-27.0`, `-20.0`.
+- Owner Review ist jetzt Pflicht.
+- Naechster Schritt: Ali Auge/Ohr Review mit GO / FIX / NO-GO.
+
+Grenzen:
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Produktionsdateien geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.
+
 ## Controlled Music Preview Run Schritt 4 Gaming-Re-Render
 
 Entscheidung: Master-GO fuer genau einen zweiten kontrollierten Main-Account-Musik-Preview-Re-Render mit `content_type=gaming_main`.
