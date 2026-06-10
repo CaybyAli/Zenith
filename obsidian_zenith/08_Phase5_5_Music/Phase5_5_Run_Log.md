@@ -898,3 +898,39 @@ Beweise:
 
 Naechster Schritt:
 - Controlled Music Preview Schritt 9 Render neuer Clip mit finalem Tuning nur nach Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 9A Input-Allowlist-Fix
+
+Status:
+- Schritt 9 Ergebnis: NO-GO
+- neuer Clip wurde vom Script blockiert, weil nur alter K7-Input erlaubt war
+- Input-Allowlist-Fix gebaut
+- neuer bestaetigter Clip ist jetzt erlaubt
+- kein Auto-Fallback auf alten K7-Clip
+- keine beliebigen Inputs erlaubt
+- kein Execute-Render gestartet
+- kein Render gestartet
+- kein Preview-Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Musikdateien committed
+
+Beweise:
+- Code-Commit: `72505ca`
+- Full Hash: `72505ca9af02cbbf51fe525ee8cf4d9844080ba3`
+- Neuer Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Dry-Run: `status=dry_run`, `input_video_path` exakt neuer Clip, `content_type=gaming_main`, `music_category=funny_gaming_background`, kein MP4
+- Report: `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_summary.md`
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 28 passed
+- Forbidden Search: keine Treffer
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 9B Render neuer Clip nach Input-Fix nur nach Master-GO

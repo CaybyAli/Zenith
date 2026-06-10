@@ -1,9 +1,9 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 9 - RENDER NEW CLIP WITH FINAL TUNING
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 9B - RENDER NEW CLIP AFTER INPUT FIX
 
 Nur nach Master-GO.
 
 Ziel:
-Neuen bestaetigten gaming_main Clip rendern:
+Neuen bestaetigten Clip rendern:
 exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4
 
 Regeln:

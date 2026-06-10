@@ -744,6 +744,38 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 9A Input-Allowlist-Fix
+
+Entscheidung: Schritt 9 = NO-GO wegen hardcoded altem K7-Input. Code-GO nur fuer Step 9A Input-Allowlist-Fix, kein Render.
+
+Beweis:
+- Originalfehler: `hardcoded_old_k7_input_blocked_new_confirmed_clip`.
+- Code-Commit: `72505ca` / `72505ca9af02cbbf51fe525ee8cf4d9844080ba3`.
+- Geaendert: `scripts/controlled_music_preview_render.py`, `tests/test_controlled_music_preview_render.py`.
+- Lokaler Report: `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_summary.md`.
+
+Ergebnis:
+- Neuer bestaetigter Clip ist erlaubt:
+  - `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Alter K7-Clip bleibt historisch erlaubt, aber es gibt keinen Auto-Fallback.
+- Beliebige Inputs sind nicht erlaubt.
+- Dry-Run mit neuem Clip ist gruen und nutzt exakt den neuen Clip.
+- Naechster Schritt: Controlled Music Preview Schritt 9B Render neuer Clip nur nach Master-GO.
+
+Grenzen:
+- Kein Execute-Render.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+
 ## Controlled Music Preview Run Schritt 8B Neuer Clip festgeschrieben
 
 Entscheidung: Master bestaetigt Kandidat 1 als neuen Clip fuer den naechsten Musik-Preview. Kein Render in Schritt 8B.

@@ -926,3 +926,46 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 9 Render neuer Clip nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 9A Input-Allowlist-Fix
+
+- Schritt 9 Ergebnis: NO-GO.
+- Grund: Script erlaubte nur den alten K7-Input.
+- Originalfehler: `hardcoded_old_k7_input_blocked_new_confirmed_clip`.
+- Code-Commit: `72505ca` / `72505ca9af02cbbf51fe525ee8cf4d9844080ba3`.
+- Fix: feste Allowlist fuer bestaetigte Controlled-Preview-Inputs.
+- Neuer Clip erlaubt:
+  - `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Alter K7 Auto-Fallback: nein.
+- Beliebige Inputs erlaubt: nein.
+- Fremde Inputs wie `learning_corpus`, `local_assets/music`, `video_configs` und `reports/controlled_music_preview_run` bleiben blockiert.
+- Dry-Run:
+  - `status=dry_run`
+  - `input_video_path=exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+  - `content_type=gaming_main`
+  - `music_category=funny_gaming_background`
+  - `music_start_offset_sec=30.0`
+  - `intro_trim_used=true`
+  - `intro_boost_used=false`
+  - `low_speech_base_music_gain_db=-27.0`
+  - `low_speech_ducking_gain_db=-32.0`
+  - `low_speech_max_music_gain_db=-25.0`
+  - kein MP4 erzeugt
+- Tests:
+  - `python -m py_compile scripts\controlled_music_preview_render.py`: gruen.
+  - `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 28 passed.
+- Report:
+  - `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_manifest.json`
+  - `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_summary.md`
+- Forbidden Search: keine Treffer.
+- Kein Execute-Render gestartet.
+- Kein Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 9B Render neuer Clip nur nach Master-GO.

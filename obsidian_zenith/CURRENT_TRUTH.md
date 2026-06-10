@@ -17,7 +17,7 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 8B neuer Clip remote festgeschrieben.
+- Controlled Music Preview Run: Schritt 9A Input-Allowlist-Fix remote gesichert.
 - Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 - Controlled Music Preview Run Schritt 2: technisch GO, Owner Review = FIX wegen falscher Musik-Kategorie.
 - Controlled Music Preview Run Schritt 3: DONE / Content-Type-Fix remote gesichert.
@@ -30,6 +30,8 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 8: Owner Review = FIX.
 - Controlled Music Preview Run Schritt 8A: DONE / Low-Speech nochmal -5 dB / neue Clip-Kandidaten gesucht / kein Render.
 - Controlled Music Preview Run Schritt 8B: DONE / neuer Clip festgeschrieben / kein Render.
+- Controlled Music Preview Run Schritt 9: NO-GO / Script erlaubte nur alten K7-Input.
+- Controlled Music Preview Run Schritt 9A: DONE / neuer bestaetigter Clip per Allowlist erlaubt / kein Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -90,7 +92,12 @@ Schritt 8A senkt Low-Speech erneut um ca. 5 dB auf `base=-27.0`, `ducking=-32.0`
 Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 Neue Clip-Kandidaten wurden gesucht.
 Schritt 8B bestaetigt den neuen Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
-Naechster Schritt: Controlled Music Preview Run Schritt 9 neuen Clip mit finalem Tuning rendern nur nach Master-GO.
+Schritt 9 war NO-GO, weil das Script nur den alten K7-Input erlaubt hat.
+Schritt 9A erlaubt den neuen bestaetigten Clip sicher per Allowlist.
+Kein Fallback auf alten K7-Clip.
+Keine beliebigen Inputs erlaubt.
+Kein Execute-Render gestartet und kein MP4 erzeugt.
+Naechster Schritt: Controlled Music Preview Run Schritt 9B neuen Clip rendern nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -400,6 +407,38 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 9 neuen Clip mit finalem Tuning rendern nur nach Master-GO.
+
+### Controlled Music Preview Run Schritt 9A
+
+- Schritt 9 Ergebnis: NO-GO.
+- Originalfehler: hardcoded alter K7-Input blockierte neuen bestaetigten Clip.
+- Fehlertext: `input-video must be exactly reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Code Commit: `72505ca`
+- Full Hash: `72505ca9af02cbbf51fe525ee8cf4d9844080ba3`
+- Neuer Clip erlaubt: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Alter K7 Auto-Fallback: nein.
+- Beliebige Inputs erlaubt: nein.
+- Allowlist blockiert weiterhin fremde Inputs wie `learning_corpus`, `local_assets/music`, `video_configs` und `reports/controlled_music_preview_run`.
+- Dry-Run mit neuem Clip: `status=dry_run`, `input_video_path` exakt neuer Clip, kein MP4 erzeugt.
+- `content_type=gaming_main`.
+- `music_category=funny_gaming_background`.
+- `vlog_background_blocked_for_gaming_main=true`.
+- `music_start_offset_sec=30.0`.
+- `intro_trim_used=true`.
+- `intro_boost_used=false`.
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`.
+- Report lokal/untracked: `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_manifest.json`
+- Summary lokal/untracked: `reports/controlled_music_preview_run/step9a_allowed_input_fix/step9a_summary.md`
+- Kein Execute-Render gestartet.
+- Kein Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 9B neuen Clip rendern nur nach Master-GO.
 
 ## Wichtigste Beweise
 
