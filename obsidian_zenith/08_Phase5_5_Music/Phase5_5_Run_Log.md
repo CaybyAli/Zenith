@@ -809,3 +809,54 @@ Reports:
 Naechster Schritt:
 - Controlled Music Preview Run Schritt 8 Owner Review Intro/Volume Tuning
 - Kein neuer Render ohne Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten
+
+Status:
+- Owner Review Schritt 8 = FIX
+- Musik passt grundsaetzlich
+- Intro-Offset funktioniert
+- Gaming-Musik passt besser
+- Low-Speech / No-Speech Musik noch ein Tick zu laut
+- Low-Speech Musik nochmal ca. 5 dB gesenkt
+- alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt
+- neue Clip-Kandidaten gesucht
+- kein Render gestartet
+- kein Preview-Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Musikdateien committed
+
+Tuning:
+- Low-Speech vorher Base/Ducking/Max: `-22.0`, `-27.0`, `-20.0`
+- Low-Speech neu Base/Ducking/Max: `-27.0`, `-32.0`, `-25.0`
+- Additional reduction: `5.0` dB
+- Total reduction: `10.0` dB
+- Intro Offset bleibt: `30.0`
+- Intro Trim bleibt: true
+- Intro Boost bleibt: false
+
+Top 3 neue Clip-Kandidaten:
+1. `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+2. `reports/phase5/g2_s3b_multispeaker_pair001/g2_s3b_pair001_short_1.mp4`
+3. `reports/phase5/g2_s3b_friend_rich_520_540/g2_s3b_friend_rich_520_540_short_1.mp4`
+
+Beweise:
+- Code-Commit: `f6725b9`
+- Full Hash: `f6725b97ec7cbc6bacca873ff366198507b1c987`
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`, kein MP4
+- Report: `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_summary.md`
+
+Tests / Runs:
+- `python -m py_compile core\music_ducking_plan.py scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_p55_ducking_plan.py tests\test_controlled_music_preview_render.py -vv`: 45 passed
+- Forbidden Search: keine Treffer
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO
+- Danach erst Step 9 Re-Render mit neuem Clip

@@ -17,7 +17,7 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 7B Re-Render nach FFmpeg-Command-Fix lokal erzeugt.
+- Controlled Music Preview Run: Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten remote gesichert.
 - Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 - Controlled Music Preview Run Schritt 2: technisch GO, Owner Review = FIX wegen falscher Musik-Kategorie.
 - Controlled Music Preview Run Schritt 3: DONE / Content-Type-Fix remote gesichert.
@@ -27,6 +27,8 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 7: NO-GO / FFmpeg-Command war nach `-stream_loop -1` abgeschnitten.
 - Controlled Music Preview Run Schritt 7A: DONE / FFmpeg-Command-Builder repariert und remote gesichert.
 - Controlled Music Preview Run Schritt 7B: DONE / Re-Render lokal erzeugt / Owner Review Pflicht.
+- Controlled Music Preview Run Schritt 8: Owner Review = FIX.
+- Controlled Music Preview Run Schritt 8A: DONE / Low-Speech nochmal -5 dB / neue Clip-Kandidaten gesucht / kein Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -42,7 +44,7 @@ Stand: 2026-06-10
 - `vlog_main` blockiert `funny_gaming_background`, `fail`, `hype`.
 - `uncut` blockiert Musik komplett.
 - Intro-Offset-Policy vorhanden: ruhige Intros werden per Start-Offset getrimmt, kein automatischer Boost.
-- Low-Speech / No-Speech Musik ist um ca. 5 dB leiser geplant.
+- Low-Speech / No-Speech Musik ist um ca. 10 dB leiser geplant.
 - Erster kontrollierter Preview-Musik-Mix lokal erzeugt.
 - Produktions-Musik-Build: nicht gestartet.
 - Finaler Audio-Mix: nicht gestartet.
@@ -71,7 +73,7 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-6 Controlled Music Preview Gate ist abgeschlossen.
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
-Controlled Music Preview Run Schritt 7B Re-Render nach FFmpeg-Command-Fix ist lokal erzeugt.
+Controlled Music Preview Run Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten ist remote gesichert.
 Input-Kandidat ist bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 Letztes Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`.
 Owner Review Schritt 5: GO mit Tuning-Fix.
@@ -82,7 +84,11 @@ Loesung: Low-Speech Gains reduziert auf `base=-22.0`, `ducking=-27.0`, `max=-20.
 Schritt 7 Re-Render ist mit `ffmpeg_command_truncated_after_stream_loop` gescheitert.
 Schritt 7A repariert den FFmpeg-Command-Builder; Dry-Run zeigt vollstaendigen Command mit Musik-Input, `-filter_complex`, Maps und Output-Pfad.
 Schritt 7B Re-Render ist mit `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`, `intro_trim_used=true`, `intro_boost_used=false` lokal erzeugt.
-Naechster Schritt: Controlled Music Preview Run Schritt 8 Owner Review Intro/Volume Tuning.
+Owner Review Schritt 8: FIX, Musik bei wenig Sprache noch ein Tick zu laut.
+Schritt 8A senkt Low-Speech erneut um ca. 5 dB auf `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
+Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+Neue Clip-Kandidaten wurden gesucht.
+Naechster Schritt: Controlled Music Preview Run Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -333,6 +339,37 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Step-7B-Summary lokal/untracked: `reports/controlled_music_preview_run/step7b_rerender_after_ffmpeg_fix/step7b_rerender_summary.md`
 - Owner Review ist jetzt Pflicht.
 - Naechster Schritt: Controlled Music Preview Schritt 8 Owner Review Intro/Volume Tuning.
+
+### Controlled Music Preview Run Schritt 8A
+
+- Owner Review Schritt 8 Ergebnis: FIX.
+- Owner Feedback: Musik passt grundsaetzlich, Intro-Offset funktioniert, Gaming-Musik passt besser.
+- Problem: Wenn wenig oder nicht geredet wird, ist die Musik noch ein Tick zu laut.
+- Entscheidung: Low-Speech / No-Speech Musik nochmal ca. 5 dB runter.
+- Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt.
+- Code Commit: `f6725b9`
+- Full Hash: `f6725b97ec7cbc6bacca873ff366198507b1c987`
+- Low-Speech vorher: `base=-22.0`, `ducking=-27.0`, `max=-20.0`.
+- Low-Speech neu: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
+- Additional reduction: `5.0` dB.
+- Total reduction: `10.0` dB.
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`, `intro_trim_used=true`, `intro_boost_used=false`, kein MP4 erzeugt.
+- Top 3 neue Clip-Kandidaten:
+  1. `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+  2. `reports/phase5/g2_s3b_multispeaker_pair001/g2_s3b_pair001_short_1.mp4`
+  3. `reports/phase5/g2_s3b_friend_rich_520_540/g2_s3b_friend_rich_520_540_short_1.mp4`
+- Report lokal/untracked: `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_manifest.json`
+- Summary lokal/untracked: `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_summary.md`
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
 
 ## Wichtigste Beweise
 

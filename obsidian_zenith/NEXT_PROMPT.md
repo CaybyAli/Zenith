@@ -1,17 +1,10 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 8 - OWNER REVIEW INTRO/VOLUME TUNING
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 8B - SELECT NEW CLIP FOR NEXT PREVIEW
+
+Nur nach Master-GO.
 
 Ziel:
-Ali prueft den neuen Musik-Preview mit Auge/Ohr.
+Einen neuen Main-Account-Clip fuer den naechsten Musik-Preview auswaehlen.
+Nicht denselben K7-Clip verwenden.
+Noch kein Render.
 
-Bewertung:
-- Startet die Musik jetzt direkt brauchbar?
-- Ist die Musik bei wenig Sprache nicht mehr zu laut?
-- Stimme klar?
-- Musik passt zu Rocket League?
-- Keine Audio-Spruenge?
-- Gesamtgefuehl besser?
-
-Entscheidung:
-GO / FIX / NO-GO
-
-Kein neuer Render ohne Master-GO.
+Danach erst Step 9 Re-Render mit neuem Clip.

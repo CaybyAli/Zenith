@@ -708,6 +708,42 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports/MP4 nicht committed.
 
+## Controlled Music Preview Run Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten
+
+Entscheidung: Owner Review Schritt 8 = FIX. Code-GO nur fuer erneutes Low-Speech-Retune und neue Clip-Kandidatensuche, kein Render.
+
+Beweis:
+- Code-Commit: `f6725b9` / `f6725b97ec7cbc6bacca873ff366198507b1c987`.
+- Geaendert: `core/music_ducking_plan.py`, `scripts/controlled_music_preview_render.py`, `tests/test_p55_ducking_plan.py`, `tests/test_controlled_music_preview_render.py`.
+- Lokaler Report: `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_summary.md`.
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt.
+
+Ergebnis:
+- Low-Speech Base Gain: `-27.0`.
+- Low-Speech Ducking Gain: `-32.0`.
+- Low-Speech Max Gain: `-25.0`.
+- Additional reduction: `5.0` dB.
+- Total reduction: `10.0` dB.
+- Alter K7-Clip wird fuer naechsten Review nicht weiter benutzt.
+- Top 3 neue Clip-Kandidaten:
+  1. `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+  2. `reports/phase5/g2_s3b_multispeaker_pair001/g2_s3b_pair001_short_1.mp4`
+  3. `reports/phase5/g2_s3b_friend_rich_520_540/g2_s3b_friend_rich_520_540_short_1.mp4`
+- Naechster Schritt: Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
+
+Grenzen:
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+
 ## Controlled Music Preview Run Schritt 3 Content-Type-Fix
 
 Entscheidung: Owner Review = FIX. Code-GO nur fuer Content-Type-Musik-Policy, kein neuer Render.

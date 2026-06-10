@@ -836,3 +836,58 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Controlled Music Preview Run Schritt 8 Owner Review Intro/Volume Tuning.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten
+
+- Owner Review Schritt 8 Ergebnis: FIX.
+- Musik passt grundsaetzlich.
+- Intro-Offset funktioniert.
+- Gaming-Musik passt besser.
+- Problem: Musik ist bei wenig / keiner Sprache noch ein Tick zu laut.
+- Entscheidung: Low-Speech Musik nochmal ca. 5 dB senken.
+- Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt.
+- Code-Commit: `f6725b9` / `f6725b97ec7cbc6bacca873ff366198507b1c987`.
+- Low-Speech vorher:
+  - `base_music_gain_db=-22.0`
+  - `ducking_gain_db=-27.0`
+  - `max_music_gain_db=-20.0`
+- Low-Speech neu:
+  - `base_music_gain_db=-27.0`
+  - `ducking_gain_db=-32.0`
+  - `max_music_gain_db=-25.0`
+- Additional reduction: `5.0` dB.
+- Total reduction: `10.0` dB.
+- Dry-Run:
+  - `status=dry_run`
+  - `content_type=gaming_main`
+  - `music_category=funny_gaming_background`
+  - `music_start_offset_sec=30.0`
+  - `intro_trim_used=true`
+  - `intro_boost_used=false`
+  - `low_speech_base_music_gain_db=-27.0`
+  - `low_speech_ducking_gain_db=-32.0`
+  - `low_speech_max_music_gain_db=-25.0`
+  - `low_speech_volume_reduced_total_db=10.0`
+  - kein MP4 erzeugt
+- Top 3 neue Clip-Kandidaten:
+  1. `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+  2. `reports/phase5/g2_s3b_multispeaker_pair001/g2_s3b_pair001_short_1.mp4`
+  3. `reports/phase5/g2_s3b_friend_rich_520_540/g2_s3b_friend_rich_520_540_short_1.mp4`
+- Report:
+  - `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_manifest.json`
+  - `reports/controlled_music_preview_run/step8a_owner_review_fix_low_speech_new_clip/step8a_summary.md`
+- Tests:
+  - `python -m py_compile core\music_ducking_plan.py scripts\controlled_music_preview_render.py`: gruen.
+  - `python -m pytest tests\test_p55_ducking_plan.py tests\test_controlled_music_preview_render.py -vv`: 45 passed.
+- Forbidden Search: keine Treffer.
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
