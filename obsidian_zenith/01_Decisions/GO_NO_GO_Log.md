@@ -744,6 +744,35 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 10B Proper Run Selection
+
+Entscheidung: Ali/Master hat den richtigen `gaming_main` Run fuer den finalen Musik-Review ausgewaehlt. Kein Render-GO in Schritt 10B.
+
+Beweis:
+- Ausgewaehlter Run: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Dauer: `520.25s` / ca. 8.67min.
+- Groesse: `800312704` Bytes.
+- Kein Short, kein raw, kein uncut, kein controlled-preview Output.
+- Musik-Tuning fuer Step 11 bleibt `funny_gaming_background`, Intro Offset `30.0s`, Low-Speech Gains `-27.0`, `-32.0`, `-25.0`.
+- `vlog_background` bleibt verboten.
+- Readiness-Risiko: ausgewaehlter Proper Run und Step-11-Output-Root sind im Controlled-Preview-Script noch nicht erlaubt.
+- Report: `reports/controlled_music_preview_run/step10b_select_proper_run/step10b_manifest.json`.
+
+Grenzen:
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Keine Musikdateien committed.
+- Reports nicht committed.
+
+Naechster Schritt:
+- Controlled Music Preview Step 11 Proper Run Render nur nach Master-GO.
+- Wenn Input/Output-Allowlist blockiert: STOPP und Master fragen.
+
 ## Controlled Music Preview Run Schritt 10A Find Proper Run Input
 
 Entscheidung: Owner Review Schritt 10 = Musik-Tuning grundsaetzlich gut, aber Testmedium nicht ausreichend. Kein Render. Nur passenden richtigen Run suchen.

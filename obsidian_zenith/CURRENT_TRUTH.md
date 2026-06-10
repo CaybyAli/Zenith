@@ -822,6 +822,30 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Controlled Music Preview Run nur nach Master-GO und Owner Review.
 
+### Controlled Music Preview Step 10B - Proper Run ausgewaehlt
+
+- Status: richtiger `gaming_main` Run fuer finalen Musik-Review festgeschrieben.
+- Ausgewaehlter Run: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+- Dauer: `520.25s` / ca. 8.67 Minuten.
+- Groesse: `800312704` Bytes.
+- Kein Short.
+- Kein raw.
+- Kein uncut.
+- Kein controlled-preview Output.
+- Musik-Tuning bleibt:
+  - `music_category=funny_gaming_background`
+  - `vlog_background` verboten
+  - Intro Offset `30.0s`
+  - Low-Speech Gains `-27.0`, `-32.0`, `-25.0`
+- Readiness-Risiko fuer Step 11: ausgewaehlter Proper Run und Step-11-Output-Root sind im Controlled-Preview-Script noch nicht erlaubt.
+- Kein Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: Step 11 Proper Run Render nur nach Master-GO; bei Allowlist-Blocker STOPP und Master fragen.
+
 ## Wichtige Links
 
 - [[ZENITH_HOME]]

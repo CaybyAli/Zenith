@@ -1038,3 +1038,40 @@ Report:
 
 Naechster Schritt:
 - Controlled Music Preview Step 10B richtigen Run auswaehlen nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 10B Proper Run festgeschrieben
+
+- Schritt 10B: DONE.
+- Ali/Master hat den richtigen Run fuer den finalen Musik-Review ausgewaehlt.
+- Ausgewaehlter Run: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+- Dauer: `520.25s` / ca. 8.67min.
+- Groesse: `800312704` Bytes.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Kein Short.
+- Kein raw.
+- Kein uncut.
+- Kein controlled-preview Output.
+- Musik-Tuning bleibt:
+  - `music_category=funny_gaming_background`
+  - `vlog_background` verboten
+  - Intro Offset `30.0`
+  - Low-Speech Gains `-27.0`, `-32.0`, `-25.0`
+- Readiness:
+  - Selected input already allowed: nein.
+  - Step-11-Output-Root already allowed: nein.
+  - Naechster Render braucht wahrscheinlich Allowlist-Fix.
+  - Grund: selected proper run/output root not yet allowed by controlled preview script.
+- Report:
+  - `reports/controlled_music_preview_run/step10b_select_proper_run/step10b_manifest.json`
+  - `reports/controlled_music_preview_run/step10b_select_proper_run/step10b_summary.md`
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Step 11 Proper Run Render nur nach Master-GO; bei Allowlist-Blocker STOPP und Master fragen.
