@@ -743,6 +743,43 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix
+
+Entscheidung: Schritt 7 ist NO-GO wegen abgeschnittenem FFmpeg-Command. Code-GO nur fuer Step 7A FFmpeg-Command-Fix, kein Render.
+
+Beweis:
+- Originalfehler: `ffmpeg_command_truncated_after_stream_loop`.
+- Fehlerhafter Command endete nach `-stream_loop -1`.
+- FFmpeg stderr: `At least one output file must be specified`.
+- Code-Commit: `6bfaff8` / `6bfaff8e8cb0aba3af954c178105d0396bc5c3c0`.
+- Fix: `scripts/controlled_music_preview_render.py`.
+- Tests: `tests/test_controlled_music_preview_render.py`.
+- Lokaler Report: `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_summary.md`.
+
+Ergebnis:
+- FFmpeg-Command-Builder baut wieder vollstaendigen Command.
+- Musik-Input ist Pflicht.
+- Output-Pfad ist Pflicht.
+- `-filter_complex` ist Pflicht.
+- mindestens zwei `-map` Eintraege sind Pflicht.
+- mindestens zwei Inputs sind Pflicht.
+- Command darf nicht nach `-stream_loop -1` enden.
+- Dry-Run zeigt `music_start_offset_sec=30.0` und vollstaendigen Command.
+- Naechster Schritt: Controlled Music Preview Schritt 7B Re-Render nur nach Master-GO.
+
+Grenzen:
+- Kein Execute-Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+
 ## Controlled Music Preview Run Schritt 4 Gaming-Re-Render
 
 Entscheidung: Master-GO fuer genau einen zweiten kontrollierten Main-Account-Musik-Preview-Re-Render mit `content_type=gaming_main`.

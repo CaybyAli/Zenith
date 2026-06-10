@@ -17,13 +17,15 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 6 Intro/Low-Speech-Tuning-Fix remote gesichert.
+- Controlled Music Preview Run: Schritt 7A FFmpeg-Command-Fix remote gesichert.
 - Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 - Controlled Music Preview Run Schritt 2: technisch GO, Owner Review = FIX wegen falscher Musik-Kategorie.
 - Controlled Music Preview Run Schritt 3: DONE / Content-Type-Fix remote gesichert.
 - Controlled Music Preview Run Schritt 4: DONE / Gaming-Re-Render lokal erzeugt / Owner Review offen.
 - Controlled Music Preview Run Schritt 5: Owner Review = GO mit Tuning-Fix.
 - Controlled Music Preview Run Schritt 6: DONE / Intro-Offset + Low-Speech-Volume-Fix remote gesichert.
+- Controlled Music Preview Run Schritt 7: NO-GO / FFmpeg-Command war nach `-stream_loop -1` abgeschnitten.
+- Controlled Music Preview Run Schritt 7A: DONE / FFmpeg-Command-Builder repariert und remote gesichert.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -68,7 +70,7 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-6 Controlled Music Preview Gate ist abgeschlossen.
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
-Controlled Music Preview Run Schritt 6 Intro/Low-Speech-Tuning-Fix ist remote gesichert.
+Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix ist remote gesichert.
 Input-Kandidat ist bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 Letztes Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/controlled_music_preview_main.mp4`.
 Owner Review Schritt 5: GO mit Tuning-Fix.
@@ -76,7 +78,9 @@ Problem 1: viele Songs beginnen zu leise, brauchbarer Start erst nach ca. 30 Sek
 Loesung: Intro-Offset/Trim-Policy mit `music_start_offset_sec=30.0`, kein automatischer Boost.
 Problem 2: Musik bei Low-Speech/No-Speech ca. 5 dB zu laut.
 Loesung: Low-Speech Gains reduziert auf `base=-22.0`, `ducking=-27.0`, `max=-20.0`.
-Naechster Schritt: Controlled Music Preview Run Schritt 7 Re-Render nur nach Master-GO.
+Schritt 7 Re-Render ist mit `ffmpeg_command_truncated_after_stream_loop` gescheitert.
+Schritt 7A repariert den FFmpeg-Command-Builder; Dry-Run zeigt vollstaendigen Command mit Musik-Input, `-filter_complex`, Maps und Output-Pfad.
+Naechster Schritt: Controlled Music Preview Run Schritt 7B Re-Render nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -262,6 +266,37 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 7 Re-Render nur nach Master-GO.
+
+### Controlled Music Preview Run Schritt 7A
+
+- Schritt 7 Ergebnis: NO-GO.
+- Fehler: FFmpeg-Command war nach `-stream_loop -1` abgeschnitten.
+- FFmpeg stderr: `At least one output file must be specified`.
+- Code Commit: `6bfaff8`
+- Full Hash: `6bfaff8e8cb0aba3af954c178105d0396bc5c3c0`
+- Repariert: `scripts/controlled_music_preview_render.py`
+- Tests: `tests/test_controlled_music_preview_render.py`
+- FFmpeg-Command-Builder baut wieder vollstaendigen Command.
+- Musik-Input ist Pflicht.
+- Output-Pfad ist Pflicht.
+- `-filter_complex` ist Pflicht.
+- mindestens zwei `-map` Eintraege sind Pflicht.
+- Command darf nicht nach `-stream_loop -1` enden.
+- Intro Offset `30.000` wird vor Musik-Input gesetzt.
+- Tests: `python -m py_compile scripts\controlled_music_preview_render.py` gruen; `python -m pytest tests\test_controlled_music_preview_render.py -vv` mit 26 passed.
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`, `intro_trim_used=true`, `intro_boost_used=false`, kein MP4 erzeugt.
+- Report lokal/untracked: `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_manifest.json`
+- Summary lokal/untracked: `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_summary.md`
+- Kein Execute-Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 7B Re-Render nur nach Master-GO.
 
 ## Wichtigste Beweise
 

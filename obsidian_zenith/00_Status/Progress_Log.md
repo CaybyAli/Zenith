@@ -752,3 +752,41 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 7 Re-Render nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix
+
+- Schritt 7 Ergebnis: NO-GO.
+- Originalfehler: `ffmpeg_command_truncated_after_stream_loop`.
+- FFmpeg stderr: `At least one output file must be specified`.
+- Ursache: FFmpeg-Command-Builder gab nach `-stream_loop -1` zu frueh zurueck.
+- Code-Commit: `6bfaff8` / `6bfaff8e8cb0aba3af954c178105d0396bc5c3c0`.
+- Repariert: `scripts/controlled_music_preview_render.py`.
+- Tests erweitert: `tests/test_controlled_music_preview_render.py`.
+- Validierung erfordert Musik-Input, Output-Pfad, `-filter_complex`, Maps und mindestens zwei Inputs.
+- Command darf nicht nach `-stream_loop -1` enden.
+- Dry-Run:
+  - `status=dry_run`
+  - `content_type=gaming_main`
+  - `music_category=funny_gaming_background`
+  - `music_start_offset_sec=30.0`
+  - `intro_trim_used=true`
+  - `intro_boost_used=false`
+  - kein MP4 erzeugt
+- Report:
+  - `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_manifest.json`
+  - `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_summary.md`
+- Tests:
+  - `python -m py_compile scripts\controlled_music_preview_render.py`: gruen.
+  - `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 26 passed.
+- Forbidden Search: keine Treffer.
+- Kein Execute-Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 7B Re-Render nur nach Master-GO.

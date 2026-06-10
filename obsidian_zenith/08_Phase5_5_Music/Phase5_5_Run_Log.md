@@ -715,3 +715,45 @@ Tests / Runs:
 
 Naechster Schritt:
 - Controlled Music Preview Schritt 7 Re-Render mit Intro-Offset und niedrigerer Low-Speech-Musik nur nach Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix
+
+Status:
+- Schritt 7 Re-Render Ergebnis: NO-GO
+- FFmpeg-Command war nach `-stream_loop -1` abgeschnitten
+- FFmpeg-Command-Builder repariert
+- kein Execute-Render gestartet
+- kein Preview-Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Musikdateien committed
+
+Beweise:
+- Code-Commit: `6bfaff8`
+- Full Hash: `6bfaff8e8cb0aba3af954c178105d0396bc5c3c0`
+- Fix: `scripts/controlled_music_preview_render.py`
+- Tests: `tests/test_controlled_music_preview_render.py`
+- Original Failure: `ffmpeg_command_truncated_after_stream_loop`
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`, `music_start_offset_sec=30.0`
+- Dry-Run MP4 erzeugt: nein
+- Report: `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step7a_ffmpeg_command_fix/ffmpeg_command_fix_summary.md`
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 26 passed
+- Forbidden Search: keine Treffer
+
+Command Safety:
+- Musik-Input required: true
+- Output-Pfad required: true
+- `-filter_complex` required: true
+- `-map` required: true
+- Command darf nicht nach `-stream_loop -1` enden
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 7B Re-Render nach FFmpeg-Command-Fix nur nach Master-GO
