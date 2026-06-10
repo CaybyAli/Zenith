@@ -1,14 +1,13 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 12C - SELECT VISUALLY VALID PROPER RUN
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 12D - ALLOWLIST + AUDIO READINESS FOR VISUAL PROPER RUN
 
 Nur nach Master-GO.
 
 Ziel:
-Visuell gueltigen Proper Run auswaehlen.
-Gameplay sichtbar.
-Nicht Facecam fullscreen.
-Kein Short/raw/uncut.
-Noch kein Render.
+Vor neuem Render:
+1. ausgewaehlten visuellen Proper Run erlauben
+2. passenden Output-Root erlauben
+3. Audio-Gain/Ducking-Readiness klaeren, weil Step 12A zeigte:
+   Manifest-Gains werden nicht direkt im FFmpeg-Command angewendet
+   speech-aware Ducking ist nicht bestaetigt
 
-Danach:
-Allowlist falls noetig, dann Render mit Musik.
-Audio-Ducking-Thema bleibt separat zu pruefen.
+Noch kein Execute Render ohne separates Master-GO.

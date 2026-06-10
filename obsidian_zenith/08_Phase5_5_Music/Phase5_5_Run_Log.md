@@ -1252,3 +1252,38 @@ Audio-Hinweis:
 
 Naechster Schritt:
 - Step 12C visuell gueltigen Proper Run auswaehlen nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 12C Select Visually Valid Proper Run
+
+Status:
+- Ali/Master hat den visuell gueltigen Proper Run ausgewaehlt.
+- Ausgewaehlter Run: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Dauer: `528.348813s`.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Kein Short, kein raw, kein uncut, kein controlled preview output.
+- Alter falscher Proper Run wird nicht weiter genutzt: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Alter Input war Facecam fullscreen: ja.
+- Video-Mapping-Fix noetig: nein.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Readiness:
+- Input schon erlaubt: nein.
+- Output-root schon erlaubt: nein.
+- Naechster Render braucht Allowlist-Fix: ja.
+- Grund: selected visual proper run/output root not yet allowed by controlled preview script.
+- Audio-Thema bleibt offen: Manifest-Gains nicht direkt im FFmpeg-Command; speech-aware Ducking nicht bestaetigt.
+
+Reports:
+- `reports/controlled_music_preview_run/step12c_select_visually_valid_proper_run/step12c_manifest.json`
+- `reports/controlled_music_preview_run/step12c_select_visually_valid_proper_run/step12c_summary.md`
+
+Naechster Schritt:
+- Step 12D Allowlist + Audio Readiness nur nach Master-GO.
+- Noch kein Execute Render ohne separates Master-GO.

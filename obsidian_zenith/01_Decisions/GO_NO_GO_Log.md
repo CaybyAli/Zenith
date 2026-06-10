@@ -744,6 +744,39 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## 2026-06-10 - Controlled Music Preview Run Schritt 12C Select Visually Valid Proper Run
+
+Entscheidung: Ali/Master hat `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4` als visuell gueltigen Proper Run fuer den naechsten Musik-Realtest ausgewaehlt.
+
+Beweis:
+- Ausgewaehlter Run: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Dauer laut ffprobe: `528.348813s`.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Short/raw/uncut: nein/nein/nein.
+- Controlled preview output: nein.
+- Lokaler Report: `reports/controlled_music_preview_run/step12c_select_visually_valid_proper_run/step12c_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step12c_select_visually_valid_proper_run/step12c_summary.md`.
+
+Ergebnis:
+- Der alte falsche Proper Run wird nicht weiter genutzt: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Alter Input war Facecam fullscreen: ja.
+- Video-Mapping-Fix noetig: nein.
+- Kein Render gestartet.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Audio-Thema bleibt offen: Manifest-Gains nicht direkt im FFmpeg-Command; speech-aware Ducking nicht bestaetigt.
+
+Risiko fuer Step 12D:
+- Input schon erlaubt: nein.
+- Output-root `reports/controlled_music_preview_run/step13_visual_proper_run_music_render` schon erlaubt: nein.
+- Naechster Render braucht Allowlist-Fix: ja.
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 12D Allowlist + Audio Readiness nur nach Master-GO.
+- Noch kein Execute Render ohne separates Master-GO.
+
 ## Controlled Music Preview Run Schritt 10B Proper Run Selection
 
 Entscheidung: Ali/Master hat den richtigen `gaming_main` Run fuer den finalen Musik-Review ausgewaehlt. Kein Render-GO in Schritt 10B.

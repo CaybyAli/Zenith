@@ -1007,6 +1007,30 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Audio-Thema bleibt offen: Manifest-Gains nicht direkt im FFmpeg-Command; speech-aware Ducking nicht bestaetigt.
 - Naechster Schritt: Controlled Music Preview Step 12C visuell gueltigen Proper Run auswaehlen nur nach Master-GO.
 
+### Controlled Music Preview Step 12C - Select Visually Valid Proper Run
+
+- Status: visuell gueltiger Proper Run ausgewaehlt und lokal dokumentiert.
+- Ausgewaehlter Run: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Dauer: `528.348813s`.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Short/raw/uncut: nein/nein/nein.
+- Controlled preview output: nein.
+- Alter falscher Proper Run wird nicht weiter genutzt: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Alter Input war Facecam fullscreen: ja.
+- Video-Mapping-Fix noetig: nein.
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Audio-Thema bleibt offen: Manifest-Gains nicht direkt im FFmpeg-Command; speech-aware Ducking nicht bestaetigt.
+- Risiko fuer naechsten Schritt: Input `job_aa2953e15914` und Output-Root `reports/controlled_music_preview_run/step13_visual_proper_run_music_render` sind im Controlled-Preview-Script noch nicht erlaubt.
+- Lokaler Report: `reports/controlled_music_preview_run/step12c_select_visually_valid_proper_run/step12c_summary.md`.
+- Naechster Schritt: Controlled Music Preview Step 12D Allowlist + Audio Readiness nur nach Master-GO.
+
 ## Wichtige Links
 
 - [[ZENITH_HOME]]
