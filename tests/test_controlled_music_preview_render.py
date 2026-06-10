@@ -28,6 +28,9 @@ def _repo_fixture(tmp_path: Path) -> Path:
     new_input_path = tmp_path / preview.SELECTED_NEW_INPUT_VIDEO
     new_input_path.parent.mkdir(parents=True, exist_ok=True)
     new_input_path.write_bytes(b"new video")
+    proper_run_path = tmp_path / preview.PROPER_RUN_INPUT_VIDEO
+    proper_run_path.parent.mkdir(parents=True, exist_ok=True)
+    proper_run_path.write_bytes(b"proper run video")
 
     music_dir = tmp_path / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
     music_dir.mkdir(parents=True, exist_ok=True)
@@ -154,6 +157,78 @@ def test_selected_new_clip_is_allowed(tmp_path):
     assert not list((repo_root / preview.STEP9_OUTPUT_ROOT).rglob("*.mp4"))
 
 
+def test_proper_run_input_is_allowed(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP11_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["input_video_path"] == preview.PROPER_RUN_INPUT_VIDEO.as_posix()
+
+
+def test_step11_output_root_is_allowed(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP11_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["output_root"] == preview.STEP11_OUTPUT_ROOT.as_posix()
+
+
+def test_step11_dry_run_with_proper_run_uses_final_music_tuning(tmp_path, monkeypatch):
+    repo_root = _repo_fixture(tmp_path)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("ffmpeg must not start in dry-run")
+
+    monkeypatch.setattr(preview.subprocess, "run", fail_if_called)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP11_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert not list((repo_root / preview.STEP11_OUTPUT_ROOT).rglob("*.mp4"))
+    assert manifest["input_video_path"] == preview.PROPER_RUN_INPUT_VIDEO.as_posix()
+    assert manifest["output_root"] == preview.STEP11_OUTPUT_ROOT.as_posix()
+    assert manifest["content_type"] == CONTENT_TYPE_GAMING_MAIN
+    assert manifest["music_category"] == CATEGORY_FUNNY_GAMING_BACKGROUND
+    assert manifest["music_start_offset_sec"] == 30.0
+    assert manifest["intro_trim_used"] is True
+    assert manifest["intro_boost_used"] is False
+    assert manifest["low_speech_base_music_gain_db"] == -27.0
+    assert manifest["low_speech_ducking_gain_db"] == -32.0
+    assert manifest["low_speech_max_music_gain_db"] == -25.0
+
+
+def test_proper_run_has_no_k7_or_short_fallback(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP11_OUTPUT_ROOT,
+    )
+
+    assert manifest["input_video_path"] == preview.PROPER_RUN_INPUT_VIDEO.as_posix()
+    assert manifest["input_video_path"] != preview.CONFIRMED_INPUT_VIDEO.as_posix()
+    assert manifest["input_video_path"] != preview.SELECTED_NEW_INPUT_VIDEO.as_posix()
+
+
 def test_disallowed_controlled_preview_inputs_are_blocked(tmp_path):
     repo_root = _repo_fixture(tmp_path)
     blocked_inputs = (
@@ -161,6 +236,7 @@ def test_disallowed_controlled_preview_inputs_are_blocked(tmp_path):
         "local_assets/music/main_account/funny_gaming_background/test.mp3",
         "video_configs/something.mp4",
         "reports/controlled_music_preview_run/irgendwas.mp4",
+        "exports/gaming_main/job_other/job_other_v1_final.mp4",
     )
 
     for blocked_input in blocked_inputs:

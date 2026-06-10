@@ -27,15 +27,21 @@ CONFIRMED_INPUT_VIDEO = Path(
 SELECTED_NEW_INPUT_VIDEO = Path(
     "exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4"
 )
+PROPER_RUN_INPUT_VIDEO = Path(
+    "exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4"
+)
 ALLOWED_CONTROLLED_PREVIEW_INPUTS = {
     "k7_control_preview": CONFIRMED_INPUT_VIDEO,
     "g2_emoji_position_preview": SELECTED_NEW_INPUT_VIDEO,
+    "proper_run_job_323bf29c60e4": PROPER_RUN_INPUT_VIDEO,
 }
 EXPECTED_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step2_preview_render")
 STEP9_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step9_new_clip_final_tuning_render")
+STEP11_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step11_proper_run_final_music_render")
 ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step2_preview_render": EXPECTED_OUTPUT_ROOT,
     "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
+    "step11_proper_run_final_music_render": STEP11_OUTPUT_ROOT,
 }
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
 OUTPUT_FILENAME = "controlled_music_preview_main.mp4"
@@ -285,6 +291,7 @@ def build_manifest(
     status: str,
     repo_root: Path,
     input_video: Path,
+    output_root: Path,
     output_video: Path,
     music_file: Path,
     content_type: str,
@@ -303,6 +310,7 @@ def build_manifest(
         "channel_type": "main",
         "content_type": content_type,
         "input_video_path": input_video.relative_to(repo_root).as_posix(),
+        "output_root": output_root.relative_to(repo_root).as_posix(),
         "output_video_path": output_video.relative_to(repo_root).as_posix(),
         "music_category": music_category,
         "default_preview_category": music_category,
@@ -333,6 +341,7 @@ def build_summary(manifest: dict) -> str:
         f"- channel_type: {manifest['channel_type']}",
         f"- content_type: {manifest['content_type']}",
         f"- input_video_path: `{manifest['input_video_path']}`",
+        f"- output_root: `{manifest['output_root']}`",
         f"- output_video_path: `{manifest['output_video_path']}`",
         f"- music_category: {manifest['music_category']}",
         f"- default_preview_category: {manifest['default_preview_category']}",
@@ -406,6 +415,7 @@ def run(
             status="dry_run",
             repo_root=root,
             input_video=full_input,
+            output_root=full_output_root,
             output_video=output_video,
             music_file=selected_music,
             content_type=normalized_content_type,
@@ -428,6 +438,7 @@ def run(
             status="failed",
             repo_root=root,
             input_video=full_input,
+            output_root=full_output_root,
             output_video=output_video,
             music_file=selected_music,
             content_type=normalized_content_type,
@@ -446,6 +457,7 @@ def run(
         status="ok",
         repo_root=root,
         input_video=full_input,
+        output_root=full_output_root,
         output_video=output_video,
         music_file=selected_music,
         content_type=normalized_content_type,
