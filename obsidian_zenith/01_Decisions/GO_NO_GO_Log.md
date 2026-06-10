@@ -853,6 +853,48 @@ Grenzen:
 Naechster Schritt:
 - Controlled Music Preview Step 12 Owner Review Proper Run Final Music Tuning.
 
+## Controlled Music Preview Run Schritt 12A Owner NO-GO Diagnosis
+
+Entscheidung: Owner Review Schritt 12 = NO-GO. Step 12A ist reine Diagnose. Kein Code-Fix, kein Render.
+
+Beweis:
+- Owner Visual Issue: Output zeigt nur Facecam fullscreen.
+- Owner Audio Issue: Musik dauerhaft zu laut, auch bei Sprache/Freunden.
+- Diagnose-Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- NO-GO Output: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/controlled_music_preview_main.mp4`.
+- Diagnose-Report: `reports/controlled_music_preview_run/step12a_owner_review_no_go_diagnosis/step12a_manifest.json`.
+- Diagnose-Summary: `reports/controlled_music_preview_run/step12a_owner_review_no_go_diagnosis/step12a_summary.md`.
+- Diagnose-Screenshots: `input_010s.png`, `output_010s.png`, `input_060s.png`, `output_060s.png`, `input_180s.png`, `output_180s.png`, `input_360s.png`, `output_360s.png`.
+
+Ergebnis:
+- Input ist Facecam fullscreen: ja.
+- Output ist Facecam fullscreen: ja.
+- Input-/Output-Frames sind an 10s, 60s, 180s und 360s byte-identisch.
+- Visuelle Root Cause: der ausgewaehlte Proper Run ist selbst Facecam fullscreen; Step-11B kopiert das Video unveraendert.
+- FFmpeg Video Mapping: `-map 0:v:0` und `-c:v copy`.
+- Manifest-Gains vorhanden: ja, `-27.0`, `-32.0`, `-25.0`.
+- FFmpeg command nutzt diese Gains direkt: nein; echter Filter nutzt `volume=0.08` plus `sidechaincompress`.
+- Speech/Friend-Ducking bestaetigt: nein.
+- Audio Root Cause: keine echte transcript-/speaker-/friend-aware Ducking-Kurve bestaetigt; Manifest-Gains stehen nicht direkt im ffmpeg command.
+
+Grenzen:
+- Kein Code-Fix.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Keine Musikdateien committed.
+- Reports/Screenshots nicht committed.
+
+Naechster Schritt:
+- Controlled Music Preview Step 12B Fix after Owner NO-GO nur nach Master-GO.
+- Danach erst Dry-Run.
+- Kein Execute Render ohne weiteres Master-GO.
+
 ## Controlled Music Preview Run Schritt 10A Find Proper Run Input
 
 Entscheidung: Owner Review Schritt 10 = Musik-Tuning grundsaetzlich gut, aber Testmedium nicht ausreichend. Kein Render. Nur passenden richtigen Run suchen.

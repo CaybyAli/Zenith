@@ -39,6 +39,8 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 10B: DONE / richtiger Proper Run festgeschrieben / kein Render.
 - Controlled Music Preview Run Schritt 11A: DONE / Proper-Run-Input und Step-11-Output-Root exakt erlaubt / kein Execute Render.
 - Controlled Music Preview Run Schritt 11B: DONE / Proper Run mit finalem Musik-Tuning lokal gerendert / Owner Review Schritt 12 Pflicht.
+- Controlled Music Preview Run Schritt 12: Owner Review = NO-GO.
+- Controlled Music Preview Run Schritt 12A: DONE / Owner-NO-GO diagnostiziert / kein Render / kein Code-Fix.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -157,6 +159,18 @@ Intro Boost: `false`.
 Low-Speech Gains: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
 Owner Review Schritt 12 ist jetzt Pflicht.
+Owner Review Schritt 12 Ergebnis: NO-GO.
+Grund 1: Output zeigt nur Facecam fullscreen.
+Grund 2: Musik dauerhaft zu laut, auch bei Sprache/Freunden.
+Schritt 12A Diagnose wurde ohne Code-Fix und ohne Render durchgefuehrt.
+Visual Diagnose: Input ist bereits Facecam fullscreen; Output ist ebenfalls Facecam fullscreen und die gezogenen Input-/Output-Frames sind byte-identisch.
+Visuelle Root Cause: falscher/ungeeigneter Proper-Run-Input, nicht Step-11B-Video-Mapping.
+FFmpeg Video Mapping: `-map 0:v:0` und `-c:v copy`.
+Audio Diagnose: Manifest enthaelt `-27/-32/-25`, aber der echte ffmpeg command nutzt statisch `volume=0.08` plus `sidechaincompress`.
+Audio Root Cause: geplante Manifest-Gains werden nicht direkt im ffmpeg command angewendet; echte transcript-/speaker-/friend-aware Ducking-Kurve ist nicht bestaetigt.
+Volumedetect 60-90s: Input `mean=-32.8 dB`, `max=-18.6 dB`; Output `mean=-37.8 dB`, `max=-22.8 dB`.
+Naechster Fixvorschlag: Step 12B nach Master-GO: richtigen Gameplay-Proper-Run waehlen/fixen und Audio-Command so korrigieren, dass deutlich niedrigere echte Musik-Gains plus verlaessliche Speech/Friend-Ducking-Logik greifen.
+Kein Render, kein Audio-Mix, kein Upload, kein Qwen, kein Runtime Learning.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -935,6 +949,31 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Runtime Learning gestartet.
 - Reports/MP4 nicht committed.
 - Naechster Schritt: Controlled Music Preview Step 12 Owner Review Proper Run Final Music Tuning.
+
+### Controlled Music Preview Step 12A - Owner NO-GO Diagnosis
+
+- Status: Owner-NO-GO diagnostiziert und lokal dokumentiert.
+- Owner Review Schritt 12: NO-GO.
+- Grund 1: Output zeigt nur Facecam fullscreen.
+- Grund 2: Musik dauerhaft zu laut, auch bei Sprache/Freunden.
+- Diagnose-Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- NO-GO-Output: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/controlled_music_preview_main.mp4`.
+- Input ist Facecam fullscreen: ja.
+- Output ist Facecam fullscreen: ja.
+- Input-/Output-Screenshots sind an 10s, 60s, 180s und 360s byte-identisch.
+- Visuelle Root Cause: falscher/ungeeigneter Proper-Run-Input; Step-11B kopiert Video unveraendert.
+- Verdaechtige Video-Stelle: keine Bildfilter-Stelle; ffmpeg nutzt `-map 0:v:0` und `-c:v copy`.
+- Manifest-Gains vorhanden: ja, `-27.0`, `-32.0`, `-25.0`.
+- FFmpeg command nutzt diese Gains direkt: nein; echter Filter nutzt `volume=0.08` plus `sidechaincompress`.
+- Speech/Friend-Ducking bestaetigt: nein; keine transcript-/speaker-/friend-aware Ducking-Kurve sichtbar.
+- Lokaler Diagnose-Report: `reports/controlled_music_preview_run/step12a_owner_review_no_go_diagnosis/step12a_summary.md`.
+- Kein Code-Fix.
+- Kein Render.
+- Kein Audio-Mix.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Naechster Schritt: Controlled Music Preview Step 12B Fix after Owner NO-GO nur nach Master-GO.
 
 ## Wichtige Links
 

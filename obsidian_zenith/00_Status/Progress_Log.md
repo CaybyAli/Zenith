@@ -1152,3 +1152,44 @@ Naechster Schritt:
 - Musikdateien nicht committed.
 - Reports/MP4 lokal/untracked, nicht committed.
 - Owner Review Schritt 12 ist jetzt Pflicht.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 12A Owner NO-GO Diagnosis
+
+- Owner Review Schritt 12: NO-GO.
+- Owner Visual Issue: Output zeigt nur Facecam fullscreen.
+- Owner Audio Issue: Musik dauerhaft zu laut, auch wenn Ali oder Freunde reden.
+- Schritt 12A: Diagnose-only ausgefuehrt.
+- Kein Code-Fix.
+- Kein neuer Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Visual Diagnose:
+- Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- NO-GO Output: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/controlled_music_preview_main.mp4`.
+- Input ist Facecam fullscreen: ja.
+- Output ist Facecam fullscreen: ja.
+- Input-/Output-Frames bei 10s, 60s, 180s und 360s sind byte-identisch.
+- FFmpeg Video Mapping: `-map 0:v:0`, `-c:v copy`.
+- Root Cause visuell: falscher/ungeeigneter Proper-Run-Input, nicht Preview-Render-Mapping.
+
+Audio Diagnose:
+- Manifest-Gains vorhanden: `-27.0`, `-32.0`, `-25.0`.
+- FFmpeg command nutzt diese Werte direkt: nein.
+- Echter Audiofilter: `[1:a]volume=0.08[musicquiet]`, danach `sidechaincompress`, danach `amix`.
+- Speech/Friend-Ducking bestaetigt: nein.
+- Root Cause Audio: Manifest-Gains werden nicht direkt angewendet; keine transcript-/speaker-/friend-aware Ducking-Kurve im Step-11B command sichtbar.
+- Volumedetect 60-90s Input: `mean=-32.8 dB`, `max=-18.6 dB`.
+- Volumedetect 60-90s Output: `mean=-37.8 dB`, `max=-22.8 dB`.
+
+Reports:
+- `reports/controlled_music_preview_run/step12a_owner_review_no_go_diagnosis/step12a_manifest.json`
+- `reports/controlled_music_preview_run/step12a_owner_review_no_go_diagnosis/step12a_summary.md`
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 12B Fix after Owner NO-GO nur nach Master-GO.
+- Erst gezielt fixen, danach Dry-Run.
+- Kein Execute Render ohne weiteres Master-GO.

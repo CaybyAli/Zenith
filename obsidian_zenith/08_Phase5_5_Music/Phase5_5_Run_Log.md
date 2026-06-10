@@ -1169,3 +1169,43 @@ Naechster Schritt:
 - Entscheidung nur durch Ali: GO / FIX / NO-GO
 - Kein Upload ohne neues Master-GO
 - Kein Runtime Learning
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 12A Owner NO-GO Diagnosis
+
+Status:
+- Owner Review Schritt 12: NO-GO.
+- Grund 1: Output zeigt nur Facecam fullscreen.
+- Grund 2: Musik dauerhaft zu laut, auch bei Sprache/Freunden.
+- Step 12A Diagnose ausgefuehrt.
+- Kein Code-Fix.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Visual Diagnose:
+- Input ist Facecam fullscreen: ja.
+- Output ist Facecam fullscreen: ja.
+- Screenshots: `input_010s.png`, `output_010s.png`, `input_060s.png`, `output_060s.png`, `input_180s.png`, `output_180s.png`, `input_360s.png`, `output_360s.png`.
+- Input-/Output-Screenshots sind an allen vier Zeitpunkten byte-identisch.
+- FFmpeg Video Mapping: `-map 0:v:0` und `-c:v copy`.
+- Visuelle Root Cause: der ausgewaehlte Proper Run ist selbst Facecam fullscreen; Step-11B hat das Bild nicht veraendert.
+
+Audio Diagnose:
+- Manifest-Gains: `low_speech_base_music_gain_db=-27.0`, `low_speech_ducking_gain_db=-32.0`, `low_speech_max_music_gain_db=-25.0`.
+- FFmpeg command nutzt diese Gains direkt: nein.
+- Echter Filter: `[1:a]volume=0.08[musicquiet];[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]`.
+- Speech/Friend-Ducking bestaetigt: nein.
+- Audio Root Cause: keine echte transcript-/speaker-/friend-aware Ducking-Kurve bestaetigt; Manifest-Gains stehen nicht direkt im ffmpeg command.
+- Volumedetect Input 60-90s: `mean=-32.8 dB`, `max=-18.6 dB`.
+- Volumedetect Output 60-90s: `mean=-37.8 dB`, `max=-22.8 dB`.
+
+Naechster Fixvorschlag:
+- Step 12B nur nach Master-GO.
+- Facecam fullscreen / falsche Proper-Run-Auswahl beheben.
+- Musik global und bei Sprache deutlich leiser machen.
+- Danach erst Dry-Run.
+- Kein Execute Render ohne weiteren Master-GO.
