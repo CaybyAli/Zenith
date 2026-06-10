@@ -744,6 +744,39 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 8B Neuer Clip festgeschrieben
+
+Entscheidung: Master bestaetigt Kandidat 1 als neuen Clip fuer den naechsten Musik-Preview. Kein Render in Schritt 8B.
+
+Beweis:
+- Neuer Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
+- Groesse: `94364505` Bytes.
+- LastWriteTime: `2026-06-05 06:07:32`.
+- Lokaler Report: `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_summary.md`.
+
+Ergebnis:
+- Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt.
+- Neuer Clip ist festgeschrieben.
+- `content_type=gaming_main`.
+- `channel_type=main`.
+- Musik-Kategorie fuer naechsten Render: `funny_gaming_background`.
+- `vlog_background` bleibt verboten.
+- Low-Speech Gains bleiben `-27.0`, `-32.0`, `-25.0`.
+- Intro Offset bleibt `30.0`.
+- Naechster Schritt: Controlled Music Preview Schritt 9 Render neuer Clip nur nach Master-GO.
+
+Grenzen:
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+
 ## Controlled Music Preview Run Schritt 3 Content-Type-Fix
 
 Entscheidung: Owner Review = FIX. Code-GO nur fuer Content-Type-Musik-Policy, kein neuer Render.

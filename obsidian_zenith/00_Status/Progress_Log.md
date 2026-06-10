@@ -891,3 +891,38 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 8B Neuer Clip festgeschrieben
+
+- Ali/Master hat Kandidat 1 als neuen Clip bestaetigt.
+- Neuer Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
+- Neuer Clip existiert: ja.
+- Neuer Clip Groesse: `94364505` Bytes.
+- Neuer Clip LastWriteTime: `2026-06-05 06:07:32`.
+- Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt:
+  - `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Content Type fuer naechsten Render: `gaming_main`.
+- Channel Type fuer naechsten Render: `main`.
+- Musik-Kategorie fuer naechsten Render: `funny_gaming_background`.
+- `vlog_background` erlaubt: nein.
+- Low-Speech Werte bleiben:
+  - `low_speech_base_music_gain_db=-27.0`
+  - `low_speech_ducking_gain_db=-32.0`
+  - `low_speech_max_music_gain_db=-25.0`
+- Intro Offset bleibt: `30.0`.
+- Musikbibliothek:
+  - `local_assets/music/` ignored.
+  - `git ls-files local_assets/music` leer.
+- Report:
+  - `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_manifest.json`
+  - `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_summary.md`
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 9 Render neuer Clip nur nach Master-GO.

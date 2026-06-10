@@ -1,10 +1,19 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 8B - SELECT NEW CLIP FOR NEXT PREVIEW
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 9 - RENDER NEW CLIP WITH FINAL TUNING
 
 Nur nach Master-GO.
 
 Ziel:
-Einen neuen Main-Account-Clip fuer den naechsten Musik-Preview auswaehlen.
-Nicht denselben K7-Clip verwenden.
-Noch kein Render.
+Neuen bestaetigten gaming_main Clip rendern:
+exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4
 
-Danach erst Step 9 Re-Render mit neuem Clip.
+Regeln:
+- content_type=gaming_main
+- channel_type=main
+- music_category=funny_gaming_background
+- vlog_background verboten
+- intro offset 30s
+- low-speech gains -27/-32/-25
+- kein Upload
+- kein Runtime Learning
+- kein Qwen
+- Uncut verboten

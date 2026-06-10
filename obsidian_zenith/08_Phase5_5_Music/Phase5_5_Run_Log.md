@@ -860,3 +860,41 @@ Tests / Runs:
 Naechster Schritt:
 - Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO
 - Danach erst Step 9 Re-Render mit neuem Clip
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 8B Neuer Clip festgeschrieben
+
+Status:
+- Ali/Master hat Kandidat 1 bestaetigt
+- neuer Clip fuer naechsten Preview festgeschrieben
+- alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt
+- kein Render gestartet
+- kein Preview-Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Runtime Learning gestartet
+- keine Musikdateien committed
+
+Neuer Clip:
+- `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Groesse: `94364505` Bytes
+- LastWriteTime: `2026-06-05 06:07:32`
+
+Naechster Render Plan:
+- `content_type=gaming_main`
+- `channel_type=main`
+- `music_category=funny_gaming_background`
+- `vlog_background` verboten
+- Intro Offset: `30.0`
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`
+- Uncut verboten
+
+Beweise:
+- Report: `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_summary.md`
+- Musikbibliothek ignored: ja
+- `git ls-files local_assets/music`: leer
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 9 Render neuer Clip mit finalem Tuning nur nach Master-GO

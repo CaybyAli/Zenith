@@ -17,7 +17,7 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten remote gesichert.
+- Controlled Music Preview Run: Schritt 8B neuer Clip remote festgeschrieben.
 - Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 - Controlled Music Preview Run Schritt 2: technisch GO, Owner Review = FIX wegen falscher Musik-Kategorie.
 - Controlled Music Preview Run Schritt 3: DONE / Content-Type-Fix remote gesichert.
@@ -29,6 +29,7 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 7B: DONE / Re-Render lokal erzeugt / Owner Review Pflicht.
 - Controlled Music Preview Run Schritt 8: Owner Review = FIX.
 - Controlled Music Preview Run Schritt 8A: DONE / Low-Speech nochmal -5 dB / neue Clip-Kandidaten gesucht / kein Render.
+- Controlled Music Preview Run Schritt 8B: DONE / neuer Clip festgeschrieben / kein Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -74,7 +75,7 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
 Controlled Music Preview Run Schritt 8A Low-Speech-Retune + neue Clip-Kandidaten ist remote gesichert.
-Input-Kandidat ist bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+Neuer Input-Kandidat fuer den naechsten Review ist bestaetigt: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
 Letztes Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_153756/controlled_music_preview_main.mp4`.
 Owner Review Schritt 5: GO mit Tuning-Fix.
 Problem 1: viele Songs beginnen zu leise, brauchbarer Start erst nach ca. 30 Sekunden.
@@ -88,7 +89,8 @@ Owner Review Schritt 8: FIX, Musik bei wenig Sprache noch ein Tick zu laut.
 Schritt 8A senkt Low-Speech erneut um ca. 5 dB auf `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
 Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 Neue Clip-Kandidaten wurden gesucht.
-Naechster Schritt: Controlled Music Preview Run Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
+Schritt 8B bestaetigt den neuen Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`.
+Naechster Schritt: Controlled Music Preview Run Schritt 9 neuen Clip mit finalem Tuning rendern nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -370,6 +372,34 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 8B neuen Clip auswaehlen nur nach Master-GO.
+
+### Controlled Music Preview Run Schritt 8B
+
+- Ali/Master hat Kandidat 1 als neuen Clip bestaetigt.
+- Neuer Clip: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
+- Neuer Clip Groesse: `94364505` Bytes.
+- Neuer Clip LastWriteTime: `2026-06-05 06:07:32`.
+- Alter K7-Clip wird fuer den naechsten Review nicht weiter benutzt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Content Type fuer naechsten Render: `gaming_main`.
+- Channel Type fuer naechsten Render: `main`.
+- Musik-Kategorie fuer naechsten Render: `funny_gaming_background`.
+- `vlog_background` erlaubt: nein.
+- Low-Speech Base Gain bleibt: `-27.0`.
+- Low-Speech Ducking Gain bleibt: `-32.0`.
+- Low-Speech Max Gain bleibt: `-25.0`.
+- Intro Offset bleibt: `30.0`.
+- Report lokal/untracked: `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_manifest.json`
+- Summary lokal/untracked: `reports/controlled_music_preview_run/step8b_new_clip_decision/step8b_summary.md`
+- Kein Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 9 neuen Clip mit finalem Tuning rendern nur nach Master-GO.
 
 ## Wichtigste Beweise
 
