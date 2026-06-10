@@ -773,6 +773,41 @@ Naechster Schritt:
 - Controlled Music Preview Step 11 Proper Run Render nur nach Master-GO.
 - Wenn Input/Output-Allowlist blockiert: STOPP und Master fragen.
 
+## Controlled Music Preview Run Schritt 11A Proper-Run-Allowlist-Fix
+
+Entscheidung: GO fuer exakt den Step-11A-Allowlist-Fix. Kein Render-GO.
+
+Beweis:
+- Code-Commit: `74da7bf` / `74da7bf14f93c1da3bed379cf5ea1232afdab525`.
+- Geaendert: `scripts/controlled_music_preview_render.py`, `tests/test_controlled_music_preview_render.py`.
+- Proper Run Input erlaubt: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Step-11 Output-Root erlaubt: `reports/controlled_music_preview_run/step11_proper_run_final_music_render`.
+- Dry-Run mit Proper Run: `status=dry_run`.
+- Pytest: 32 passed.
+- Report: `reports/controlled_music_preview_run/step11a_proper_run_allowlist_fix/step11a_manifest.json`.
+
+Ergebnis:
+- Schritt 10B Readiness-Blocker ist beseitigt.
+- Beliebige `exports` bleiben verboten.
+- `reports/controlled_music_preview_run` bleibt als Input verboten.
+- `learning_corpus`, `local_assets/music` und `video_configs` bleiben als Input blockiert.
+- Kein Fallback auf K7.
+- Kein Fallback auf Short.
+
+Grenzen:
+- Kein Execute Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+
+Naechster Schritt:
+- Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO.
+
 ## Controlled Music Preview Run Schritt 10A Find Proper Run Input
 
 Entscheidung: Owner Review Schritt 10 = Musik-Tuning grundsaetzlich gut, aber Testmedium nicht ausreichend. Kein Render. Nur passenden richtigen Run suchen.

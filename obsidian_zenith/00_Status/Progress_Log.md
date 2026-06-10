@@ -1075,3 +1075,43 @@ Naechster Schritt:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Step 11 Proper Run Render nur nach Master-GO; bei Allowlist-Blocker STOPP und Master fragen.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 11A Proper-Run-Allowlist-Fix
+
+- Schritt 10B zeigte: Proper Run Input und Step-11-Output-Root waren noch nicht erlaubt.
+- Step 11A erlaubt jetzt exakt diesen Proper Run:
+  - `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+- Step 11A erlaubt jetzt exakt diesen Output-Root:
+  - `reports/controlled_music_preview_run/step11_proper_run_final_music_render`
+- Keine beliebigen `exports` erlaubt.
+- Kein Fallback auf alten K7-Clip.
+- Kein Fallback auf Short-Clip.
+- Code-Commit: `74da7bf` / `74da7bf14f93c1da3bed379cf5ea1232afdab525`.
+- Dry-Run:
+  - `status=dry_run`
+  - `input_video_path=exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+  - `output_root=reports/controlled_music_preview_run/step11_proper_run_final_music_render`
+  - `content_type=gaming_main`
+  - `music_category=funny_gaming_background`
+  - `music_start_offset_sec=30.0`
+  - `intro_trim_used=true`
+  - `intro_boost_used=false`
+  - `low_speech_base_music_gain_db=-27.0`
+  - `low_speech_ducking_gain_db=-32.0`
+  - `low_speech_max_music_gain_db=-25.0`
+- Tests:
+  - `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+  - `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 32 passed
+- Report:
+  - `reports/controlled_music_preview_run/step11a_proper_run_allowlist_fix/step11a_manifest.json`
+  - `reports/controlled_music_preview_run/step11a_proper_run_allowlist_fix/step11a_summary.md`
+- Kein Execute Render gestartet.
+- Kein MP4 erzeugt.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO.

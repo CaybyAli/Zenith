@@ -36,6 +36,8 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 9B-R: DONE / neuer Clip mit bestehendem erlaubtem Output-Root lokal gerendert / Owner Review Pflicht.
 - Controlled Music Preview Run Schritt 10: Owner Review = Tuning gut, aber Short mit mehreren Musik-Switches ist kein finaler Beweis.
 - Controlled Music Preview Run Schritt 10A: DONE / passende richtige Main/Gaming-Run-Kandidaten gesucht / kein Render.
+- Controlled Music Preview Run Schritt 10B: DONE / richtiger Proper Run festgeschrieben / kein Render.
+- Controlled Music Preview Run Schritt 11A: DONE / Proper-Run-Input und Step-11-Output-Root exakt erlaubt / kein Execute Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -126,7 +128,17 @@ Top 3 richtige Run-Kandidaten:
 Empfohlener Kandidat: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
 Begruendung: neuester passender `gaming_main` Final-Export, 8.67 Minuten echter Flow, praktikable Groesse, kein Short/raw/uncut/controlled-preview Output.
 Kein Render, kein Audio-Mix, keine Musik eingefuegt, kein Upload, kein Qwen, kein Runtime Learning.
-Naechster Schritt: Controlled Music Preview Run Schritt 10B richtigen Run auswaehlen nur nach Master-GO.
+Schritt 10B hat den richtigen Proper Run festgeschrieben: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+Schritt 10B Readiness zeigte: Proper Run Input und Step-11-Output-Root waren noch nicht erlaubt.
+Schritt 11A erlaubt jetzt exakt diesen Proper Run.
+Schritt 11A erlaubt jetzt exakt diesen Output-Root: `reports/controlled_music_preview_run/step11_proper_run_final_music_render`.
+Keine beliebigen `exports` erlaubt.
+Kein Fallback auf K7.
+Kein Fallback auf Short.
+Kein Execute Render gestartet.
+Kein MP4 erzeugt.
+Kein Upload, kein Qwen, kein Runtime Learning.
+Naechster Schritt: Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -845,6 +857,37 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen gestartet.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Step 11 Proper Run Render nur nach Master-GO; bei Allowlist-Blocker STOPP und Master fragen.
+
+### Controlled Music Preview Step 11A - Proper Run Allowlist Fix
+
+- Status: Proper-Run-Allowlist-Fix remote gesichert.
+- Code Commit: `74da7bf`
+- Full Hash: `74da7bf14f93c1da3bed379cf5ea1232afdab525`
+- Schritt 10B zeigte: Proper Run Input und Step-11-Output-Root waren noch nicht erlaubt.
+- Proper Run Input jetzt erlaubt: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+- Step-11 Output-Root jetzt erlaubt: `reports/controlled_music_preview_run/step11_proper_run_final_music_render`
+- Beliebige `exports` erlaubt: nein.
+- Fallback auf alten K7-Clip: nein.
+- Fallback auf Short-Clip: nein.
+- Dry-Run mit Proper Run: `status=dry_run`.
+- Dry-Run Input: exakt Proper Run.
+- Dry-Run Output Root: exakt Step-11-Root.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Intro Offset: `30.0`.
+- Intro Trim: `true`.
+- Intro Boost: `false`.
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`.
+- Kein Execute Render gestartet.
+- Kein MP4 erzeugt.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Reports lokal/untracked, nicht committed.
+- Naechster Schritt: Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO.
 
 ## Wichtige Links
 

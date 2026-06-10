@@ -1068,3 +1068,46 @@ Beweise:
 Naechster Schritt:
 - Controlled Music Preview Step 11 Proper Run Render nur nach Master-GO
 - Wenn Input/Output-Allowlist blockiert: STOPP und Master fragen
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 11A Proper-Run-Allowlist-Fix
+
+Status:
+- Schritt 10B zeigte: Proper Run Input und Step-11-Output-Root waren noch nicht erlaubt.
+- Proper Run Input jetzt exakt erlaubt.
+- Step-11 Output-Root jetzt exakt erlaubt.
+- Keine beliebigen `exports` erlaubt.
+- Kein Fallback auf alten K7-Clip.
+- Kein Fallback auf Short-Clip.
+- Kein Execute Render gestartet.
+- Kein Preview-Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Keine Musikdateien committed.
+
+Erlaubter Proper Run:
+- `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+
+Erlaubter Step-11 Output-Root:
+- `reports/controlled_music_preview_run/step11_proper_run_final_music_render`
+
+Beweise:
+- Code Commit: `74da7bf`
+- Full Hash: `74da7bf14f93c1da3bed379cf5ea1232afdab525`
+- Dry-Run: `status=dry_run`
+- Dry-Run Input: exakt Proper Run
+- Dry-Run Output Root: exakt Step-11 Root
+- Dry-Run MP4 erzeugt: nein
+- Report: `reports/controlled_music_preview_run/step11a_proper_run_allowlist_fix/step11a_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step11a_proper_run_allowlist_fix/step11a_summary.md`
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 32 passed
+- Proper-Run-Dry-Run ohne `--execute-owner-go`: gruen
+- Forbidden Search: keine Treffer
+
+Naechster Schritt:
+- Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO
