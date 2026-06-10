@@ -482,3 +482,49 @@ Top Empfehlungen:
 
 Naechster Schritt:
 - Controlled Music Preview Run Schritt 1 nur nach Master-GO und bestaetigtem Input-Kandidaten
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 1 Preview-Plan
+
+Status:
+- Schritt 1 als reine Preview-Plan-Vorbereitung erledigt
+- bestaetigter Input-Kandidat geprueft
+- Musikbibliothek nur gezaehlt und Git-Schutz geprueft
+- kein Code geaendert
+- keine Tests geaendert
+- keine Musik eingefuegt
+- kein Musik-Build gestartet
+- kein Audio-Mix gestartet
+- kein Render gestartet
+- kein Preview-Render gestartet
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+
+Beweise:
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Input existiert: ja
+- Input-Groesse: `108427404` Bytes
+- Input LastWriteTime: `2026-06-05 17:50:57`
+- `git status --ignored --short -- local_assets/music`: `!! local_assets/music/`
+- `git ls-files local_assets/music`: leer
+- Musikdateien tracked: nein
+- Musikdateien staged: nein
+
+Musikbibliothek:
+- `local_assets/music/main_account/intro`: 4
+- `local_assets/music/main_account/vlog_background`: 8
+- `local_assets/music/main_account/funny_gaming_background`: 34
+- `local_assets/music/main_account/fail`: 15
+- `local_assets/music/main_account/hype`: 15
+- `local_assets/music/main_account/sad`: 6
+- `local_assets/music/main_account/outro`: 5
+- Gesamt: 87
+
+Reports:
+- `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_manifest.json`
+- `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_summary.md`
+- Reports lokal/untracked, nicht committed
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 2 nur nach Master-GO und Owner Review

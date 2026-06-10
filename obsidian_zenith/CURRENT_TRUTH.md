@@ -17,8 +17,9 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 0 Input-Auswahl / Diagnose vorbereitet.
-- Controlled Music Preview Run Schritt 1: gesperrt bis Ali einen Input-Kandidaten bestaetigt und Master-GO gibt.
+- Controlled Music Preview Run: Schritt 1 Preview-Plan vorbereitet.
+- Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Controlled Music Preview Run Schritt 2: gesperrt bis Master-GO.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -56,10 +57,10 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-6 Controlled Music Preview Gate ist abgeschlossen.
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
-Controlled Music Preview Run Schritt 0 Input-Auswahl / Diagnose ist vorbereitet.
-Empfohlene Input-Kandidaten stehen lokal in `reports/controlled_music_preview_input_selection/input_selection_summary.md`.
-Ali muss einen Input-Kandidaten bestaetigen.
-Naechster Schritt: Controlled Music Preview Run Schritt 1 nur nach Master-GO und Owner Review.
+Controlled Music Preview Run Schritt 1 Preview-Plan ist vorbereitet.
+Input-Kandidat ist bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+Plan-Reports stehen lokal in `reports/controlled_music_preview_run/step1_preview_plan/`.
+Naechster Schritt: Controlled Music Preview Run Schritt 2 nur nach Master-GO und Owner Review.
 Uncut bleibt ohne Musik.
 Musik-Build, echter Audio-Mix und echter Render sind weiterhin nicht gestartet.
 
@@ -90,6 +91,27 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Kein Qwen.
 - Kein Runtime Learning.
 - Ali muss Input-Kandidat bestaetigen.
+
+### Controlled Music Preview Run Schritt 1
+
+- Preview-Plan-Manifest lokal/untracked: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_manifest.json`
+- Preview-Plan-Summary lokal/untracked: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_summary.md`
+- Bestaetigter Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Input existiert: ja, `108427404` Bytes, LastWriteTime `2026-06-05 17:50:57`.
+- Channel: `main`.
+- Main Account Musik spaeter erlaubt, aber nur mit Owner Review und Safety-Gate.
+- Uncut Musik erlaubt: nein.
+- Musikbibliothek: `local_assets/music/main_account`, 87 Musikdateien.
+- Kategorien: `intro=4`, `vlog_background=8`, `funny_gaming_background=34`, `fail=15`, `hype=15`, `sad=6`, `outro=5`.
+- `local_assets/music/` ignored, `git ls-files local_assets/music` leer.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Naechster Schritt: Controlled Music Preview Run Schritt 2 nur nach Master-GO.
 
 ## Wichtigste Beweise
 

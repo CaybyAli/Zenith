@@ -1,35 +1,38 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 1 NUR NACH MASTER-GO
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 2 NUR NACH MASTER-GO
 
 Nur nach Master-GO.
 
 Ziel:
-Einen streng kontrollierten Main-Account-Musik-Preview-Run erst nach bestaetigtem Input-Kandidaten vorbereiten.
+Einen streng kontrollierten Main-Account-Musik-Preview-Schritt erst nach Review des Schritt-1-Plans vorbereiten.
 Uncut bleibt ohne Musik.
 
 Aktueller Stand:
 - Phase 5: 100% / DONE
 - P5-L: 100% / CLOSED
-- Phase 5.5: 100% / Final Audit GO
-- Controlled Music Preview Run Schritt 0: Input-Auswahl / Diagnose vorbereitet
+- Phase 5.5: 100% / DONE
+- Controlled Music Preview Run Schritt 1: Preview-Plan vorbereitet
 - Runtime Learning: locked / later
 
-Schritt 0 Ergebnis:
-- Diagnose-Report: `reports/controlled_music_preview_input_selection/input_selection_summary.md`
-- Top Empfehlung: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
-- Alternative Main-Account-Pfad: `exports/gaming_main/job_p5_g2_real_caption_shorts/shorts/job_p5_g2_emoji_position_preview.mp4`
-- Ali muss einen Input-Kandidaten bestaetigen.
-- Schritt 1 darf erst nach Master-GO starten.
+Schritt 1 Ergebnis:
+- Plan-Manifest: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_manifest.json`
+- Plan-Summary: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_summary.md`
+- Bestaetigter Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Channel Type: `main`
+- Main Account Musikbibliothek: `local_assets/music/main_account`
+- Musikbibliothek verifiziert: 87 Musikdateien
+- Uncut Musik erlaubt: nein
+- Owner Review Pflicht: ja
 
 Wichtig:
-- Nur ein kurzer kontrollierter Test
-- Owner Review Pflicht
+- Schritt 2 erst nach Master-GO
+- Nur Main Account darf Musik bekommen
+- Uncut bleibt ohne Musik
 - Kein Final-Auto-Upload
 - Kein Runtime Learning
 - Kein Qwen-Autocut
-- Kein Schritt 1 ohne bestaetigten Input-Kandidaten
 
 Verbote:
-- kein Musikdownload
+- kein Upload
 - keine externen Dienste
 - keine API-Keys
 - keine Musikdateien committen

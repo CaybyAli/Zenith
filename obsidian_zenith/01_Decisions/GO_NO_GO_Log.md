@@ -637,3 +637,39 @@ Grenzen:
 - Kein Qwen gestartet.
 - Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.
+
+## Controlled Music Preview Run Schritt 1 Preview-Plan
+
+Entscheidung: GO fuer reine Preview-Plan-Vorbereitung, kein Musik-Build und kein Render.
+
+Beweis:
+- Plan-Manifest: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_manifest.json`
+- Plan-Summary: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_summary.md`
+- Bestaetigter Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Input existiert: ja, `108427404` Bytes, LastWriteTime `2026-06-05 17:50:57`.
+- Musikbibliothek: `local_assets/music/` ignored, `git ls-files local_assets/music` leer.
+- Main-Account-Musikdateien: 87.
+
+Ergebnis:
+- Controlled Music Preview Run: Plan vorbereitet.
+- Channel Type: `main`.
+- Main Account Musik spaeter erlaubt, nur mit Owner Review und Safety-Gate.
+- Uncut-Musik bleibt dauerhaft NO-GO.
+- `ducking_required=true`.
+- `owner_review_required=true`.
+- `upload_allowed=false`.
+- `runtime_learning_allowed=false`.
+- `qwen_autocut_allowed=false`.
+- Naechster Schritt: Controlled Music Preview Run Schritt 2 nur nach Master-GO.
+
+Grenzen:
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein Audio-Mix gestartet.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Reports nicht committed.

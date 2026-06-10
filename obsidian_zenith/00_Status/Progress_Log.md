@@ -572,3 +572,28 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Runtime Learning gestartet.
 - Ali muss Input-Kandidat bestaetigen.
 - Naechster Schritt: Controlled Music Preview Run Schritt 1 nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 1 Preview-Plan
+
+- Controlled Music Preview Run Schritt 1 als reiner Preview-Plan vorbereitet.
+- Bestaetigter Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Input geprueft: existiert, `108427404` Bytes, LastWriteTime `2026-06-05 17:50:57`.
+- Musikbibliothek geprueft: `local_assets/music/` ignored, `git ls-files local_assets/music` leer.
+- Musikbibliothek Main Account: 87 Musikdateien.
+- Anzahl pro Ordner: `intro=4`, `vlog_background=8`, `funny_gaming_background=34`, `fail=15`, `hype=15`, `sad=6`, `outro=5`.
+- Plan-Reports:
+  - `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_manifest.json`
+  - `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_summary.md`
+- Reports lokal/untracked, nicht committed.
+- Kein Code geaendert.
+- Keine Tests geaendert.
+- Keine Musik eingefuegt.
+- Kein Musik-Build gestartet.
+- Kein Audio-Mix gestartet.
+- Kein Render.
+- Kein Preview-Render.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: Controlled Music Preview Run Schritt 2 nur nach Master-GO.
