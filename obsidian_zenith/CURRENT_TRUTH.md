@@ -34,6 +34,8 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 9A: DONE / neuer bestaetigter Clip per Allowlist erlaubt / kein Render.
 - Controlled Music Preview Run Schritt 9B: NO-GO / neuer Output-Root war nicht erlaubt.
 - Controlled Music Preview Run Schritt 9B-R: DONE / neuer Clip mit bestehendem erlaubtem Output-Root lokal gerendert / Owner Review Pflicht.
+- Controlled Music Preview Run Schritt 10: Owner Review = Tuning gut, aber Short mit mehreren Musik-Switches ist kein finaler Beweis.
+- Controlled Music Preview Run Schritt 10A: DONE / passende richtige Main/Gaming-Run-Kandidaten gesucht / kein Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -113,7 +115,18 @@ Intro Trim: `true`.
 Intro Boost: `false`.
 Low-Speech Gains: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
-Naechster Schritt: Controlled Music Preview Run Schritt 10 Owner Review New Clip Final Tuning.
+Owner Review Schritt 10: Musik-Tuning ist grundsaetzlich gut.
+Aber: Der Short mit mehreren Musik-Switches reicht nicht als finaler Musik-Beweis.
+Controlled Music Preview wird noch nicht geschlossen.
+Schritt 10A suchte einen richtigen Main/Gaming-Run fuer realistischen finalen Musik-Review.
+Top 3 richtige Run-Kandidaten:
+1. `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4` - 520.25s / 8.67min / 800312704 Bytes.
+2. `exports/gaming_main/job_76374a6ddb88/job_76374a6ddb88_v1_final.mp4` - 486.569s / 8.11min / 727225858 Bytes.
+3. `exports/gaming_main/job_d9811223d36c/job_d9811223d36c_v1_final.mp4` - 486.569s / 8.11min / 721638052 Bytes.
+Empfohlener Kandidat: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+Begruendung: neuester passender `gaming_main` Final-Export, 8.67 Minuten echter Flow, praktikable Groesse, kein Short/raw/uncut/controlled-preview Output.
+Kein Render, kein Audio-Mix, keine Musik eingefuegt, kein Upload, kein Qwen, kein Runtime Learning.
+Naechster Schritt: Controlled Music Preview Run Schritt 10B richtigen Run auswaehlen nur nach Master-GO.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.

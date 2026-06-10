@@ -1,17 +1,13 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 10 - OWNER REVIEW NEW CLIP FINAL TUNING
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 10B - SELECT PROPER RUN FOR FINAL MUSIC REVIEW
+
+Nur nach Master-GO.
 
 Ziel:
-Ali prueft den neuen Clip mit finalem Musik-Tuning.
+Einen richtigen Main/Gaming-Run auswaehlen.
+Kein Short.
+Kein raw.
+Kein uncut.
+Kein controlled preview output als Input.
+Noch kein Render.
 
-Bewertung:
-- Musik passt zum neuen Gaming-Clip?
-- Musik bei wenig Sprache jetzt passend/leise genug?
-- Stimme klar?
-- Startet Musik brauchbar?
-- Keine Audio-Spruenge?
-- Gesamtgefuehl besser?
-
-Entscheidung:
-GO / FIX / NO-GO
-
-Kein neuer Render ohne Master-GO.
+Danach erst: Render mit finalem Musik-Tuning auf richtigem Run.

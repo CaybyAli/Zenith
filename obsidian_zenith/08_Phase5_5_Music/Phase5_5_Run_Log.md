@@ -980,3 +980,42 @@ Tests / Runs:
 Naechster Schritt:
 - Controlled Music Preview Run Schritt 10 Owner Review New Clip Final Tuning
 - Kein neuer Render ohne Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 10A Proper Run Input Search
+
+Status:
+- Owner Review Schritt 10: Musik-Tuning gut.
+- Aber: Short mit mehreren Musik-Switches ist kein finaler Beweis.
+- Controlled Music Preview wird noch nicht geschlossen.
+- Schritt 10A hat nur passende richtige Run-Kandidaten gesucht.
+- Kein Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+
+Top 3 richtige Run-Kandidaten:
+1. `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+   - Dauer: 520.25s / 8.67min
+   - Groesse: `800312704` Bytes / 763.2 MB
+   - LastWriteTime: 2026-06-03 05:45:48
+2. `exports/gaming_main/job_76374a6ddb88/job_76374a6ddb88_v1_final.mp4`
+   - Dauer: 486.569s / 8.11min
+   - Groesse: `727225858` Bytes / 693.5 MB
+   - LastWriteTime: 2026-05-29 18:47:38
+3. `exports/gaming_main/job_d9811223d36c/job_d9811223d36c_v1_final.mp4`
+   - Dauer: 486.569s / 8.11min
+   - Groesse: `721638052` Bytes / 688.2 MB
+   - LastWriteTime: 2026-05-29 17:06:18
+
+Empfehlung:
+- `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+- Begruendung: neuester passender `gaming_main` Final-Export, 8.67 Minuten echter Flow, praktikable Groesse, kein Short/raw/uncut/controlled-preview Output.
+
+Report:
+- `reports/controlled_music_preview_run/step10a_find_proper_run_input/step10a_manifest.json`
+- `reports/controlled_music_preview_run/step10a_find_proper_run_input/step10a_summary.md`
+
+Naechster Schritt:
+- Controlled Music Preview Step 10B richtigen Run auswaehlen nur nach Master-GO

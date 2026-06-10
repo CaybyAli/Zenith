@@ -744,6 +744,34 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 10A Find Proper Run Input
+
+Entscheidung: Owner Review Schritt 10 = Musik-Tuning grundsaetzlich gut, aber Testmedium nicht ausreichend. Kein Render. Nur passenden richtigen Run suchen.
+
+Beweis:
+- Nicht als finaler Musik-Beweis nutzen: `reports/controlled_music_preview_run/step9_new_clip_final_tuning_render/run_20260610_203039/controlled_music_preview_main.mp4`.
+- Grund: Short mit mehreren Musik-Switches reicht nicht fuer finalen Musik-Review.
+- Report: `reports/controlled_music_preview_run/step10a_find_proper_run_input/step10a_manifest.json`.
+- Summary: `reports/controlled_music_preview_run/step10a_find_proper_run_input/step10a_summary.md`.
+- Empfohlener Kandidat: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+
+Top 3:
+1. `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4` - 520.25s / 8.67min / 800312704 Bytes.
+2. `exports/gaming_main/job_76374a6ddb88/job_76374a6ddb88_v1_final.mp4` - 486.569s / 8.11min / 727225858 Bytes.
+3. `exports/gaming_main/job_d9811223d36c/job_d9811223d36c_v1_final.mp4` - 486.569s / 8.11min / 721638052 Bytes.
+
+Grenzen:
+- Kein Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Step 10B richtigen Run auswaehlen nur nach Master-GO.
+
 ## Controlled Music Preview Run Schritt 9B-R Render New Clip With Allowed Output Root
 
 Entscheidung: Master-GO fuer Step 9B-R. Kein Code-Fix, kein neuer Output-Root. Neuer bestaetigter Clip wird mit bestehendem erlaubtem Output-Root gerendert.
