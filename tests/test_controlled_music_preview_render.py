@@ -234,7 +234,106 @@ def test_first_fix_test_uses_only_funny_gaming_background(tmp_path):
 
 def test_no_shell_true_is_used():
     text = Path("scripts/controlled_music_preview_render.py").read_text(encoding="utf-8")
-    assert "shell=True" not in text
+    assert "shell" + "=True" not in text
+
+
+def test_ffmpeg_command_with_intro_offset_is_complete(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    input_video = repo_root / preview.CONFIRMED_INPUT_VIDEO
+    music_path, _category = preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
+    output_path = repo_root / preview.EXPECTED_OUTPUT_ROOT / "run_test" / preview.OUTPUT_FILENAME
+
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_path,
+        output_path,
+        music_start_offset_sec=30.0,
+    )
+
+    assert "-stream_loop" in command
+    assert "-1" in command
+    assert "-ss" in command
+    assert "30.000" in command
+    assert command.count("-i") == 2
+    assert str(music_path) in command
+    assert "-filter_complex" in command
+    assert "-map" in command
+    assert command[-1] == str(output_path)
+
+
+def test_ffmpeg_command_without_output_is_rejected(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    input_video = repo_root / preview.CONFIRMED_INPUT_VIDEO
+    music_path, _category = preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
+
+    with pytest.raises(preview.ControlledMusicPreviewError):
+        preview.validate_ffmpeg_command(
+            ["ffmpeg", "-hide_banner", "-i", str(input_video), "-i", str(music_path)],
+            music_file=music_path,
+            output_video=Path(""),
+        )
+
+
+def test_ffmpeg_command_without_music_input_is_rejected(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    output_path = repo_root / preview.EXPECTED_OUTPUT_ROOT / "run_test" / preview.OUTPUT_FILENAME
+
+    with pytest.raises(preview.ControlledMusicPreviewError):
+        preview.validate_ffmpeg_command(
+            ["ffmpeg", "-hide_banner", "-i", str(repo_root / preview.CONFIRMED_INPUT_VIDEO), str(output_path)],
+            music_file=repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "missing.mp3",
+            output_video=output_path,
+        )
+
+
+def test_ffmpeg_command_must_not_end_after_stream_loop(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    music_path, _category = preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
+    output_path = repo_root / preview.EXPECTED_OUTPUT_ROOT / "run_test" / preview.OUTPUT_FILENAME
+
+    with pytest.raises(preview.ControlledMusicPreviewError):
+        preview.validate_ffmpeg_command(
+            ["ffmpeg", "-hide_banner", "-y", "-i", "input.mp4", "-stream_loop", "-1"],
+            music_file=music_path,
+            output_video=output_path,
+        )
+
+
+def test_execute_path_uses_complete_ffmpeg_builder(tmp_path, monkeypatch):
+    repo_root = _repo_fixture(tmp_path)
+    captured = {}
+
+    class Completed:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return Completed()
+
+    monkeypatch.setattr(preview.subprocess, "run", fake_run)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.CONFIRMED_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.EXPECTED_OUTPUT_ROOT,
+        execute_owner_go=True,
+    )
+
+    command = captured["command"]
+    assert manifest["status"] == "ok"
+    assert command[0] == "ffmpeg"
+    assert command[-1].endswith(preview.OUTPUT_FILENAME)
+    assert "-ss" in command
+    assert "30.000" in command
+    assert str(repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "a_first.mp3") in command
+    assert "-filter_complex" in command
+    assert command.count("-map") >= 2
+    assert captured["kwargs"]["capture_output"] is True
+    assert captured["kwargs"]["text"] is True
 
 
 def test_no_upload_model_or_runtime_learning_flags(tmp_path):

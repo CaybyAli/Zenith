@@ -158,12 +158,19 @@ def build_ffmpeg_command(
     output_video: Path,
     music_start_offset_sec: float = 0.0,
 ) -> list[str]:
+    if not str(music_file).strip():
+        raise ControlledMusicPreviewError("music input is required")
+    if not str(output_video).strip():
+        raise ControlledMusicPreviewError("output video path is required")
+    if music_start_offset_sec < 0.0:
+        raise ControlledMusicPreviewError("music_start_offset_sec must not be negative")
+
     filter_complex = (
         "[1:a]volume=0.08[musicquiet];"
         "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
         "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
     )
-    return [
+    command = [
         "ffmpeg",
         "-hide_banner",
         "-y",
@@ -192,6 +199,26 @@ def build_ffmpeg_command(
         "-shortest",
         str(output_video),
     ])
+    return validate_ffmpeg_command(command, music_file=music_file, output_video=output_video)
+
+
+def validate_ffmpeg_command(command: list[str], *, music_file: Path, output_video: Path) -> list[str]:
+    if not command:
+        raise ControlledMusicPreviewError("ffmpeg command is required")
+    if command[0] != "ffmpeg":
+        raise ControlledMusicPreviewError("ffmpeg command must start with ffmpeg")
+    if len(command) < 2 or command[-2:] == ["-stream_loop", "-1"]:
+        raise ControlledMusicPreviewError("ffmpeg command must not end after stream_loop")
+    if str(music_file) not in command:
+        raise ControlledMusicPreviewError("ffmpeg command is missing music input")
+    if not str(output_video).strip() or command[-1] != str(output_video):
+        raise ControlledMusicPreviewError("ffmpeg command must end with output video path")
+    if "-filter_complex" not in command:
+        raise ControlledMusicPreviewError("ffmpeg command is missing filter_complex")
+    if command.count("-map") < 2:
+        raise ControlledMusicPreviewError("ffmpeg command is missing output maps")
+    if command.count("-i") < 2:
+        raise ControlledMusicPreviewError("ffmpeg command is missing music -i input")
     return command
 
 
