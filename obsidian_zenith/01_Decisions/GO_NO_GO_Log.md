@@ -673,3 +673,37 @@ Grenzen:
 - Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.
 - Reports nicht committed.
+
+## Controlled Music Preview Run Schritt 2 Preview-Render
+
+Entscheidung: GO fuer genau einen kontrollierten Main-Account-Musik-Preview-Render nach Master-GO.
+
+Beweis:
+- Code-Commit: `b672dd4` / `b672dd4f413e4537394640379728846ffa6b209a`.
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/controlled_music_preview_main.mp4`.
+- Output-Groesse: `107923180` Bytes.
+- Manifest: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/preview_render_manifest.json`.
+- Summary: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/preview_render_summary.md`.
+- Musik-Kategorie: `vlog_background`.
+- Musikdatei: `local_assets/music/main_account/vlog_background/ES_As Daylight Fades - Sulu.mp3`.
+- Channel Type: `main`.
+- Manifest Status: `ok`.
+
+Ergebnis:
+- Controlled Music Preview Run Schritt 2 ausgefuehrt.
+- Genau ein neuer kontrollierter Preview-Render wurde erzeugt.
+- Owner Review ist jetzt Pflicht.
+- Naechster Schritt: Ali Auge/Ohr Review mit GO / FIX / NO-GO.
+
+Grenzen:
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Produktionsdateien geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.

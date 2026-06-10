@@ -528,3 +528,52 @@ Reports:
 
 Naechster Schritt:
 - Controlled Music Preview Run Schritt 2 nur nach Master-GO und Owner Review
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 2 Preview-Render
+
+Status:
+- Schritt 2 nach Master-GO erledigt
+- genau ein kontrollierter Main-Account-Musik-Preview-Render erzeugt
+- kein Upload gestartet
+- kein Final-Render gestartet
+- kein Ingest gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Uncut-Musik genutzt
+- keine Produktionsdateien geaendert
+- Owner Review ist Pflicht
+
+Beweise:
+- Code-Commit: `b672dd4`
+- Full Hash: `b672dd4f413e4537394640379728846ffa6b209a`
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/controlled_music_preview_main.mp4`
+- Output-Groesse: `107923180` Bytes
+- Musik-Kategorie: `vlog_background`
+- Musikdatei: `local_assets/music/main_account/vlog_background/ES_As Daylight Fades - Sulu.mp3`
+- Channel Type: `main`
+- Manifest Status: `ok`
+- `preview_render_used=true`
+- `final_render_used=false`
+- `upload_started=false`
+- `runtime_learning_started=false`
+- `qwen_used=false`
+- `qwen_autocut_used=false`
+- `uncut_music_allowed=false`
+- `owner_review_required=true`
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 11 passed
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt
+- Execute-Render: `status=ok`
+
+Reports:
+- `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/preview_render_manifest.json`
+- `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/preview_render_summary.md`
+- Reports und MP4 lokal/untracked, nicht committed
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 3 Owner Review durch Ali Auge/Ohr
+- Kein neuer Render ohne Master-GO

@@ -1,43 +1,27 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 2 NUR NACH MASTER-GO
-
-Nur nach Master-GO.
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 3 - OWNER REVIEW
 
 Ziel:
-Einen streng kontrollierten Main-Account-Musik-Preview-Schritt erst nach Review des Schritt-1-Plans vorbereiten.
-Uncut bleibt ohne Musik.
+Ali prueft das gerenderte Musik-Preview mit Auge/Ohr.
 
-Aktueller Stand:
-- Phase 5: 100% / DONE
-- P5-L: 100% / CLOSED
-- Phase 5.5: 100% / DONE
-- Controlled Music Preview Run Schritt 1: Preview-Plan vorbereitet
-- Runtime Learning: locked / later
-
-Schritt 1 Ergebnis:
-- Plan-Manifest: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_manifest.json`
-- Plan-Summary: `reports/controlled_music_preview_run/step1_preview_plan/preview_plan_summary.md`
-- Bestaetigter Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+Preview:
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/controlled_music_preview_main.mp4`
+- Musik-Kategorie: `vlog_background`
+- Musikdatei: `local_assets/music/main_account/vlog_background/ES_As Daylight Fades - Sulu.mp3`
 - Channel Type: `main`
-- Main Account Musikbibliothek: `local_assets/music/main_account`
-- Musikbibliothek verifiziert: 87 Musikdateien
-- Uncut Musik erlaubt: nein
-- Owner Review Pflicht: ja
+- Uncut genutzt: nein
 
-Wichtig:
-- Schritt 2 erst nach Master-GO
-- Nur Main Account darf Musik bekommen
-- Uncut bleibt ohne Musik
-- Kein Final-Auto-Upload
-- Kein Runtime Learning
-- Kein Qwen-Autocut
+Bewertung:
+- Musik zu laut?
+- Stimme klar?
+- Stimmung passend?
+- kein Uncut?
+- keine komischen Audio-Spruenge?
+- GO / FIX / NO-GO
 
-Verbote:
-- kein Upload
-- keine externen Dienste
-- keine API-Keys
-- keine Musikdateien committen
-- keine Musik fuer Uncut
-- kein Qwen-Autocut
-- kein Runtime Learning
-- kein Render ohne Master-GO
-- kein Audio-Mix ohne Master-GO
+Grenzen:
+- Kein neuer Render ohne Master-GO.
+- Kein Upload.
+- Kein Final-Render.
+- Kein Runtime Learning.
+- Kein Qwen-Autocut.
