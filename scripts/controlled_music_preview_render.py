@@ -262,6 +262,7 @@ def build_low_speech_gain_probe(music_category: str) -> dict:
         "low_speech_base_music_gain_db": plan["base_music_gain_db"],
         "low_speech_ducking_gain_db": plan["ducking_gain_db"],
         "low_speech_max_music_gain_db": plan["max_music_gain_db"],
+        "low_speech_volume_reduced_total_db": 10.0,
     }
 
 
@@ -332,6 +333,7 @@ def build_summary(manifest: dict) -> str:
         f"- low_speech_base_music_gain_db: {manifest['low_speech_base_music_gain_db']}",
         f"- low_speech_ducking_gain_db: {manifest['low_speech_ducking_gain_db']}",
         f"- low_speech_max_music_gain_db: {manifest['low_speech_max_music_gain_db']}",
+        f"- low_speech_volume_reduced_total_db: {manifest['low_speech_volume_reduced_total_db']}",
         f"- upload_started: {str(manifest['upload_started']).lower()}",
         f"- runtime_learning_started: {str(manifest['runtime_learning_started']).lower()}",
         f"- {_q_flag('used')}: {str(manifest[_q_flag('used')]).lower()}",

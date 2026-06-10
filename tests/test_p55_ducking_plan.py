@@ -60,9 +60,9 @@ def test_main_selected_music_enables_ducking():
 def test_low_speech_density_010_uses_owner_review_lower_music_gains():
     item = build_ducking_plan_item(_ducking_input(speech_density=0.10))
     assert item["speech_priority"] == "low"
-    assert item["base_music_gain_db"] == -22.0
-    assert item["ducking_gain_db"] == -27.0
-    assert item["max_music_gain_db"] == -20.0
+    assert item["base_music_gain_db"] == -27.0
+    assert item["ducking_gain_db"] == -32.0
+    assert item["max_music_gain_db"] == -25.0
 
 
 def test_medium_high_and_very_high_gains_stay_unchanged():

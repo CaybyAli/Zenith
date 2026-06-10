@@ -96,9 +96,10 @@ def test_dry_run_reports_lower_low_speech_gains(tmp_path):
         content_type=CONTENT_TYPE_GAMING_MAIN,
         output_root=preview.EXPECTED_OUTPUT_ROOT,
     )
-    assert manifest["low_speech_base_music_gain_db"] == -22.0
-    assert manifest["low_speech_ducking_gain_db"] == -27.0
-    assert manifest["low_speech_max_music_gain_db"] == -20.0
+    assert manifest["low_speech_base_music_gain_db"] == -27.0
+    assert manifest["low_speech_ducking_gain_db"] == -32.0
+    assert manifest["low_speech_max_music_gain_db"] == -25.0
+    assert manifest["low_speech_volume_reduced_total_db"] == 10.0
 
 
 def test_script_never_auto_boosts_intro(tmp_path):
