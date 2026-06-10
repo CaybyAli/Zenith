@@ -668,3 +668,50 @@ Reports:
 Naechster Schritt:
 - Controlled Music Preview Run Schritt 5 Owner Review Gaming Music
 - Kein neuer Render ohne Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 6 Intro/Low-Speech-Tuning-Fix
+
+Status:
+- Owner Review Schritt 5: GO mit Tuning-Fix
+- Intro-Offset-Policy gebaut
+- Low-Speech / No-Speech Gains ca. 5 dB leiser gesetzt
+- Preview-Script zeigt Policy-Entscheidung im Dry-Run
+- kein neuer Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingefuegt
+- kein Upload gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Musikdateien committed
+
+Tuning:
+- Quiet Intro Handling: `trim_start_offset`
+- Music Start Offset: `30.0`
+- Intro Trim: true
+- Intro Boost: false
+- Intro Boost Gain: `0.0`
+- Low-Speech Base Gain: `-22.0`
+- Low-Speech Ducking Gain: `-27.0`
+- Low-Speech Max Gain: `-20.0`
+
+Beweise:
+- Code-Commit: `79826e4`
+- Full Hash: `79826e410eee50349b224d9060efca97363a5cab`
+- Intro Policy: `core/music_intro_offset_policy.py`
+- Ducking Update: `core/music_ducking_plan.py`
+- Preview Script: `scripts/controlled_music_preview_render.py`
+- Tests: `tests/test_music_intro_offset_policy.py`, `tests/test_p55_ducking_plan.py`, `tests/test_controlled_music_preview_render.py`
+- Dry-Run: `status=dry_run`, `intro_offset_policy_used=true`, `music_start_offset_sec=30.0`, `intro_boost_used=false`
+- Dry-Run-Output-Ordner: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_151603/`
+- Dry-Run MP4 erzeugt: nein
+- Report: `reports/controlled_music_preview_run/step6_owner_review_tuning_fix/tuning_fix_manifest.json`
+- Summary: `reports/controlled_music_preview_run/step6_owner_review_tuning_fix/tuning_fix_summary.md`
+
+Tests / Runs:
+- `python -m py_compile core\music_intro_offset_policy.py core\music_ducking_plan.py scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_music_intro_offset_policy.py tests\test_p55_ducking_plan.py tests\test_controlled_music_preview_render.py -vv`: 47 passed
+- Forbidden Search: keine Treffer
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 7 Re-Render mit Intro-Offset und niedrigerer Low-Speech-Musik nur nach Master-GO

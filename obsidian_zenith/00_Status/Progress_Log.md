@@ -709,3 +709,46 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Kein Qwen-Autocut.
 - Kein Runtime Learning gestartet.
 - Naechster Schritt: Controlled Music Preview Run Schritt 5 Owner Review Gaming Music.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 6 Intro/Low-Speech-Tuning-Fix
+
+- Owner Review Schritt 5: GO mit Tuning-Fix.
+- Problem 1: viele Songs beginnen zu leise, brauchbarer Start erst nach ca. 30 Sekunden.
+- Loesung: Intro-Offset/Trim-Policy, kein automatischer Boost.
+- Problem 2: Musik bei Low-Speech/No-Speech ca. 5 dB zu laut.
+- Loesung: Low-Speech Gains um ca. 5 dB reduziert.
+- Code-Commit: `79826e4` / `79826e410eee50349b224d9060efca97363a5cab`.
+- Intro Policy: `core/music_intro_offset_policy.py`.
+- Low-Speech Ducking geaendert:
+  - `base_music_gain_db=-22.0`
+  - `ducking_gain_db=-27.0`
+  - `max_music_gain_db=-20.0`
+- Medium/High/Very-High Gains unveraendert.
+- Preview-Dry-Run zeigt:
+  - `status=dry_run`
+  - `intro_offset_policy_used=true`
+  - `quiet_intro_detected=true`
+  - `music_start_offset_sec=30.0`
+  - `intro_trim_used=true`
+  - `intro_boost_used=false`
+  - `low_speech_base_music_gain_db=-22.0`
+  - `low_speech_ducking_gain_db=-27.0`
+  - `low_speech_max_music_gain_db=-20.0`
+  - kein MP4 erzeugt
+- Report:
+  - `reports/controlled_music_preview_run/step6_owner_review_tuning_fix/tuning_fix_manifest.json`
+  - `reports/controlled_music_preview_run/step6_owner_review_tuning_fix/tuning_fix_summary.md`
+- Tests:
+  - `python -m py_compile core\music_intro_offset_policy.py core\music_ducking_plan.py scripts\controlled_music_preview_render.py`: gruen.
+  - `python -m pytest tests\test_music_intro_offset_policy.py tests\test_p55_ducking_plan.py tests\test_controlled_music_preview_render.py -vv`: 47 passed.
+- Forbidden Search: keine Treffer.
+- Kein neuer Render gestartet.
+- Kein Audio-Mix gestartet.
+- Keine Musik eingefuegt.
+- Kein Upload gestartet.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
+- Naechster Schritt: Controlled Music Preview Schritt 7 Re-Render nur nach Master-GO.

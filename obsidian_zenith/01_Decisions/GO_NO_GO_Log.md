@@ -778,3 +778,41 @@ Grenzen:
 - Keine Produktionsdateien geaendert.
 - Musikdateien nicht committed.
 - Reports/MP4 nicht committed.
+
+## Controlled Music Preview Run Schritt 6 Intro/Low-Speech-Tuning-Fix
+
+Entscheidung: Owner Review Schritt 5 = GO mit Tuning-Fix. Code-GO nur fuer Intro-Offset-Policy und Low-Speech-Lautstaerke, kein neuer Render.
+
+Beweis:
+- Code-Commit: `79826e4` / `79826e410eee50349b224d9060efca97363a5cab`.
+- Intro Policy: `core/music_intro_offset_policy.py`.
+- Ducking Update: `core/music_ducking_plan.py`.
+- Preview Script Dry-Run-Felder: `scripts/controlled_music_preview_render.py`.
+- Tests:
+  - `tests/test_music_intro_offset_policy.py`
+  - `tests/test_p55_ducking_plan.py`
+  - `tests/test_controlled_music_preview_render.py`
+- Lokaler Report: `reports/controlled_music_preview_run/step6_owner_review_tuning_fix/tuning_fix_manifest.json`.
+- Lokale Summary: `reports/controlled_music_preview_run/step6_owner_review_tuning_fix/tuning_fix_summary.md`.
+
+Ergebnis:
+- Quiet Intro Handling: `trim_start_offset`.
+- Music Start Offset: `30.0`.
+- Intro Boost erlaubt: nein.
+- Low-Speech Base Gain: `-22.0`.
+- Low-Speech Ducking Gain: `-27.0`.
+- Low-Speech Max Gain: `-20.0`.
+- Low-Speech / No-Speech Musik ca. 5 dB leiser geplant.
+- Naechster Schritt: Controlled Music Preview Schritt 7 Re-Render nur nach Master-GO.
+
+Grenzen:
+- Kein neuer Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Musikdateien nicht committed.
+- Reports nicht committed.
