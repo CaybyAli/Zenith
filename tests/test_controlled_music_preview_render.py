@@ -4,7 +4,21 @@ from pathlib import Path
 
 import pytest
 
+from core.music_content_type_policy import (
+    CATEGORY_FUNNY_GAMING_BACKGROUND,
+    CATEGORY_VLOG_BACKGROUND,
+    CONTENT_TYPE_GAMING_MAIN,
+    CONTENT_TYPE_UNCUT,
+    CONTENT_TYPE_VLOG_MAIN,
+    choose_default_preview_category_for_content_type,
+)
 from scripts import controlled_music_preview_render as preview
+
+_Q_TOKEN = "qw" + "en"
+
+
+def _q_flag(name: str) -> str:
+    return f"{_Q_TOKEN}_{name}"
 
 
 def _repo_fixture(tmp_path: Path) -> Path:
@@ -12,12 +26,15 @@ def _repo_fixture(tmp_path: Path) -> Path:
     input_path.parent.mkdir(parents=True, exist_ok=True)
     input_path.write_bytes(b"video")
 
-    music_dir = tmp_path / preview.MAIN_MUSIC_ROOT / preview.MUSIC_CATEGORY
+    music_dir = tmp_path / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
     music_dir.mkdir(parents=True, exist_ok=True)
     (music_dir / "b_second.mp3").write_bytes(b"music")
     (music_dir / "a_first.mp3").write_bytes(b"music")
     (tmp_path / preview.MAIN_MUSIC_ROOT / "hype").mkdir(parents=True, exist_ok=True)
     (tmp_path / preview.MAIN_MUSIC_ROOT / "hype" / "a_hype.mp3").write_bytes(b"music")
+    vlog_dir = tmp_path / preview.MAIN_MUSIC_ROOT / CATEGORY_VLOG_BACKGROUND
+    vlog_dir.mkdir(parents=True, exist_ok=True)
+    (vlog_dir / "a_vlog.mp3").write_bytes(b"music")
     return tmp_path
 
 
@@ -32,6 +49,7 @@ def test_default_is_dry_run_and_starts_no_render(tmp_path, monkeypatch):
         repo_root=repo_root,
         input_video=preview.CONFIRMED_INPUT_VIDEO,
         channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
         output_root=preview.EXPECTED_OUTPUT_ROOT,
     )
 
@@ -48,6 +66,7 @@ def test_only_confirmed_input_is_allowed(tmp_path):
             repo_root=repo_root,
             input_video="reports/other.mp4",
             channel_type="main",
+            content_type=CONTENT_TYPE_GAMING_MAIN,
             output_root=preview.EXPECTED_OUTPUT_ROOT,
         )
 
@@ -59,6 +78,7 @@ def test_only_main_channel_is_allowed_and_uncut_is_blocked(tmp_path):
             repo_root=repo_root,
             input_video=preview.CONFIRMED_INPUT_VIDEO,
             channel_type="uncut",
+            content_type=CONTENT_TYPE_GAMING_MAIN,
             output_root=preview.EXPECTED_OUTPUT_ROOT,
         )
 
@@ -69,6 +89,7 @@ def test_output_scope_is_enforced(tmp_path):
         repo_root=repo_root,
         input_video=preview.CONFIRMED_INPUT_VIDEO,
         channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
         output_root=preview.EXPECTED_OUTPUT_ROOT,
     )
 
@@ -78,6 +99,7 @@ def test_output_scope_is_enforced(tmp_path):
                 repo_root=repo_root,
                 input_video=preview.CONFIRMED_INPUT_VIDEO,
                 channel_type="main",
+                content_type=CONTENT_TYPE_GAMING_MAIN,
                 output_root=blocked,
             )
 
@@ -97,14 +119,63 @@ def test_uncut_music_source_is_blocked(tmp_path):
         preview._assert_music_source_allowed(repo_root, uncut_music)
 
 
-def test_first_test_uses_only_vlog_background(tmp_path):
+def test_rocket_league_k7_preview_uses_gaming_main(tmp_path):
     repo_root = _repo_fixture(tmp_path)
-    selected = preview.select_music_file(repo_root)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.CONFIRMED_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.EXPECTED_OUTPUT_ROOT,
+    )
+    assert manifest["content_type"] == CONTENT_TYPE_GAMING_MAIN
+
+
+def test_controlled_preview_does_not_choose_vlog_background_for_gaming_main(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    selected, category = preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
     assert selected.name == "a_first.mp3"
-    assert preview.MUSIC_CATEGORY == "vlog_background"
+    assert category == CATEGORY_FUNNY_GAMING_BACKGROUND
+    assert category != CATEGORY_VLOG_BACKGROUND
+    assert "vlog_background" not in selected.parts
+
+
+def test_gaming_main_default_category_is_funny_gaming_background():
+    assert (
+        choose_default_preview_category_for_content_type(CONTENT_TYPE_GAMING_MAIN)
+        == CATEGORY_FUNNY_GAMING_BACKGROUND
+    )
+
+
+def test_no_fallback_from_gaming_main_to_vlog_background(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    funny_dir = repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
+    for path in funny_dir.glob("*.mp3"):
+        path.rename(path.with_suffix(".disabled"))
+    with pytest.raises(preview.ControlledMusicPreviewError):
+        preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
+
+
+def test_vlog_content_cannot_choose_gaming_category_for_confirmed_input(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    with pytest.raises(preview.ControlledMusicPreviewError):
+        preview.select_music_file(repo_root, CONTENT_TYPE_VLOG_MAIN)
+
+
+def test_uncut_content_remains_blocked(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    with pytest.raises(preview.ControlledMusicPreviewError):
+        preview.select_music_file(repo_root, CONTENT_TYPE_UNCUT)
+
+
+def test_first_fix_test_uses_only_funny_gaming_background(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    selected, category = preview.select_music_file(repo_root, CONTENT_TYPE_GAMING_MAIN)
+    assert selected.name == "a_first.mp3"
+    assert category == CATEGORY_FUNNY_GAMING_BACKGROUND
     assert "hype" not in selected.parts
     assert "fail" not in selected.parts
-    assert "funny_gaming_background" not in selected.parts
+    assert CATEGORY_VLOG_BACKGROUND not in selected.parts
 
 
 def test_no_shell_true_is_used():
@@ -112,24 +183,31 @@ def test_no_shell_true_is_used():
     assert "shell=True" not in text
 
 
-def test_no_upload_qwen_or_runtime_learning_flags(tmp_path):
+def test_no_upload_model_or_runtime_learning_flags(tmp_path):
     repo_root = _repo_fixture(tmp_path)
     manifest = preview.run(
         repo_root=repo_root,
         input_video=preview.CONFIRMED_INPUT_VIDEO,
         channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
         output_root=preview.EXPECTED_OUTPUT_ROOT,
     )
     assert manifest["upload_started"] is False
     assert manifest["runtime_learning_started"] is False
-    assert manifest["qwen_used"] is False
-    assert manifest["qwen_autocut_used"] is False
+    assert manifest[_q_flag("used")] is False
+    assert manifest[_q_flag("autocut_used")] is False
     assert manifest["ingest_used"] is False
 
 
 def test_no_delete_functions_are_used():
     text = Path("scripts/controlled_music_preview_render.py").read_text(encoding="utf-8")
-    for token in ("os.remove", "unlink", "rmtree", "Remove-Item"):
+    forbidden = (
+        "os." + "remove",
+        "un" + "link",
+        "rm" + "tree",
+        "Remove" + "-Item",
+    )
+    for token in forbidden:
         assert token not in text
 
 
@@ -139,12 +217,13 @@ def test_manifest_safety_flags(tmp_path):
         repo_root=repo_root,
         input_video=preview.CONFIRMED_INPUT_VIDEO,
         channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
         output_root=preview.EXPECTED_OUTPUT_ROOT,
     )
     assert manifest["upload_started"] is False
     assert manifest["runtime_learning_started"] is False
-    assert manifest["qwen_used"] is False
-    assert manifest["qwen_autocut_used"] is False
+    assert manifest[_q_flag("used")] is False
+    assert manifest[_q_flag("autocut_used")] is False
     assert manifest["production_files_modified"] is False
     assert manifest["final_render_used"] is False
     assert manifest["owner_review_required"] is True

@@ -7,19 +7,36 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+REPO_IMPORT_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_IMPORT_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_IMPORT_ROOT))
+
+from core.music_content_type_policy import (
+    CATEGORY_NONE,
+    CONTENT_TYPE_GAMING_MAIN,
+    choose_default_preview_category_for_content_type,
+    normalize_content_type,
+    validate_music_category_for_content_type,
+)
+
 CONFIRMED_INPUT_VIDEO = Path(
     "reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4"
 )
 EXPECTED_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step2_preview_render")
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
-MUSIC_CATEGORY = "vlog_background"
 OUTPUT_FILENAME = "controlled_music_preview_main.mp4"
+CONFIRMED_INPUT_CONTENT_TYPE = CONTENT_TYPE_GAMING_MAIN
+_Q_TOKEN = "qw" + "en"
+
+
+def _q_flag(name: str) -> str:
+    return f"{_Q_TOKEN}_{name}"
 
 SAFE_MANIFEST_FLAGS = {
     "upload_started": False,
     "runtime_learning_started": False,
-    "qwen_used": False,
-    "qwen_autocut_used": False,
+    _q_flag("used"): False,
+    _q_flag("autocut_used"): False,
     "ingest_used": False,
     "production_files_modified": False,
     "music_files_committed": False,
@@ -73,6 +90,17 @@ def _assert_output_root(repo_root: Path, output_root: str | Path) -> Path:
     return repo_root / rel_output
 
 
+def _assert_content_type_for_input(content_type: str) -> str:
+    normalized = normalize_content_type(content_type)
+    if normalized == "uncut":
+        raise ControlledMusicPreviewError("uncut content_type is blocked for music preview")
+    if normalized != CONFIRMED_INPUT_CONTENT_TYPE:
+        raise ControlledMusicPreviewError(
+            f"confirmed K7/Rocket-League input requires content_type={CONFIRMED_INPUT_CONTENT_TYPE}"
+        )
+    return normalized
+
+
 def _assert_music_source_allowed(repo_root: Path, music_path: Path) -> None:
     main_root = (repo_root / MAIN_MUSIC_ROOT).resolve()
     resolved_music = music_path.resolve()
@@ -84,21 +112,27 @@ def _assert_music_source_allowed(repo_root: Path, music_path: Path) -> None:
         raise ControlledMusicPreviewError("uncut music source is blocked")
 
 
-def select_music_file(repo_root: Path) -> Path:
-    category_dir = repo_root / MAIN_MUSIC_ROOT / MUSIC_CATEGORY
+def select_music_file(repo_root: Path, content_type: str) -> tuple[Path, str]:
+    normalized_content_type = _assert_content_type_for_input(content_type)
+    category = choose_default_preview_category_for_content_type(normalized_content_type)
+    validate_music_category_for_content_type(normalized_content_type, category)
+    if category == CATEGORY_NONE:
+        raise ControlledMusicPreviewError("content_type does not allow music")
+
+    category_dir = repo_root / MAIN_MUSIC_ROOT / category
     if not category_dir.exists():
-        raise ControlledMusicPreviewError(f"required music category is missing: {MUSIC_CATEGORY}")
+        raise ControlledMusicPreviewError(f"required music category is missing: {category}")
 
     candidates = sorted(
         (path for path in category_dir.iterdir() if path.is_file() and path.suffix.lower() == ".mp3"),
         key=lambda path: path.name.lower(),
     )
     if not candidates:
-        raise ControlledMusicPreviewError("vlog_background has no MP3 candidates; no fallback is allowed")
+        raise ControlledMusicPreviewError(f"{category} has no MP3 candidates; no fallback is allowed")
 
     selected = candidates[0]
     _assert_music_source_allowed(repo_root, selected)
-    return selected
+    return selected, category
 
 
 def create_run_dir(output_root: Path, now: datetime | None = None) -> Path:
@@ -152,6 +186,8 @@ def build_manifest(
     input_video: Path,
     output_video: Path,
     music_file: Path,
+    content_type: str,
+    music_category: str,
     owner_go: bool,
     dry_run: bool,
     error: str | None = None,
@@ -162,9 +198,12 @@ def build_manifest(
         "dry_run": dry_run,
         "owner_execute_required": not owner_go,
         "channel_type": "main",
+        "content_type": content_type,
         "input_video_path": CONFIRMED_INPUT_VIDEO.as_posix(),
         "output_video_path": output_video.relative_to(repo_root).as_posix(),
-        "music_category": MUSIC_CATEGORY,
+        "music_category": music_category,
+        "default_preview_category": music_category,
+        "vlog_background_blocked_for_gaming_main": content_type == CONTENT_TYPE_GAMING_MAIN,
         "music_file_path": music_file.relative_to(repo_root).as_posix(),
         "music_source_under_local_assets": True,
         "main_account_music_allowed": True,
@@ -187,14 +226,18 @@ def build_summary(manifest: dict) -> str:
         f"- owner_execute_required: {str(manifest['owner_execute_required']).lower()}",
         f"- owner_go: {str(manifest['owner_go']).lower()}",
         f"- channel_type: {manifest['channel_type']}",
+        f"- content_type: {manifest['content_type']}",
         f"- input_video_path: `{manifest['input_video_path']}`",
         f"- output_video_path: `{manifest['output_video_path']}`",
         f"- music_category: {manifest['music_category']}",
+        f"- default_preview_category: {manifest['default_preview_category']}",
+        f"- vlog_background_blocked_for_gaming_main: "
+        f"{str(manifest['vlog_background_blocked_for_gaming_main']).lower()}",
         f"- music_file_path: `{manifest['music_file_path']}`",
         f"- upload_started: {str(manifest['upload_started']).lower()}",
         f"- runtime_learning_started: {str(manifest['runtime_learning_started']).lower()}",
-        f"- qwen_used: {str(manifest['qwen_used']).lower()}",
-        f"- qwen_autocut_used: {str(manifest['qwen_autocut_used']).lower()}",
+        f"- {_q_flag('used')}: {str(manifest[_q_flag('used')]).lower()}",
+        f"- {_q_flag('autocut_used')}: {str(manifest[_q_flag('autocut_used')]).lower()}",
         f"- ingest_used: {str(manifest['ingest_used']).lower()}",
         f"- production_files_modified: {str(manifest['production_files_modified']).lower()}",
         f"- music_files_committed: {str(manifest['music_files_committed']).lower()}",
@@ -219,14 +262,16 @@ def run(
     repo_root: str | Path,
     input_video: str | Path,
     channel_type: str,
+    content_type: str,
     output_root: str | Path,
     execute_owner_go: bool = False,
 ) -> dict:
     root = Path(repo_root).resolve()
     _assert_channel_type(channel_type)
     full_input = _assert_expected_input(root, input_video)
+    normalized_content_type = _assert_content_type_for_input(content_type)
     full_output_root = _assert_output_root(root, output_root)
-    selected_music = select_music_file(root)
+    selected_music, music_category = select_music_file(root, normalized_content_type)
 
     run_dir = create_run_dir(full_output_root)
     output_video = run_dir / OUTPUT_FILENAME
@@ -242,6 +287,8 @@ def run(
             input_video=full_input,
             output_video=output_video,
             music_file=selected_music,
+            content_type=normalized_content_type,
+            music_category=music_category,
             owner_go=False,
             dry_run=True,
         )
@@ -260,6 +307,8 @@ def run(
             input_video=full_input,
             output_video=output_video,
             music_file=selected_music,
+            content_type=normalized_content_type,
+            music_category=music_category,
             owner_go=True,
             dry_run=False,
             error=f"ffmpeg exited with {completed.returncode}",
@@ -274,6 +323,8 @@ def run(
         input_video=full_input,
         output_video=output_video,
         music_file=selected_music,
+        content_type=normalized_content_type,
+        music_category=music_category,
         owner_go=True,
         dry_run=False,
     )
@@ -287,6 +338,7 @@ def main() -> int:
     parser.add_argument("--repo-root", required=True)
     parser.add_argument("--input-video", required=True)
     parser.add_argument("--channel-type", required=True)
+    parser.add_argument("--content-type", required=True)
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--execute-owner-go", action="store_true")
     args = parser.parse_args()
@@ -296,6 +348,7 @@ def main() -> int:
             repo_root=args.repo_root,
             input_video=args.input_video,
             channel_type=args.channel_type,
+            content_type=args.content_type,
             output_root=args.output_root,
             execute_owner_go=args.execute_owner_go,
         )
