@@ -1115,3 +1115,40 @@ Naechster Schritt:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 11B Proper Run Final Music Render
+
+- Schritt 11B: DONE.
+- Master-GO fuer genau einen lokalen Proper-Run-Musik-Preview-Render lag vor.
+- Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Input-Dauer: `520.250131s` / ca. 8.67min.
+- Input-Groesse: `800312704` Bytes.
+- Output Root: `reports/controlled_music_preview_run/step11_proper_run_final_music_render`.
+- Output-MP4: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/controlled_music_preview_main.mp4`.
+- Output-Groesse: `798591899` Bytes.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- Alter K7-Clip genutzt: nein.
+- Short-Clip genutzt: nein.
+- `vlog_background` genutzt: nein.
+- Intro Offset: `30.0`.
+- Intro Trim: true.
+- Intro Boost: false.
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`.
+- Dry-Run: `status=dry_run`, Proper-Run-Input, kein MP4 erzeugt.
+- Execute-Render: `status=ok`.
+- Manifest Status: `ok`.
+- Lokaler Step-11B-Report:
+  - `reports/controlled_music_preview_run/step11_proper_run_final_music_render/step11b_render_manifest.json`
+  - `reports/controlled_music_preview_run/step11_proper_run_final_music_render/step11b_render_summary.md`
+- Kein Upload gestartet.
+- Kein Final-Render gestartet.
+- Kein Runtime Learning gestartet.
+- Kein Qwen gestartet.
+- Keine Uncut-Musik genutzt.
+- Produktionsdateien nicht geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 lokal/untracked, nicht committed.
+- Owner Review Schritt 12 ist jetzt Pflicht.

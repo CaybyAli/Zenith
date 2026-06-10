@@ -1111,3 +1111,61 @@ Tests / Runs:
 
 Naechster Schritt:
 - Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 11B Proper Run Final Music Render
+
+Status:
+- Master-GO fuer Step 11B lag vor.
+- Richtiger `gaming_main` Proper Run wurde lokal mit finalem Musik-Tuning gerendert.
+- Kein Short genutzt.
+- Kein raw genutzt.
+- Kein uncut genutzt.
+- Kein Upload gestartet.
+- Kein Final-Render gestartet.
+- Kein Qwen gestartet.
+- Kein Runtime Learning gestartet.
+- Keine Musikdateien committed.
+
+Render:
+- Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`
+- Input-Dauer: `520.250131s` / ca. 8.67min
+- Input-Groesse: `800312704` Bytes
+- Output Root: `reports/controlled_music_preview_run/step11_proper_run_final_music_render`
+- Output-MP4: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/controlled_music_preview_main.mp4`
+- Output-Groesse: `798591899` Bytes
+- Output-Dauer: `520.241000s`
+- Content Type: `gaming_main`
+- Channel Type: `main`
+- Musik-Kategorie: `funny_gaming_background`
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`
+- Alter K7-Clip genutzt: nein
+- Short-Clip genutzt: nein
+- `vlog_background` genutzt: nein
+- Intro Offset: `30.0`
+- Intro Trim: true
+- Intro Boost: false
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`
+
+Safety:
+- Upload gestartet: nein
+- Final-Render gestartet: nein
+- Runtime Learning gestartet: nein
+- Qwen gestartet: nein
+- Qwen-Autocut: nein
+- Uncut genutzt: nein
+- Produktionsdateien geaendert: nein
+- Musikdateien committed: nein
+- Reports/MP4 committed: nein
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 32 passed
+- Dry-Run: `status=dry_run`, Proper-Run-Input, kein MP4 erzeugt
+- Execute-Render: `status=ok`
+- Manifest Status: `ok`
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 12 Owner Review Proper Run Final Music Tuning
+- Entscheidung nur durch Ali: GO / FIX / NO-GO
+- Kein Upload ohne neues Master-GO
+- Kein Runtime Learning

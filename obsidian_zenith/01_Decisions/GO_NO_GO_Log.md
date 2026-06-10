@@ -808,6 +808,51 @@ Grenzen:
 Naechster Schritt:
 - Controlled Music Preview Step 11B Proper Run Render nur nach Master-GO.
 
+## Controlled Music Preview Run Schritt 11B Proper Run Final Music Render
+
+Entscheidung: Master-GO fuer genau einen lokalen Proper-Run-Musik-Preview-Render mit finalem Musik-Tuning.
+
+Beweis:
+- Input: `exports/gaming_main/job_323bf29c60e4/job_323bf29c60e4_v1_final.mp4`.
+- Input-Dauer: `520.250131s` / ca. 8.67min.
+- Output-MP4: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/controlled_music_preview_main.mp4`.
+- Output-Groesse: `798591899` Bytes.
+- Manifest: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/preview_render_manifest.json`.
+- Summary: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/run_20260610_213126/preview_render_summary.md`.
+- Step-11B-Report: `reports/controlled_music_preview_run/step11_proper_run_final_music_render/step11b_render_manifest.json`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- Channel Type: `main`.
+- Content Type: `gaming_main`.
+- Manifest Status: `ok`.
+
+Ergebnis:
+- Controlled Music Preview Run Schritt 11B ausgefuehrt.
+- Echter 8.67-Minuten-Proper-Run wurde lokal mit finalem Musik-Tuning gerendert.
+- Alter K7-Clip wurde nicht genutzt.
+- Short-Clip wurde nicht genutzt.
+- `vlog_background` wurde nicht genutzt.
+- `music_start_offset_sec=30.0`.
+- `intro_trim_used=true`.
+- `intro_boost_used=false`.
+- Low-Speech Gains: `-27.0`, `-32.0`, `-25.0`.
+- Owner Review Schritt 12 ist jetzt Pflicht.
+
+Grenzen:
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Produktionsdateien geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.
+
+Naechster Schritt:
+- Controlled Music Preview Step 12 Owner Review Proper Run Final Music Tuning.
+
 ## Controlled Music Preview Run Schritt 10A Find Proper Run Input
 
 Entscheidung: Owner Review Schritt 10 = Musik-Tuning grundsaetzlich gut, aber Testmedium nicht ausreichend. Kein Render. Nur passenden richtigen Run suchen.
