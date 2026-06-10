@@ -17,10 +17,11 @@ Stand: 2026-06-10
 - P5-L6.5 Gruppe 5F P5-L Close: DONE.
 - Runtime Learning Gate: locked / later.
 - Phase 5.5 Musik: 100% / Final Audit abgeschlossen.
-- Controlled Music Preview Run: Schritt 3 Content-Type-Musik-Policy-Fix remote gesichert.
+- Controlled Music Preview Run: Schritt 4 Gaming-kompatibler Musik-Preview-Re-Render ausgefuehrt.
 - Controlled Music Preview Run Input-Kandidat bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
 - Controlled Music Preview Run Schritt 2: technisch GO, Owner Review = FIX wegen falscher Musik-Kategorie.
 - Controlled Music Preview Run Schritt 3: DONE / Content-Type-Fix remote gesichert.
+- Controlled Music Preview Run Schritt 4: DONE / Gaming-Re-Render lokal erzeugt / Owner Review offen.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -63,12 +64,13 @@ Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ord
 5.5-6 Controlled Music Preview Gate ist abgeschlossen.
 5.5-7 Final Audit ist abgeschlossen.
 Musik-Infrastruktur ist bereit fuer einen separaten kontrollierten Preview-Run.
-Controlled Music Preview Run Schritt 3 Content-Type-Musik-Policy-Fix ist remote gesichert.
+Controlled Music Preview Run Schritt 4 Gaming-kompatibler Musik-Preview-Re-Render ist ausgefuehrt.
 Input-Kandidat ist bestaetigt: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
-Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_095423/controlled_music_preview_main.mp4`.
-Owner Review Ergebnis: FIX, weil `vlog_background` nicht zu Rocket League / `gaming_main` passt.
-Neue Default-Preview-Kategorie fuer `gaming_main`: `funny_gaming_background`.
-Naechster Schritt: Controlled Music Preview Run Schritt 4 Re-Render nur nach Master-GO.
+Neues Output-MP4 steht lokal in `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/controlled_music_preview_main.mp4`.
+`content_type=gaming_main`.
+Musik-Kategorie: `funny_gaming_background`.
+`vlog_background` wurde nicht genutzt.
+Naechster Schritt: Controlled Music Preview Run Schritt 5 Owner Review Gaming Music.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
@@ -184,6 +186,43 @@ Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 4 Re-Render nur nach Master-GO.
+
+### Controlled Music Preview Run Schritt 4
+
+- Re-Render nach Master-GO ausgefuehrt.
+- Render-Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Output-MP4 lokal/untracked: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/controlled_music_preview_main.mp4`
+- Output-Groesse: `107944673` Bytes.
+- Manifest lokal/untracked: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/preview_render_manifest.json`
+- Summary lokal/untracked: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/preview_render_summary.md`
+- Step-4-Report lokal/untracked: `reports/controlled_music_preview_run/step4_gaming_compatible_rerender/step4_rerender_manifest.json`
+- Step-4-Summary lokal/untracked: `reports/controlled_music_preview_run/step4_gaming_compatible_rerender/step4_rerender_summary.md`
+- Channel: `main`.
+- Content Type: `gaming_main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- `vlog_background` genutzt: nein.
+- Uncut genutzt: nein.
+- Manifest Status: `ok`.
+- `preview_render_used=true`.
+- `final_render_used=false`.
+- `upload_started=false`.
+- `runtime_learning_started=false`.
+- `qwen_used=false`.
+- `qwen_autocut_used=false`.
+- `uncut_music_allowed=false`.
+- `owner_review_required=true`.
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt.
+- Execute-Run: `status=ok`, genau ein neues Output-MP4 im Run-Ordner.
+- Reports/MP4 lokal/untracked, nicht committed.
+- Musikdateien ignored und nicht committed.
+- Keine Produktionsdateien geaendert.
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Naechster Schritt: Controlled Music Preview Run Schritt 5 Owner Review Gaming Music.
 
 ## Wichtigste Beweise
 

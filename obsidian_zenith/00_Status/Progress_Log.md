@@ -670,3 +670,42 @@ Dieser Log ist Historie. Aktuelle Wahrheit steht in [[CURRENT_TRUTH]] und [[Phas
 - Musikdateien nicht committed.
 - Reports nicht committed.
 - Naechster Schritt: Controlled Music Preview Schritt 4 Re-Render nur nach Master-GO.
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 4 Gaming-Re-Render
+
+- Controlled Music Preview Run Schritt 4 nach Master-GO ausgefuehrt.
+- Bestehendes Render-Script genutzt, kein Code geaendert.
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`.
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/controlled_music_preview_main.mp4`.
+- Output-Groesse: `107944673` Bytes.
+- Channel Type: `main`.
+- Content Type: `gaming_main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- `vlog_background` genutzt: nein.
+- Uncut genutzt: nein.
+- Manifest: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/preview_render_manifest.json`.
+- Summary: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/preview_render_summary.md`.
+- Step-4-Report:
+  - `reports/controlled_music_preview_run/step4_gaming_compatible_rerender/step4_rerender_manifest.json`
+  - `reports/controlled_music_preview_run/step4_gaming_compatible_rerender/step4_rerender_summary.md`
+- Manifest Status: `ok`.
+- `preview_render_used=true`.
+- `final_render_used=false`.
+- `upload_started=false`.
+- `runtime_learning_started=false`.
+- `qwen_used=false`.
+- `qwen_autocut_used=false`.
+- `owner_review_required=true`.
+- Dry-Run: `status=dry_run`, `music_category=funny_gaming_background`, kein MP4 erzeugt.
+- Execute-Render: `status=ok`.
+- Reports und MP4 lokal/untracked, nicht committed.
+- Musikdateien ignored und nicht committed.
+- Keine Produktionsdateien geaendert.
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Kein Runtime Learning gestartet.
+- Naechster Schritt: Controlled Music Preview Run Schritt 5 Owner Review Gaming Music.

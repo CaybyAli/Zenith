@@ -620,3 +620,51 @@ Tests / Runs:
 
 Naechster Schritt:
 - Controlled Music Preview Schritt 4 Re-Render mit `content_type=gaming_main` nur nach Master-GO
+
+## 2026-06-10 - Controlled Music Preview Run Schritt 4 Gaming-Re-Render
+
+Status:
+- Schritt 4 nach Master-GO erledigt
+- genau ein zweiter kontrollierter Main-Account-Musik-Preview-Re-Render erzeugt
+- Content Type: `gaming_main`
+- Musik-Kategorie: `funny_gaming_background`
+- `vlog_background` nicht genutzt
+- kein Upload gestartet
+- kein Final-Render gestartet
+- kein Ingest gestartet
+- kein Qwen gestartet
+- kein Qwen-Autocut
+- kein Runtime Learning gestartet
+- keine Uncut-Musik genutzt
+- keine Produktionsdateien geaendert
+- Owner Review ist Pflicht
+
+Beweise:
+- Input: `reports/phase5/k7_control_run/production_retry_after_1h_20260605_175014/k7_control_preview.mp4`
+- Output-MP4: `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/controlled_music_preview_main.mp4`
+- Output-Groesse: `107944673` Bytes
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`
+- Manifest Status: `ok`
+- `preview_render_used=true`
+- `final_render_used=false`
+- `upload_started=false`
+- `runtime_learning_started=false`
+- `qwen_used=false`
+- `qwen_autocut_used=false`
+- `uncut_music_allowed=false`
+- `owner_review_required=true`
+
+Runs:
+- Dry-Run: `status=dry_run`, `content_type=gaming_main`, `music_category=funny_gaming_background`, kein MP4
+- Execute-Render: `status=ok`
+
+Reports:
+- `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/preview_render_manifest.json`
+- `reports/controlled_music_preview_run/step2_preview_render/run_20260610_150421/preview_render_summary.md`
+- `reports/controlled_music_preview_run/step4_gaming_compatible_rerender/step4_rerender_manifest.json`
+- `reports/controlled_music_preview_run/step4_gaming_compatible_rerender/step4_rerender_summary.md`
+- Reports und MP4 lokal/untracked, nicht committed
+
+Naechster Schritt:
+- Controlled Music Preview Run Schritt 5 Owner Review Gaming Music
+- Kein neuer Render ohne Master-GO
