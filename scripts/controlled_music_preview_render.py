@@ -9,6 +9,20 @@ from datetime import datetime
 from pathlib import Path
 from statistics import median
 
+import sys
+from pathlib import Path as _ZenithPath
+
+_ZENITH_REPO_ROOT = _ZenithPath(__file__).resolve().parents[1]
+if str(_ZENITH_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ZENITH_REPO_ROOT))
+
+from core.music_timeline_planner import (
+    build_fallback_video_mood_timeline as planner_build_fallback_video_mood_timeline,
+    classify_music_track_category as planner_classify_music_track_category,
+    get_media_duration_sec as planner_get_media_duration_sec,
+    plan_music_timeline as planner_plan_music_timeline,
+)
+
 REPO_IMPORT_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_IMPORT_ROOT))
@@ -307,6 +321,50 @@ def build_track_gain_plan(repo_root: Path, selected_music_files: list[Path]) -> 
     }
 
 
+
+def get_music_track_duration_sec(path: Path) -> float:
+    return planner_get_media_duration_sec(path)
+
+
+def build_music_timeline_probe(
+    repo_root: Path,
+    video_duration_sec: float,
+    selected_music_files: list[Path],
+    content_type: str,
+) -> dict:
+    fallback_mood = planner_build_fallback_video_mood_timeline(video_duration_sec, content_type)
+
+    available_tracks = []
+    for track in selected_music_files:
+        loudness = measure_music_track_loudness_db(track)
+        available_tracks.append(
+            {
+                "path": track.relative_to(repo_root).as_posix(),
+                "category": planner_classify_music_track_category(track),
+                "duration_sec": round(float(get_music_track_duration_sec(track)), 3),
+                "mean_volume_db": float(loudness["mean_volume_db"]),
+                "max_volume_db": loudness.get("max_volume_db"),
+            }
+        )
+
+    timeline_plan = planner_plan_music_timeline(
+        video_duration_sec=video_duration_sec,
+        available_tracks=available_tracks,
+        content_type=content_type,
+        mood_timeline=fallback_mood["mood_timeline"],
+        owner_gain_range_db=OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB,
+        owner_base_gain_db=OWNER_MUSIC_TARGET_GAIN_DB,
+    )
+
+    timeline_plan["mood_analysis_source"] = fallback_mood["mood_analysis_source"]
+    timeline_plan["true_ai_mood_detection_used"] = fallback_mood["true_ai_mood_detection_used"]
+    timeline_plan["mood_category_mapping_enabled"] = fallback_mood["mood_category_mapping_enabled"]
+    timeline_plan["duration_based_song_count"] = True
+    timeline_plan["track_duration_aware_selection"] = True
+    timeline_plan["single_song_loop"] = False
+    timeline_plan["music_timeline_planner_enabled"] = True
+    return timeline_plan
+
 def input_duration_sec(input_video: Path, repo_root: Path) -> float:
     return float(KNOWN_INPUT_DURATIONS_SEC.get(input_video.relative_to(repo_root).as_posix(), 0.0))
 
@@ -584,6 +642,7 @@ def build_manifest(
     low_speech_gains: dict,
     ffmpeg_music_volume: dict,
     playlist_plan: dict,
+    music_timeline_probe: dict | None = None,
     error: str | None = None,
 ) -> dict:
     manifest = {
@@ -608,6 +667,8 @@ def build_manifest(
     manifest.update(intro_offset)
     manifest.update(low_speech_gains)
     manifest.update(playlist_plan)
+    if music_timeline_probe:
+        manifest.update(music_timeline_probe)
     manifest.update(ffmpeg_music_volume)
     manifest.update(SAFE_MANIFEST_FLAGS)
     if error:
@@ -646,6 +707,12 @@ def build_summary(manifest: dict) -> str:
         f"- low_speech_ducking_gain_db: {manifest['low_speech_ducking_gain_db']}",
         f"- low_speech_max_music_gain_db: {manifest['low_speech_max_music_gain_db']}",
         f"- low_speech_volume_reduced_total_db: {manifest['low_speech_volume_reduced_total_db']}",
+        f"- music_timeline_planner_enabled: {str(manifest.get('music_timeline_planner_enabled', False)).lower()}",
+        f"- music_timeline_segment_count: {manifest.get('music_timeline_segment_count', 0)}",
+        f"- track_duration_aware_selection: {str(manifest.get('track_duration_aware_selection', False)).lower()}",
+        f"- duration_based_song_count: {str(manifest.get('duration_based_song_count', False)).lower()}",
+        f"- true_ai_mood_detection_used: {str(manifest.get('true_ai_mood_detection_used', False)).lower()}",
+        f"- mood_analysis_source: {manifest.get('mood_analysis_source')}",
         f"- adaptive_track_gain_enabled: {str(manifest['adaptive_track_gain_enabled']).lower()}",
         f"- track_gain_strategy: {manifest['track_gain_strategy']}",
         f"- track_gain_reference: {manifest['track_gain_reference']}",
@@ -703,6 +770,7 @@ def run(
     normalized_content_type = _assert_content_type_for_input(content_type)
     full_output_root = _assert_output_root(root, output_root)
     _assert_allowed_input_output_pair(root, full_input, full_output_root)
+    duration_sec = input_duration_sec(full_input, root)
     music_tracks, music_category = select_music_tracks(root, normalized_content_type)
     selected_music = music_tracks[0]
     intro_offset = build_demo_intro_offset_decision(selected_music)
@@ -714,6 +782,15 @@ def run(
         music_category=music_category,
     )
     selected_music_files = [root / Path(track) for track in playlist_plan["selected_music_track_paths"]]
+    music_timeline_probe = build_music_timeline_probe(
+        repo_root=root,
+        video_duration_sec=duration_sec,
+        selected_music_files=selected_music_files,
+        content_type=normalized_content_type,
+    )
+    music_timeline_probe = dict(music_timeline_probe)
+    music_timeline_probe["music_timeline_planner_status"] = music_timeline_probe.pop("status", "ok")
+    playlist_plan.update(music_timeline_probe)
     track_gain_plan = build_track_gain_plan(root, selected_music_files)
     ffmpeg_music_volume = build_ffmpeg_music_volume_probe(low_speech_gains, track_gain_plan)
 
@@ -797,7 +874,9 @@ def run(
         low_speech_gains=low_speech_gains,
         ffmpeg_music_volume=ffmpeg_music_volume,
         playlist_plan=playlist_plan,
+        music_timeline_probe=music_timeline_probe,
     )
+    manifest.update(music_timeline_probe)
     _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
     return manifest

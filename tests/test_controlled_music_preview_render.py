@@ -65,9 +65,27 @@ def _fake_music_loudness(music_file: Path) -> dict:
     }
 
 
+def _fake_music_duration(music_file: Path) -> float:
+    duration_by_name = {
+        "a_first.mp3": 150.0,
+        "b_second.mp3": 150.0,
+        "c_third.mp3": 150.0,
+        "d_fourth.mp3": 150.0,
+        "a_hype.mp3": 150.0,
+        "a_vlog.mp3": 150.0,
+    }
+    return duration_by_name.get(music_file.name, 150.0)
+
+
+def _fake_input_duration(input_video: Path, repo_root: Path) -> float:
+    return 528.348813
+
+
 @pytest.fixture(autouse=True)
 def _patch_music_loudness(monkeypatch):
     monkeypatch.setattr(preview, "measure_music_track_loudness_db", _fake_music_loudness)
+    monkeypatch.setattr(preview, "get_music_track_duration_sec", _fake_music_duration)
+    monkeypatch.setattr(preview, "input_duration_sec", _fake_input_duration)
 
 
 def test_default_is_dry_run_and_starts_no_render(tmp_path, monkeypatch):
@@ -806,3 +824,29 @@ def test_long_run_command_uses_different_adaptive_volume_values(tmp_path):
     assert "volume=-27.0dB" not in command
     assert "-stream_loop" not in command
     assert "concat=n=4" in command
+
+def test_step15a2_dry_run_manifest_contains_music_timeline_planner(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["music_timeline_planner_enabled"] is True
+    assert manifest["music_timeline"]
+    assert manifest["music_timeline_segment_count"] >= 3
+    assert manifest["track_duration_aware_selection"] is True
+    assert manifest["duration_based_song_count"] is True
+    assert manifest["mood_category_mapping_enabled"] is True
+    assert manifest["true_ai_mood_detection_used"] is False
+    assert "fallback" in manifest["mood_analysis_source"]
+    assert manifest["single_song_loop"] is False
+    assert manifest["selected_music_track_count"] >= 3
+    assert manifest["qwen_used"] is False
+    assert manifest["runtime_learning_started"] is False
+    assert manifest["owner_execute_required"] is True
