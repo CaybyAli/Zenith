@@ -47,6 +47,7 @@ Stand: 2026-06-11
 - Controlled Music Preview Run Schritt 13: DONE / Visual Proper Run mit Audio-Gain-Fix lokal gerendert / Owner Review Schritt 14 Pflicht.
 - Controlled Music Preview Run Schritt 14: Owner Review = NO-GO.
 - Controlled Music Preview Run Schritt 14A: DONE / Musik auf Adobe-Range `-38.0dB` gesenkt + Long-Run-Playlist vorbereitet / kein Render.
+- Controlled Music Preview Run Schritt 14B: DONE / Lower-Music Multi-Song Proper Run lokal gerendert / Owner Review Schritt 15 Pflicht.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -234,6 +235,32 @@ Ausgewaehlte Tracks: 4.
 `vlog_background` wurde nicht genutzt.
 Kein Execute Render, kein Preview-Render, kein Audio-Mix, kein Upload, kein Qwen, kein Runtime Learning.
 Naechster Schritt: Step 14B Render nur nach Master-GO.
+Schritt 14B Lower-Music Multi-Song Proper Run Render wurde nach Master-GO ausgefuehrt.
+Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+Input-Dauer: `528.348813s` / ca. 8.8min.
+Gameplay sichtbar: ja.
+Facecam fullscreen: nein.
+Kein Short, kein raw, kein uncut.
+Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_133137/controlled_music_preview_main.mp4`.
+Output-Groesse: `1623773832` Bytes.
+Content Type: `gaming_main`.
+Channel Type: `main`.
+Musik-Kategorie: `funny_gaming_background`.
+Owner-Musik-Zielwert: `-38.0dB`.
+FFmpeg-Musik-Volume: `-38.0dB`.
+FFmpeg-Volume-Quelle: `owner_adobe_reference_gain_db`.
+Hardcoded `volume=0.08` wurde nicht genutzt.
+`-27.0dB` wurde nicht als finaler Musikwert genutzt.
+Long-Run-Playlist genutzt: ja.
+Single-Song-Dauerloop genutzt: nein.
+Ausgewaehlte Tracks: 4.
+Selected Tracks: `ES_Ain't No Thing But To Swing - Jules Gaia.mp3`, `ES_B Positive - Jules Gaia.mp3`, `ES_Bop It - Jules Gaia.mp3`, `ES_Break Fast - Jules Gaia.mp3`.
+Kein immediate repeat, kein fast switching.
+FFmpeg Command nutzt `concat=n=4`.
+FFmpeg Command nutzt kein `stream_loop`.
+`vlog_background` wurde nicht genutzt.
+Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
+Owner Review Schritt 15 ist jetzt Pflicht.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 

@@ -1278,6 +1278,56 @@ Grenzen:
 - Keine Musikdateien committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 14B Lower Music Multi-Song Proper Run Render
+
+Entscheidung: Master-GO fuer genau einen lokalen Preview-Render des visuellen Proper Runs mit Owner/Adobe-Musikziel `-38.0dB` und Long-Run-Playlist.
+
+Beweis:
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Input-Dauer: `528.348813s` / ca. 8.8min.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_133137/controlled_music_preview_main.mp4`.
+- Output-Groesse: `1623773832` Bytes.
+- Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_133137/preview_render_manifest.json`.
+- Step-14B-Report: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/step14b_render_manifest.json`.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- `owner_music_target_gain_db=-38.0`.
+- `ffmpeg_music_volume_gain_db=-38.0`.
+- `ffmpeg_music_volume_source=owner_adobe_reference_gain_db`.
+- FFmpeg command nutzt `volume=-38.0dB`.
+- Hardcoded `volume=0.08` genutzt: nein.
+- `volume=-27.0dB` als finaler Musikwert genutzt: nein.
+- Long-Run-Playlist: ja.
+- Single-Song-Dauerloop: nein.
+- Selected Track Count: `4`.
+- Command nutzt `concat=n=4`.
+- Command nutzt kein `stream_loop`.
+
+Ergebnis:
+- Controlled Music Preview Run Schritt 14B ausgefuehrt.
+- Alter K7-Clip wurde nicht genutzt.
+- Short-Clip wurde nicht genutzt.
+- Alter Facecam-Proper-Run wurde nicht genutzt.
+- `vlog_background` wurde nicht genutzt.
+- Kein immediate repeat: ja.
+- Fast switching: nein.
+- Owner Review Schritt 15 ist jetzt Pflicht.
+
+Grenzen:
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Produktionsdateien geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.
+
 ## Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix
 
 Entscheidung: Schritt 7 ist NO-GO wegen abgeschnittenem FFmpeg-Command. Code-GO nur fuer Step 7A FFmpeg-Command-Fix, kein Render.

@@ -1434,3 +1434,62 @@ Reports:
 
 Naechster Schritt:
 - Controlled Music Preview Schritt 14B Render Visual Proper Run mit leiserer Musik und Multi-Song-Playlist nur nach Master-GO.
+
+## 2026-06-11 - Controlled Music Preview Run Schritt 14B Lower Music Multi-Song Proper Run Render
+
+Status:
+- Ali/Master hat GO fuer Step 14B gegeben.
+- Visual Proper Run mit leiserer Musik und Multi-Song-Playlist wurde lokal gerendert.
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Input-Dauer: `528.348813s` / ca. 8.8min.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Kein Short, kein raw, kein uncut.
+- Kein Upload.
+- Kein Final-Render.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Render:
+- Output Root: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_133137/controlled_music_preview_main.mp4`.
+- Output-Groesse: `1623773832` Bytes.
+- Output-Dauer: `528.348177s`.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+
+Audio / Playlist:
+- Owner Adobe-Referenzbereich: `[-40.0, -35.0]`.
+- Owner-Musik-Zielwert: `-38.0dB`.
+- `ffmpeg_music_volume_gain_db=-38.0`.
+- `ffmpeg_music_volume_source=owner_adobe_reference_gain_db`.
+- Hardcoded `volume=0.08` genutzt: nein.
+- `-27.0dB` als finaler Musikwert genutzt: nein.
+- Long-Run-Playlist: true.
+- Single-Song-Dauerloop: false.
+- Selected Track Count: `4`.
+- Selected Tracks:
+  - `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`
+  - `local_assets/music/main_account/funny_gaming_background/ES_B Positive - Jules Gaia.mp3`
+  - `local_assets/music/main_account/funny_gaming_background/ES_Bop It - Jules Gaia.mp3`
+  - `local_assets/music/main_account/funny_gaming_background/ES_Break Fast - Jules Gaia.mp3`
+- Kein immediate repeat: ja.
+- Fast switching: nein.
+- Command nutzt `concat=n=4`.
+- Command nutzt kein `stream_loop`.
+- `vlog_background` genutzt: nein.
+
+Belege:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen.
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 42 passed.
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt.
+- Execute Render: `status=ok`.
+- Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_133137/preview_render_manifest.json`.
+- Lokaler Step-14B-Report: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/step14b_render_manifest.json`.
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 15 Owner Review Lower Music Multi-Song Proper Run.
+- Ali entscheidet GO / FIX / NO-GO.
+- Kein Upload ohne neues Master-GO.
+- Kein Runtime Learning.
