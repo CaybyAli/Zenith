@@ -2260,3 +2260,46 @@ Next:
 - Owner Review Schritt 20 is mandatory.
 - No upload without new Master-GO.
 - No runtime learning.
+
+## 2026-06-11 ? Step 21A Tail Music Coverage Fix
+
+Status:
+- Phase 5: 100% DONE
+- P5-L: 100% CLOSED
+- Phase 5.5: 100% DONE
+- Step 20 Owner Review: FIX / NO-GO
+- Step 21A Code: DONE
+- Commit: 9c681eb fix(preview): build musicbed from timeline segments
+- Render: not started
+- Upload: not started
+- Runtime Learning: locked / not started
+- Qwen: not used
+- Ingest: not used
+
+Root Cause:
+- FFmpeg musicbed was built from selected_music_files / unique tracks.
+- Timeline could have more music segments than unique tracks.
+- This caused tail music to disappear while manifest still claimed no silent gaps.
+
+Fix:
+- FFmpeg musicbed is now built from music_timeline segments.
+- Reused tracks become real FFmpeg music segments.
+- concat=n now matches music_timeline_segment_count.
+- Tail coverage guard added.
+- Command/timeline consistency fields added.
+- Source music loudness automation fields added.
+- Voice priority remains stronger than quiet-section boost.
+
+Dry-run evidence:
+- status=dry_run
+- owner_go=false
+- musicbed_command_matches_timeline=true
+- musicbed_no_silent_gaps=true
+- tail_music_coverage_passed=true
+- upload_started=false
+- runtime_learning_started=false
+- qwen_used=false
+
+Next:
+- Step 21B/21C render only after new Master-GO.
+
