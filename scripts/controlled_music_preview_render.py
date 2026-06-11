@@ -82,6 +82,17 @@ DEMO_FIRST_USABLE_AUDIO_SEC = 30.0
 DEMO_MUSIC_DURATION_SEC = 120.0
 LOW_SPEECH_DENSITY = 0.10
 FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
+OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = [-40.0, -35.0]
+OWNER_MUSIC_TARGET_GAIN_DB = -38.0
+OWNER_MUSIC_VOLUME_SOURCE = "owner_adobe_reference_gain_db"
+LONG_RUN_PLAYLIST_THRESHOLD_SEC = 180.0
+LONG_RUN_MIN_UNIQUE_TRACKS = 3
+LONG_RUN_MAX_UNIQUE_TRACKS = 5
+LONG_RUN_TARGET_TRACK_LENGTH_SEC = 150.0
+KNOWN_INPUT_DURATIONS_SEC = {
+    PROPER_RUN_INPUT_VIDEO.as_posix(): 520.250131,
+    VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix(): 528.348813,
+}
 
 
 class ControlledMusicPreviewError(ValueError):
@@ -160,6 +171,11 @@ def _assert_music_source_allowed(repo_root: Path, music_path: Path) -> None:
 
 
 def select_music_file(repo_root: Path, content_type: str) -> tuple[Path, str]:
+    tracks, category = select_music_tracks(repo_root, content_type)
+    return tracks[0], category
+
+
+def select_music_tracks(repo_root: Path, content_type: str) -> tuple[list[Path], str]:
     normalized_content_type = _assert_content_type_for_input(content_type)
     category = choose_default_preview_category_for_content_type(normalized_content_type)
     validate_music_category_for_content_type(normalized_content_type, category)
@@ -177,9 +193,9 @@ def select_music_file(repo_root: Path, content_type: str) -> tuple[Path, str]:
     if not candidates:
         raise ControlledMusicPreviewError(f"{category} has no MP3 candidates; no fallback is allowed")
 
-    selected = candidates[0]
-    _assert_music_source_allowed(repo_root, selected)
-    return selected, category
+    for selected in candidates:
+        _assert_music_source_allowed(repo_root, selected)
+    return candidates, category
 
 
 def create_run_dir(output_root: Path, now: datetime | None = None) -> Path:
@@ -197,12 +213,59 @@ def db_to_linear(gain_db: float) -> float:
     return 10 ** (gain_db / 20)
 
 
-def build_ffmpeg_music_volume_probe(low_speech_gains: dict) -> dict:
-    gain_db = float(low_speech_gains[FFMPEG_MUSIC_VOLUME_SOURCE])
+def input_duration_sec(input_video: Path, repo_root: Path) -> float:
+    return float(KNOWN_INPUT_DURATIONS_SEC.get(input_video.relative_to(repo_root).as_posix(), 0.0))
+
+
+def playlist_track_target_count(duration_sec: float, available_count: int) -> int:
+    if duration_sec <= LONG_RUN_PLAYLIST_THRESHOLD_SEC:
+        return 1
+    target_count = int((duration_sec + LONG_RUN_TARGET_TRACK_LENGTH_SEC - 1) // LONG_RUN_TARGET_TRACK_LENGTH_SEC)
+    target_count = max(LONG_RUN_MIN_UNIQUE_TRACKS, target_count)
+    target_count = min(LONG_RUN_MAX_UNIQUE_TRACKS, target_count)
+    if available_count < LONG_RUN_MIN_UNIQUE_TRACKS:
+        raise ControlledMusicPreviewError("long run playlist requires at least 3 unique tracks")
+    return min(target_count, available_count)
+
+
+def build_music_playlist_plan(
+    *,
+    repo_root: Path,
+    input_video: Path,
+    music_tracks: list[Path],
+    music_category: str,
+) -> dict:
+    duration_sec = input_duration_sec(input_video, repo_root)
+    target_count = playlist_track_target_count(duration_sec, len(music_tracks))
+    selected_tracks = music_tracks[:target_count]
+    selected_track_paths = [track.relative_to(repo_root).as_posix() for track in selected_tracks]
+    no_immediate_repeat = all(
+        previous != current
+        for previous, current in zip(selected_track_paths, selected_track_paths[1:])
+    )
     return {
+        "input_duration_sec": duration_sec,
+        "long_run_playlist_enabled": duration_sec > LONG_RUN_PLAYLIST_THRESHOLD_SEC,
+        "music_single_track_loop": duration_sec <= LONG_RUN_PLAYLIST_THRESHOLD_SEC,
+        "min_unique_tracks": LONG_RUN_MIN_UNIQUE_TRACKS if duration_sec > LONG_RUN_PLAYLIST_THRESHOLD_SEC else 1,
+        "target_unique_tracks": target_count,
+        "selected_music_track_count": len(selected_tracks),
+        "selected_music_tracks": selected_track_paths,
+        "music_playlist_no_immediate_repeat": no_immediate_repeat,
+        "music_playlist_category": music_category,
+        "music_playlist_fast_switching": False,
+    }
+
+
+def build_ffmpeg_music_volume_probe(low_speech_gains: dict) -> dict:
+    _unused_low_speech_gain = float(low_speech_gains[FFMPEG_MUSIC_VOLUME_SOURCE])
+    gain_db = OWNER_MUSIC_TARGET_GAIN_DB
+    return {
+        "owner_adobe_reference_gain_range_db": OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB,
+        "owner_music_target_gain_db": OWNER_MUSIC_TARGET_GAIN_DB,
         "ffmpeg_music_volume_gain_db": gain_db,
         "ffmpeg_music_volume_linear": db_to_linear(gain_db),
-        "ffmpeg_music_volume_source": FFMPEG_MUSIC_VOLUME_SOURCE,
+        "ffmpeg_music_volume_source": OWNER_MUSIC_VOLUME_SOURCE,
         "manifest_gains_applied_to_ffmpeg_command": True,
         "speech_aware_ducking_confirmed": False,
         "sidechaincompress_used": True,
@@ -233,34 +296,54 @@ def build_ffmpeg_command(
     music_file: Path,
     output_video: Path,
     music_start_offset_sec: float = 0.0,
-    music_volume_gain_db: float = -27.0,
+    music_volume_gain_db: float = OWNER_MUSIC_TARGET_GAIN_DB,
+    music_files: list[Path] | None = None,
+    long_run_playlist_enabled: bool = False,
 ) -> list[str]:
-    if not str(music_file).strip():
+    selected_music_files = list(music_files or [music_file])
+    if not selected_music_files or not str(selected_music_files[0]).strip():
         raise ControlledMusicPreviewError("music input is required")
     if not str(output_video).strip():
         raise ControlledMusicPreviewError("output video path is required")
     if music_start_offset_sec < 0.0:
         raise ControlledMusicPreviewError("music_start_offset_sec must not be negative")
 
-    filter_complex = (
-        f"[1:a]volume={music_volume_gain_db:.1f}dB[musicquiet];"
-        "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
-        "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
-    )
     command = [
         "ffmpeg",
         "-hide_banner",
         "-y",
         "-i",
         str(input_video),
-        "-stream_loop",
-        "-1",
     ]
-    if music_start_offset_sec > 0.0:
-        command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
+    if long_run_playlist_enabled:
+        if len(selected_music_files) < LONG_RUN_MIN_UNIQUE_TRACKS:
+            raise ControlledMusicPreviewError("long run playlist requires at least 3 unique tracks")
+        for track in selected_music_files:
+            if music_start_offset_sec > 0.0:
+                command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
+            command.extend(["-i", str(track)])
+        volume_filters = [
+            f"[{index}:a]volume={music_volume_gain_db:.1f}dB[music{index}]"
+            for index in range(1, len(selected_music_files) + 1)
+        ]
+        concat_inputs = "".join(f"[music{index}]" for index in range(1, len(selected_music_files) + 1))
+        filter_complex = (
+            ";".join(volume_filters)
+            + f";{concat_inputs}concat=n={len(selected_music_files)}:v=0:a=1[musicquiet];"
+            "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
+            "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
+        )
+    else:
+        command.extend(["-stream_loop", "-1"])
+        if music_start_offset_sec > 0.0:
+            command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
+        command.extend(["-i", str(selected_music_files[0])])
+        filter_complex = (
+            f"[1:a]volume={music_volume_gain_db:.1f}dB[musicquiet];"
+            "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
+            "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
+        )
     command.extend([
-        "-i",
-        str(music_file),
         "-filter_complex",
         filter_complex,
         "-map",
@@ -276,28 +359,49 @@ def build_ffmpeg_command(
         "-shortest",
         str(output_video),
     ])
-    command = validate_ffmpeg_command(command, music_file=music_file, output_video=output_video)
+    command = validate_ffmpeg_command(
+        command,
+        music_file=selected_music_files[0],
+        output_video=output_video,
+        music_files=selected_music_files,
+        long_run_playlist_enabled=long_run_playlist_enabled,
+    )
     _assert_command_uses_music_gain(command, music_volume_gain_db)
     return command
 
 
-def validate_ffmpeg_command(command: list[str], *, music_file: Path, output_video: Path) -> list[str]:
+def validate_ffmpeg_command(
+    command: list[str],
+    *,
+    music_file: Path,
+    output_video: Path,
+    music_files: list[Path] | None = None,
+    long_run_playlist_enabled: bool = False,
+) -> list[str]:
     if not command:
         raise ControlledMusicPreviewError("ffmpeg command is required")
     if command[0] != "ffmpeg":
         raise ControlledMusicPreviewError("ffmpeg command must start with ffmpeg")
     if len(command) < 2 or command[-2:] == ["-stream_loop", "-1"]:
         raise ControlledMusicPreviewError("ffmpeg command must not end after stream_loop")
-    if str(music_file) not in command:
-        raise ControlledMusicPreviewError("ffmpeg command is missing music input")
+    selected_music_files = list(music_files or [music_file])
+    for selected_music_file in selected_music_files:
+        if str(selected_music_file) not in command:
+            raise ControlledMusicPreviewError("ffmpeg command is missing music input")
     if not str(output_video).strip() or command[-1] != str(output_video):
         raise ControlledMusicPreviewError("ffmpeg command must end with output video path")
     if "-filter_complex" not in command:
         raise ControlledMusicPreviewError("ffmpeg command is missing filter_complex")
     if command.count("-map") < 2:
         raise ControlledMusicPreviewError("ffmpeg command is missing output maps")
-    if command.count("-i") < 2:
+    if command.count("-i") < len(selected_music_files) + 1:
         raise ControlledMusicPreviewError("ffmpeg command is missing music -i input")
+    filter_complex = _filter_complex_from_command(command)
+    if long_run_playlist_enabled:
+        if "-stream_loop" in command:
+            raise ControlledMusicPreviewError("long run playlist must not use stream_loop")
+        if "concat=" not in filter_complex:
+            raise ControlledMusicPreviewError("long run playlist command must concatenate music inputs")
     return command
 
 
@@ -360,6 +464,7 @@ def build_manifest(
     intro_offset: dict,
     low_speech_gains: dict,
     ffmpeg_music_volume: dict,
+    playlist_plan: dict,
     error: str | None = None,
 ) -> dict:
     manifest = {
@@ -384,6 +489,7 @@ def build_manifest(
     manifest.update(intro_offset)
     manifest.update(low_speech_gains)
     manifest.update(ffmpeg_music_volume)
+    manifest.update(playlist_plan)
     manifest.update(SAFE_MANIFEST_FLAGS)
     if error:
         manifest["error"] = error
@@ -409,6 +515,9 @@ def build_summary(manifest: dict) -> str:
         f"- vlog_background_blocked_for_gaming_main: "
         f"{str(manifest['vlog_background_blocked_for_gaming_main']).lower()}",
         f"- music_file_path: `{manifest['music_file_path']}`",
+        f"- input_duration_sec: {manifest['input_duration_sec']}",
+        f"- owner_adobe_reference_gain_range_db: {manifest['owner_adobe_reference_gain_range_db']}",
+        f"- owner_music_target_gain_db: {manifest['owner_music_target_gain_db']}",
         f"- intro_offset_policy_used: {str(manifest['intro_offset_policy_used']).lower()}",
         f"- quiet_intro_detected: {str(manifest['quiet_intro_detected']).lower()}",
         f"- music_start_offset_sec: {manifest['music_start_offset_sec']}",
@@ -425,6 +534,13 @@ def build_summary(manifest: dict) -> str:
         f"{str(manifest['manifest_gains_applied_to_ffmpeg_command']).lower()}",
         f"- speech_aware_ducking_confirmed: {str(manifest['speech_aware_ducking_confirmed']).lower()}",
         f"- sidechaincompress_used: {str(manifest['sidechaincompress_used']).lower()}",
+        f"- long_run_playlist_enabled: {str(manifest['long_run_playlist_enabled']).lower()}",
+        f"- music_single_track_loop: {str(manifest['music_single_track_loop']).lower()}",
+        f"- selected_music_track_count: {manifest['selected_music_track_count']}",
+        f"- selected_music_tracks: {manifest['selected_music_tracks']}",
+        f"- music_playlist_no_immediate_repeat: {str(manifest['music_playlist_no_immediate_repeat']).lower()}",
+        f"- music_playlist_category: {manifest['music_playlist_category']}",
+        f"- music_playlist_fast_switching: {str(manifest['music_playlist_fast_switching']).lower()}",
         f"- upload_started: {str(manifest['upload_started']).lower()}",
         f"- runtime_learning_started: {str(manifest['runtime_learning_started']).lower()}",
         f"- {_q_flag('used')}: {str(manifest[_q_flag('used')]).lower()}",
@@ -463,10 +579,18 @@ def run(
     normalized_content_type = _assert_content_type_for_input(content_type)
     full_output_root = _assert_output_root(root, output_root)
     _assert_allowed_input_output_pair(root, full_input, full_output_root)
-    selected_music, music_category = select_music_file(root, normalized_content_type)
+    music_tracks, music_category = select_music_tracks(root, normalized_content_type)
+    selected_music = music_tracks[0]
     intro_offset = build_demo_intro_offset_decision(selected_music)
     low_speech_gains = build_low_speech_gain_probe(music_category)
     ffmpeg_music_volume = build_ffmpeg_music_volume_probe(low_speech_gains)
+    playlist_plan = build_music_playlist_plan(
+        repo_root=root,
+        input_video=full_input,
+        music_tracks=music_tracks,
+        music_category=music_category,
+    )
+    selected_music_files = [root / Path(track) for track in playlist_plan["selected_music_tracks"]]
 
     run_dir = create_run_dir(full_output_root)
     output_video = run_dir / OUTPUT_FILENAME
@@ -476,6 +600,8 @@ def run(
         output_video,
         music_start_offset_sec=float(intro_offset["music_start_offset_sec"]),
         music_volume_gain_db=float(ffmpeg_music_volume["ffmpeg_music_volume_gain_db"]),
+        music_files=selected_music_files,
+        long_run_playlist_enabled=bool(playlist_plan["long_run_playlist_enabled"]),
     )
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 
@@ -496,6 +622,7 @@ def run(
             intro_offset=intro_offset,
             low_speech_gains=low_speech_gains,
             ffmpeg_music_volume=ffmpeg_music_volume,
+            playlist_plan=playlist_plan,
         )
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
@@ -520,6 +647,7 @@ def run(
             intro_offset=intro_offset,
             low_speech_gains=low_speech_gains,
             ffmpeg_music_volume=ffmpeg_music_volume,
+            playlist_plan=playlist_plan,
             error=f"ffmpeg exited with {completed.returncode}",
         )
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
@@ -540,6 +668,7 @@ def run(
         intro_offset=intro_offset,
         low_speech_gains=low_speech_gains,
         ffmpeg_music_volume=ffmpeg_music_volume,
+        playlist_plan=playlist_plan,
     )
     _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))

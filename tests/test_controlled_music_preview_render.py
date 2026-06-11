@@ -37,6 +37,8 @@ def _repo_fixture(tmp_path: Path) -> Path:
 
     music_dir = tmp_path / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
     music_dir.mkdir(parents=True, exist_ok=True)
+    (music_dir / "d_fourth.mp3").write_bytes(b"music")
+    (music_dir / "c_third.mp3").write_bytes(b"music")
     (music_dir / "b_second.mp3").write_bytes(b"music")
     (music_dir / "a_first.mp3").write_bytes(b"music")
     (tmp_path / preview.MAIN_MUSIC_ROOT / "hype").mkdir(parents=True, exist_ok=True)
@@ -216,7 +218,7 @@ def test_step13_output_root_is_allowed_for_visual_proper_run(tmp_path):
     assert manifest["output_root"] == preview.STEP13_OUTPUT_ROOT.as_posix()
 
 
-def test_step13_dry_run_with_visual_proper_run_uses_audio_gain_fix(tmp_path, monkeypatch):
+def test_step13_dry_run_with_visual_proper_run_uses_owner_volume_and_playlist_fix(tmp_path, monkeypatch):
     repo_root = _repo_fixture(tmp_path)
 
     def fail_if_called(*args, **kwargs):
@@ -244,12 +246,22 @@ def test_step13_dry_run_with_visual_proper_run_uses_audio_gain_fix(tmp_path, mon
     assert manifest["low_speech_base_music_gain_db"] == -27.0
     assert manifest["low_speech_ducking_gain_db"] == -32.0
     assert manifest["low_speech_max_music_gain_db"] == -25.0
-    assert manifest["ffmpeg_music_volume_gain_db"] == -27.0
-    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0447, abs=0.0001)
-    assert manifest["ffmpeg_music_volume_source"] == "low_speech_base_music_gain_db"
+    assert manifest["owner_adobe_reference_gain_range_db"] == [-40.0, -35.0]
+    assert manifest["owner_music_target_gain_db"] == -38.0
+    assert manifest["ffmpeg_music_volume_gain_db"] == -38.0
+    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0126, abs=0.0001)
+    assert manifest["ffmpeg_music_volume_source"] == "owner_adobe_reference_gain_db"
     assert manifest["manifest_gains_applied_to_ffmpeg_command"] is True
     assert manifest["speech_aware_ducking_confirmed"] is False
     assert manifest["sidechaincompress_used"] is True
+    assert manifest["input_duration_sec"] > 180.0
+    assert manifest["long_run_playlist_enabled"] is True
+    assert manifest["music_single_track_loop"] is False
+    assert manifest["selected_music_track_count"] >= 3
+    assert len(set(manifest["selected_music_tracks"])) == manifest["selected_music_track_count"]
+    assert manifest["music_playlist_no_immediate_repeat"] is True
+    assert manifest["music_playlist_category"] == CATEGORY_FUNNY_GAMING_BACKGROUND
+    assert manifest["music_playlist_fast_switching"] is False
     assert manifest["owner_execute_required"] is True
 
 
@@ -485,15 +497,16 @@ def test_ffmpeg_command_with_intro_offset_is_complete(tmp_path):
     assert command[-1] == str(output_path)
     filter_complex = command[command.index("-filter_complex") + 1]
     assert "volume=0.08" not in filter_complex
-    assert "volume=-27.0dB" in filter_complex
+    assert "volume=-38.0dB" in filter_complex
+    assert "volume=-27.0dB" not in filter_complex
     assert "sidechaincompress" in filter_complex
 
 
 def test_db_to_linear_converts_planned_preview_gain():
-    assert preview.db_to_linear(-27.0) == pytest.approx(0.0447, abs=0.0001)
+    assert preview.db_to_linear(-38.0) == pytest.approx(0.0126, abs=0.0001)
 
 
-def test_ffmpeg_music_volume_manifest_fields_match_low_speech_base_gain(tmp_path):
+def test_ffmpeg_music_volume_manifest_fields_match_owner_adobe_reference_gain(tmp_path):
     repo_root = _repo_fixture(tmp_path)
     manifest = preview.run(
         repo_root=repo_root,
@@ -503,10 +516,11 @@ def test_ffmpeg_music_volume_manifest_fields_match_low_speech_base_gain(tmp_path
         output_root=preview.STEP13_OUTPUT_ROOT,
     )
 
-    assert manifest["ffmpeg_music_volume_gain_db"] == manifest["low_speech_base_music_gain_db"]
-    assert manifest["ffmpeg_music_volume_gain_db"] == -27.0
-    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0447, abs=0.0001)
-    assert manifest["ffmpeg_music_volume_source"] == "low_speech_base_music_gain_db"
+    assert manifest["owner_adobe_reference_gain_range_db"] == [-40.0, -35.0]
+    assert manifest["owner_music_target_gain_db"] == -38.0
+    assert manifest["ffmpeg_music_volume_gain_db"] == -38.0
+    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0126, abs=0.0001)
+    assert manifest["ffmpeg_music_volume_source"] == "owner_adobe_reference_gain_db"
     assert manifest["manifest_gains_applied_to_ffmpeg_command"] is True
     assert manifest["speech_aware_ducking_confirmed"] is False
 
@@ -522,12 +536,58 @@ def test_manifest_gains_claim_requires_matching_ffmpeg_command(tmp_path):
         music_path,
         output_path,
         music_start_offset_sec=30.0,
-        music_volume_gain_db=-27.0,
+        music_volume_gain_db=-38.0,
     )
 
     filter_complex = command[command.index("-filter_complex") + 1]
-    assert "volume=-27.0dB" in filter_complex
+    assert "volume=-38.0dB" in filter_complex
+    assert "volume=-27.0dB" not in filter_complex
     assert "volume=0.08" not in filter_complex
+
+
+def test_long_visual_proper_run_uses_multi_song_playlist_command(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert manifest["input_duration_sec"] > 180.0
+    assert manifest["long_run_playlist_enabled"] is True
+    assert manifest["music_single_track_loop"] is False
+    assert manifest["selected_music_track_count"] >= 3
+    assert len(set(manifest["selected_music_tracks"])) == manifest["selected_music_track_count"]
+    assert all(CATEGORY_FUNNY_GAMING_BACKGROUND in track for track in manifest["selected_music_tracks"])
+    assert all(CATEGORY_VLOG_BACKGROUND not in track for track in manifest["selected_music_tracks"])
+    assert all("uncut" not in Path(track).parts for track in manifest["selected_music_tracks"])
+    assert manifest["music_playlist_no_immediate_repeat"] is True
+    assert manifest["music_playlist_fast_switching"] is False
+    assert "volume=-38.0dB" in command
+    assert "volume=0.08" not in command
+    assert "volume=-27.0dB" not in command
+    assert "concat=n=" in command
+    assert "-stream_loop" not in command
+
+
+def test_long_run_playlist_requires_at_least_three_tracks(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    funny_dir = repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND
+    for path in sorted(funny_dir.glob("*.mp3"))[2:]:
+        path.rename(path.with_suffix(".disabled"))
+
+    with pytest.raises(preview.ControlledMusicPreviewError, match="at least 3 unique tracks"):
+        preview.run(
+            repo_root=repo_root,
+            input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+            channel_type="main",
+            content_type=CONTENT_TYPE_GAMING_MAIN,
+            output_root=preview.STEP13_OUTPUT_ROOT,
+        )
 
 
 def test_ffmpeg_command_without_output_is_rejected(tmp_path):
