@@ -66,6 +66,7 @@ STEP11_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step11_proper_ru
 STEP13_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step13_visual_proper_run_music_render")
 STEP17B_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step17b_music_audibility_policy_fix")
 STEP18B_FIX_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step18b_fix_single_music_bus_gain")
+STEP19B_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step19b_music_balance_gap_fix")
 ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step2_preview_render": EXPECTED_OUTPUT_ROOT,
     "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
@@ -73,6 +74,7 @@ ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step13_visual_proper_run_music_render": STEP13_OUTPUT_ROOT,
     "step17b_music_audibility_policy_fix": STEP17B_OUTPUT_ROOT,
     "step18b_fix_single_music_bus_gain": STEP18B_FIX_OUTPUT_ROOT,
+    "step19b_music_balance_gap_fix": STEP19B_OUTPUT_ROOT,
 }
 ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS = {
     CONFIRMED_INPUT_VIDEO.as_posix(): {EXPECTED_OUTPUT_ROOT.as_posix()},
@@ -82,6 +84,7 @@ ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS = {
         STEP13_OUTPUT_ROOT.as_posix(),
         STEP17B_OUTPUT_ROOT.as_posix(),
         STEP18B_FIX_OUTPUT_ROOT.as_posix(),
+        STEP19B_OUTPUT_ROOT.as_posix(),
     },
 }
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
@@ -111,13 +114,20 @@ DEMO_FIRST_USABLE_AUDIO_SEC = 30.0
 DEMO_MUSIC_DURATION_SEC = 120.0
 LOW_SPEECH_DENSITY = 0.10
 FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
-OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = [-35.0, -26.0]
+OWNER_MUSIC_BALANCED_GAIN_RANGE_DB = [-38.0, -30.0]
+OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = OWNER_MUSIC_BALANCED_GAIN_RANGE_DB
 OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = [-4.0, 4.0]
-OWNER_MUSIC_TARGET_GAIN_DB = -30.0
-MUSIC_AUDIBILITY_FLOOR_DB = -35.0
-MUSIC_LOUDNESS_CEILING_DB = -26.0
+OWNER_MUSIC_TARGET_GAIN_DB = -34.0
+MUSIC_AUDIBILITY_FLOOR_DB = -38.0
+MUSIC_LOUDNESS_CEILING_DB = -30.0
 MUSIC_AUDIBILITY_POLICY_ENABLED = True
+MUSIC_BALANCE_POLICY_ENABLED = True
 DOUBLE_DUCKING_PROTECTION_ENABLED = True
+VOICE_PRIORITY_MUSIC_DUCKING_ENABLED = True
+MUSIC_MUST_STAY_BELOW_VOICE_ENABLED = True
+MUSIC_VS_VOICE_SAFETY_MARGIN_ENABLED = True
+VOICE_ACTIVE_MUSIC_CEILING_DB = -35.0
+NO_VOICE_MUSIC_CEILING_DB = -30.0
 SIDECHAIN_THRESHOLD = 0.08
 SIDECHAIN_RATIO = 3.0
 SIDECHAIN_ATTACK = 40
@@ -482,6 +492,13 @@ def build_ffmpeg_music_volume_probe(low_speech_gains: dict, track_gain_plan: dic
         "music_bus_double_gain_protection_enabled": MUSIC_BUS_DOUBLE_GAIN_PROTECTION_ENABLED,
         "music_bus_double_gain_protection_passed": True,
         "effective_music_gain_double_applied": False,
+        "music_balance_policy_enabled": MUSIC_BALANCE_POLICY_ENABLED,
+        "owner_music_balanced_gain_range_db": OWNER_MUSIC_BALANCED_GAIN_RANGE_DB,
+        "voice_priority_music_ducking_enabled": VOICE_PRIORITY_MUSIC_DUCKING_ENABLED,
+        "music_must_stay_below_voice_enabled": MUSIC_MUST_STAY_BELOW_VOICE_ENABLED,
+        "voice_active_music_ceiling_db": VOICE_ACTIVE_MUSIC_CEILING_DB,
+        "no_voice_music_ceiling_db": NO_VOICE_MUSIC_CEILING_DB,
+        "music_vs_voice_safety_margin_enabled": MUSIC_VS_VOICE_SAFETY_MARGIN_ENABLED,
     }
 
 
@@ -573,7 +590,7 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
     )
 
     all_at_floor = all(abs(value - MUSIC_AUDIBILITY_FLOOR_DB) <= 0.001 for value in final_mix_values)
-    all_too_quiet = all(value <= -38.0 for value in final_mix_values)
+    all_too_quiet = all(value < MUSIC_AUDIBILITY_FLOOR_DB for value in final_mix_values)
     automation_values_are_final_mix_values = (
         not automation_stage_values
         or len(automation_strong_negative_values) == len(automation_stage_values)
@@ -581,7 +598,7 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
 
     gate_passed = (
         average_gain > MUSIC_AUDIBILITY_FLOOR_DB
-        and -33.0 <= average_gain <= -28.0
+        and MUSIC_AUDIBILITY_FLOOR_DB <= average_gain <= MUSIC_LOUDNESS_CEILING_DB
         and min_gain >= MUSIC_AUDIBILITY_FLOOR_DB
         and max_gain <= MUSIC_LOUDNESS_CEILING_DB
         and SIDECHAIN_RATIO <= 4.0

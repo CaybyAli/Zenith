@@ -3,18 +3,22 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import Any
 
-OWNER_GAIN_MIN_DB = -35.0
-OWNER_GAIN_MAX_DB = -26.0
-MUSIC_AUDIBILITY_FLOOR_DB = -35.0
-MUSIC_LOUDNESS_CEILING_DB = -26.0
+OWNER_GAIN_MIN_DB = -38.0
+OWNER_GAIN_MAX_DB = -30.0
+MUSIC_AUDIBILITY_FLOOR_DB = -38.0
+MUSIC_LOUDNESS_CEILING_DB = -30.0
 OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = (MUSIC_AUDIBILITY_FLOOR_DB, MUSIC_LOUDNESS_CEILING_DB)
+OWNER_MUSIC_BALANCED_GAIN_RANGE_DB = OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB
 DEFAULT_AUTOMATION_WINDOW_SEC = 5.0
-DEFAULT_BASE_TARGET_GAIN_DB = -30.0
+DEFAULT_BASE_TARGET_GAIN_DB = -34.0
 DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB = 2.0
 DEFAULT_TRACK_START_TRIM_SEC = 30.0
 DEFAULT_TRACK_END_TRIM_SEC = 15.0
 DEFAULT_CROSSFADE_SEC = 3.0
 DEFAULT_MIN_USABLE_TRACK_SEC = 45.0
+VOICE_ACTIVE_MUSIC_CEILING_DB = -35.0
+NO_VOICE_MUSIC_CEILING_DB = -30.0
+KNOWN_OWNER_GAP_SEC = (103.0, 110.0)
 
 
 class MusicAutomationPlannerError(ValueError):
@@ -164,6 +168,7 @@ def compute_dynamic_music_gain(
 ) -> dict[str, Any]:
     raw_gain_db = float(base_target_gain_db)
     reasons: list[str] = []
+    voice_active = float(voice_level_db) >= -38.0
 
     if voice_level_db >= -24.0:
         raw_gain_db -= 4.0
@@ -171,6 +176,9 @@ def compute_dynamic_music_gain(
     elif voice_level_db >= -32.0:
         raw_gain_db -= 2.0
         reasons.append("voice_active")
+    elif voice_level_db >= -38.0:
+        raw_gain_db -= 1.0
+        reasons.append("voice_present")
     elif voice_level_db <= -45.0:
         raw_gain_db += 3.0
         reasons.append("voice_quiet")
@@ -190,6 +198,12 @@ def compute_dynamic_music_gain(
     else:
         reasons.append("song_normal")
 
+    if voice_active:
+        raw_gain_db = min(raw_gain_db, VOICE_ACTIVE_MUSIC_CEILING_DB)
+    else:
+        raw_gain_db = min(raw_gain_db, NO_VOICE_MUSIC_CEILING_DB)
+        raw_gain_db = max(raw_gain_db, -34.0)
+
     minimum, maximum = owner_range_db
     final_gain_db = max(minimum, min(maximum, raw_gain_db))
 
@@ -198,8 +212,15 @@ def compute_dynamic_music_gain(
         "final_gain_db": _round_db(final_gain_db),
         "reason": "_".join(reasons),
         "music_audibility_policy_enabled": True,
+        "music_balance_policy_enabled": True,
+        "owner_music_balanced_gain_range_db": [OWNER_GAIN_MIN_DB, OWNER_GAIN_MAX_DB],
         "music_audibility_floor_db": MUSIC_AUDIBILITY_FLOOR_DB,
         "music_loudness_ceiling_db": MUSIC_LOUDNESS_CEILING_DB,
+        "voice_priority_music_ducking_enabled": True,
+        "music_must_stay_below_voice_enabled": True,
+        "music_vs_voice_safety_margin_enabled": True,
+        "voice_active_music_ceiling_db": VOICE_ACTIVE_MUSIC_CEILING_DB,
+        "no_voice_music_ceiling_db": NO_VOICE_MUSIC_CEILING_DB,
     }
 
 
@@ -334,6 +355,154 @@ def apply_clean_transition_policy_to_timeline(
     return enhanced
 
 
+def _intervals_cover_range(
+    intervals: list[tuple[float, float]],
+    start_sec: float,
+    end_sec: float,
+    *,
+    tolerance_sec: float = 0.02,
+) -> bool:
+    if end_sec <= start_sec:
+        return False
+
+    cursor = float(start_sec)
+    for raw_start, raw_end in sorted(intervals):
+        segment_start = float(raw_start)
+        segment_end = float(raw_end)
+        if segment_end <= cursor + tolerance_sec:
+            continue
+        if segment_start > cursor + tolerance_sec:
+            return False
+        cursor = max(cursor, segment_end)
+        if cursor >= end_sec - tolerance_sec:
+            return True
+    return cursor >= end_sec - tolerance_sec
+
+
+def _interval_gap_count(
+    intervals: list[tuple[float, float]],
+    start_sec: float,
+    end_sec: float,
+    *,
+    tolerance_sec: float = 0.02,
+) -> int:
+    if end_sec <= start_sec:
+        return 1
+
+    cursor = float(start_sec)
+    gaps = 0
+    for raw_start, raw_end in sorted(intervals):
+        segment_start = float(raw_start)
+        segment_end = float(raw_end)
+        if segment_end <= cursor + tolerance_sec:
+            continue
+        if segment_start > cursor + tolerance_sec:
+            gaps += 1
+        cursor = max(cursor, segment_end)
+    if cursor < end_sec - tolerance_sec:
+        gaps += 1
+    return gaps
+
+
+def _timeline_intervals(music_timeline: list[dict[str, Any]] | None) -> list[tuple[float, float]]:
+    intervals: list[tuple[float, float]] = []
+    for segment in music_timeline or []:
+        try:
+            start_sec = float(segment.get("start_sec", 0.0))
+            end_sec = float(segment.get("end_sec", start_sec))
+        except (TypeError, ValueError):
+            continue
+        if end_sec > start_sec:
+            intervals.append((start_sec, end_sec))
+    return intervals
+
+
+def _automation_intervals(music_automation_plan: list[dict[str, Any]] | None) -> list[tuple[float, float]]:
+    intervals: list[tuple[float, float]] = []
+    for window in music_automation_plan or []:
+        try:
+            start_sec = float(window.get("start_sec", 0.0))
+            end_sec = float(window.get("end_sec", start_sec))
+        except (TypeError, ValueError):
+            continue
+        if end_sec > start_sec:
+            intervals.append((start_sec, end_sec))
+    return intervals
+
+
+def build_music_continuity_guard(
+    *,
+    video_duration_sec: float,
+    music_timeline: list[dict[str, Any]] | None,
+    music_automation_plan: list[dict[str, Any]] | None,
+    known_owner_gap_sec: tuple[float, float] = KNOWN_OWNER_GAP_SEC,
+) -> dict[str, Any]:
+    timeline_intervals = _timeline_intervals(music_timeline)
+    automation_intervals = _automation_intervals(music_automation_plan)
+
+    known_start, known_end = float(known_owner_gap_sec[0]), float(known_owner_gap_sec[1])
+    full_timeline_coverage = _intervals_cover_range(timeline_intervals, 0.0, float(video_duration_sec))
+    full_automation_coverage = _intervals_cover_range(automation_intervals, 0.0, float(video_duration_sec))
+    known_gap_has_music_coverage = _intervals_cover_range(timeline_intervals, known_start, known_end)
+    known_gap_has_automation_coverage = _intervals_cover_range(automation_intervals, known_start, known_end)
+
+    known_gap_gains = [
+        float(window.get("final_gain_db", window.get("smoothed_gain_db", MUSIC_AUDIBILITY_FLOOR_DB - 1.0)))
+        for window in music_automation_plan or []
+        if float(window.get("start_sec", 0.0)) < known_end
+        and known_start < float(window.get("end_sec", 0.0))
+    ]
+    known_gap_has_silent_gain = (
+        not known_gap_gains
+        or any(gain < MUSIC_AUDIBILITY_FLOOR_DB - 0.001 for gain in known_gap_gains)
+    )
+
+    timeline_gap_count = _interval_gap_count(timeline_intervals, 0.0, float(video_duration_sec))
+    crossfade_or_fade_enabled = bool(music_timeline) and all(
+        str(segment.get("transition_type", "")).lower() in {"crossfade", "fade", "cut_or_short_crossfade"}
+        for segment in music_timeline or []
+    )
+
+    return {
+        "music_continuity_guard_enabled": True,
+        "music_gap_detection_enabled": True,
+        "known_owner_gap_sec": [known_start, known_end],
+        "known_owner_gap_has_music_coverage": known_gap_has_music_coverage,
+        "known_owner_gap_has_automation_coverage": known_gap_has_automation_coverage,
+        "music_gap_at_103_110_fixed": (
+            known_gap_has_music_coverage
+            and known_gap_has_automation_coverage
+            and not known_gap_has_silent_gain
+        ),
+        "musicbed_full_coverage_required": True,
+        "musicbed_full_coverage_confirmed": full_timeline_coverage,
+        "musicbed_no_silent_gaps": full_timeline_coverage and timeline_gap_count == 0,
+        "musicbed_gap_count": timeline_gap_count,
+        "automation_full_coverage_confirmed": full_automation_coverage,
+        "known_gap_final_gain_db_values": [_round_db(gain) for gain in known_gap_gains],
+        "crossfade_true_overlap_required": True,
+        "crossfade_or_fade_enabled": crossfade_or_fade_enabled,
+        "clean_transition_no_gap": full_timeline_coverage and timeline_gap_count == 0 and crossfade_or_fade_enabled,
+    }
+
+
+def _enforce_voice_priority_after_smoothing(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    enforced: list[dict[str, Any]] = []
+    for window in windows:
+        item = dict(window)
+        voice_level = float(item.get("voice_level_db", -99.0))
+        final_gain = float(item.get("final_gain_db", DEFAULT_BASE_TARGET_GAIN_DB))
+        if voice_level >= -38.0 and final_gain > VOICE_ACTIVE_MUSIC_CEILING_DB:
+            final_gain = VOICE_ACTIVE_MUSIC_CEILING_DB
+            reason = str(item.get("reason", ""))
+            if "voice_priority_ceiling" not in reason:
+                item["reason"] = f"{reason}_voice_priority_ceiling".strip("_")
+        item["smoothed_gain_db"] = _round_db(final_gain)
+        item["final_gain_db"] = _round_db(final_gain)
+        enforced.append(item)
+    return enforced
+
+
 def build_music_automation_plan(
     *,
     video_duration_sec: float,
@@ -389,6 +558,13 @@ def build_music_automation_plan(
         automation_windows,
         max_delta_db=max_gain_change_per_window_db,
     )
+    automation_windows = _enforce_voice_priority_after_smoothing(automation_windows)
+
+    continuity_guard = build_music_continuity_guard(
+        video_duration_sec=video_duration_sec,
+        music_timeline=music_timeline,
+        music_automation_plan=automation_windows,
+    )
 
     return {
         "music_automation_planner_enabled": True,
@@ -402,17 +578,28 @@ def build_music_automation_plan(
         "automation_window_count": len(automation_windows),
         "music_automation_plan": automation_windows,
         "music_audibility_policy_enabled": True,
+        "music_balance_policy_enabled": True,
         "owner_music_audible_gain_range_db": [OWNER_GAIN_MIN_DB, OWNER_GAIN_MAX_DB],
+        "owner_music_balanced_gain_range_db": [OWNER_GAIN_MIN_DB, OWNER_GAIN_MAX_DB],
         "owner_music_target_gain_db": DEFAULT_BASE_TARGET_GAIN_DB,
         "music_audibility_floor_db": MUSIC_AUDIBILITY_FLOOR_DB,
         "music_loudness_ceiling_db": MUSIC_LOUDNESS_CEILING_DB,
+        "voice_priority_music_ducking_enabled": True,
+        "music_must_stay_below_voice_enabled": True,
+        "voice_active_music_ceiling_db": VOICE_ACTIVE_MUSIC_CEILING_DB,
+        "no_voice_music_ceiling_db": NO_VOICE_MUSIC_CEILING_DB,
+        "music_vs_voice_safety_margin_enabled": True,
         "double_ducking_protection_enabled": True,
         "automation_all_final_gains_between_audible_range": all(
             OWNER_GAIN_MIN_DB <= float(window["final_gain_db"]) <= OWNER_GAIN_MAX_DB
             for window in automation_windows
         ),
-        "automation_all_final_gains_between_minus_35_and_minus_26": all(
+        "automation_all_final_gains_between_minus_38_and_minus_30": all(
             OWNER_GAIN_MIN_DB <= float(window["final_gain_db"]) <= OWNER_GAIN_MAX_DB
+            for window in automation_windows
+        ),
+        "automation_all_final_gains_between_minus_35_and_minus_26": all(
+            -35.0 <= float(window["final_gain_db"]) <= -26.0
             for window in automation_windows
         ),
         "automation_all_final_gains_between_minus_40_and_minus_35": False,
@@ -422,4 +609,5 @@ def build_music_automation_plan(
         "crossfade_sec": DEFAULT_CROSSFADE_SEC,
         "hard_cut_transitions": False,
         "track_intro_outro_trim_enabled": True,
+        **continuity_guard,
     }

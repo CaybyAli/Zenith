@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 import json
 
 from pathlib import Path
@@ -287,10 +287,10 @@ def test_step13_dry_run_with_visual_proper_run_uses_owner_volume_and_playlist_fi
     assert manifest["low_speech_ducking_gain_db"] == -32.0
     assert manifest["low_speech_max_music_gain_db"] == -25.0
     assert manifest["owner_adobe_reference_gain_range_db"] == [-4.0, 4.0]
-    assert manifest["owner_music_audible_gain_range_db"] == [-35.0, -26.0]
-    assert manifest["owner_music_target_gain_db"] == -30.0
-    assert manifest["ffmpeg_music_volume_gain_db"] == -30.0
-    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0316, abs=0.0001)
+    assert manifest["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
+    assert manifest["owner_music_target_gain_db"] == -34.0
+    assert manifest["ffmpeg_music_volume_gain_db"] == -34.0
+    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.02, abs=0.0001)
     assert manifest["ffmpeg_music_volume_source"] == "owner_music_audible_gain_db"
     assert manifest["adaptive_track_gain_enabled"] is True
     assert manifest["track_gain_strategy"] == "relative_track_loudness_normalization_only_single_final_automation_gain"
@@ -546,13 +546,13 @@ def test_ffmpeg_command_with_intro_offset_is_complete(tmp_path):
     assert "atrim=start=30.000" in filter_complex
     assert "afade" in filter_complex
     assert "volume=0.08" not in filter_complex
-    assert "volume=-30.0dB" in filter_complex
+    assert "volume=-34.0dB" in filter_complex
     assert "volume=-27.0dB" not in filter_complex
     assert "sidechaincompress" in filter_complex
     assert "[aout]" in filter_complex
 
 def test_db_to_linear_converts_planned_preview_gain():
-    assert preview.db_to_linear(-30.0) == pytest.approx(0.0316, abs=0.0001)
+    assert preview.db_to_linear(-34.0) == pytest.approx(0.02, abs=0.0001)
 
 
 def test_ffmpeg_music_volume_manifest_fields_match_owner_adobe_reference_gain(tmp_path):
@@ -566,10 +566,10 @@ def test_ffmpeg_music_volume_manifest_fields_match_owner_adobe_reference_gain(tm
     )
 
     assert manifest["owner_adobe_reference_gain_range_db"] == [-4.0, 4.0]
-    assert manifest["owner_music_audible_gain_range_db"] == [-35.0, -26.0]
-    assert manifest["owner_music_target_gain_db"] == -30.0
-    assert manifest["ffmpeg_music_volume_gain_db"] == -30.0
-    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0316, abs=0.0001)
+    assert manifest["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
+    assert manifest["owner_music_target_gain_db"] == -34.0
+    assert manifest["ffmpeg_music_volume_gain_db"] == -34.0
+    assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.02, abs=0.0001)
     assert manifest["ffmpeg_music_volume_source"] == "owner_music_audible_gain_db"
     assert manifest["adaptive_track_gain_enabled"] is True
     assert manifest["track_gain_strategy"] == "relative_track_loudness_normalization_only_single_final_automation_gain"
@@ -593,11 +593,11 @@ def test_manifest_gains_claim_requires_matching_ffmpeg_command(tmp_path):
         music_path,
         output_path,
         music_start_offset_sec=30.0,
-        music_volume_gain_db=-30.0,
+        music_volume_gain_db=-34.0,
     )
 
     filter_complex = command[command.index("-filter_complex") + 1]
-    assert "volume=-30.0dB" in filter_complex
+    assert "volume=-34.0dB" in filter_complex
     assert "volume=-27.0dB" not in filter_complex
     assert "volume=0.08" not in filter_complex
 
@@ -787,7 +787,7 @@ def test_adaptive_track_gain_calculates_per_track_owner_clamped_values(tmp_path)
 
     assert plan["adaptive_track_gain_enabled"] is True
     assert plan["owner_adobe_reference_gain_range_db"] == [-4.0, 4.0]
-    assert plan["owner_music_target_gain_db"] == -30.0
+    assert plan["owner_music_target_gain_db"] == -34.0
     assert plan["track_gain_strategy"] == "relative_track_loudness_normalization_only_single_final_automation_gain"
     assert plan["track_gain_reference"] == "median_selected_track_mean_volume_db"
     assert plan["reference_track_mean_volume_db"] == -21.5
@@ -910,7 +910,8 @@ def test_step16a_dry_run_manifest_contains_dynamic_music_automation(tmp_path):
     assert manifest["ali_friend_separation_confirmed"] is False
     assert manifest["speaker_voice_source"] == "mixed_audio_level"
     assert manifest["automation_all_final_gains_between_audible_range"] is True
-    assert manifest["automation_all_final_gains_between_minus_35_and_minus_26"] is True
+    assert manifest["automation_all_final_gains_between_minus_38_and_minus_30"] is True
+    assert manifest["automation_all_final_gains_between_minus_35_and_minus_26"] is False
     assert manifest["automation_all_final_gains_between_minus_40_and_minus_35"] is False
     assert manifest["clean_transition_policy_enabled"] is True
     assert manifest["track_start_trim_sec"] == 30.0
@@ -944,7 +945,7 @@ def test_step16b_fix_command_realizes_clean_transitions_trim_and_dynamic_automat
         music_files[0],
         output_video,
         music_start_offset_sec=30.0,
-        music_volume_gain_db=-30.0,
+        music_volume_gain_db=-34.0,
         music_files=music_files,
         long_run_playlist_enabled=True,
         music_volume_gain_db_by_track=[-1.4, -3.4, -4.0, -2.6],
@@ -1010,7 +1011,7 @@ def test_step16b_r_fix_large_window_count_uses_segmented_strategy_without_nested
         music_files[0],
         output_video,
         music_start_offset_sec=30.0,
-        music_volume_gain_db=-30.0,
+        music_volume_gain_db=-34.0,
         music_files=music_files,
         long_run_playlist_enabled=True,
         music_volume_gain_db_by_track=[-1.4, -3.4, -4.0, -2.6],
@@ -1154,18 +1155,17 @@ def test_step17b_music_audibility_policy_manifest_and_command(tmp_path):
     command_text = command_path.read_text(encoding="utf-8")
 
     assert manifest["music_audibility_policy_enabled"] is True
-    assert manifest["owner_music_audible_gain_range_db"] == [-35.0, -26.0]
-    assert manifest["owner_music_target_gain_db"] == -30.0
-    assert manifest["music_audibility_floor_db"] == -35.0
-    assert manifest["music_loudness_ceiling_db"] == -26.0
+    assert manifest["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
+    assert manifest["owner_music_target_gain_db"] == -34.0
+    assert manifest["music_audibility_floor_db"] == -38.0
+    assert manifest["music_loudness_ceiling_db"] == -30.0
     assert manifest["double_ducking_protection_enabled"] is True
     assert manifest["sidechain_ratio"] <= 4.0
     assert manifest["sidechain_threshold"] == 0.08
     assert manifest["sidechain_attack"] == 40
     assert manifest["sidechain_release"] == 350
-    assert manifest["command_volume_average_db"] > -35.0
-    assert -33.0 <= manifest["command_volume_average_db"] <= -28.0
-    assert manifest["command_volume_min_db"] >= -35.0
+    assert -38.0 <= manifest["command_volume_average_db"] <= -30.0
+    assert manifest["command_volume_min_db"] >= -38.0
     assert manifest["command_volume_max_db"] <= -26.0
     assert manifest["command_volume_audibility_gate_passed"] is True
     assert "ratio=12" not in command_text
@@ -1190,7 +1190,7 @@ def test_step17b_output_root_is_allowed_for_music_audibility_policy_fix(tmp_path
     assert manifest["status"] == "dry_run"
     assert manifest["output_root"] == preview.STEP17B_OUTPUT_ROOT.as_posix()
     assert manifest["music_audibility_policy_enabled"] is True
-    assert manifest["owner_music_audible_gain_range_db"] == [-35.0, -26.0]
+    assert manifest["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
     assert manifest["double_ducking_protection_enabled"] is True
 
 
@@ -1227,7 +1227,7 @@ def test_track_stage_does_not_apply_final_negative_mix_gain(tmp_path):
     assert manifest["per_track_strong_negative_gain_count"] == 0
     assert manifest["automation_strong_negative_gain_count"] == manifest["automation_window_count"]
     assert manifest["automation_stage_volume_db_values"]
-    assert all(-35.0 <= value <= -26.0 for value in manifest["automation_stage_volume_db_values"])
+    assert all(-38.0 <= value <= -30.0 for value in manifest["automation_stage_volume_db_values"])
 
 
 def test_double_gain_gate_blocks_bad_command():
@@ -1254,8 +1254,8 @@ def test_music_audibility_policy_still_active(tmp_path):
     )
 
     assert manifest["music_audibility_policy_enabled"] is True
-    assert manifest["owner_music_audible_gain_range_db"] == [-35.0, -26.0]
-    assert manifest["owner_music_target_gain_db"] == -30.0
+    assert manifest["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
+    assert manifest["owner_music_target_gain_db"] == -34.0
     assert manifest["command_volume_audibility_gate_passed"] is True
 
 
@@ -1289,3 +1289,129 @@ def test_segmented_automation_still_active(tmp_path):
     assert manifest["dynamic_gain_expression_strategy"] == "segmented_atrim_volume_concat"
     assert manifest["segmented_gain_volume_count"] == manifest["automation_window_count"]
     assert manifest["command_contains_nested_if_volume_automation"] is False
+
+def test_step19b_output_root_is_allowed_for_music_balance_gap_fix():
+    assert hasattr(preview, "STEP19B_OUTPUT_ROOT")
+    root = preview.STEP19B_OUTPUT_ROOT.as_posix()
+    allowed_roots = {
+        output_root.as_posix()
+        for output_root in preview.ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS.values()
+    }
+    visual_input = preview.VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix()
+    allowed_for_visual = preview.ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS[visual_input]
+
+    assert root == "reports/controlled_music_preview_run/step19b_music_balance_gap_fix"
+    assert root in allowed_roots
+    assert root in allowed_for_visual
+
+
+def test_owner_review_19_balance_policy(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP19B_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["dry_run"] is True
+    assert manifest["music_balance_policy_enabled"] is True
+    assert manifest["owner_music_balanced_gain_range_db"] == [-38.0, -30.0]
+    assert manifest["owner_music_target_gain_db"] == -34.0
+    assert manifest["music_audibility_floor_db"] == -38.0
+    assert manifest["music_loudness_ceiling_db"] == -30.0
+    assert manifest["command_volume_min_db"] >= -38.0
+    assert manifest["command_volume_max_db"] <= -30.0
+    assert manifest["command_volume_audibility_gate_passed"] is True
+
+
+def test_music_not_as_loud_as_voice_when_voice_active(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP19B_OUTPUT_ROOT,
+    )
+
+    voice_active_windows = [
+        window for window in manifest["music_automation_plan"]
+        if window["voice_level_db"] >= -38.0
+    ]
+    assert voice_active_windows
+    assert all(window["final_gain_db"] <= -35.0 for window in voice_active_windows)
+    assert manifest["voice_priority_music_ducking_enabled"] is True
+    assert manifest["music_must_stay_below_voice_enabled"] is True
+
+
+def test_music_remains_audible_without_voice():
+    result = preview.build_command_volume_audibility_gate(
+        [
+            "ffmpeg",
+            "-filter_complex",
+            "[auto0]atrim=start=0.000:end=5.000,asetpts=PTS-STARTPTS,volume=-32.0dB[ag0]",
+        ]
+    )
+
+    assert result["command_volume_audibility_gate_passed"] is True
+    assert -34.0 <= result["command_volume_average_db"] <= -30.0
+
+
+def test_known_gap_103_110_has_music_coverage(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP19B_OUTPUT_ROOT,
+    )
+
+    assert manifest["music_continuity_guard_enabled"] is True
+    assert manifest["music_gap_detection_enabled"] is True
+    assert manifest["known_owner_gap_sec"] == [103.0, 110.0]
+    assert manifest["known_owner_gap_has_music_coverage"] is True
+    assert manifest["known_owner_gap_has_automation_coverage"] is True
+    assert manifest["music_gap_at_103_110_fixed"] is True
+    assert manifest["musicbed_full_coverage_required"] is True
+    assert manifest["musicbed_no_silent_gaps"] is True
+
+
+def test_no_double_gain_regression(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP19B_OUTPUT_ROOT,
+    )
+
+    assert manifest["double_music_gain_fix_enabled"] is True
+    assert manifest["per_track_final_mix_gain_applied"] is False
+    assert manifest["automation_final_mix_gain_applied"] is True
+    assert manifest["music_bus_double_gain_protection_enabled"] is True
+    assert manifest["music_bus_double_gain_protection_passed"] is True
+    assert manifest["effective_music_gain_double_applied"] is False
+
+
+def test_step19b_safety_no_upload_no_model_no_runtime_learning(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP19B_OUTPUT_ROOT,
+    )
+
+    assert manifest["upload_started"] is False
+    assert manifest["runtime_learning_started"] is False
+    assert manifest[preview._q_flag("used")] is False
+    assert manifest[preview._q_flag("autocut_used")] is False
+    assert manifest["ingest_used"] is False
+    assert manifest["sidechain_ratio"] <= 4.0
+    assert not list((repo_root / preview.STEP19B_OUTPUT_ROOT).rglob("*.mp4"))

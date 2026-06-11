@@ -10,6 +10,7 @@ from core.music_automation_planner import (
     build_analysis_windows,
     build_clean_transition_policy_for_track,
     build_music_automation_plan,
+    build_music_continuity_guard,
     compute_dynamic_music_gain,
     smooth_gain_curve,
 )
@@ -33,7 +34,7 @@ def test_voice_aware_gain_loud_voice_is_lower_than_quiet_voice():
 
     assert loud["final_gain_db"] < quiet["final_gain_db"]
     assert MUSIC_AUDIBILITY_FLOOR_DB <= loud["final_gain_db"] <= -33.0
-    assert -29.0 <= quiet["final_gain_db"] <= MUSIC_LOUDNESS_CEILING_DB
+    assert -34.0 <= quiet["final_gain_db"] <= MUSIC_LOUDNESS_CEILING_DB
     assert loud["final_gain_db"] >= MUSIC_AUDIBILITY_FLOOR_DB
 
 
@@ -56,17 +57,17 @@ def test_gain_clamp_keeps_all_final_gains_inside_owner_audible_range():
     assert gains
     assert all(MUSIC_AUDIBILITY_FLOOR_DB <= gain <= MUSIC_LOUDNESS_CEILING_DB for gain in gains)
     assert plan["music_audibility_policy_enabled"] is True
-    assert plan["owner_music_audible_gain_range_db"] == [-35.0, -26.0]
+    assert plan["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
     assert plan["owner_music_target_gain_db"] == DEFAULT_BASE_TARGET_GAIN_DB
     assert plan["automation_all_final_gains_between_audible_range"] is True
     assert plan["automation_all_final_gains_between_minus_40_and_minus_35"] is False
 
 
 def test_owner_review_music_not_audible_updates_gain_policy():
-    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-35.0, -26.0)
-    assert DEFAULT_BASE_TARGET_GAIN_DB == -30.0
-    assert MUSIC_AUDIBILITY_FLOOR_DB == -35.0
-    assert MUSIC_LOUDNESS_CEILING_DB == -26.0
+    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-38.0, -30.0)
+    assert DEFAULT_BASE_TARGET_GAIN_DB == -34.0
+    assert MUSIC_AUDIBILITY_FLOOR_DB == -38.0
+    assert MUSIC_LOUDNESS_CEILING_DB == -30.0
 
 
 def test_106_window_final_gains_are_audible_without_sticking_to_floor():
@@ -82,7 +83,7 @@ def test_106_window_final_gains_are_audible_without_sticking_to_floor():
 
     assert len(gains) == 106
     assert all(MUSIC_AUDIBILITY_FLOOR_DB <= gain <= MUSIC_LOUDNESS_CEILING_DB for gain in gains)
-    assert -33.0 <= average_gain <= -28.0
+    assert -38.0 <= average_gain <= -34.0
     assert not all(gain <= -38.0 for gain in gains)
     assert not all(gain == MUSIC_AUDIBILITY_FLOOR_DB for gain in gains)
 
@@ -141,3 +142,71 @@ def test_no_render_safety_terms_in_automation_planner_source():
     assert "requests" not in source
     assert "while True" not in source
     assert "Remove-Item" not in source
+
+def test_owner_review_19_balance_policy():
+    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-38.0, -30.0)
+    assert DEFAULT_BASE_TARGET_GAIN_DB == -34.0
+    assert MUSIC_AUDIBILITY_FLOOR_DB == -38.0
+    assert MUSIC_LOUDNESS_CEILING_DB == -30.0
+
+
+def test_music_not_as_loud_as_voice_when_voice_active():
+    result = compute_dynamic_music_gain(
+        voice_level_db=-32.0,
+        music_section_level_db=-30.0,
+    )
+
+    assert result["voice_priority_music_ducking_enabled"] is True
+    assert result["music_must_stay_below_voice_enabled"] is True
+    assert MUSIC_AUDIBILITY_FLOOR_DB <= result["final_gain_db"] <= -35.0
+
+
+def test_music_remains_audible_without_voice():
+    result = compute_dynamic_music_gain(
+        voice_level_db=-55.0,
+        music_section_level_db=-30.0,
+    )
+
+    assert -34.0 <= result["final_gain_db"] <= -30.0
+
+
+def test_known_gap_103_110_has_music_coverage():
+    guard = build_music_continuity_guard(
+        video_duration_sec=120.0,
+        music_timeline=[
+            {"start_sec": 0.0, "end_sec": 120.0, "transition_type": "crossfade"},
+        ],
+        music_automation_plan=[
+            {"start_sec": 100.0, "end_sec": 105.0, "final_gain_db": -36.0},
+            {"start_sec": 105.0, "end_sec": 110.0, "final_gain_db": -36.0},
+            {"start_sec": 110.0, "end_sec": 115.0, "final_gain_db": -36.0},
+        ],
+    )
+
+    assert guard["music_continuity_guard_enabled"] is True
+    assert guard["music_gap_detection_enabled"] is True
+    assert guard["known_owner_gap_sec"] == [103.0, 110.0]
+    assert guard["known_owner_gap_has_music_coverage"] is True
+    assert guard["known_owner_gap_has_automation_coverage"] is True
+    assert guard["music_gap_at_103_110_fixed"] is True
+    assert guard["musicbed_full_coverage_required"] is True
+    assert guard["musicbed_no_silent_gaps"] is True
+
+
+def test_clean_transition_no_gap():
+    guard = build_music_continuity_guard(
+        video_duration_sec=20.0,
+        music_timeline=[
+            {"start_sec": 0.0, "end_sec": 10.0, "transition_type": "crossfade"},
+            {"start_sec": 10.0, "end_sec": 20.0, "transition_type": "crossfade"},
+        ],
+        music_automation_plan=[
+            {"start_sec": 0.0, "end_sec": 10.0, "final_gain_db": -36.0},
+            {"start_sec": 10.0, "end_sec": 20.0, "final_gain_db": -36.0},
+        ],
+    )
+
+    assert guard["musicbed_full_coverage_confirmed"] is True
+    assert guard["musicbed_gap_count"] == 0
+    assert guard["crossfade_or_fade_enabled"] is True
+    assert guard["clean_transition_no_gap"] is True
