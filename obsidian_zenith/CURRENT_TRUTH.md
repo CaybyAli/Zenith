@@ -1,3 +1,64 @@
+<!-- STEP22C_RENDER_CURRENT_TRUTH_START -->
+# CURRENT TRUTH ADDENDUM ? Step 22C Render
+
+Stand: 2026-06-11
+
+## Status
+- Phase 5: 100% / DONE
+- P5-L: 100% / CLOSED
+- Phase 5.5: 100% / DONE
+- Step 22B-FIX: FINAL DONE
+- Step 22C Render: DONE
+- Step 23 Owner Review: REQUIRED / NEXT
+- Runtime Learning: locked
+
+## Current HEAD Before Render
+- Short: 03f064c
+- Full: 03f064c005836b91f233ab39f28c78d31ece7e5a
+- Commit: docs(obsidian): record real dynamic music automation fix
+
+## Step 22C Render
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
+- Output: `D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_232023\controlled_music_preview_main.mp4`
+- Output size: `1623798130`
+- Manifest status: `ok`
+
+## Technical Evidence
+- Echte dynamische Musikautomation aktiv: `True`
+- `dynamic_gain_unique_value_count: 5`
+- `dynamic_gain_min_db: -38.0`
+- `dynamic_gain_max_db: -30.0`
+- `dynamic_gain_average_db: -34.226`
+- `dynamic_gain_stddev_db: 2.416`
+- `source_music_loudness_adjustment_nonzero_count: 24`
+- `quiet_section_boost_window_count: 20`
+- `loud_section_cut_window_count: 4`
+- `voice_priority_window_count: 45`
+- Command dynamic non-constant: `True`
+- Command unique gain count: `5`
+- Final tail fadeout disabled: `True`
+- Final segment has no fade to silence: `True`
+- Command contains final tail fadeout: `False`
+- Musicbed command matches timeline: `True`
+- Tail music coverage passed: `True`
+
+## Tail Audio Smoke
+- Tail 60s volumedetect log: `D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_232023\step22c_tail_voldetect_60s.txt`
+- Tail 60s astats log: `D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_232023\step22c_tail_astats_60s.txt`
+- End 20s volumedetect log: `D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_232023\step22c_end_voldetect_20s.txt`
+- Technical smoke confirms audio presence, but does not replace Owner Review.
+
+## Safety
+- Upload started: `False`
+- Runtime Learning started: `False`
+- Qwen used: `False`
+
+## Next
+- Owner Review Step 23 is mandatory.
+- Ali decides GO / FIX / NO-GO by ear.
+- No upload without new Master-GO.
+<!-- STEP22C_RENDER_CURRENT_TRUTH_END -->
+
 <!-- STEP22B_FIX_CURRENT_TRUTH_START -->
 # CURRENT TRUTH ADDENDUM ? Step 22B-FIX
 

@@ -2376,3 +2376,39 @@ Safety:
 - No Runtime Learning.
 - No Qwen.
 - No ingest.
+
+<!-- STEP22C_RENDER_PHASE5_5_RUN_LOG -->
+## 2026-06-11 ? Phase 5.5 / Step 22C controlled preview render
+
+Run:
+- Controlled preview render after Step 22B-FIX.
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Output: `D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_232023\controlled_music_preview_main.mp4`.
+- Output size: `1623798130`.
+
+Technical Gates:
+- `status: ok`
+- `dynamic_music_gain_real_enabled: True`
+- `dynamic_gain_unique_value_count: 5`
+- `quiet_section_boost_window_count: 20`
+- `loud_section_cut_window_count: 4`
+- `voice_priority_window_count: 45`
+- `final_music_segment_tail_fade_disabled: True`
+- `final_music_segment_has_no_fade_to_silence: True`
+- `command_contains_final_tail_fadeout: False`
+- `musicbed_command_matches_timeline: True`
+- `tail_music_coverage_passed: True`
+
+Tail Smoke:
+- Logs written locally.
+- Technical values show audio presence in the tail.
+- Owner Review still required by ear.
+
+Safety:
+- No upload.
+- No Qwen.
+- No Runtime Learning.
+- No ingest.
+
+Next:
+- Step 23 Owner Review.

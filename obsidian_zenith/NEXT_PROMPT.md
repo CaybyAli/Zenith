@@ -1,39 +1,23 @@
-PROJECT ZENITH ? CONTROLLED MUSIC PREVIEW RUN ? STEP 22C ? RENDER AFTER REAL DYNAMIC MUSIC AUTOMATION FIX
+PROJECT ZENITH ? CONTROLLED MUSIC PREVIEW RUN ? STEP 23 ? OWNER REVIEW AFTER REAL DYNAMIC MUSIC AUTOMATION FIX
 
-Nur nach Master-GO.
+Ali pr?ft:
+- Musik l?uft von Anfang bis Ende h?rbar?
+- Ist am Ende Musik h?rbar?
+- Verschwindet Musik am Tail nicht mehr?
+- Ist Musik nicht zu laut?
+- Ist Musik nicht zu leise?
+- Bleibt Stimme klar vorne?
+- Wird Musik bei Sprache korrekt abgesenkt?
+- Werden leise Songanf?nge h?rbar angehoben?
+- Werden laute Musikstellen korrekt gesenkt?
+- Gibt es keine Audio-Spr?nge?
+- ?berg?nge sauber?
+- Gesamtgef?hl uploadf?hig?
 
-Ziel:
-Neuen Controlled Preview Render erzeugen nach Step 22B-FIX.
+Entscheidung:
+GO / FIX / NO-GO
 
-Pflicht:
-- echte dynamische Musikautomation aktiv
-- Command darf nicht wieder 106x volume=-36.0dB haben
-- dynamic_gain_unique_value_count >= 4
-- quiet sections werden geboostet
-- loud sections werden gesenkt
-- voice priority bleibt aktiv
-- finaler Tail-Fadeout bleibt entfernt
-- Musik muss bis Ende h?rbar bleiben
-- kein Upload
-- kein Runtime Learning
-- kein Qwen
-
-BEFEHLE:
-
-cd D:\Zenith
-
-"`n===== VERIFY BEFORE STEP 22C RENDER ====="
-git log --oneline -8
-
-"`n===== TRACKED ONLY BEFORE STEP 22C RENDER ====="
-git status --short --untracked-files=no
-
-"`n===== BRANCH STATUS BEFORE STEP 22C RENDER ====="
-git status -sb
-
-STOPP:
-Nicht starten ohne Master-GO.
-Nicht uploaden.
-Nicht Runtime Learning starten.
-Nicht Qwen starten.
-Nicht ingest starten.
+Kein Upload ohne neues Master-GO.
+Kein Runtime Learning.
+Kein Qwen.
+Kein Ingest.
