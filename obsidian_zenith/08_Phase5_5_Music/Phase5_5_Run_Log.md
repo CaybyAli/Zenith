@@ -1389,3 +1389,50 @@ Naechster Schritt:
 - Ali entscheidet GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
 - Kein Runtime Learning.
+
+## 2026-06-11 - Controlled Music Preview Run Schritt 14A Owner NO-GO Music Volume Playlist Fix
+
+Status:
+- Owner Review Schritt 14: NO-GO.
+- Musik war zu laut.
+- Owner nutzt in Adobe ca. `-35dB` bis `-40dB`.
+- Nur ein Song wurde genutzt und dauerhaft wiederholt.
+- Step 14A Fix vorbereitet.
+- Kein Execute Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Volume:
+- Neuer Zielwert: `-38.0dB`.
+- Adobe-Referenzbereich: `[-40.0, -35.0]`.
+- `ffmpeg_music_volume_gain_db=-38.0`.
+- `ffmpeg_music_volume_source=owner_adobe_reference_gain_db`.
+- Manifest-Gains applied to FFmpeg command: ja.
+- Hardcoded `volume=0.08` genutzt: nein.
+- `-27.0dB` als finaler Musikwert genutzt: nein.
+
+Playlist:
+- Long-Run-Playlist vorbereitet: ja.
+- Input-Dauer: `528.348813s`.
+- `long_run_playlist_enabled=true`.
+- `music_single_track_loop=false`.
+- `selected_music_track_count=4`.
+- Kategorie: `funny_gaming_background`.
+- `vlog_background` genutzt: nein.
+- Kein immediate repeat: ja.
+- Fast switching: nein.
+- Command nutzt mehrere Musikinputs und `concat=n=4`.
+- Command nutzt kein `stream_loop`.
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen.
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 42 passed.
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt.
+- Dry-Run Command: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_132327/ffmpeg_command.txt`.
+
+Naechster Schritt:
+- Step 14B Render Visual Proper Run mit `-38.0dB` und Multi-Song-Playlist nur nach Master-GO.

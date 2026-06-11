@@ -1377,3 +1377,60 @@ Naechster Schritt:
 - Ali entscheidet GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
 - Kein Runtime Learning.
+
+## 2026-06-11 - Controlled Music Preview Run Schritt 14A Owner NO-GO Music Volume Playlist Fix
+
+Status:
+- Owner Review Schritt 14: NO-GO.
+- Problem 1: Musik war zu laut.
+- Owner nutzt in Adobe normalerweise ca. `-35dB` bis `-40dB`.
+- Problem 2: Ein einzelner Song wurde ueber den ganzen Run geloopt.
+- Step 14A hat nur den Fix vorbereitet.
+- Kein Execute Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Fix:
+- Neuer Zielwert: `owner_music_target_gain_db=-38.0`.
+- Adobe-Referenzbereich: `[-40.0, -35.0]`.
+- `ffmpeg_music_volume_gain_db=-38.0`.
+- `ffmpeg_music_volume_source=owner_adobe_reference_gain_db`.
+- Manifest-Gains applied to FFmpeg command: ja.
+- Hardcoded `volume=0.08` genutzt: nein.
+- `-27.0dB` als finaler Musikwert genutzt: nein.
+
+Playlist:
+- Long-Run-Playlist vorbereitet.
+- Regel: Inputs > 180s nutzen mehrere Tracks.
+- `long_run_playlist_enabled=true`.
+- `music_single_track_loop=false`.
+- Dry-Run Track Count: `4`.
+- Kategorie: `funny_gaming_background`.
+- `vlog_background` genutzt: nein.
+- Kein immediate repeat: ja.
+- Fast switching: nein.
+
+Dry-Run:
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Input-Dauer: `528.348813s`.
+- Dry-Run Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_132327/preview_render_manifest.json`.
+- Dry-Run Command: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_132327/ffmpeg_command.txt`.
+- Command nutzt mehrere Musikinputs und `concat=n=4`.
+- Command nutzt `volume=-38.0dB`.
+- Command nutzt kein `stream_loop`.
+- MP4 erzeugt: nein.
+
+Tests:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen.
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 42 passed.
+
+Reports:
+- `reports/controlled_music_preview_run/step14a_owner_no_go_music_volume_playlist_fix/step14a_manifest.json`.
+- `reports/controlled_music_preview_run/step14a_owner_no_go_music_volume_playlist_fix/step14a_summary.md`.
+
+Naechster Schritt:
+- Controlled Music Preview Schritt 14B Render Visual Proper Run mit leiserer Musik und Multi-Song-Playlist nur nach Master-GO.

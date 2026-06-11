@@ -1235,6 +1235,49 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports/MP4 nicht committed.
 
+## Controlled Music Preview Run Schritt 14A Owner NO-GO Music Volume Playlist Fix
+
+Entscheidung: Owner Review Schritt 14 = NO-GO. Code-GO nur fuer Fix-Vorbereitung: Musik deutlich leiser und keine Single-Song-Dauerwiederholung bei langen Runs. Kein Render.
+
+Beweis:
+- Owner-Problem Musik zu laut: ja.
+- Owner Adobe-Referenz: ca. `-35dB` bis `-40dB`.
+- Neuer Zielwert: `-38.0dB`.
+- `ffmpeg_music_volume_gain_db=-38.0`.
+- `ffmpeg_music_volume_source=owner_adobe_reference_gain_db`.
+- Hardcoded `volume=0.08` genutzt: nein.
+- `-27.0dB` als finaler Musikwert genutzt: nein.
+- Owner-Problem Single-Song-Repeat: ja.
+- Long-Run-Playlist aktiviert fuer Input > 180s.
+- Dry-Run Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Dry-Run Command: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_132327/ffmpeg_command.txt`.
+- Dry-Run Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_132327/preview_render_manifest.json`.
+- Lokaler Step-14A-Report: `reports/controlled_music_preview_run/step14a_owner_no_go_music_volume_playlist_fix/step14a_manifest.json`.
+
+Ergebnis:
+- `long_run_playlist_enabled=true`.
+- `music_single_track_loop=false`.
+- `selected_music_track_count=4`.
+- Musik-Kategorie: `funny_gaming_background`.
+- `vlog_background` genutzt: nein.
+- Kein immediate repeat: ja.
+- Fast switching: nein.
+- FFmpeg Command nutzt mehrere Musikinputs und `concat=n=4`.
+- FFmpeg Command nutzt kein `stream_loop`.
+
+Grenzen:
+- Kein Execute Render.
+- Kein Preview-Render.
+- Kein Audio-Mix.
+- Keine Musik eingefuegt.
+- Kein Upload.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Musikdateien committed.
+- Reports nicht committed.
+
 ## Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix
 
 Entscheidung: Schritt 7 ist NO-GO wegen abgeschnittenem FFmpeg-Command. Code-GO nur fuer Step 7A FFmpeg-Command-Fix, kein Render.

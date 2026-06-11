@@ -45,6 +45,8 @@ Stand: 2026-06-11
 - Controlled Music Preview Run Schritt 12C: DONE / visuell gueltiger Proper Run ausgewaehlt / kein Render.
 - Controlled Music Preview Run Schritt 12D: DONE / Allowlist + Audio-Readiness remote gesichert.
 - Controlled Music Preview Run Schritt 13: DONE / Visual Proper Run mit Audio-Gain-Fix lokal gerendert / Owner Review Schritt 14 Pflicht.
+- Controlled Music Preview Run Schritt 14: Owner Review = NO-GO.
+- Controlled Music Preview Run Schritt 14A: DONE / Musik auf Adobe-Range `-38.0dB` gesenkt + Long-Run-Playlist vorbereitet / kein Render.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -216,6 +218,22 @@ Speech-aware Ducking bestaetigt: nein.
 Sidechaincompress genutzt: ja.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
 Owner Review Schritt 14 ist jetzt Pflicht.
+Owner Review Schritt 14 Ergebnis: NO-GO.
+Grund 1: Musik war trotz `-27.0dB` zu laut.
+Grund 2: Es wurde nur ein Song genutzt und dauerhaft wiederholt.
+Owner-Referenz: Adobe-Mix normalerweise ca. `-35dB` bis `-40dB`.
+Schritt 14A hat nur den Fix vorbereitet, ohne Execute Render.
+Neuer Owner-Zielwert: `-38.0dB`.
+FFmpeg-Musikvolume ist an `owner_adobe_reference_gain_db` gekoppelt.
+Hardcoded `volume=0.08` bleibt verboten/nicht genutzt.
+`-27.0dB` wird nicht mehr als finaler Musikwert fuer den visuellen Proper Run genutzt.
+Long-Run-Playlist vorbereitet: bei Runs > 180s kein Single-Song-Dauerloop.
+Fuer den 8.8-Minuten-Run waehlt der Dry-Run mehrere Songs aus `funny_gaming_background`.
+Dry-Run Step 14A: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_132327/`.
+Ausgewaehlte Tracks: 4.
+`vlog_background` wurde nicht genutzt.
+Kein Execute Render, kein Preview-Render, kein Audio-Mix, kein Upload, kein Qwen, kein Runtime Learning.
+Naechster Schritt: Step 14B Render nur nach Master-GO.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 
