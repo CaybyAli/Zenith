@@ -721,8 +721,8 @@ def test_execute_path_uses_complete_ffmpeg_builder(tmp_path, monkeypatch):
     assert manifest["status"] == "ok"
     assert command[0] == "ffmpeg"
     assert command[-1].endswith(preview.OUTPUT_FILENAME)
-    assert "-ss" in command
-    assert "30.000" in command
+    assert "-ss" not in command
+    assert "atrim=start=30.000" in " ".join(str(part) for part in command)
     assert str(repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "a_first.mp3") in command
     assert "-filter_complex" in command
     assert command.count("-map") >= 2
@@ -1708,3 +1708,97 @@ def test_step23b_owner_tail_music_guard_manifest(tmp_path):
     assert manifest["owner_tail_music_guard_enabled"] is True
     assert manifest["owner_tail_music_guard_passed"] is True
     assert manifest["owner_tail_music_silent_window_count"] == 0
+
+
+def test_no_full_render_in_diagnose_audio_stems_mode(tmp_path, monkeypatch):
+    repo_root = _repo_fixture(tmp_path)
+
+    def fake_diagnosis(**kwargs):
+        return {
+            "audio_stem_diagnosis_enabled": True,
+            "manifest_truth_requires_audio_stem_probe": True,
+            "music_auto_stem_generated_for_gate": True,
+            "music_auto_tail_rms_checked": True,
+            "music_auto_tail_audible": True,
+            "music_auto_tail_silent_window_count": 0,
+            "song_start_music_stem_checked": True,
+            "song_start_silent_window_count": 0,
+            "music_vs_voice_relative_gate_enabled": True,
+            "voice_window_music_below_voice_db_min": 18.0,
+            "voice_window_music_below_voice_passed": True,
+            "final_mix_tail_probe_passed": True,
+            "diagnosis_mode_generated_mp4": False,
+            "full_render_started": False,
+            "status": "diagnosis_ok",
+            "blocked_reason": None,
+        }
+
+    monkeypatch.setattr(preview, "run_audio_stem_diagnosis", fake_diagnosis)
+
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+        diagnose_audio_stems=True,
+    )
+
+    assert manifest["status"] == "diagnosis_ok"
+    assert manifest["dry_run"] is True
+    assert manifest["audio_stem_probe_passed"] is True
+    assert manifest["diagnosis_mode_generated_mp4"] is False
+    assert manifest["full_render_started"] is False
+    assert not list((repo_root / preview.STEP13_OUTPUT_ROOT).rglob("*.mp4"))
+
+
+def test_no_music_double_mix(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert command_text.count("[music_auto]") == 2
+    assert "[music_auto][0:a]sidechaincompress" not in command_text
+    assert "[0:a][ducked]amix=inputs=2" in command_text
+    assert command_text.count("amix=inputs=2") == 1
+
+
+def test_final_mix_does_not_use_raw_fullmix_sidechain(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert "sidechaincompress" not in command_text
+    assert manifest["raw_fullmix_sidechain_blocked"] is True
+    assert manifest["ffmpeg_sidechaincompress_disabled"] is True
+
+
+def test_music_inputs_are_not_double_seeked_when_timeline_trims_source(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command = json.loads((run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8"))
+    command_text = " ".join(str(part) for part in command)
+
+    assert "-ss" not in command
+    assert "atrim=start=30.000" in command_text

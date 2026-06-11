@@ -27,6 +27,20 @@ from core.music_automation_planner import (
     apply_clean_transition_policy_to_timeline,
     build_music_automation_plan,
 )
+from core.music_output_diagnostics import (
+    OWNER_TAIL_START_SEC,
+    apply_audio_stem_truth_gate,
+    build_audio_stem_command,
+    build_audio_stem_truth_gate,
+    build_relative_voice_music_stats,
+    default_final_mix_windows,
+    probe_audio_duration_sec,
+    probe_windows,
+    run_checked_command,
+    song_start_probe_windows,
+    tail_probe_windows,
+    write_json,
+)
 
 REPO_IMPORT_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_IMPORT_ROOT) not in sys.path:
@@ -67,6 +81,7 @@ STEP13_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step13_visual_pr
 STEP17B_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step17b_music_audibility_policy_fix")
 STEP18B_FIX_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step18b_fix_single_music_bus_gain")
 STEP19B_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step19b_music_balance_gap_fix")
+STEP24A_DIAGNOSIS_ROOT = Path("reports/controlled_music_preview_run/step24a_deep_audio_diagnosis")
 ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step2_preview_render": EXPECTED_OUTPUT_ROOT,
     "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
@@ -126,7 +141,7 @@ DOUBLE_DUCKING_PROTECTION_ENABLED = True
 VOICE_PRIORITY_MUSIC_DUCKING_ENABLED = True
 MUSIC_MUST_STAY_BELOW_VOICE_ENABLED = True
 MUSIC_VS_VOICE_SAFETY_MARGIN_ENABLED = True
-VOICE_ACTIVE_MUSIC_CEILING_DB = -40.0
+VOICE_ACTIVE_MUSIC_CEILING_DB = -42.0
 NO_VOICE_MUSIC_CEILING_DB = -34.0
 SIDECHAIN_THRESHOLD = 0.08
 SIDECHAIN_RATIO = 3.0
@@ -1140,18 +1155,13 @@ def build_ffmpeg_command(
     )
 
     for music_input in music_inputs:
-        command.extend(
-            [
-                "-ss",
-                f"{float(music_start_offset_sec):.3f}",
-                "-i",
-                str(music_input["music_file"]),
-            ]
-        )
+        command.extend(["-i", str(music_input["music_file"])])
 
     music_filters: list[str] = []
     for command_input_index, music_input in enumerate(music_inputs, start=1):
-        segment = music_input["segment"]
+        segment = dict(music_input["segment"])
+        if not segment and music_start_offset_sec > 0.0:
+            segment["track_source_start_sec"] = float(music_start_offset_sec)
         gain_db = float(music_input["gain_db"])
         segment_label = f"musicSegment{command_input_index}"
         trim = _safe_music_track_trim_for_command(
@@ -1498,6 +1508,193 @@ def _write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _repo_path_or_abs(root: Path, path: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _voice_probe_windows_from_plan(music_automation_plan: list[dict], *, limit: int = 24) -> list[dict]:
+    windows: list[dict] = []
+    for window in music_automation_plan or []:
+        try:
+            voice_level = float(window.get("voice_level_db", -99.0))
+            start_sec = float(window.get("start_sec", window.get("window_start_sec", 0.0)))
+            end_sec = float(window.get("end_sec", window.get("window_end_sec", start_sec)))
+        except (TypeError, ValueError):
+            continue
+        if end_sec <= start_sec:
+            continue
+        if voice_level >= -36.0:
+            windows.append({"start_sec": start_sec, "end_sec": end_sec})
+        if len(windows) >= limit:
+            break
+    return windows
+
+
+def _filter_measured_voice_windows(
+    voice_stats: list[dict],
+    music_stats: list[dict],
+    *,
+    minimum_voice_proxy_db: float = -38.0,
+) -> tuple[list[dict], list[dict]]:
+    paired = list(zip(voice_stats, music_stats))
+    measured = [
+        (voice, music)
+        for voice, music in paired
+        if voice.get("mean_volume_db") is not None
+        and float(voice["mean_volume_db"]) >= minimum_voice_proxy_db
+    ]
+    if not measured:
+        measured = sorted(
+            [
+                (voice, music)
+                for voice, music in paired
+                if voice.get("mean_volume_db") is not None
+            ],
+            key=lambda pair: float(pair[0]["mean_volume_db"]),
+            reverse=True,
+        )[: min(8, len(paired))]
+    return [voice for voice, _music in measured], [music for _voice, music in measured]
+
+
+def run_audio_stem_diagnosis(
+    *,
+    repo_root: Path,
+    command: list[str],
+    input_video: Path,
+    video_duration_sec: float,
+    music_timeline: list[dict],
+    music_automation_plan: list[dict],
+) -> dict:
+    report_dir = repo_root / STEP24A_DIAGNOSIS_ROOT
+    report_dir.mkdir(parents=True, exist_ok=True)
+
+    musicbed_path = report_dir / "musicbed_raw.mka"
+    music_auto_path = report_dir / "music_auto_after_gain.mka"
+    final_audio_path = report_dir / "final_audio_probe.mka"
+
+    stem_commands = {
+        "musicbed_raw": build_audio_stem_command(command, stem_label="musicbed", output_path=musicbed_path),
+        "music_auto_after_gain": build_audio_stem_command(command, stem_label="music_auto", output_path=music_auto_path),
+        "final_audio_probe": build_audio_stem_command(command, stem_label="aout", output_path=final_audio_path),
+    }
+    write_json(report_dir / "audio_stem_commands.json", stem_commands)
+
+    for name, stem_command in stem_commands.items():
+        run_checked_command(
+            stem_command,
+            stdout_path=report_dir / f"{name}_ffmpeg_stdout.txt",
+            stderr_path=report_dir / f"{name}_ffmpeg_stderr.txt",
+        )
+
+    music_auto_duration = probe_audio_duration_sec(music_auto_path)
+    musicbed_duration = probe_audio_duration_sec(musicbed_path)
+    final_audio_duration = probe_audio_duration_sec(final_audio_path)
+
+    tail_windows = tail_probe_windows(video_duration_sec)
+    song_windows = song_start_probe_windows(music_timeline, video_duration_sec)
+    final_windows = default_final_mix_windows(video_duration_sec)
+    voice_windows = _voice_probe_windows_from_plan(music_automation_plan)
+
+    music_tail_stats = probe_windows(music_auto_path, tail_windows)
+    music_song_start_stats = probe_windows(music_auto_path, song_windows)
+    final_mix_stats = probe_windows(final_audio_path, final_windows)
+    final_tail_stats = probe_windows(final_audio_path, tail_windows)
+    voice_proxy_stats = probe_windows(input_video, voice_windows) if voice_windows else []
+    music_voice_window_stats = probe_windows(music_auto_path, voice_windows) if voice_windows else []
+    measured_voice_stats, measured_music_stats = _filter_measured_voice_windows(
+        voice_proxy_stats,
+        music_voice_window_stats,
+    )
+    relative_stats = build_relative_voice_music_stats(
+        voice_proxy_stats=measured_voice_stats,
+        music_auto_stats=measured_music_stats,
+    )
+
+    music_bus_stats = {
+        "musicbed_raw_path": _repo_path_or_abs(repo_root, musicbed_path),
+        "musicbed_raw_duration_sec": musicbed_duration,
+        "music_auto_after_gain_path": _repo_path_or_abs(repo_root, music_auto_path),
+        "music_auto_after_gain_duration_sec": music_auto_duration,
+        "expected_duration_sec": float(video_duration_sec),
+        "tail_windows": music_tail_stats,
+        "song_start_windows": music_song_start_stats,
+    }
+    final_mix_window_stats = {
+        "final_audio_probe_path": _repo_path_or_abs(repo_root, final_audio_path),
+        "final_audio_probe_duration_sec": final_audio_duration,
+        "windows": final_mix_stats,
+        "tail_windows": final_tail_stats,
+    }
+    voice_proxy_window_stats = {
+        "voice_proxy_source_path": _repo_path_or_abs(repo_root, input_video),
+        "candidate_voice_windows": voice_proxy_stats,
+        "measured_voice_windows_used_for_gate": measured_voice_stats,
+        "music_windows_used_for_gate": measured_music_stats,
+        "relative_windows": relative_stats,
+    }
+
+    write_json(report_dir / "music_bus_window_stats.json", music_bus_stats)
+    write_json(report_dir / "final_mix_window_stats.json", final_mix_window_stats)
+    write_json(report_dir / "voice_proxy_window_stats.json", voice_proxy_window_stats)
+
+    gate = build_audio_stem_truth_gate(
+        music_auto_stem_path=music_auto_path,
+        music_auto_stem_duration_sec=music_auto_duration,
+        expected_duration_sec=video_duration_sec,
+        tail_window_stats=music_tail_stats,
+        song_start_window_stats=music_song_start_stats,
+        voice_music_relative_stats=relative_stats,
+        final_mix_tail_stats=final_tail_stats,
+    )
+    gate.update(
+        {
+            "audio_stem_diagnosis_report_dir": STEP24A_DIAGNOSIS_ROOT.as_posix(),
+            "musicbed_raw_stem_generated_for_diagnosis": musicbed_path.exists(),
+            "musicbed_raw_stem_duration_sec": round(musicbed_duration, 3),
+            "final_audio_probe_generated_for_diagnosis": final_audio_path.exists(),
+            "final_audio_probe_duration_sec": round(final_audio_duration, 3),
+            "diagnosis_mode_generated_mp4": False,
+            "full_render_started": False,
+            "owner_tail_probe_start_sec": OWNER_TAIL_START_SEC,
+        }
+    )
+    return gate
+
+
+def build_step24a_summary(manifest: dict) -> str:
+    lines = [
+        "# Step24a Deep Audio Diagnosis",
+        "",
+        f"- status: {manifest.get('status')}",
+        f"- input_video_path: `{manifest.get('input_video_path')}`",
+        f"- output_video_path: `{manifest.get('output_video_path')}`",
+        f"- audio_stem_diagnosis_enabled: {str(manifest.get('audio_stem_diagnosis_enabled')).lower()}",
+        f"- music_auto_stem_duration_sec: {manifest.get('music_auto_stem_duration_sec')}",
+        f"- music_auto_expected_duration_sec: {manifest.get('music_auto_expected_duration_sec')}",
+        f"- music_auto_tail_audible: {str(manifest.get('music_auto_tail_audible')).lower()}",
+        f"- music_auto_tail_silent_window_count: {manifest.get('music_auto_tail_silent_window_count')}",
+        f"- song_start_silent_window_count: {manifest.get('song_start_silent_window_count')}",
+        f"- voice_window_music_below_voice_min_observed_db: {manifest.get('voice_window_music_below_voice_min_observed_db')}",
+        f"- voice_window_music_below_voice_passed: {str(manifest.get('voice_window_music_below_voice_passed')).lower()}",
+        f"- final_mix_tail_probe_passed: {str(manifest.get('final_mix_tail_probe_passed')).lower()}",
+        f"- blocked_reason: {manifest.get('blocked_reason')}",
+        f"- diagnosis_mode_generated_mp4: {str(manifest.get('diagnosis_mode_generated_mp4')).lower()}",
+        f"- full_render_started: {str(manifest.get('full_render_started')).lower()}",
+        "",
+        "## Findings",
+        "",
+        "- Old green gates checked manifest, timeline and command realization, but not the realized music bus stem.",
+        "- The new gate requires a generated music_auto stem before manifest truth can claim no silent gaps.",
+        "- Tail, song-start and voice-relative checks now block the manifest when the audio stem contradicts JSON.",
+        "",
+        "Next step: Controlled Render only after Master-GO.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def run(
     *,
     repo_root: str | Path,
@@ -1506,7 +1703,11 @@ def run(
     content_type: str,
     output_root: str | Path,
     execute_owner_go: bool = False,
+    diagnose_audio_stems: bool = False,
 ) -> dict:
+    if diagnose_audio_stems and execute_owner_go:
+        raise ControlledMusicPreviewError("diagnose_audio_stems_mode_cannot_execute_render")
+
     root = Path(repo_root).resolve()
     _assert_channel_type(channel_type)
     full_input = _assert_allowed_input(root, input_video)
@@ -1576,6 +1777,17 @@ def run(
     step23b_command_gate = build_step23b_command_policy_gate(command)
     ffmpeg_music_volume.update(step23b_command_gate)
 
+    if diagnose_audio_stems:
+        audio_stem_gate = run_audio_stem_diagnosis(
+            repo_root=root,
+            command=command,
+            input_video=full_input,
+            video_duration_sec=duration_sec,
+            music_timeline=playlist_plan.get("music_timeline", []),
+            music_automation_plan=playlist_plan.get("music_automation_plan", []),
+        )
+        ffmpeg_music_volume.update(audio_stem_gate)
+
     dynamic_manifest_block_reason = None
     if playlist_plan.get("source_music_loudness_analysis_enabled") is True:
         if int(playlist_plan.get("source_music_loudness_adjustment_nonzero_count", 0)) <= 0:
@@ -1589,7 +1801,12 @@ def run(
         ffmpeg_music_volume["status"] = "blocked"
         ffmpeg_music_volume["blocked_reason"] = dynamic_manifest_block_reason
 
-    dry_run_status = "blocked" if ffmpeg_music_volume.get("status") == "blocked" else "dry_run"
+    if ffmpeg_music_volume.get("status") == "blocked":
+        dry_run_status = "blocked"
+    elif diagnose_audio_stems:
+        dry_run_status = "diagnosis_ok"
+    else:
+        dry_run_status = "dry_run"
 
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 
@@ -1612,8 +1829,15 @@ def run(
             ffmpeg_music_volume=ffmpeg_music_volume,
             playlist_plan=playlist_plan,
         )
+        if diagnose_audio_stems:
+            manifest = apply_audio_stem_truth_gate(manifest, ffmpeg_music_volume)
         _write_text(run_dir / "preview_render_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
+        if diagnose_audio_stems:
+            report_dir = root / STEP24A_DIAGNOSIS_ROOT
+            report_dir.mkdir(parents=True, exist_ok=True)
+            _write_text(report_dir / "step24a_manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+            _write_text(report_dir / "step24a_summary.md", build_step24a_summary(manifest))
         return manifest
 
     completed = subprocess.run(command, capture_output=True, text=True)
@@ -1689,7 +1913,7 @@ def build_ffmpeg_music_volume_probe(low_speech_gains: dict, track_gain_plan: dic
     probe["owner_music_target_gain_db"] = -39.0
     probe["music_audibility_floor_db"] = -44.0
     probe["music_loudness_ceiling_db"] = -34.0
-    probe["voice_active_music_ceiling_db"] = -40.0
+    probe["voice_active_music_ceiling_db"] = -42.0
     probe["no_voice_music_ceiling_db"] = -34.0
     probe["ffmpeg_music_volume_gain_db"] = -39.0
     probe["ffmpeg_music_volume_linear"] = db_to_linear(-39.0)
@@ -1808,6 +2032,7 @@ def main() -> int:
     parser.add_argument("--content-type", required=True)
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--execute-owner-go", action="store_true")
+    parser.add_argument("--diagnose-audio-stems", action="store_true")
     args = parser.parse_args()
 
     try:
@@ -1818,6 +2043,7 @@ def main() -> int:
             content_type=args.content_type,
             output_root=args.output_root,
             execute_owner_go=args.execute_owner_go,
+            diagnose_audio_stems=args.diagnose_audio_stems or not args.execute_owner_go,
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

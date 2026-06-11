@@ -16,7 +16,7 @@ DEFAULT_TRACK_START_TRIM_SEC = 30.0
 DEFAULT_TRACK_END_TRIM_SEC = 15.0
 DEFAULT_CROSSFADE_SEC = 3.0
 DEFAULT_MIN_USABLE_TRACK_SEC = 45.0
-VOICE_ACTIVE_MUSIC_CEILING_DB = -40.0
+VOICE_ACTIVE_MUSIC_CEILING_DB = -42.0
 NO_VOICE_MUSIC_CEILING_DB = -34.0
 KNOWN_OWNER_GAP_SEC = (103.0, 110.0)
 
@@ -976,7 +976,7 @@ def compute_dynamic_music_gain(
     voice_active = voice_level > -36.0
 
     if voice_active:
-        gain = -40.0
+        gain = -42.0 if voice_level >= -32.0 else -40.0
         reason = "voice_priority_background"
     elif music_level <= -42.0:
         gain = -34.0
@@ -1014,7 +1014,7 @@ def compute_dynamic_music_gain(
         "voice_priority_music_ducking_enabled": True,
         "music_must_stay_below_voice_enabled": True,
         "music_vs_voice_safety_margin_enabled": True,
-        "voice_active_music_ceiling_db": -40.0,
+        "voice_active_music_ceiling_db": -42.0,
         "no_voice_music_ceiling_db": -34.0,
         "music_loudness_ceiling_db": -34.0,
         "music_audibility_floor_db": -44.0,
@@ -1038,7 +1038,7 @@ def build_music_automation_plan(*args, **kwargs) -> dict:
             gain = -34.0 if music_level <= -42.0 else -38.0
             reason = "owner_tail_music_floor"
         elif voice_present:
-            gain = -40.0
+            gain = -42.0 if voice_level >= -32.0 else -40.0
             reason = "voice_priority_background"
         elif music_level <= -42.0:
             gain = -34.0
@@ -1073,7 +1073,7 @@ def build_music_automation_plan(*args, **kwargs) -> dict:
     plan["owner_music_target_gain_db"] = -39.0
     plan["music_audibility_floor_db"] = -44.0
     plan["music_loudness_ceiling_db"] = -34.0
-    plan["voice_active_music_ceiling_db"] = -40.0
+    plan["voice_active_music_ceiling_db"] = -42.0
     plan["no_voice_music_ceiling_db"] = -34.0
 
     plan["dynamic_gain_non_constant"] = len(unique_gains) > 1
