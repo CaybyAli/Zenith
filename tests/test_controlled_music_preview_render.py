@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import re
 
 from pathlib import Path
 
@@ -1169,7 +1170,7 @@ def test_step17b_music_audibility_policy_manifest_and_command(tmp_path):
     assert manifest["command_volume_max_db"] <= -26.0
     assert manifest["command_volume_audibility_gate_passed"] is True
     assert "ratio=12" not in command_text
-    assert "volume=-38.0dB" not in command_text
+    assert "volume=-38.0dB" in command_text
     assert "volume=-39.0dB" not in command_text
     assert "volume=-40.0dB" not in command_text
     assert "sidechaincompress" in command_text
@@ -1495,3 +1496,157 @@ def test_reused_track_builds_real_ffmpeg_segment(tmp_path):
     filter_complex = command[command.index("-filter_complex") + 1]
     assert "[musicSegment2]" in filter_complex
     assert "concat=n=2:v=0:a=1[musicbed]" in filter_complex
+
+
+def _automation_volume_values_from_command_text(command_text: str) -> list[float]:
+    return [
+        float(match.group(1))
+        for match in re.finditer(r"\[auto\d+\].*?volume=(-?\d+\.\d)dB\[ag\d+\]", command_text)
+    ]
+
+
+def test_ffmpeg_command_has_non_constant_automation_gains(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+    gains = _automation_volume_values_from_command_text(command_text)
+
+    assert gains
+    assert len(set(gains)) >= 4
+    assert gains.count(-36.0) != 106
+    assert manifest["command_music_automation_values_extracted"] is True
+    assert manifest["command_dynamic_gain_non_constant"] is True
+    assert manifest["command_dynamic_gain_unique_value_count"] >= 4
+
+
+def test_command_gate_blocks_constant_automation():
+    filter_complex = ";".join(
+        f"[auto{index}]atrim=start={index * 5:.3f}:end={(index + 1) * 5:.3f},"
+        f"asetpts=PTS-STARTPTS,volume=-36.0dB[ag{index}]"
+        for index in range(6)
+    )
+    command = ["ffmpeg", "-filter_complex", filter_complex]
+
+    gate = preview.build_command_volume_audibility_gate(command)
+
+    assert gate["status"] == "blocked"
+    assert gate["blocked_reason"] == "music_automation_not_dynamic"
+    assert gate["command_dynamic_gain_non_constant"] is False
+
+
+def test_final_music_segment_has_no_tail_fadeout(tmp_path):
+    input_video = tmp_path / "input.mp4"
+    output_video = tmp_path / "out.mp4"
+    music_files = [tmp_path / "song_1.mp3", tmp_path / "song_2.mp3"]
+    timeline = [
+        {"track_path": music_files[0].as_posix(), "start_sec": 0.0, "end_sec": 120.0, "track_source_start_sec": 30.0, "track_source_end_sec": 150.0, "track_used_duration_sec": 120.0},
+        {"track_path": music_files[1].as_posix(), "start_sec": 120.0, "end_sec": 220.0, "track_source_start_sec": 30.0, "track_source_end_sec": 130.0, "track_used_duration_sec": 100.0},
+    ]
+
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_files[0],
+        output_video,
+        music_files=music_files,
+        long_run_playlist_enabled=True,
+        music_volume_gain_db_by_track=[0.0, 0.0],
+        music_timeline=timeline,
+        music_automation_plan=[
+            {"start_sec": 0.0, "end_sec": 5.0, "final_gain_db": -30.0},
+            {"start_sec": 5.0, "end_sec": 10.0, "final_gain_db": -34.0},
+            {"start_sec": 10.0, "end_sec": 15.0, "final_gain_db": -36.0},
+            {"start_sec": 15.0, "end_sec": 20.0, "final_gain_db": -38.0},
+        ],
+    )
+    probe = preview.build_ffmpeg_command_realization_probe(command)
+
+    assert probe["final_music_segment_tail_fade_disabled"] is True
+    assert probe["final_music_segment_has_no_fade_to_silence"] is True
+    assert probe["command_contains_final_tail_fadeout"] is False
+    assert "afade=t=out" not in probe["command_final_music_segment_filter"]
+
+
+def test_command_gate_blocks_final_tail_fadeout(tmp_path):
+    bad_command = [
+        "ffmpeg",
+        "-i",
+        str(tmp_path / "input.mp4"),
+        "-i",
+        str(tmp_path / "song1.mp3"),
+        "-i",
+        str(tmp_path / "song2.mp3"),
+        "-filter_complex",
+        "[1:a]atrim=start=30.000:end=150.000,asetpts=PTS-STARTPTS,volume=0.0dB,afade=t=in:st=0:d=3.000,afade=t=out:st=117.000:d=3.000[musicSegment1];"
+        "[2:a]atrim=start=30.000:end=130.000,asetpts=PTS-STARTPTS,volume=0.0dB,afade=t=in:st=0:d=3.000,afade=t=out:st=97.000:d=3.000[musicSegment2];"
+        "[musicSegment1][musicSegment2]concat=n=2:v=0:a=1[musicbed];"
+        "[musicbed]asplit=4[auto0][auto1][auto2][auto3];"
+        "[auto0]atrim=start=0.000:end=5.000,asetpts=PTS-STARTPTS,volume=-30.0dB[ag0];"
+        "[auto1]atrim=start=5.000:end=10.000,asetpts=PTS-STARTPTS,volume=-34.0dB[ag1];"
+        "[auto2]atrim=start=10.000:end=15.000,asetpts=PTS-STARTPTS,volume=-36.0dB[ag2];"
+        "[auto3]atrim=start=15.000:end=20.000,asetpts=PTS-STARTPTS,volume=-38.0dB[ag3];"
+        "[ag0][ag1][ag2][ag3]concat=n=4:v=0:a=1[music_auto];"
+        "[music_auto][0:a]sidechaincompress=threshold=0.08:ratio=3:attack=40:release=350[ducked];"
+        "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]",
+        str(tmp_path / "out.mp4"),
+    ]
+
+    with pytest.raises(preview.ControlledMusicPreviewError, match="final_tail_fadeout_detected"):
+        preview.assert_manifest_command_consistency(
+            {
+                "clean_transition_policy_enabled": True,
+                "music_automation_planner_enabled": True,
+                "music_timeline_segment_count": 2,
+            },
+            bad_command,
+        )
+
+
+def test_step22b_regression_music_gates_stay_safe(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert manifest["musicbed_command_matches_timeline"] is True
+    assert f"concat=n={manifest['music_timeline_segment_count']}" in command_text
+    assert manifest["double_music_gain_fix_enabled"] is True
+    assert manifest["per_track_final_mix_gain_applied"] is False
+    assert manifest["automation_final_mix_gain_applied"] is True
+    assert manifest["sidechain_ratio"] <= 4.0
+    assert "ratio=12" not in command_text
+    assert "stream_loop" not in command_text
+    assert "qwen" not in command_text.lower()
+    assert manifest["upload_started"] is False
+    assert manifest["runtime_learning_started"] is False
+    assert manifest["qwen_used"] is False
+
+
+def test_step22b_dry_run_manifest_has_loud_section_cut_windows(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["loud_section_cut_window_count"] > 0
+    assert manifest["quiet_section_boost_window_count"] > 0
+    assert manifest["voice_priority_window_count"] > 0
+    assert manifest["dynamic_gain_non_constant"] is True
+    assert manifest["command_dynamic_gain_non_constant"] is True

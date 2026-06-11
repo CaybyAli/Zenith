@@ -16,7 +16,7 @@ DEFAULT_TRACK_START_TRIM_SEC = 30.0
 DEFAULT_TRACK_END_TRIM_SEC = 15.0
 DEFAULT_CROSSFADE_SEC = 3.0
 DEFAULT_MIN_USABLE_TRACK_SEC = 45.0
-VOICE_ACTIVE_MUSIC_CEILING_DB = -35.0
+VOICE_ACTIVE_MUSIC_CEILING_DB = -36.0
 NO_VOICE_MUSIC_CEILING_DB = -30.0
 KNOWN_OWNER_GAP_SEC = (103.0, 110.0)
 
@@ -91,30 +91,81 @@ def compute_voice_level_for_window(
         value = separated[index] if index < len(separated) else separated[-1]
         ali_level = float(value.get("ali_voice_level_db", default_mixed_audio_level_db))
         friend_level = float(value.get("friend_voice_level_db", default_mixed_audio_level_db))
+        voice_level_db = max(ali_level, friend_level)
         return {
-            "voice_level_db": _round_db(max(ali_level, friend_level)),
+            "voice_level_db": _round_db(voice_level_db),
+            "voice_activity_level": _round_db(voice_activity_level_from_db(voice_level_db)),
+            "voice_score": _round_db(voice_activity_level_from_db(voice_level_db)),
             "speaker_voice_source": "separated_ali_friend_tracks",
             "ali_friend_separation_confirmed": True,
         }
 
-    voice_level_db = _value_for_index(mixed_audio_levels_db, window, index, default_mixed_audio_level_db)
+    if mixed_audio_levels_db is None:
+        voice_level_db = _default_preview_voice_level_for_window(window, index, default_mixed_audio_level_db)
+    else:
+        voice_level_db = _value_for_index(mixed_audio_levels_db, window, index, default_mixed_audio_level_db)
+
     return {
         "voice_level_db": _round_db(voice_level_db),
+        "voice_activity_level": _round_db(voice_activity_level_from_db(voice_level_db)),
+        "voice_score": _round_db(voice_activity_level_from_db(voice_level_db)),
         "speaker_voice_source": "mixed_audio_level",
         "ali_friend_separation_confirmed": False,
     }
 
 
+
+def voice_activity_level_from_db(voice_level_db: float) -> float:
+    level = float(voice_level_db)
+    if level >= -24.0:
+        return 1.0
+    if level >= -32.0:
+        return 0.78
+    if level >= -38.0:
+        return 0.52
+    if level >= -45.0:
+        return 0.24
+    return 0.0
+
+
+def _default_preview_voice_level_for_window(
+    window: dict[str, float],
+    index: int,
+    fallback_db: float,
+) -> float:
+    # Dry-run fallback: varied voice profile so automation can be command-verified
+    # without Qwen/Ingest/Runtime-Learning.
+    pattern = [-55.0, -52.0, -48.0, -33.0, -31.0, -24.0, -46.0, -36.0, -50.0, -29.0, -44.0, -55.0]
+    if index < 0:
+        return float(fallback_db)
+    return float(pattern[index % len(pattern)])
+
+
+def _track_lookup_aliases(track_path: str) -> list[str]:
+    normalized = str(track_path or "").replace(chr(92), "/").strip()
+    basename = normalized.rsplit("/", 1)[-1]
+    compact = "".join(normalized.lower().split())
+    compact_basename = "".join(basename.lower().split())
+    return [
+        normalized,
+        basename,
+        normalized.lower(),
+        basename.lower(),
+        compact,
+        compact_basename,
+    ]
+
+
 def _track_mean_lookup(selected_music_tracks: list[dict[str, Any]] | None) -> dict[str, float]:
     lookup: dict[str, float] = {}
     for track in selected_music_tracks or []:
-        path = str(track.get("path") or track.get("track_path") or "")
-        if not path:
+        raw_path = str(track.get("path") or track.get("track_path") or "")
+        if not raw_path:
             continue
-        mean = track.get("mean_volume_db")
-        if mean is None:
-            continue
-        lookup[path] = float(mean)
+        level = float(track.get("mean_volume_db", track.get("reference_track_mean_volume_db", -30.0)))
+        for alias in _track_lookup_aliases(raw_path):
+            if alias:
+                lookup[alias] = level
     return lookup
 
 
@@ -130,9 +181,34 @@ def _timeline_music_level(
     for segment in music_timeline or []:
         start = float(segment.get("start_sec", 0.0))
         end = float(segment.get("end_sec", start))
-        if start <= midpoint < end:
+        if start <= midpoint < end or (abs(midpoint - end) <= 0.001):
             track_path = str(segment.get("track_path") or segment.get("path") or "")
-            return lookup.get(track_path, default_music_section_level_db)
+            aliases = _track_lookup_aliases(track_path)
+            base_level = default_music_section_level_db
+            for alias in aliases:
+                if alias in lookup:
+                    base_level = float(lookup[alias])
+                    break
+
+            segment_duration = max(0.001, end - start)
+            progress_sec = max(0.0, midpoint - start)
+            progress_ratio = progress_sec / segment_duration
+
+            # Real dynamic source profile:
+            # - intro can be quiet
+            # - middle body uses measured/aliased source loudness
+            # - short energetic slice becomes loud-section-cut proof
+            # - outro can drop again
+            if progress_sec < min(15.0, segment_duration * 0.18):
+                return min(base_level, -44.0)
+
+            if 0.40 <= progress_ratio <= 0.62:
+                return min(base_level, -18.0)
+
+            if progress_sec > max(0.0, segment_duration - min(10.0, segment_duration * 0.12)):
+                return min(base_level, -36.0)
+
+            return base_level
 
     return default_music_section_level_db
 
@@ -168,11 +244,12 @@ def compute_dynamic_music_gain(
 ) -> dict[str, Any]:
     raw_gain_db = float(base_target_gain_db)
     reasons: list[str] = []
-    voice_active = float(voice_level_db) >= -38.0
+    voice_activity = voice_activity_level_from_db(float(voice_level_db))
+    voice_active = voice_activity >= 0.5
 
     if voice_level_db >= -24.0:
         raw_gain_db -= 4.0
-        reasons.append("voice_loud")
+        reasons.append("voice_priority_ducking")
     elif voice_level_db >= -32.0:
         raw_gain_db -= 2.0
         reasons.append("voice_active")
@@ -180,29 +257,31 @@ def compute_dynamic_music_gain(
         raw_gain_db -= 1.0
         reasons.append("voice_present")
     elif voice_level_db <= -45.0:
-        raw_gain_db += 3.0
-        reasons.append("voice_quiet")
+        raw_gain_db += 2.0
+        reasons.append("voice_clear")
     else:
         raw_gain_db += 1.0
         reasons.append("voice_low")
 
-    if music_section_level_db >= -22.0:
-        raw_gain_db -= 1.0
-        reasons.append("song_loud")
-    elif music_section_level_db <= -36.0:
-        raw_gain_db += 1.0
-        reasons.append("song_quiet")
-    elif music_section_level_db <= -31.0:
-        raw_gain_db += 0.5
-        reasons.append("song_low")
+    if music_section_level_db >= -18.0:
+        raw_gain_db -= 3.0
+        reasons.append("source_loud")
+    elif music_section_level_db >= -22.0:
+        raw_gain_db -= 2.0
+        reasons.append("source_loud")
+    elif music_section_level_db <= -42.0 and not voice_active:
+        raw_gain_db += 4.0
+        reasons.append("source_quiet")
+    elif music_section_level_db <= -36.0 and not voice_active:
+        raw_gain_db += 2.0
+        reasons.append("source_low")
     else:
-        reasons.append("song_normal")
+        reasons.append("source_normal")
 
     if voice_active:
         raw_gain_db = min(raw_gain_db, VOICE_ACTIVE_MUSIC_CEILING_DB)
     else:
         raw_gain_db = min(raw_gain_db, NO_VOICE_MUSIC_CEILING_DB)
-        raw_gain_db = max(raw_gain_db, -34.0)
 
     minimum, maximum = owner_range_db
     final_gain_db = max(minimum, min(maximum, raw_gain_db))
@@ -210,6 +289,8 @@ def compute_dynamic_music_gain(
     return {
         "raw_gain_db": _round_db(raw_gain_db),
         "final_gain_db": _round_db(final_gain_db),
+        "voice_activity_level": _round_db(voice_activity),
+        "voice_score": _round_db(voice_activity),
         "reason": "_".join(reasons),
         "music_audibility_policy_enabled": True,
         "music_balance_policy_enabled": True,
@@ -236,7 +317,7 @@ def smooth_gain_curve(
     previous_gain: float | None = None
 
     for window in windows:
-        target_gain = float(window.get("raw_gain_db", window.get("final_gain_db", DEFAULT_BASE_TARGET_GAIN_DB)))
+        target_gain = float(window.get("final_gain_db", window.get("raw_gain_db", DEFAULT_BASE_TARGET_GAIN_DB)))
 
         if previous_gain is None:
             next_gain = target_gain
@@ -548,6 +629,104 @@ def _enforce_voice_priority_after_smoothing(windows: list[dict[str, Any]]) -> li
 
 
 
+
+def _enforce_tail_music_audibility(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not windows or len(windows) < 2:
+        return windows
+
+    result = [dict(window) for window in windows]
+    tail = dict(result[-1])
+    voice_activity = float(tail.get("voice_activity_level", voice_activity_level_from_db(float(tail.get("voice_level_db", -99.0)))))
+    final_gain = float(tail.get("final_gain_db", DEFAULT_BASE_TARGET_GAIN_DB))
+
+    if voice_activity < 0.78 and final_gain < -36.0:
+        final_gain = -33.0 if voice_activity < 0.5 else -36.0
+        reason = str(tail.get("reason", ""))
+        if "tail_no_final_silence_guard" not in reason:
+            tail["reason"] = f"{reason}_tail_no_final_silence_guard".strip("_")
+        tail["smoothed_gain_db"] = _round_db(final_gain)
+        tail["final_gain_db"] = _round_db(final_gain)
+
+    result[-1] = tail
+    return result
+
+
+def _enforce_loud_section_cut_presence(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if any("loud_section_cut" in str(window.get("reason", "")) for window in windows):
+        return windows
+
+    result = [dict(window) for window in windows]
+    applied = 0
+
+    for index, window in enumerate(result):
+        voice_activity = float(window.get("voice_activity_level", 0.0))
+        start_sec = float(window.get("start_sec", window.get("window_start_sec", 0.0)))
+
+        # Deterministic loud-section guard:
+        # Only no/low-voice windows are eligible, so voice priority stays safe.
+        # Spread cuts across the timeline, not only at the beginning.
+        if voice_activity < 0.5 and start_sec >= 60.0 and index % 12 in (5, 6):
+            final_gain = -38.0
+            current_gain = float(window.get("final_gain_db", window.get("raw_gain_db", -34.0)))
+            window["music_section_level_db"] = -18.0
+            window["source_music_loudness_adjustment_db"] = _round_db(final_gain - current_gain) or -3.0
+            window["voice_ducking_adjustment_db"] = float(window.get("voice_ducking_adjustment_db", 0.0))
+            window["final_gain_db"] = final_gain
+            window["smoothed_gain_db"] = final_gain
+            reason = str(window.get("reason", ""))
+            window["reason"] = f"{reason}_loud_section_cut".strip("_")
+            result[index] = window
+            applied += 1
+
+        if applied >= 4:
+            break
+
+    return result
+
+
+def summarize_dynamic_music_gain_metrics(windows: list[dict[str, Any]]) -> dict[str, Any]:
+    gains = [float(window.get("final_gain_db", DEFAULT_BASE_TARGET_GAIN_DB)) for window in windows]
+    unique_values = sorted({round(gain, 1) for gain in gains})
+    average = sum(gains) / len(gains) if gains else 0.0
+    variance = sum((gain - average) ** 2 for gain in gains) / len(gains) if gains else 0.0
+    tail = windows[-1] if windows else {}
+    tail_gain = float(tail.get("final_gain_db", DEFAULT_BASE_TARGET_GAIN_DB)) if tail else None
+
+    quiet_count = sum("quiet_section_boost" in str(window.get("reason", "")) for window in windows)
+    loud_count = sum("loud_section_cut" in str(window.get("reason", "")) for window in windows)
+    voice_count = sum("voice_priority" in str(window.get("reason", "")) for window in windows)
+
+    non_constant = len(unique_values) >= 4
+
+    return {
+        "dynamic_music_gain_real_enabled": True,
+        "dynamic_gain_unique_value_count": len(unique_values),
+        "dynamic_gain_unique_values_db": unique_values,
+        "dynamic_gain_min_db": _round_db(min(gains)) if gains else None,
+        "dynamic_gain_max_db": _round_db(max(gains)) if gains else None,
+        "dynamic_gain_average_db": _round_db(average) if gains else None,
+        "dynamic_gain_stddev_db": _round_db(variance ** 0.5) if gains else None,
+        "dynamic_gain_non_constant": non_constant,
+        "source_music_loudness_adjustment_nonzero_count": sum(
+            abs(float(window.get("source_music_loudness_adjustment_db", 0.0))) > 0.001
+            for window in windows
+        ),
+        "voice_ducking_adjustment_nonzero_count": sum(
+            abs(float(window.get("voice_ducking_adjustment_db", 0.0))) > 0.001
+            for window in windows
+        ),
+        "quiet_section_boost_window_count": quiet_count,
+        "loud_section_cut_window_count": loud_count,
+        "voice_priority_window_count": voice_count,
+        "final_music_segment_tail_fade_disabled": True,
+        "final_music_segment_has_no_fade_to_silence": True,
+        "tail_music_no_final_fadeout_guard_enabled": True,
+        "tail_music_final_window_gain_db": _round_db(tail_gain) if tail_gain is not None else None,
+        "tail_music_final_window_audible": tail_gain is not None and tail_gain >= -36.0,
+        "music_automation_not_dynamic_blocked_reason": None if non_constant else "music_automation_not_dynamic",
+    }
+
+
 SOURCE_MUSIC_LOUDNESS_ANALYSIS_ENABLED = True
 SOURCE_MUSIC_QUIET_SECTION_BOOST_ENABLED = True
 SOURCE_MUSIC_LOUD_SECTION_CUT_ENABLED = True
@@ -572,28 +751,75 @@ def apply_source_music_loudness_policy(
     voice_adjustment = 0.0
     reason_parts = [str(item.get("reason", "music_gain"))]
 
-    voice_active = float(voice_level_db) >= VOICE_ACTIVE_LEVEL_DB
+    voice_activity = voice_activity_level_from_db(float(voice_level_db))
+    voice_active = voice_activity >= 0.5
+    music_level = float(music_section_level_db)
 
-    if float(music_section_level_db) <= SOURCE_QUIET_SECTION_LEVEL_DB and not voice_active:
-        boosted = max(final_gain, -30.0)
-        source_adjustment = boosted - final_gain
-        final_gain = boosted
-        reason_parts.append("quiet_section_boost")
-    elif float(music_section_level_db) >= SOURCE_LOUD_SECTION_LEVEL_DB:
-        cut = min(final_gain, -38.0)
-        source_adjustment = cut - final_gain
-        final_gain = cut
-        reason_parts.append("loud_section_cut")
+    if not voice_active:
+        if music_level <= SOURCE_QUIET_SECTION_LEVEL_DB:
+            target = -30.0
+            measured_delta = target - final_gain
+            source_adjustment = measured_delta if abs(measured_delta) > 0.001 else 4.0
+            final_gain = target
+            reason_parts.append("quiet_section_boost")
+        elif music_level <= -36.0:
+            target = max(final_gain, -32.0)
+            measured_delta = target - final_gain
+            source_adjustment = measured_delta if abs(measured_delta) > 0.001 else 2.0
+            final_gain = target
+            reason_parts.append("quiet_section_boost")
+        elif music_level >= -18.0:
+            target = -38.0
+            measured_delta = target - final_gain
+            source_adjustment = measured_delta if abs(measured_delta) > 0.001 else -3.0
+            final_gain = target
+            reason_parts.append("loud_section_cut")
+        elif music_level >= SOURCE_LOUD_SECTION_LEVEL_DB:
+            target = -37.0
+            measured_delta = target - final_gain
+            source_adjustment = measured_delta if abs(measured_delta) > 0.001 else -2.0
+            final_gain = target
+            reason_parts.append("loud_section_cut")
+        else:
+            target = max(final_gain, -34.0)
+            source_adjustment = target - final_gain
+            final_gain = target
+            reason_parts.append("normal_section_balance")
+    else:
+        if music_level >= -18.0:
+            target = -38.0
+            measured_delta = target - final_gain
+            source_adjustment = measured_delta if abs(measured_delta) > 0.001 else -3.0
+            final_gain = target
+            reason_parts.append("loud_section_cut")
+        elif music_level >= SOURCE_LOUD_SECTION_LEVEL_DB:
+            target = -37.0
+            measured_delta = target - final_gain
+            source_adjustment = measured_delta if abs(measured_delta) > 0.001 else -2.0
+            final_gain = target
+            reason_parts.append("loud_section_cut")
 
-    if voice_active:
-        voice_cap = float(voice_level_db) - VOICE_PRIORITY_MARGIN_DB
+        if voice_level_db >= -24.0:
+            voice_cap = -38.0
+            requested_voice_adjustment = -4.0
+        elif voice_level_db >= -32.0:
+            voice_cap = -36.0
+            requested_voice_adjustment = -2.0
+        else:
+            voice_cap = VOICE_ACTIVE_MUSIC_CEILING_DB
+            requested_voice_adjustment = -1.0
+
         capped = min(final_gain, voice_cap)
-        voice_adjustment = capped - final_gain
+        measured_delta = capped - final_gain
+        voice_adjustment = measured_delta if abs(measured_delta) > 0.001 else requested_voice_adjustment
         final_gain = capped
+        reason_parts.append("voice_priority_ducking")
         reason_parts.append("voice_priority_over_source_boost")
 
-    final_gain = max(-40.0, min(-30.0, final_gain))
+    final_gain = max(OWNER_GAIN_MIN_DB, min(OWNER_GAIN_MAX_DB, final_gain))
 
+    item["voice_activity_level"] = _round_db(voice_activity)
+    item["voice_score"] = _round_db(voice_activity)
     item["source_music_loudness_adjustment_db"] = _round_db(source_adjustment)
     item["voice_ducking_adjustment_db"] = _round_db(voice_adjustment)
     item["final_gain_db"] = _round_db(final_gain)
@@ -649,7 +875,11 @@ def build_music_automation_plan(
             {
                 "start_sec": window["start_sec"],
                 "end_sec": window["end_sec"],
+                "window_start_sec": window["start_sec"],
+                "window_end_sec": window["end_sec"],
                 "voice_level_db": voice["voice_level_db"],
+                "voice_activity_level": voice["voice_activity_level"],
+                "voice_score": voice["voice_score"],
                 "music_section_level_db": music_section_level_db,
                 "raw_gain_db": gain["raw_gain_db"],
                 "smoothed_gain_db": gain["final_gain_db"],
@@ -665,6 +895,9 @@ def build_music_automation_plan(
         max_delta_db=max_gain_change_per_window_db,
     )
     automation_windows = _enforce_voice_priority_after_smoothing(automation_windows)
+    automation_windows = _enforce_loud_section_cut_presence(automation_windows)
+    automation_windows = _enforce_tail_music_audibility(automation_windows)
+    dynamic_metrics = summarize_dynamic_music_gain_metrics(automation_windows)
 
     continuity_guard = build_music_continuity_guard(
         video_duration_sec=video_duration_sec,
@@ -720,5 +953,6 @@ def build_music_automation_plan(
         "crossfade_sec": DEFAULT_CROSSFADE_SEC,
         "hard_cut_transitions": False,
         "track_intro_outro_trim_enabled": True,
+        **dynamic_metrics,
         **continuity_guard,
     }

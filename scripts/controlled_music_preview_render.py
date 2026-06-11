@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import json
@@ -554,6 +554,14 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
 
     if not final_mix_values:
         return {
+            "status": "blocked",
+            "blocked_reason": "no_volume_db_tokens_found",
+            "command_music_automation_values_extracted": False,
+            "command_dynamic_gain_non_constant": False,
+            "command_dynamic_gain_unique_value_count": 0,
+            "command_dynamic_gain_unique_values_db": [],
+            "command_tail_final_window_gain_db": None,
+            "command_tail_final_window_audible": False,
             "command_volume_values_db": [],
             "command_volume_average_db": None,
             "command_volume_min_db": None,
@@ -579,6 +587,20 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
     min_gain = min(final_mix_values)
     max_gain = max(final_mix_values)
 
+    automation_unique_values = sorted({round(value, 1) for value in automation_stage_values})
+    command_music_automation_values_extracted = bool(automation_stage_values)
+    command_dynamic_gain_unique_value_count = len(automation_unique_values)
+    command_dynamic_gain_gate_required = len(automation_stage_values) >= 4
+    command_dynamic_gain_non_constant = (
+        not command_dynamic_gain_gate_required
+        or command_dynamic_gain_unique_value_count >= 4
+    )
+    command_tail_final_window_gain_db = round(automation_stage_values[-1], 3) if automation_stage_values else None
+    command_tail_final_window_audible = (
+        command_tail_final_window_gain_db is not None
+        and command_tail_final_window_gain_db >= -36.0
+    )
+
     per_track_strong_negative_values = _strong_negative_final_mix_values(track_stage_values)
     automation_strong_negative_values = _strong_negative_final_mix_values(automation_stage_values)
 
@@ -596,7 +618,7 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
         or len(automation_strong_negative_values) == len(automation_stage_values)
     )
 
-    gate_passed = (
+    audibility_passed = (
         average_gain > MUSIC_AUDIBILITY_FLOOR_DB
         and MUSIC_AUDIBILITY_FLOOR_DB <= average_gain <= MUSIC_LOUDNESS_CEILING_DB
         and min_gain >= MUSIC_AUDIBILITY_FLOOR_DB
@@ -607,6 +629,19 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
         and not all_too_quiet
         and automation_values_are_final_mix_values
         and double_gain_gate["music_bus_double_gain_protection_passed"]
+    )
+    dynamic_blocked = command_dynamic_gain_gate_required and not command_dynamic_gain_non_constant
+    gate_passed = audibility_passed and not dynamic_blocked
+    blocked_reason = None
+    if dynamic_blocked:
+        blocked_reason = "music_automation_not_dynamic"
+    elif not gate_passed:
+        blocked_reason = "music_audibility_gate_failed"
+
+    status_fields = (
+        {"status": "blocked", "blocked_reason": blocked_reason}
+        if blocked_reason
+        else {"blocked_reason": None}
     )
 
     return {
@@ -621,13 +656,20 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
         "track_stage_volume_db_values": [round(value, 3) for value in track_stage_values],
         "automation_stage_volume_db_values": [round(value, 3) for value in automation_stage_values],
         "all_command_volume_db_values": [round(value, 3) for value in all_volume_values],
+        "command_music_automation_values_extracted": command_music_automation_values_extracted,
+        "command_dynamic_gain_non_constant": command_dynamic_gain_non_constant,
+        "command_dynamic_gain_unique_value_count": command_dynamic_gain_unique_value_count,
+        "command_dynamic_gain_unique_values_db": automation_unique_values,
+        "command_tail_final_window_gain_db": command_tail_final_window_gain_db,
+        "command_tail_final_window_audible": command_tail_final_window_audible,
         "per_track_strong_negative_gain_count": len(per_track_strong_negative_values),
         "automation_strong_negative_gain_count": len(automation_strong_negative_values),
         "music_gain_application_mode": MUSIC_GAIN_APPLICATION_MODE,
         "double_music_gain_fix_enabled": DOUBLE_MUSIC_GAIN_FIX_ENABLED,
         "per_track_final_mix_gain_applied": per_track_final_mix_gain_applied,
         "automation_final_mix_gain_applied": automation_final_mix_gain_applied,
-        **{key: value for key, value in double_gain_gate.items() if key != "status"},
+        **{key: value for key, value in double_gain_gate.items() if key not in ("status", "blocked_reason")},
+        **status_fields,
     }
 
 
@@ -922,7 +964,19 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
     musicbed_match = re.search(r"concat=n=(\d+):v=0:a=1\[musicbed\]", filter_complex)
     if musicbed_match:
         musicbed_command_segment_count = int(musicbed_match.group(1))
-    musicbed_segment_label_count = len(set(re.findall(r"\[musicSegment\d+\]", filter_complex)))
+    musicbed_segment_numbers = sorted({int(value) for value in re.findall(r"\[musicSegment(\d+)\]", filter_complex)})
+    musicbed_segment_label_count = len(musicbed_segment_numbers)
+
+    final_music_segment_filter = ""
+    command_contains_final_tail_fadeout = False
+    if musicbed_segment_numbers:
+        final_segment_number = musicbed_segment_numbers[-1]
+        final_label = f"[musicSegment{final_segment_number}]"
+        for filter_part in filter_complex.split(";"):
+            if final_label in filter_part:
+                final_music_segment_filter = filter_part
+                command_contains_final_tail_fadeout = "afade=t=out" in filter_part
+                break
 
     dynamic_gain_zone_count = (
         segmented_gain_asplit_count
@@ -956,6 +1010,7 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
         ffmpeg_clean_transition_applied
         and ffmpeg_dynamic_automation_applied
         and not command_contains_nested_if_volume_automation
+        and not command_contains_final_tail_fadeout
         and (
             not large_window_count_requires_segmented_strategy
             or dynamic_gain_expression_strategy == "segmented_atrim_volume_concat"
@@ -982,6 +1037,11 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
         "musicbed_command_segment_count": musicbed_command_segment_count,
         "musicbed_command_uses_segment_labels": musicbed_segment_label_count > 0,
         "musicbed_command_segment_label_count": musicbed_segment_label_count,
+        "command_contains_final_tail_fadeout": command_contains_final_tail_fadeout,
+        "command_final_music_segment_filter": final_music_segment_filter,
+        "final_music_segment_tail_fade_disabled": not command_contains_final_tail_fadeout,
+        "final_music_segment_has_no_fade_to_silence": not command_contains_final_tail_fadeout,
+        "tail_music_no_final_fadeout_guard_enabled": True,
     }
 
 
@@ -1000,6 +1060,9 @@ def assert_manifest_command_consistency(manifest: dict, command: list[str]) -> d
             and features["dynamic_gain_expression_strategy"] != "segmented_atrim_volume_concat"
         ):
             raise ControlledMusicPreviewError("dynamic_automation_requires_segmented_strategy")
+
+    if features["command_contains_final_tail_fadeout"]:
+        raise ControlledMusicPreviewError("final_tail_fadeout_detected")
 
     timeline_count = int(
         manifest.get("music_timeline_segment_count")
@@ -1102,13 +1165,20 @@ def build_ffmpeg_command(
         fade_token = _music_command_sec(trim["crossfade_sec"])
         fade_out_start_token = _music_command_sec(trim["fade_out_start_sec"])
 
+        is_final_music_segment = command_input_index == len(music_inputs)
+        fade_out_filter = (
+            ""
+            if is_final_music_segment
+            else f",afade=t=out:st={fade_out_start_token}:d={fade_token}"
+        )
+
         music_filters.append(
             f"[{command_input_index}:a]"
             f"atrim=start={start_token}:end={end_token},"
             "asetpts=PTS-STARTPTS,"
             f"volume={gain_db:.1f}dB,"
-            f"afade=t=in:st=0:d={fade_token},"
-            f"afade=t=out:st={fade_out_start_token}:d={fade_token}"
+            f"afade=t=in:st=0:d={fade_token}"
+            f"{fade_out_filter}"
             f"[{segment_label}]"
         )
 
@@ -1501,7 +1571,23 @@ def run(
         command,
     )
     ffmpeg_music_volume.update(command_realization_probe)
-    ffmpeg_music_volume.update(build_command_volume_audibility_gate(command))
+    command_volume_gate = build_command_volume_audibility_gate(command)
+    ffmpeg_music_volume.update(command_volume_gate)
+
+    dynamic_manifest_block_reason = None
+    if playlist_plan.get("source_music_loudness_analysis_enabled") is True:
+        if int(playlist_plan.get("source_music_loudness_adjustment_nonzero_count", 0)) <= 0:
+            dynamic_manifest_block_reason = "source_music_loudness_adjustment_not_applied"
+    if dynamic_manifest_block_reason is None:
+        if int(playlist_plan.get("voice_priority_window_count", 0)) > 0:
+            if int(playlist_plan.get("voice_ducking_adjustment_nonzero_count", 0)) <= 0:
+                dynamic_manifest_block_reason = "voice_ducking_adjustment_not_applied"
+
+    if dynamic_manifest_block_reason:
+        ffmpeg_music_volume["status"] = "blocked"
+        ffmpeg_music_volume["blocked_reason"] = dynamic_manifest_block_reason
+
+    dry_run_status = "blocked" if ffmpeg_music_volume.get("status") == "blocked" else "dry_run"
 
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 
@@ -1509,7 +1595,7 @@ def run(
         _write_text(run_dir / "ffmpeg_stdout.txt", "DRY-RUN: ffmpeg was not started.\n")
         _write_text(run_dir / "ffmpeg_stderr.txt", "DRY-RUN: owner execute flag missing.\n")
         manifest = build_manifest(
-            status="dry_run",
+            status=dry_run_status,
             repo_root=root,
             input_video=full_input,
             output_root=full_output_root,

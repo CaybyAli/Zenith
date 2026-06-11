@@ -293,3 +293,100 @@ def test_balance_policy_still_background():
     )
 
     assert result["final_gain_db"] <= -35.0
+
+
+def test_dynamic_gain_not_constant():
+    plan = build_music_automation_plan(
+        video_duration_sec=40.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0, -50.0, -32.0, -22.0, -45.0, -55.0, -36.0, -55.0],
+        music_section_levels_db=[-44.0, -30.0, -18.0, -23.0, -50.0, -20.0, -28.0, -16.0],
+    )
+
+    gains = [window["final_gain_db"] for window in plan["music_automation_plan"]]
+    assert plan["dynamic_music_gain_real_enabled"] is True
+    assert plan["dynamic_gain_unique_value_count"] >= 4
+    assert plan["dynamic_gain_non_constant"] is True
+    assert not all(gain == -36.0 for gain in gains)
+
+
+def test_quiet_music_section_boosts_when_no_voice():
+    plan = build_music_automation_plan(
+        video_duration_sec=5.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0],
+        music_section_levels_db=[-50.0],
+    )
+    window = plan["music_automation_plan"][0]
+
+    assert -33.0 <= window["final_gain_db"] <= -30.0
+    assert "quiet_section_boost" in window["reason"]
+
+
+def test_loud_music_section_cuts_gain():
+    plan = build_music_automation_plan(
+        video_duration_sec=5.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0],
+        music_section_levels_db=[-15.0],
+    )
+    window = plan["music_automation_plan"][0]
+
+    assert -40.0 <= window["final_gain_db"] <= -37.0
+    assert "loud_section_cut" in window["reason"]
+
+
+def test_voice_priority_over_quiet_boost():
+    plan = build_music_automation_plan(
+        video_duration_sec=5.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-24.0],
+        music_section_levels_db=[-50.0],
+    )
+    window = plan["music_automation_plan"][0]
+
+    assert window["final_gain_db"] <= -35.5
+    assert "voice_priority" in window["reason"]
+
+
+def test_tail_final_window_not_forced_silent():
+    plan = build_music_automation_plan(
+        video_duration_sec=10.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-24.0, -55.0],
+        music_section_levels_db=[-18.0, -18.0],
+    )
+
+    assert plan["tail_music_no_final_fadeout_guard_enabled"] is True
+    assert plan["tail_music_final_window_gain_db"] >= -36.0
+    assert plan["tail_music_final_window_audible"] is True
+
+
+def test_source_and_voice_adjustment_counts_are_nonzero():
+    plan = build_music_automation_plan(
+        video_duration_sec=30.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0, -24.0, -55.0, -31.0, -55.0, -55.0],
+        music_section_levels_db=[-50.0, -30.0, -15.0, -24.0, -44.0, -18.0],
+    )
+
+    assert plan["source_music_loudness_adjustment_nonzero_count"] > 0
+    assert plan["voice_ducking_adjustment_nonzero_count"] > 0
+    assert plan["quiet_section_boost_window_count"] > 0
+    assert plan["loud_section_cut_window_count"] > 0
+    assert plan["voice_priority_window_count"] > 0
+
+
+def test_loud_section_cut_guard_prevents_zero_loud_count():
+    plan = build_music_automation_plan(
+        video_duration_sec=120.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0] * 24,
+        music_section_levels_db=[-30.0] * 24,
+    )
+
+    assert plan["loud_section_cut_window_count"] > 0
+    assert any(
+        "loud_section_cut" in window["reason"] and window["final_gain_db"] <= -37.0
+        for window in plan["music_automation_plan"]
+    )
