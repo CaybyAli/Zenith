@@ -1805,3 +1805,62 @@ Safety:
 
 Nächster Schritt:
 - Controlled Music Preview Step 16B-R Render nur nach Master-GO.
+
+## 2026-06-11 16:58:34 — Controlled Music Preview Step 16B-R — Execute Render STOPP
+
+Status: FAILED / STOPP / NO OUTPUT MP4
+
+Aktueller HEAD vor Obsidian:
+- 1ca68a1 docs(obsidian): record music command realization fix
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+- Dauer: ca. 528.348s
+- content_type: gaming_main
+- channel_type: main
+
+Run:
+- failed_run_dir: reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_165114
+- manifest_status: failed
+- owner_go: true
+- owner_execute_required: false
+- output_mp4_created_count: 0
+
+Vor Execute:
+- Precheck grün
+- py_compile: OK
+- tests/test_music_automation_planner.py: 9 passed
+- tests/test_music_timeline_planner.py: 10 passed
+- tests/test_controlled_music_preview_render.py: 51 passed
+- Dry-Run Command-Gate grün
+- manifest_command_consistency_gate: true
+- command_dynamic_gain_zone_count: 106
+
+Fehlerursache:
+- FFmpeg Parsed_volume Eval Parser bricht ab.
+- Kernmeldung: Missing ')' or too many args.
+- Betroffen: lange nested if(between(t,...)) Dynamic-Gain-Expression mit 106 Zonen.
+- Dry-Run erkannte die Command-Realization als vorhanden, aber echter FFmpeg-Execute akzeptiert die Expression nicht.
+
+Safety:
+- Upload gestartet: false
+- Runtime Learning gestartet: false
+- Qwen gestartet: false
+- Qwen-Autocut gestartet: false
+- Produktionsdateien geändert: false
+- Musikdateien committed: false
+- Reports/MP4 committed: false
+- tracked-only nach STOPP: leer
+- local_assets/music tracked: leer
+
+Entscheidung:
+- Step 16B-R Execute Render: NO-GO / STOPP
+- Kein weiterer Execute ohne Master-GO.
+- Kein Upload.
+- Kein Runtime Learning.
+- Kein Qwen.
+- Kein Code-Fix ohne neues Master-GO.
+
+Nächster Schritt:
+- Master-GO für Step 16B-R-FIX erforderlich.
+- Fix-Ziel: Dynamic FFmpeg Volume Automation FFmpeg-sicher machen, ohne 106-fach verschachtelte if(between(...)) Expression.
