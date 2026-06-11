@@ -1187,6 +1187,54 @@ Grenzen:
 - Musikdateien nicht committed.
 - Reports nicht committed.
 
+## Controlled Music Preview Run Schritt 13 Visual Proper Run Music Render
+
+Entscheidung: Ali/Master-GO fuer genau einen lokalen Preview-Render des visuell gueltigen `gaming_main` Proper Runs mit Audio-Gain-Fix.
+
+Beweis:
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Input-Dauer: `528.348813s` / ca. 8.8min.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_125108/controlled_music_preview_main.mp4`.
+- Output-Groesse: `1623915456` Bytes.
+- Manifest: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_125108/preview_render_manifest.json`.
+- Step-13-Report: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/step13_render_manifest.json`.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- FFmpeg command nutzt `volume=-27.0dB`.
+- Hardcoded `volume=0.08` genutzt: nein.
+- Manifest-Gains applied to FFmpeg command: ja.
+- Speech-aware Ducking bestaetigt: nein.
+- Sidechaincompress genutzt: ja.
+- Manifest Status: `ok`.
+
+Ergebnis:
+- Controlled Music Preview Run Schritt 13 ausgefuehrt.
+- Alter K7-Clip wurde nicht genutzt.
+- Short-Clip wurde nicht genutzt.
+- Alter Facecam-Proper-Run wurde nicht genutzt.
+- `vlog_background` wurde nicht genutzt.
+- Intro Offset: `30.0`.
+- Intro Trim: true.
+- Intro Boost: false.
+- Low-Speech Gains: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
+- Owner Review Schritt 14 ist jetzt Pflicht.
+
+Grenzen:
+- Kein Upload.
+- Kein Final-Render.
+- Kein Ingest.
+- Kein Runtime Learning.
+- Kein Qwen gestartet.
+- Kein Qwen-Autocut.
+- Keine Uncut-Musik.
+- Keine Produktionsdateien geaendert.
+- Musikdateien nicht committed.
+- Reports/MP4 nicht committed.
+
 ## Controlled Music Preview Run Schritt 7A FFmpeg-Command-Fix
 
 Entscheidung: Schritt 7 ist NO-GO wegen abgeschnittenem FFmpeg-Command. Code-GO nur fuer Step 7A FFmpeg-Command-Fix, kein Render.

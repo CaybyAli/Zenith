@@ -1,6 +1,6 @@
 # CURRENT TRUTH - PROJECT ZENITH
 
-Stand: 2026-06-10
+Stand: 2026-06-11
 
 ## Aktuelle Wahrheit
 
@@ -42,6 +42,9 @@ Stand: 2026-06-10
 - Controlled Music Preview Run Schritt 12: Owner Review = NO-GO.
 - Controlled Music Preview Run Schritt 12A: DONE / Owner-NO-GO diagnostiziert / kein Render / kein Code-Fix.
 - Controlled Music Preview Run Schritt 12B: DONE / visuell gueltige Proper-Run-Kandidaten gesucht / kein Render.
+- Controlled Music Preview Run Schritt 12C: DONE / visuell gueltiger Proper Run ausgewaehlt / kein Render.
+- Controlled Music Preview Run Schritt 12D: DONE / Allowlist + Audio-Readiness remote gesichert.
+- Controlled Music Preview Run Schritt 13: DONE / Visual Proper Run mit Audio-Gain-Fix lokal gerendert / Owner Review Schritt 14 Pflicht.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -184,6 +187,35 @@ Kein Render, kein Audio-Mix, kein Upload, kein Qwen, kein Runtime Learning.
 Uncut bleibt ohne Musik.
 Kein weiterer Render ohne Master-GO.
 Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
+Schritt 12C hat den visuell gueltigen Proper Run festgeschrieben: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+Schritt 12D hat Input und Step-13-Output-Root allowlisted und den Audio-Gain-Fix remote gesichert.
+Schritt 13 Visual Proper Run Render wurde nach Master-GO ausgefuehrt.
+Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+Input-Dauer: `528.348813s` / ca. 8.8min.
+Gameplay sichtbar: ja.
+Facecam fullscreen: nein.
+Kein Short, kein raw, kein uncut.
+Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_125108/controlled_music_preview_main.mp4`.
+Output-Groesse: `1623915456` Bytes.
+Content Type: `gaming_main`.
+Channel Type: `main`.
+Musik-Kategorie: `funny_gaming_background`.
+Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+Alter K7-Clip wurde nicht genutzt.
+Short-Clip wurde nicht genutzt.
+Alter Facecam-Proper-Run wurde nicht genutzt.
+`vlog_background` wurde nicht genutzt.
+Intro Offset: `30.0`.
+Intro Trim: `true`.
+Intro Boost: `false`.
+Low-Speech Gains: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
+FFmpeg-Musik-Volume: `-27.0dB`.
+Hardcoded `volume=0.08` wurde nicht genutzt.
+Manifest-Gains werden im FFmpeg-Command angewendet: ja.
+Speech-aware Ducking bestaetigt: nein.
+Sidechaincompress genutzt: ja.
+Kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning.
+Owner Review Schritt 14 ist jetzt Pflicht.
 
 Runtime Learning Gate bleibt bis eigenes Master-GO gesperrt.
 

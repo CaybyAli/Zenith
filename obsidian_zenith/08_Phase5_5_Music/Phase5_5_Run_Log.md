@@ -1334,3 +1334,58 @@ Safety:
 
 Naechster Schritt:
 - Step 13 Visual Proper Run Render nur nach Master-GO.
+
+## 2026-06-11 - Controlled Music Preview Run Schritt 13 Visual Proper Run Render
+
+Status:
+- Ali/Master hat GO fuer Step 13 gegeben.
+- Visuell gueltiger `gaming_main` Proper Run wurde lokal mit finalem Musik-Tuning gerendert.
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Input-Dauer: `528.348813s` / ca. 8.8min.
+- Gameplay sichtbar: ja.
+- Facecam fullscreen: nein.
+- Kein Short, kein raw, kein uncut.
+- Kein Upload.
+- Kein Final-Render.
+- Kein Qwen.
+- Kein Runtime Learning.
+
+Render:
+- Output Root: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`.
+- Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_125108/controlled_music_preview_main.mp4`.
+- Output-Groesse: `1623915456` Bytes.
+- Output-Dauer: `528.348177s`.
+- Content Type: `gaming_main`.
+- Channel Type: `main`.
+- Musik-Kategorie: `funny_gaming_background`.
+- Musikdatei: `local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3`.
+- Alter K7-Clip genutzt: nein.
+- Short-Clip genutzt: nein.
+- Alter Facecam-Proper-Run genutzt: nein.
+- `vlog_background` genutzt: nein.
+
+Audio:
+- Intro Offset: `30.0`.
+- Intro Trim: true.
+- Intro Boost: false.
+- Low-Speech Gains: `base=-27.0`, `ducking=-32.0`, `max=-25.0`.
+- FFmpeg-Musik-Volume: `-27.0dB`.
+- FFmpeg linear: `0.0446683592150963`.
+- Volume-Quelle: `low_speech_base_music_gain_db`.
+- Manifest-Gains applied to FFmpeg command: ja.
+- Hardcoded `volume=0.08` genutzt: nein.
+- Speech-aware Ducking bestaetigt: nein.
+- Sidechaincompress genutzt: ja.
+
+Tests / Runs:
+- `python -m py_compile scripts\controlled_music_preview_render.py`: gruen.
+- `python -m pytest tests\test_controlled_music_preview_render.py -vv`: 40 passed.
+- Dry-Run: `status=dry_run`, kein MP4 erzeugt.
+- Execute Render: `status=ok`.
+- Manifest Status: `ok`.
+
+Naechster Schritt:
+- Step 14 Owner Review Visual Proper Run Audio-Gain Fix.
+- Ali entscheidet GO / FIX / NO-GO.
+- Kein Upload ohne neues Master-GO.
+- Kein Runtime Learning.

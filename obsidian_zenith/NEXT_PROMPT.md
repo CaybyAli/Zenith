@@ -1,23 +1,23 @@
-PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 13 - RENDER VISUAL PROPER RUN WITH AUDIO-GAIN FIX
-
-Nur nach Master-GO.
+PROJECT ZENITH - CONTROLLED MUSIC PREVIEW RUN - SCHRITT 14 - OWNER REVIEW VISUAL PROPER RUN AUDIO-GAIN FIX
 
 Ziel:
-Visuell gueltigen gaming_main Proper Run rendern:
-exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+Ali prueft den echten visuellen 8.8-Minuten-Run mit Audio-Gain-Fix.
 
-Output:
-reports/controlled_music_preview_run/step13_visual_proper_run_music_render
+Bewertung:
+- Gameplay sichtbar?
+- Keine Facecam fullscreen?
+- Musik passt ueber laengeren echten Run?
+- Musik bei Sprache/Freunden jetzt leise genug?
+- Stimme klar?
+- Musik startet brauchbar?
+- Keine Audio-Spruenge?
+- Keine nervigen Wiederholungen?
+- Gesamtgefuehl uploadfaehig?
 
-Regeln:
-- content_type=gaming_main
-- channel_type=main
-- music_category=funny_gaming_background
-- vlog_background verboten
-- intro offset 30s
-- intro boost false
-- Musik-Volume im FFmpeg-Command an -27.0 dB gekoppelt
-- kein Upload
-- kein Runtime Learning
-- kein Qwen
-- Uncut verboten
+Entscheidung:
+GO / FIX / NO-GO
+
+Wenn GO:
+Danach Abschlussbericht Phase 5 + Phase 5.5 fuer Claude erstellen.
+Kein Upload ohne neues Master-GO.
+Kein Runtime Learning.
