@@ -2151,3 +2151,54 @@ Safety:
 Naechster Schritt:
 - Step 18C Render nur nach Master-GO.
 - Step 18C bleibt gesperrt, bis diese Obsidian-Dokumentation remote gesichert ist.
+---
+
+## 2026-06-11 ? Controlled Music Preview Step 18C Render After Double Music Gain Fix
+
+Status: DONE / render completed / owner review required
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+
+Output:
+- reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_210850/controlled_music_preview_main.mp4
+- output_size_bytes: 1623768206
+
+Render Result:
+- status: ok
+- owner_review_required: true
+- upload_started: false
+- runtime_learning_started: false
+- qwen_used: false
+
+Double Music Gain Fix:
+- double_music_gain_fix_enabled: true
+- music_gain_application_mode: single_final_automation_gain
+- per_track_final_mix_gain_applied: false
+- automation_final_mix_gain_applied: true
+- music_bus_double_gain_protection_passed: true
+- effective_music_gain_double_applied: false
+
+Audio / Automation:
+- music_audibility_policy_enabled: true
+- command_volume_average_db: -32.0
+- command_volume_min_db: -32.0
+- command_volume_max_db: -32.0
+- sidechain_ratio: 3.0
+- dynamic_gain_expression_strategy: segmented_atrim_volume_concat
+- clean_transitions_active: true
+
+Safety:
+- Kein Upload gestartet.
+- Kein Runtime Learning gestartet.
+- Kein Qwen genutzt.
+- Kein Ingest.
+- Keine Musikdateien geaendert.
+- Reports/MP4 bleiben lokal/untracked.
+- Keine Produktionsdateien geaendert.
+
+Next:
+- Owner Review Schritt 19 ist Pflicht.
+- Ali prueft Bild/Ton selbst.
+- Entscheidung: GO / FIX / NO-GO.
+- Kein Upload ohne neues Master-GO.
