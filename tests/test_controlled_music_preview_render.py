@@ -857,7 +857,7 @@ def test_long_run_command_uses_different_adaptive_volume_values(tmp_path):
     assert "volume=0.08" not in command
     assert "volume=-27.0dB" not in command
     assert "-stream_loop" not in command
-    assert "concat=n=4" in command
+    assert f"concat=n={manifest['music_timeline_segment_count']}" in command
 
 def test_step15a2_dry_run_manifest_contains_music_timeline_planner(tmp_path):
     repo_root = _repo_fixture(tmp_path)
@@ -1223,7 +1223,10 @@ def test_track_stage_does_not_apply_final_negative_mix_gain(tmp_path):
         output_root=preview.STEP13_OUTPUT_ROOT,
     )
 
-    assert manifest["track_stage_volume_db_values"] == [-3.5, -1.5, 1.5, 4.0]
+    track_stage_values = manifest["track_stage_volume_db_values"]
+    assert track_stage_values[:4] == [-3.5, -1.5, 1.5, 4.0]
+    assert len(track_stage_values) == manifest["music_timeline_segment_count"]
+    assert all(-4.0 <= value <= 4.0 for value in track_stage_values)
     assert manifest["per_track_strong_negative_gain_count"] == 0
     assert manifest["automation_strong_negative_gain_count"] == manifest["automation_window_count"]
     assert manifest["automation_stage_volume_db_values"]
@@ -1415,3 +1418,80 @@ def test_step19b_safety_no_upload_no_model_no_runtime_learning(tmp_path):
     assert manifest["ingest_used"] is False
     assert manifest["sidechain_ratio"] <= 4.0
     assert not list((repo_root / preview.STEP19B_OUTPUT_ROOT).rglob("*.mp4"))
+
+
+def test_ffmpeg_musicbed_uses_timeline_segment_count(tmp_path):
+    input_video = tmp_path / "input.mp4"
+    output_video = tmp_path / "out.mp4"
+    music_files = [tmp_path / f"song_{index}.mp3" for index in range(1, 5)]
+
+    timeline = [
+        {"track_path": music_files[0].as_posix(), "start_sec": 0.0, "end_sec": 120.0, "track_source_start_sec": 30.0, "track_source_end_sec": 150.0, "track_used_duration_sec": 120.0, "segment_has_real_music_source": True},
+        {"track_path": music_files[1].as_posix(), "start_sec": 120.0, "end_sec": 228.0, "track_source_start_sec": 30.0, "track_source_end_sec": 138.0, "track_used_duration_sec": 108.0, "segment_has_real_music_source": True},
+        {"track_path": music_files[2].as_posix(), "start_sec": 228.0, "end_sec": 348.0, "track_source_start_sec": 30.0, "track_source_end_sec": 150.0, "track_used_duration_sec": 120.0, "segment_has_real_music_source": True},
+        {"track_path": music_files[3].as_posix(), "start_sec": 348.0, "end_sec": 443.0, "track_source_start_sec": 30.0, "track_source_end_sec": 125.0, "track_used_duration_sec": 95.0, "segment_has_real_music_source": True},
+        {"track_path": music_files[0].as_posix(), "start_sec": 443.0, "end_sec": 528.0, "track_source_start_sec": 30.0, "track_source_end_sec": 115.0, "track_used_duration_sec": 85.0, "reused_track": True, "segment_has_real_music_source": True},
+    ]
+
+    automation_plan = [
+        {"start_sec": 0.0, "end_sec": 5.0, "final_gain_db": -33.0},
+        {"start_sec": 5.0, "end_sec": 10.0, "final_gain_db": -31.0},
+    ]
+
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_files[0],
+        output_video,
+        music_start_offset_sec=30.0,
+        music_volume_gain_db=-34.0,
+        music_files=music_files,
+        long_run_playlist_enabled=True,
+        music_volume_gain_db_by_track=[-1.4, -3.4, -4.0, -2.6],
+        music_timeline=timeline,
+        music_automation_plan=automation_plan,
+        crossfade_sec=3.0,
+    )
+
+    filter_complex = command[command.index("-filter_complex") + 1]
+    probe = preview.assert_manifest_command_consistency(
+        {
+            "clean_transition_policy_enabled": True,
+            "music_automation_planner_enabled": True,
+            "music_timeline": timeline,
+            "music_timeline_segment_count": len(timeline),
+        },
+        command,
+    )
+
+    assert "concat=n=5:v=0:a=1[musicbed]" in filter_complex
+    assert "[musicSegment5]" in filter_complex
+    assert probe["musicbed_command_segment_count"] == 5
+    assert probe["musicbed_timeline_segment_count"] == 5
+    assert probe["musicbed_command_matches_timeline"] is True
+    assert probe["musicbed_no_silent_gaps_verified_by_command"] is True
+
+
+def test_reused_track_builds_real_ffmpeg_segment(tmp_path):
+    input_video = tmp_path / "input.mp4"
+    output_video = tmp_path / "out.mp4"
+    music_files = [tmp_path / f"song_{index}.mp3" for index in range(1, 5)]
+    timeline = [
+        {"track_path": music_files[0].as_posix(), "start_sec": 0.0, "end_sec": 120.0, "track_source_start_sec": 30.0, "track_source_end_sec": 150.0, "track_used_duration_sec": 120.0, "segment_has_real_music_source": True},
+        {"track_path": music_files[0].as_posix(), "start_sec": 120.0, "end_sec": 200.0, "track_source_start_sec": 30.0, "track_source_end_sec": 110.0, "track_used_duration_sec": 80.0, "reused_track": True, "segment_has_real_music_source": True},
+    ]
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_files[0],
+        output_video,
+        music_files=music_files,
+        long_run_playlist_enabled=True,
+        music_volume_gain_db_by_track=[0.0, 0.0, 0.0, 0.0],
+        music_timeline=timeline,
+        music_automation_plan=[
+            {"start_sec": 0.0, "end_sec": 5.0, "final_gain_db": -34.0},
+            {"start_sec": 5.0, "end_sec": 10.0, "final_gain_db": -34.0},
+        ],
+    )
+    filter_complex = command[command.index("-filter_complex") + 1]
+    assert "[musicSegment2]" in filter_complex
+    assert "concat=n=2:v=0:a=1[musicbed]" in filter_complex

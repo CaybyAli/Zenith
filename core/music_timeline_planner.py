@@ -219,6 +219,29 @@ def _allowed_fallback_category(content_type: str, grouped: dict[str, list[dict[s
     return None
 
 
+
+DEFAULT_TRACK_START_TRIM_SEC = 30.0
+DEFAULT_TRACK_END_TRIM_SEC = 15.0
+MINIMUM_MUSIC_SEGMENT_DURATION_SEC = 45.0
+MINIMUM_REUSE_SEGMENT_DURATION_SEC = 60.0
+
+
+def _usable_track_window(duration_sec: float) -> dict[str, float]:
+    duration = max(0.0, float(duration_sec))
+    source_start = min(DEFAULT_TRACK_START_TRIM_SEC, duration)
+    source_end = max(source_start, duration - DEFAULT_TRACK_END_TRIM_SEC)
+    usable_duration = max(0.0, source_end - source_start)
+    if usable_duration <= 0.001:
+        source_start = 0.0
+        source_end = duration
+        usable_duration = duration
+    return {
+        "track_source_start_sec": source_start,
+        "track_source_end_sec": source_end,
+        "track_usable_duration_sec": usable_duration,
+    }
+
+
 def plan_music_timeline(
     *,
     video_duration_sec: float,
@@ -331,8 +354,18 @@ def plan_music_timeline(
             track = _pick_track(grouped[category], category_usage, last_track_path)
             track_path = str(track["path"])
             available_track_duration = float(track["duration_sec"])
+            usable_window = _usable_track_window(available_track_duration)
+            track_usable_duration = float(usable_window["track_usable_duration_sec"])
             remaining_segment = segment_end - cursor
-            used_duration = min(available_track_duration, remaining_segment)
+            used_duration = min(track_usable_duration, remaining_segment)
+
+            remaining_after_use = max(0.0, remaining_segment - used_duration)
+            if (
+                0.001 < remaining_after_use < MINIMUM_MUSIC_SEGMENT_DURATION_SEC
+                and used_duration + remaining_after_use <= track_usable_duration
+            ):
+                used_duration = remaining_segment
+
             gain = compute_adaptive_track_gain(
                 track["mean_volume_db"],
                 reference_mean_volume_db,
@@ -349,8 +382,17 @@ def plan_music_timeline(
                     "requested_music_category": requested_category,
                     "track_path": track_path,
                     "track_duration_sec": _round_sec(available_track_duration),
-                    "track_start_sec": 0.0,
+                    "track_usable_duration_sec": _round_sec(track_usable_duration),
+                    "track_start_sec": _round_sec(float(usable_window["track_source_start_sec"])),
+                    "track_source_start_sec": _round_sec(float(usable_window["track_source_start_sec"])),
+                    "track_source_end_sec": _round_sec(float(usable_window["track_source_start_sec"]) + used_duration),
                     "track_used_duration_sec": _round_sec(used_duration),
+                    "reused_track": category_usage.get(track_path, 0) > 0,
+                    "segment_is_micro_tail": (
+                        segment_end - (cursor + used_duration) <= 0.001
+                        and used_duration < MINIMUM_MUSIC_SEGMENT_DURATION_SEC
+                    ),
+                    "segment_has_real_music_source": True,
                     "gain_db": gain["final_gain_db"],
                     "raw_gain_db": gain["raw_gain_db"],
                     "clamped": gain["clamped"],

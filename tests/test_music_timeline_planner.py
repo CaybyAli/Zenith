@@ -187,3 +187,31 @@ def test_fallback_honestly_reports_no_true_ai_mood_detection():
 def test_classify_music_track_category_uses_folder_name():
     path = Path("local_assets/music/main_account/hype/song.mp3")
     assert classify_music_track_category(path) == MUSIC_CATEGORY_HYPE
+
+
+def test_timeline_planner_uses_trimmed_usable_duration():
+    plan = plan_music_timeline(
+        video_duration_sec=528.348813,
+        available_tracks=_tracks(count=4, duration=150.0),
+        content_type="gaming_main",
+    )
+
+    _assert_covers_video(plan, 528.348813)
+    for segment in plan["music_timeline"]:
+        assert segment["track_usable_duration_sec"] == pytest.approx(105.0, abs=0.01)
+        assert segment["track_used_duration_sec"] <= segment["track_usable_duration_sec"]
+        assert segment["track_source_start_sec"] == pytest.approx(30.0, abs=0.01)
+        assert segment["track_source_end_sec"] <= segment["track_duration_sec"] - 15.0 + 0.01
+        assert segment["segment_has_real_music_source"] is True
+
+
+def test_no_micro_tail_reuse_segment():
+    plan = plan_music_timeline(
+        video_duration_sec=528.348813,
+        available_tracks=_tracks(count=4, duration=150.0),
+        content_type="gaming_main",
+    )
+
+    last = plan["music_timeline"][-1]
+    assert last["segment_is_micro_tail"] is False
+    assert last["track_used_duration_sec"] >= 45.0

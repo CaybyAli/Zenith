@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from core.music_automation_planner import (
+    apply_source_music_loudness_policy,
     DEFAULT_BASE_TARGET_GAIN_DB,
     MUSIC_AUDIBILITY_FLOOR_DB,
     MUSIC_LOUDNESS_CEILING_DB,
@@ -210,3 +211,85 @@ def test_clean_transition_no_gap():
     assert guard["musicbed_gap_count"] == 0
     assert guard["crossfade_or_fade_enabled"] is True
     assert guard["clean_transition_no_gap"] is True
+
+
+def test_tail_music_coverage_guard():
+    guard = build_music_continuity_guard(
+        video_duration_sec=528.0,
+        music_timeline=[
+            {"start_sec": 0.0, "end_sec": 120.0, "transition_type": "crossfade", "segment_has_real_music_source": True},
+            {"start_sec": 120.0, "end_sec": 240.0, "transition_type": "crossfade", "segment_has_real_music_source": True},
+            {"start_sec": 240.0, "end_sec": 360.0, "transition_type": "crossfade", "segment_has_real_music_source": True},
+            {"start_sec": 360.0, "end_sec": 451.0, "transition_type": "crossfade", "segment_has_real_music_source": True},
+            {"start_sec": 451.0, "end_sec": 528.0, "transition_type": "crossfade", "reused_track": True, "segment_has_real_music_source": True},
+        ],
+        music_automation_plan=[
+            {"start_sec": 0.0, "end_sec": 528.0, "final_gain_db": -36.0},
+        ],
+    )
+
+    assert guard["music_tail_coverage_guard_enabled"] is True
+    assert guard["tail_music_coverage_checked"] is True
+    assert guard["tail_music_coverage_passed"] is True
+    assert guard["tail_music_last_audible_sec"] >= 527.0
+    assert guard["last_segment_is_micro_reuse"] is False
+    assert guard["musicbed_no_silent_gaps_verified_by_tail_guard"] is True
+    assert guard["musicbed_no_silent_gaps"] is True
+
+
+def test_manifest_no_false_no_silent_gaps_claim():
+    guard = build_music_continuity_guard(
+        video_duration_sec=528.0,
+        music_timeline=[
+            {"start_sec": 0.0, "end_sec": 443.0, "transition_type": "crossfade", "segment_has_real_music_source": True},
+        ],
+        music_automation_plan=[
+            {"start_sec": 0.0, "end_sec": 528.0, "final_gain_db": -36.0},
+        ],
+    )
+
+    assert guard["tail_music_coverage_passed"] is False
+    assert guard["musicbed_no_silent_gaps"] is False
+
+
+def test_source_music_quiet_sections_are_boosted():
+    result = apply_source_music_loudness_policy(
+        voice_level_db=-55.0,
+        music_section_level_db=-50.0,
+        gain={"raw_gain_db": -36.0, "final_gain_db": -36.0, "reason": "base"},
+    )
+
+    assert result["final_gain_db"] > -36.0
+    assert "quiet_section_boost" in result["reason"]
+
+
+def test_source_music_loud_sections_are_cut():
+    result = apply_source_music_loudness_policy(
+        voice_level_db=-55.0,
+        music_section_level_db=-15.0,
+        gain={"raw_gain_db": -32.0, "final_gain_db": -32.0, "reason": "base"},
+    )
+
+    assert result["final_gain_db"] < -32.0
+    assert "loud_section_cut" in result["reason"]
+
+
+def test_voice_priority_over_quiet_section_boost():
+    result = apply_source_music_loudness_policy(
+        voice_level_db=-32.0,
+        music_section_level_db=-50.0,
+        gain={"raw_gain_db": -30.0, "final_gain_db": -30.0, "reason": "base"},
+    )
+
+    assert result["final_gain_db"] <= -36.0
+    assert "voice_priority_over_source_boost" in result["reason"]
+
+
+def test_balance_policy_still_background():
+    result = apply_source_music_loudness_policy(
+        voice_level_db=-31.0,
+        music_section_level_db=-45.0,
+        gain={"raw_gain_db": -30.0, "final_gain_db": -30.0, "reason": "base"},
+    )
+
+    assert result["final_gain_db"] <= -35.0

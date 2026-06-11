@@ -331,8 +331,8 @@ def apply_clean_transition_policy_to_timeline(
             crossfade_sec=crossfade_sec,
         )
 
-        source_start = float(policy["usable_start_sec"])
-        source_end = float(policy["usable_end_sec"])
+        source_start = float(item.get("track_source_start_sec", policy["usable_start_sec"]))
+        source_end = float(item.get("track_source_end_sec", policy["usable_end_sec"]))
         segment_duration = max(0.0, float(item.get("end_sec", 0.0)) - float(item.get("start_sec", 0.0)))
         planned_source_end = min(source_end, source_start + segment_duration)
 
@@ -458,6 +458,38 @@ def build_music_continuity_guard(
     )
 
     timeline_gap_count = _interval_gap_count(timeline_intervals, 0.0, float(video_duration_sec))
+
+    tail_required_sec = 45.0
+    minimum_segment_sec = 45.0
+    minimum_reuse_segment_sec = 45.0
+    last_segment = (music_timeline or [])[-1] if music_timeline else {}
+    try:
+        last_start = float(last_segment.get("start_sec", 0.0))
+        last_end = float(last_segment.get("end_sec", last_start))
+    except (TypeError, ValueError):
+        last_start = 0.0
+        last_end = 0.0
+    last_duration = max(0.0, last_end - last_start)
+    tail_gap_sec = max(0.0, float(video_duration_sec) - last_end)
+    duration_requires_tail_min = float(video_duration_sec) >= minimum_segment_sec
+    reused_tail = bool(last_segment.get("reused_track", False))
+    last_segment_is_micro_reuse = (
+        duration_requires_tail_min
+        and reused_tail
+        and last_duration < minimum_reuse_segment_sec
+    )
+    tail_music_coverage_passed = (
+        full_timeline_coverage
+        and timeline_gap_count == 0
+        and tail_gap_sec <= 1.0
+        and (
+            not duration_requires_tail_min
+            or last_duration >= minimum_segment_sec
+        )
+        and not last_segment_is_micro_reuse
+        and bool(last_segment.get("segment_has_real_music_source", True))
+    )
+
     crossfade_or_fade_enabled = bool(music_timeline) and all(
         str(segment.get("transition_type", "")).lower() in {"crossfade", "fade", "cut_or_short_crossfade"}
         for segment in music_timeline or []
@@ -475,9 +507,21 @@ def build_music_continuity_guard(
             and not known_gap_has_silent_gain
         ),
         "musicbed_full_coverage_required": True,
-        "musicbed_full_coverage_confirmed": full_timeline_coverage,
-        "musicbed_no_silent_gaps": full_timeline_coverage and timeline_gap_count == 0,
+        "musicbed_full_coverage_confirmed": full_timeline_coverage and tail_music_coverage_passed,
+        "musicbed_no_silent_gaps": full_timeline_coverage and timeline_gap_count == 0 and tail_music_coverage_passed,
         "musicbed_gap_count": timeline_gap_count,
+        "music_tail_coverage_guard_enabled": True,
+        "tail_music_required_sec": tail_required_sec,
+        "minimum_music_segment_duration_sec": minimum_segment_sec,
+        "minimum_reuse_segment_duration_sec": minimum_reuse_segment_sec,
+        "musicbed_tail_no_silence_required": True,
+        "tail_music_coverage_checked": True,
+        "tail_music_coverage_passed": tail_music_coverage_passed,
+        "tail_music_last_audible_sec": _round_sec(last_end),
+        "musicbed_tail_gap_sec": _round_sec(tail_gap_sec),
+        "last_music_segment_duration_sec": _round_sec(last_duration),
+        "last_segment_is_micro_reuse": last_segment_is_micro_reuse,
+        "musicbed_no_silent_gaps_verified_by_tail_guard": tail_music_coverage_passed,
         "automation_full_coverage_confirmed": full_automation_coverage,
         "known_gap_final_gain_db_values": [_round_db(gain) for gain in known_gap_gains],
         "crossfade_true_overlap_required": True,
@@ -501,6 +545,61 @@ def _enforce_voice_priority_after_smoothing(windows: list[dict[str, Any]]) -> li
         item["final_gain_db"] = _round_db(final_gain)
         enforced.append(item)
     return enforced
+
+
+
+SOURCE_MUSIC_LOUDNESS_ANALYSIS_ENABLED = True
+SOURCE_MUSIC_QUIET_SECTION_BOOST_ENABLED = True
+SOURCE_MUSIC_LOUD_SECTION_CUT_ENABLED = True
+VOICE_PRIORITY_OVER_SOURCE_BOOST_ENABLED = True
+MUSIC_SECTION_LOUDNESS_EQUALIZATION_ENABLED = True
+SOURCE_QUIET_SECTION_LEVEL_DB = -42.0
+SOURCE_LOUD_SECTION_LEVEL_DB = -22.0
+VOICE_ACTIVE_LEVEL_DB = -40.0
+VOICE_PRIORITY_MARGIN_DB = 4.0
+
+
+def apply_source_music_loudness_policy(
+    *,
+    voice_level_db: float,
+    music_section_level_db: float,
+    gain: dict[str, Any],
+) -> dict[str, Any]:
+    item = dict(gain)
+    base_final = float(item.get("final_gain_db", item.get("raw_gain_db", -34.0)))
+    final_gain = base_final
+    source_adjustment = 0.0
+    voice_adjustment = 0.0
+    reason_parts = [str(item.get("reason", "music_gain"))]
+
+    voice_active = float(voice_level_db) >= VOICE_ACTIVE_LEVEL_DB
+
+    if float(music_section_level_db) <= SOURCE_QUIET_SECTION_LEVEL_DB and not voice_active:
+        boosted = max(final_gain, -30.0)
+        source_adjustment = boosted - final_gain
+        final_gain = boosted
+        reason_parts.append("quiet_section_boost")
+    elif float(music_section_level_db) >= SOURCE_LOUD_SECTION_LEVEL_DB:
+        cut = min(final_gain, -38.0)
+        source_adjustment = cut - final_gain
+        final_gain = cut
+        reason_parts.append("loud_section_cut")
+
+    if voice_active:
+        voice_cap = float(voice_level_db) - VOICE_PRIORITY_MARGIN_DB
+        capped = min(final_gain, voice_cap)
+        voice_adjustment = capped - final_gain
+        final_gain = capped
+        reason_parts.append("voice_priority_over_source_boost")
+
+    final_gain = max(-40.0, min(-30.0, final_gain))
+
+    item["source_music_loudness_adjustment_db"] = _round_db(source_adjustment)
+    item["voice_ducking_adjustment_db"] = _round_db(voice_adjustment)
+    item["final_gain_db"] = _round_db(final_gain)
+    item["smoothed_gain_db"] = _round_db(final_gain)
+    item["reason"] = "_".join(part for part in reason_parts if part)
+    return item
 
 
 def build_music_automation_plan(
@@ -540,6 +639,11 @@ def build_music_automation_plan(
             voice_level_db=float(voice["voice_level_db"]),
             music_section_level_db=float(music_section_level_db),
         )
+        gain = apply_source_music_loudness_policy(
+            voice_level_db=float(voice["voice_level_db"]),
+            music_section_level_db=float(music_section_level_db),
+            gain=gain,
+        )
 
         automation_windows.append(
             {
@@ -550,6 +654,8 @@ def build_music_automation_plan(
                 "raw_gain_db": gain["raw_gain_db"],
                 "smoothed_gain_db": gain["final_gain_db"],
                 "final_gain_db": gain["final_gain_db"],
+                "source_music_loudness_adjustment_db": gain["source_music_loudness_adjustment_db"],
+                "voice_ducking_adjustment_db": gain["voice_ducking_adjustment_db"],
                 "reason": gain["reason"],
             }
         )
@@ -568,6 +674,11 @@ def build_music_automation_plan(
 
     return {
         "music_automation_planner_enabled": True,
+        "source_music_loudness_analysis_enabled": SOURCE_MUSIC_LOUDNESS_ANALYSIS_ENABLED,
+        "source_music_quiet_section_boost_enabled": SOURCE_MUSIC_QUIET_SECTION_BOOST_ENABLED,
+        "source_music_loud_section_cut_enabled": SOURCE_MUSIC_LOUD_SECTION_CUT_ENABLED,
+        "voice_priority_over_source_boost_enabled": VOICE_PRIORITY_OVER_SOURCE_BOOST_ENABLED,
+        "music_section_loudness_equalization_enabled": MUSIC_SECTION_LOUDNESS_EQUALIZATION_ENABLED,
         "automation_window_sec": float(window_sec),
         "voice_aware_music_ceiling_enabled": True,
         "music_section_loudness_aware": True,

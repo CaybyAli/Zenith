@@ -534,7 +534,7 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
     track_stage_values = [
         float(match.group(1))
         for match in re.finditer(
-            r"\[\d+:a\][^;]*?volume=(-?\d+(?:\.\d+)?)dB[^;]*?\[music\d+\]",
+            r"\[\d+:a\][^;]*?volume=(-?\d+(?:\.\d+)?)dB[^;]*?\[(?:music\d+|musicSegment\d+)\]",
             filter_complex,
         )
     ]
@@ -756,6 +756,10 @@ def _automation_segments_filter_from_plan(
     return ";".join(filters), metrics
 
 
+def _normalize_music_path_token(value: object) -> str:
+    return str(value or "").replace("\\", "/").strip().lower()
+
+
 def _timeline_segment_for_music_input(music_timeline: list[dict] | None, input_index: int) -> dict:
     timeline = music_timeline or []
     if not timeline:
@@ -764,6 +768,62 @@ def _timeline_segment_for_music_input(music_timeline: list[dict] | None, input_i
     safe_index = min(max(input_index - 1, 0), len(timeline) - 1)
     segment = timeline[safe_index]
     return segment if isinstance(segment, dict) else {}
+
+
+def _music_file_for_timeline_segment(segment: dict, selected_music_files: list[Path]) -> Path:
+    track_path = _normalize_music_path_token(segment.get("track_path") or segment.get("path"))
+    if track_path:
+        for music_file in selected_music_files:
+            candidate = _normalize_music_path_token(music_file)
+            if candidate.endswith(track_path) or track_path.endswith(Path(candidate).name.lower()):
+                return music_file
+
+    if selected_music_files:
+        return selected_music_files[0]
+
+    raise ControlledMusicPreviewError("timeline segment has no matching music file")
+
+
+def _timeline_music_inputs_for_command(
+    music_timeline: list[dict] | None,
+    selected_music_files: list[Path],
+    volume_gains: list[float],
+) -> list[dict]:
+    timeline = [segment for segment in (music_timeline or []) if isinstance(segment, dict)]
+    if not timeline:
+        return [
+            {
+                "segment": {},
+                "music_file": music_file,
+                "gain_db": volume_gains[index],
+                "segment_index": index + 1,
+            }
+            for index, music_file in enumerate(selected_music_files)
+        ]
+
+    result: list[dict] = []
+    for index, segment in enumerate(timeline):
+        has_track_path = bool(str(segment.get("track_path") or segment.get("path") or "").strip())
+        if has_track_path:
+            music_file = _music_file_for_timeline_segment(segment, selected_music_files)
+        else:
+            music_file = selected_music_files[index % len(selected_music_files)]
+
+        matched_index = 0
+        for candidate_index, candidate in enumerate(selected_music_files):
+            if Path(candidate) == Path(music_file):
+                matched_index = candidate_index
+                break
+        gain_db = volume_gains[min(matched_index, len(volume_gains) - 1)]
+        result.append(
+            {
+                "segment": segment,
+                "music_file": music_file,
+                "gain_db": gain_db,
+                "segment_index": index + 1,
+            }
+        )
+    return result
 
 
 def _safe_music_track_trim_for_command(
@@ -858,6 +918,12 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
         and f"concat=n={segmented_gain_asplit_count}:v=0:a=1[music_auto]" in filter_complex
     )
 
+    musicbed_command_segment_count = 0
+    musicbed_match = re.search(r"concat=n=(\d+):v=0:a=1\[musicbed\]", filter_complex)
+    if musicbed_match:
+        musicbed_command_segment_count = int(musicbed_match.group(1))
+    musicbed_segment_label_count = len(set(re.findall(r"\[musicSegment\d+\]", filter_complex)))
+
     dynamic_gain_zone_count = (
         segmented_gain_asplit_count
         if command_contains_segmented_gain_automation
@@ -913,6 +979,9 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
         "segmented_gain_volume_count": segmented_gain_volume_count,
         "large_window_count_requires_segmented_strategy": large_window_count_requires_segmented_strategy,
         "manifest_command_consistency_gate": manifest_command_consistency_gate,
+        "musicbed_command_segment_count": musicbed_command_segment_count,
+        "musicbed_command_uses_segment_labels": musicbed_segment_label_count > 0,
+        "musicbed_command_segment_label_count": musicbed_segment_label_count,
     }
 
 
@@ -931,6 +1000,22 @@ def assert_manifest_command_consistency(manifest: dict, command: list[str]) -> d
             and features["dynamic_gain_expression_strategy"] != "segmented_atrim_volume_concat"
         ):
             raise ControlledMusicPreviewError("dynamic_automation_requires_segmented_strategy")
+
+    timeline_count = int(
+        manifest.get("music_timeline_segment_count")
+        or len(manifest.get("music_timeline") or [])
+        or 0
+    )
+    command_count = int(features.get("musicbed_command_segment_count") or 0)
+    command_matches_timeline = timeline_count == 0 or command_count == timeline_count
+
+    features["musicbed_timeline_segment_count"] = timeline_count
+    features["musicbed_command_segment_count"] = command_count
+    features["musicbed_command_matches_timeline"] = command_matches_timeline
+    features["musicbed_no_silent_gaps_verified_by_command"] = command_matches_timeline
+
+    if timeline_count and not command_matches_timeline:
+        raise ControlledMusicPreviewError("musicbed_timeline_command_segment_mismatch")
 
     return features
 
@@ -985,22 +1070,30 @@ def build_ffmpeg_command(
         str(input_video),
     ]
 
-    for selected_music_file in selected_music_files:
+    music_inputs = _timeline_music_inputs_for_command(
+        music_timeline,
+        selected_music_files,
+        volume_gains,
+    )
+
+    for music_input in music_inputs:
         command.extend(
             [
                 "-ss",
                 f"{float(music_start_offset_sec):.3f}",
                 "-i",
-                str(selected_music_file),
+                str(music_input["music_file"]),
             ]
         )
 
     music_filters: list[str] = []
-    for index, gain_db in enumerate(volume_gains, start=1):
-        segment = _timeline_segment_for_music_input(music_timeline, index)
+    for command_input_index, music_input in enumerate(music_inputs, start=1):
+        segment = music_input["segment"]
+        gain_db = float(music_input["gain_db"])
+        segment_label = f"musicSegment{command_input_index}"
         trim = _safe_music_track_trim_for_command(
             segment,
-            fallback_used_duration_sec=120.0,
+            fallback_used_duration_sec=float(segment.get("track_used_duration_sec", 120.0)) if isinstance(segment, dict) else 120.0,
             crossfade_sec=crossfade_sec,
         )
 
@@ -1010,20 +1103,20 @@ def build_ffmpeg_command(
         fade_out_start_token = _music_command_sec(trim["fade_out_start_sec"])
 
         music_filters.append(
-            f"[{index}:a]"
+            f"[{command_input_index}:a]"
             f"atrim=start={start_token}:end={end_token},"
             "asetpts=PTS-STARTPTS,"
             f"volume={gain_db:.1f}dB,"
             f"afade=t=in:st=0:d={fade_token},"
             f"afade=t=out:st={fade_out_start_token}:d={fade_token}"
-            f"[music{index}]"
+            f"[{segment_label}]"
         )
 
-    if len(selected_music_files) > 1:
-        concat_inputs = "".join(f"[music{index}]" for index in range(1, len(selected_music_files) + 1))
-        music_bed_filter = f"{concat_inputs}concat=n={len(selected_music_files)}:v=0:a=1[musicbed]"
+    if len(music_inputs) > 1:
+        concat_inputs = "".join(f"[musicSegment{index}]" for index in range(1, len(music_inputs) + 1))
+        music_bed_filter = f"{concat_inputs}concat=n={len(music_inputs)}:v=0:a=1[musicbed]"
     else:
-        music_bed_filter = "[music1]anull[musicbed]"
+        music_bed_filter = "[musicSegment1]anull[musicbed]"
 
     automation_filter, _automation_metrics = _automation_segments_filter_from_plan(
         music_automation_plan,
@@ -1091,16 +1184,15 @@ def validate_ffmpeg_command(
     if len(command) < 2 or command[-2:] == ["-stream_loop", "-1"]:
         raise ControlledMusicPreviewError("ffmpeg command must not end after stream_loop")
     selected_music_files = list(music_files or [music_file])
-    for selected_music_file in selected_music_files:
-        if str(selected_music_file) not in command:
-            raise ControlledMusicPreviewError("ffmpeg command is missing music input")
+    if not any(str(selected_music_file) in command for selected_music_file in selected_music_files):
+        raise ControlledMusicPreviewError("ffmpeg command is missing music input")
     if not str(output_video).strip() or command[-1] != str(output_video):
         raise ControlledMusicPreviewError("ffmpeg command must end with output video path")
     if "-filter_complex" not in command:
         raise ControlledMusicPreviewError("ffmpeg command is missing filter_complex")
     if command.count("-map") < 2:
         raise ControlledMusicPreviewError("ffmpeg command is missing output maps")
-    if command.count("-i") < len(selected_music_files) + 1:
+    if command.count("-i") < 2:
         raise ControlledMusicPreviewError("ffmpeg command is missing music -i input")
     filter_complex = _filter_complex_from_command(command)
     if long_run_playlist_enabled:
@@ -1219,6 +1311,28 @@ def build_manifest(
     manifest.update(SAFE_MANIFEST_FLAGS)
     if error:
         manifest["error"] = error
+    manifest = finalize_music_manifest_consistency(manifest)
+    return manifest
+
+
+def finalize_music_manifest_consistency(manifest: dict) -> dict:
+    if manifest.get("musicbed_full_coverage_required") is not True:
+        return manifest
+
+    command_ok = bool(manifest.get("musicbed_command_matches_timeline", True))
+    tail_ok = bool(manifest.get("tail_music_coverage_passed", True))
+    timeline_ok = bool(manifest.get("musicbed_full_coverage_confirmed", True))
+    gap_ok = int(manifest.get("musicbed_gap_count", 0) or 0) == 0
+
+    verified = command_ok and tail_ok and timeline_ok and gap_ok
+    manifest["musicbed_no_silent_gaps_verified_by_command"] = command_ok
+    manifest["musicbed_no_silent_gaps_verified_by_tail_guard"] = tail_ok
+    manifest["musicbed_no_silent_gaps"] = bool(manifest.get("musicbed_no_silent_gaps", False) and verified)
+    manifest["musicbed_full_coverage_confirmed"] = bool(timeline_ok and verified)
+
+    if not manifest["musicbed_no_silent_gaps"]:
+        manifest["blocked_reason"] = "musicbed_tail_coverage_failed"
+
     return manifest
 
 
@@ -1380,6 +1494,9 @@ def run(
         {
             "clean_transition_policy_enabled": playlist_plan.get("clean_transition_policy_enabled"),
             "music_automation_planner_enabled": playlist_plan.get("music_automation_planner_enabled"),
+            "music_timeline": playlist_plan.get("music_timeline", []),
+            "music_timeline_segment_count": playlist_plan.get("music_timeline_segment_count", 0),
+            "video_duration_sec": playlist_plan.get("video_duration_sec", input_duration_sec(full_input, root)),
         },
         command,
     )
