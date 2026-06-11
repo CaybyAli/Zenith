@@ -2529,3 +2529,54 @@ Conclusion:
 Required next step:
 - Diagnose actual audible mix path and compare command policy vs rendered result.
 - Find why Ali still hears the same problems despite technical fields showing background policy active.
+
+## Step 24A/24B Deep Audio Diagnosis Fix ? 2026-06-12 01:36
+
+Status:
+- Step 24 Owner Review: FIX / NO-GO
+- Step 24A Deep Audio Diagnosis: DONE
+- Step 24B Code Fix: DONE / pushed
+- EOF Cleanup: DONE / pushed
+- Controlled Render: locked until Master-GO
+- Upload: blocked
+- Qwen: blocked
+- Runtime Learning: blocked
+- Ingest: blocked
+
+Final Root Cause:
+- music_auto/musicbed was only 471.345s long while the video was 528.348s.
+- Cause: double music trimming.
+- The music input used input seek (-ss 30) and the filter also used atrim=start=30.
+- Effective result: the music bus lost too much usable duration and ended before the video ended.
+
+Why old gates were wrong:
+- Old gates checked timeline/command/manifest consistency.
+- They did not verify the real generated music bus stem.
+- Therefore manifest could be green while Ali still heard no music at the tail.
+
+Fix:
+- Removed double music seek / double trim.
+- Added real audio-stem gates.
+- Dry-run can now generate audio stem gates without producing an MP4.
+- New diagnostics verify:
+  - music_auto tail audibility
+  - song start audibility
+  - music-vs-voice distance
+  - final mix tail probe
+- Voice-active music was adjusted:
+  - stronger voice: -42 dB
+  - otherwise: -40 dB
+
+Proof:
+- Code Commit: 0b2e425 fix(music): verify preview mix with audio stem gates
+- EOF Cleanup Commit: 5763316 chore(tests): clean music output diagnostics eof
+- Tests before code commit: 129 passed
+- EOF Smoke: 4 passed
+- No full render started
+- No upload
+- No Qwen
+- No Runtime Learning
+
+Next:
+- Controlled Render only after Master-GO.
+
