@@ -1493,3 +1493,55 @@ Naechster Schritt:
 - Ali entscheidet GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
 - Kein Runtime Learning.
+
+<!-- STEP_15A_ADAPTIVE_TRACK_GAIN_RECORDED -->
+## 2026-06-11 ? Controlled Music Preview Step 15A ? Adaptive Per-Track Music Gain
+
+Status: DONE / CODE REMOTE PREPARED
+
+Code Commit:
+- Short: 6c8b7b3
+- Full: 6c8b7b392bc70746b420b200a8b6e39859edee94
+- Message: fix(preview): adapt music gain per track loudness
+
+Owner Review nach Step 14B:
+- Problem: fixer Musikwert -38.0 dB reicht nicht.
+- Grund: manche Songs sind leiser, manche lauter.
+- Entscheidung: pro Musiktrack eigene Lautheit messen und eigenen Gain berechnen.
+
+Adaptive Track Gain:
+- adaptive_track_gain_enabled: true
+- owner_adobe_reference_gain_range_db: [-40.0, -35.0]
+- owner_music_target_gain_db: -38.0
+- track_gain_strategy: relative_track_loudness_with_owner_range_clamp
+- track_gain_reference: median_selected_track_mean_volume_db
+
+Dry-Run Ergebnis:
+- status: dry_run
+- selected_music_track_count: 4
+- final gains: -37.4 dB, -39.4 dB, -35.0 dB, -38.6 dB
+- all_final_gains_between_minus_40_and_minus_35: true
+- all_tracks_same_gain: false
+- concat=n=4 bleibt aktiv
+- kein volume=0.08
+- kein -27.0dB finaler Musikwert
+- kein stream_loop Single-Song-Dauerloop
+
+Safety:
+- kein Execute Render gestartet
+- kein Preview-Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik eingef?gt
+- kein Upload
+- kein Qwen
+- kein Runtime Learning
+- keine Musikdateien committed
+- Reports nicht committen
+
+Tests:
+- python -m py_compile scripts\controlled_music_preview_render.py: OK
+- python -m pytest tests\test_controlled_music_preview_render.py -vv: 45 passed
+
+N?chster Schritt:
+- Controlled Music Preview Step 15B Render mit Adaptive Per-Track Gain nur nach Master-GO.
+

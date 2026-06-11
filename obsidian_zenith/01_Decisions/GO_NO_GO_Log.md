@@ -1478,3 +1478,19 @@ Grenzen:
 - Kein Runtime Learning gestartet.
 - Musikdateien nicht committed.
 - Reports nicht committed.
+
+<!-- STEP_15A_ADAPTIVE_TRACK_GAIN_RECORDED -->
+## 2026-06-11 ? GO/NO-GO ? Controlled Music Preview Step 15A
+
+Decision: GO for documentation / NO-GO for Step 15B until Master-GO
+
+Reason:
+- Adaptive Per-Track Gain wurde vorbereitet und remote gepusht.
+- Owner-Problem aus Step 14B wurde technisch adressiert: fixer -38.0 dB Wert ersetzt durch pro Track berechnete Werte.
+- Tests gr?n: 45 passed.
+- Dry-Run sauber: kein MP4 erzeugt, kein Render gestartet.
+- Runtime Learning bleibt locked.
+
+Next:
+- Step 15B Render only after Master-GO.
+
