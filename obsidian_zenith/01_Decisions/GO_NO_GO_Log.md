@@ -2372,3 +2372,15 @@ Hard Locks:
 - Do not use Qwen.
 - Do not ingest.
 - Do not decide Owner Review automatically.
+## 2026-06-12 ? Step 23B-FIX code/proof GO, render still locked
+
+Decision:
+- GO for Step 23B-FIX code/test/proof.
+- NO render yet.
+- New controlled render requires separate Master-GO.
+
+Evidence:
+- Commit `0c261fb` pushed.
+- Targeted tests: 121 passed.
+- Dry-run proof: PASS.
+- Policy removes sidechaincompress, blocks foreground gains, shortens segment fades, protects owner tail music.

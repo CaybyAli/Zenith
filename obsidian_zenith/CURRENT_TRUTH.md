@@ -2156,3 +2156,34 @@ Evidence:
 Next:
 - Step 22 Owner Review.
 - No upload without new Master-GO.
+## 2026-06-12 ? Step 23B-FIX: Background Music Mix Fix pushed
+
+Status:
+- Step 23B-FIX code/test/proof: DONE
+- Commit: 0c261fb / 0c261fb8538e8edee4527fa35d94b25e2b30fc16
+- Remote: origin/main verified
+- Render: still locked; no render was executed in Step 23B
+- Upload: not started
+- Runtime Learning: not started
+- Qwen: not used
+
+Owner issue fixed in policy:
+- Music too foreground / too loud
+- slow music fade-ins
+- no audible tail music after 07:51
+- raw fullmix sidechain risk
+
+Proof:
+- Targeted tests: 121 passed
+- Dry-run policy proof: PASS
+- owner_music_target_gain_db: -39.0
+- overall music range: [-44.0, -34.0]
+- voice active ceiling: -40.0
+- no voice ceiling: -34.0
+- sidechaincompress removed from command
+- slow 3s fades removed
+- forbidden foreground gains -30/-31/-32/-33 blocked
+- owner tail music guard passed
+
+Next:
+- Await Master-GO for a new controlled render.
