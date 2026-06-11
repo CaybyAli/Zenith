@@ -2469,3 +2469,36 @@ Tail audio smoke:
 Important:
 - Technical smoke does not replace Owner Review.
 - Ali must decide GO / FIX / NO-GO by watching and listening.
+## 2026-06-12 ? Step 24 Owner Review after Step 23C Render: FIX / NO-GO
+
+Status:
+- Step 23C render was reviewed by Ali.
+- Owner verdict: FIX / NOT UPLOADABLE.
+- Ali says the same audible errors are still present as before.
+- Technical gates from Step 23C were green, but owner listening review failed.
+- No upload.
+- No runtime learning.
+- No Qwen.
+- No new render.
+
+Reviewed output:
+- reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260612_004039/controlled_music_preview_main.mp4
+
+Owner feedback:
+- Same errors as before.
+- Background music fix did not solve the audible result.
+
+Local owner-fix report:
+- reports/controlled_music_preview_run/step24_owner_review_fix_after_background_music_mix/step24_owner_review_fix.json
+- reports/controlled_music_preview_run/step24_owner_review_fix_after_background_music_mix/step24_owner_review_fix.md
+
+Conclusion:
+- Step 23C is rejected by Owner Review.
+- The previous policy/command gates are not enough.
+- Next step must be Step 24A diagnosis.
+- Do not patch blindly.
+- Do not render blindly.
+
+Required next step:
+- Diagnose actual audible mix path and compare command policy vs rendered result.
+- Find why Ali still hears the same problems despite technical fields showing background policy active.
