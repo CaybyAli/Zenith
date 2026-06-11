@@ -2324,3 +2324,46 @@ Dry-run evidence:
 
 Next:
 - Step 21B/21C render only after new Master-GO.
+
+## 2026-06-11 ? Step 21B/21C Render After Tail Music Coverage Fix
+
+Status:
+- Phase 5: 100% DONE
+- P5-L: 100% CLOSED
+- Phase 5.5: 100% DONE
+- Step 21A: FINAL DONE
+- Step 21B/21C Render: DONE
+- Owner Review: REQUIRED / pending
+- Upload: not started
+- Runtime Learning: locked / not started
+- Qwen: not used
+- Ingest: not used
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+
+Output:
+- reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_223708/controlled_music_preview_main.mp4
+
+Evidence:
+- status=ok
+- musicbed_command_matches_timeline=True
+- musicbed_command_segment_count=8
+- musicbed_timeline_segment_count=8
+- tail_music_coverage_passed=True
+- tail_music_last_audible_sec=528.348
+- musicbed_no_silent_gaps=True
+- source_music_loudness_analysis_enabled=True
+- source_music_quiet_section_boost_enabled=True
+- source_music_loud_section_cut_enabled=True
+- voice_priority_over_source_boost_enabled=True
+- music_balance_policy_enabled=True
+- double_music_gain_fix_enabled=True
+- upload_started=False
+- runtime_learning_started=False
+- qwen_used=False
+
+Next:
+- Step 22 Owner Review.
+- No upload without new Master-GO.
+
