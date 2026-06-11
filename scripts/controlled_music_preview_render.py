@@ -65,18 +65,24 @@ STEP9_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step9_new_clip_fi
 STEP11_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step11_proper_run_final_music_render")
 STEP13_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step13_visual_proper_run_music_render")
 STEP17B_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step17b_music_audibility_policy_fix")
+STEP18B_FIX_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step18b_fix_single_music_bus_gain")
 ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step2_preview_render": EXPECTED_OUTPUT_ROOT,
     "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
     "step11_proper_run_final_music_render": STEP11_OUTPUT_ROOT,
     "step13_visual_proper_run_music_render": STEP13_OUTPUT_ROOT,
     "step17b_music_audibility_policy_fix": STEP17B_OUTPUT_ROOT,
+    "step18b_fix_single_music_bus_gain": STEP18B_FIX_OUTPUT_ROOT,
 }
 ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS = {
     CONFIRMED_INPUT_VIDEO.as_posix(): {EXPECTED_OUTPUT_ROOT.as_posix()},
     SELECTED_NEW_INPUT_VIDEO.as_posix(): {STEP9_OUTPUT_ROOT.as_posix()},
     PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP11_OUTPUT_ROOT.as_posix()},
-    VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP13_OUTPUT_ROOT.as_posix(), STEP17B_OUTPUT_ROOT.as_posix()},
+    VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix(): {
+        STEP13_OUTPUT_ROOT.as_posix(),
+        STEP17B_OUTPUT_ROOT.as_posix(),
+        STEP18B_FIX_OUTPUT_ROOT.as_posix(),
+    },
 }
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
 OUTPUT_FILENAME = "controlled_music_preview_main.mp4"
@@ -106,7 +112,7 @@ DEMO_MUSIC_DURATION_SEC = 120.0
 LOW_SPEECH_DENSITY = 0.10
 FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
 OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = [-35.0, -26.0]
-OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB
+OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = [-4.0, 4.0]
 OWNER_MUSIC_TARGET_GAIN_DB = -30.0
 MUSIC_AUDIBILITY_FLOOR_DB = -35.0
 MUSIC_LOUDNESS_CEILING_DB = -26.0
@@ -118,8 +124,14 @@ SIDECHAIN_ATTACK = 40
 SIDECHAIN_RELEASE = 350
 OWNER_MUSIC_VOLUME_SOURCE = "owner_music_audible_gain_db"
 ADAPTIVE_TRACK_GAIN_ENABLED = True
-TRACK_GAIN_STRATEGY = "relative_track_loudness_with_owner_range_clamp"
+TRACK_GAIN_STRATEGY = "relative_track_loudness_normalization_only_single_final_automation_gain"
 TRACK_GAIN_REFERENCE = "median_selected_track_mean_volume_db"
+DOUBLE_MUSIC_GAIN_FIX_ENABLED = True
+MUSIC_GAIN_APPLICATION_MODE = "single_final_automation_gain"
+PER_TRACK_FINAL_MIX_GAIN_APPLIED = False
+AUTOMATION_FINAL_MIX_GAIN_APPLIED = True
+MUSIC_BUS_DOUBLE_GAIN_PROTECTION_ENABLED = True
+PER_TRACK_NORMALIZATION_GAIN_RANGE_DB = [-4.0, 4.0]
 LONG_RUN_PLAYLIST_THRESHOLD_SEC = 180.0
 LONG_RUN_MIN_UNIQUE_TRACKS = 3
 LONG_RUN_MAX_UNIQUE_TRACKS = 5
@@ -301,21 +313,27 @@ def build_track_gain_plan(repo_root: Path, selected_music_files: list[Path]) -> 
 
     reference_mean = float(median(mean_values))
     selected_tracks_manifest = []
-    final_gains = []
+    normalization_gains = []
 
     for track, loudness, mean_volume_db in measured_tracks:
-        raw_gain_db = OWNER_MUSIC_TARGET_GAIN_DB + (reference_mean - mean_volume_db)
-        final_gain_db = clamp_gain_db(raw_gain_db, OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB)
-        rounded_raw = round(raw_gain_db, 3)
-        rounded_final = round(final_gain_db, 3)
-        final_gains.append(rounded_final)
+        raw_normalization_gain_db = reference_mean - mean_volume_db
+        final_normalization_gain_db = clamp_gain_db(
+            raw_normalization_gain_db,
+            PER_TRACK_NORMALIZATION_GAIN_RANGE_DB,
+        )
+        rounded_raw = round(raw_normalization_gain_db, 3)
+        rounded_final = round(final_normalization_gain_db, 3)
+        normalization_gains.append(rounded_final)
         selected_tracks_manifest.append(
             {
                 "path": track.relative_to(repo_root).as_posix(),
                 "mean_volume_db": round(mean_volume_db, 3),
                 "max_volume_db": loudness.get("max_volume_db"),
+                "raw_normalization_gain_db": rounded_raw,
+                "final_normalization_gain_db": rounded_final,
                 "raw_gain_db": rounded_raw,
                 "final_gain_db": rounded_final,
+                "per_track_final_mix_gain_applied": False,
                 "clamped": abs(rounded_raw - rounded_final) > 0.0001,
             }
         )
@@ -333,19 +351,23 @@ def build_track_gain_plan(repo_root: Path, selected_music_files: list[Path]) -> 
         "track_gain_reference": TRACK_GAIN_REFERENCE,
         "reference_track_mean_volume_db": round(reference_mean, 3),
         "selected_music_tracks": selected_tracks_manifest,
-        "ffmpeg_music_volume_gain_db_by_track": final_gains,
-        "all_final_gains_between_audible_range": all(
-            min(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB) <= gain <= max(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB)
-            for gain in final_gains
+        "ffmpeg_music_volume_gain_db_by_track": normalization_gains,
+        "per_track_normalization_gain_db_by_track": normalization_gains,
+        "per_track_normalization_gain_range_db": PER_TRACK_NORMALIZATION_GAIN_RANGE_DB,
+        "all_track_normalization_gains_between_minus_4_and_plus_4": all(
+            min(PER_TRACK_NORMALIZATION_GAIN_RANGE_DB) <= gain <= max(PER_TRACK_NORMALIZATION_GAIN_RANGE_DB)
+            for gain in normalization_gains
         ),
-        "all_final_gains_between_minus_35_and_minus_26": all(
-            min(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB) <= gain <= max(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB)
-            for gain in final_gains
-        ),
+        "all_final_gains_between_audible_range": False,
+        "all_final_gains_between_minus_35_and_minus_26": False,
         "all_final_gains_between_minus_40_and_minus_35": False,
-        "all_tracks_same_gain": len(set(final_gains)) == 1,
+        "all_tracks_same_gain": len(set(normalization_gains)) == 1,
+        "music_gain_application_mode": MUSIC_GAIN_APPLICATION_MODE,
+        "double_music_gain_fix_enabled": DOUBLE_MUSIC_GAIN_FIX_ENABLED,
+        "per_track_final_mix_gain_applied": PER_TRACK_FINAL_MIX_GAIN_APPLIED,
+        "automation_final_mix_gain_applied": AUTOMATION_FINAL_MIX_GAIN_APPLIED,
+        "music_bus_double_gain_protection_enabled": MUSIC_BUS_DOUBLE_GAIN_PROTECTION_ENABLED,
     }
-
 
 
 def get_music_track_duration_sec(path: Path) -> float:
@@ -453,30 +475,109 @@ def build_ffmpeg_music_volume_probe(low_speech_gains: dict, track_gain_plan: dic
         "sidechain_attack": SIDECHAIN_ATTACK,
         "sidechain_release": SIDECHAIN_RELEASE,
         "double_ducking_protection_enabled": DOUBLE_DUCKING_PROTECTION_ENABLED,
+        "music_gain_application_mode": MUSIC_GAIN_APPLICATION_MODE,
+        "double_music_gain_fix_enabled": DOUBLE_MUSIC_GAIN_FIX_ENABLED,
+        "per_track_final_mix_gain_applied": PER_TRACK_FINAL_MIX_GAIN_APPLIED,
+        "automation_final_mix_gain_applied": AUTOMATION_FINAL_MIX_GAIN_APPLIED,
+        "music_bus_double_gain_protection_enabled": MUSIC_BUS_DOUBLE_GAIN_PROTECTION_ENABLED,
+        "music_bus_double_gain_protection_passed": True,
+        "effective_music_gain_double_applied": False,
+    }
+
+
+def _strong_negative_final_mix_values(values: list[float]) -> list[float]:
+    return [
+        value
+        for value in values
+        if min(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB) <= value <= max(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB)
+    ]
+
+
+def build_music_bus_double_gain_gate(
+    *,
+    per_track_final_mix_gain_applied: bool,
+    automation_final_mix_gain_applied: bool,
+) -> dict:
+    double_gain_detected = bool(per_track_final_mix_gain_applied and automation_final_mix_gain_applied)
+    return {
+        "status": "blocked" if double_gain_detected else "ok",
+        "blocked_reason": "double_music_gain_detected" if double_gain_detected else None,
+        "music_bus_double_gain_protection_enabled": MUSIC_BUS_DOUBLE_GAIN_PROTECTION_ENABLED,
+        "music_bus_double_gain_protection_passed": not double_gain_detected,
+        "effective_music_gain_double_applied": double_gain_detected,
     }
 
 
 def build_command_volume_audibility_gate(command: list[str]) -> dict:
     command_text = " ".join(command)
-    volume_values = [
+    filter_complex = command_text
+    if "-filter_complex" in command:
+        filter_complex = command[command.index("-filter_complex") + 1]
+
+    track_stage_values = [
+        float(match.group(1))
+        for match in re.finditer(
+            r"\[\d+:a\][^;]*?volume=(-?\d+(?:\.\d+)?)dB[^;]*?\[music\d+\]",
+            filter_complex,
+        )
+    ]
+    automation_stage_values = [
+        float(match.group(1))
+        for match in re.finditer(
+            r"\[auto\d+\][^;]*?volume=(-?\d+(?:\.\d+)?)dB\[ag\d+\]",
+            filter_complex,
+        )
+    ]
+    all_volume_values = [
         float(match.group(1))
         for match in re.finditer(r"volume=(-?\d+(?:\.\d+)?)dB", command_text)
     ]
-    if not volume_values:
+
+    final_mix_values = automation_stage_values if automation_stage_values else all_volume_values
+
+    if not final_mix_values:
         return {
             "command_volume_values_db": [],
             "command_volume_average_db": None,
             "command_volume_min_db": None,
             "command_volume_max_db": None,
+            "track_stage_volume_db_values": [round(value, 3) for value in track_stage_values],
+            "automation_stage_volume_db_values": [round(value, 3) for value in automation_stage_values],
+            "all_command_volume_db_values": [round(value, 3) for value in all_volume_values],
+            "per_track_strong_negative_gain_count": 0,
+            "automation_strong_negative_gain_count": 0,
             "command_volume_audibility_gate_passed": False,
             "music_audibility_gate_failure_reason": "no_volume_db_tokens_found",
+            "music_gain_application_mode": MUSIC_GAIN_APPLICATION_MODE,
+            "double_music_gain_fix_enabled": DOUBLE_MUSIC_GAIN_FIX_ENABLED,
+            "per_track_final_mix_gain_applied": False,
+            "automation_final_mix_gain_applied": False,
+            **build_music_bus_double_gain_gate(
+                per_track_final_mix_gain_applied=False,
+                automation_final_mix_gain_applied=False,
+            ),
         }
 
-    average_gain = sum(volume_values) / len(volume_values)
-    min_gain = min(volume_values)
-    max_gain = max(volume_values)
-    all_at_floor = all(abs(value - MUSIC_AUDIBILITY_FLOOR_DB) <= 0.001 for value in volume_values)
-    all_too_quiet = all(value <= -38.0 for value in volume_values)
+    average_gain = sum(final_mix_values) / len(final_mix_values)
+    min_gain = min(final_mix_values)
+    max_gain = max(final_mix_values)
+
+    per_track_strong_negative_values = _strong_negative_final_mix_values(track_stage_values)
+    automation_strong_negative_values = _strong_negative_final_mix_values(automation_stage_values)
+
+    per_track_final_mix_gain_applied = bool(per_track_strong_negative_values)
+    automation_final_mix_gain_applied = bool(automation_stage_values)
+    double_gain_gate = build_music_bus_double_gain_gate(
+        per_track_final_mix_gain_applied=per_track_final_mix_gain_applied,
+        automation_final_mix_gain_applied=automation_final_mix_gain_applied,
+    )
+
+    all_at_floor = all(abs(value - MUSIC_AUDIBILITY_FLOOR_DB) <= 0.001 for value in final_mix_values)
+    all_too_quiet = all(value <= -38.0 for value in final_mix_values)
+    automation_values_are_final_mix_values = (
+        not automation_stage_values
+        or len(automation_strong_negative_values) == len(automation_stage_values)
+    )
 
     gate_passed = (
         average_gain > MUSIC_AUDIBILITY_FLOOR_DB
@@ -487,10 +588,12 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
         and ("ratio=" + "12") not in command_text
         and not all_at_floor
         and not all_too_quiet
+        and automation_values_are_final_mix_values
+        and double_gain_gate["music_bus_double_gain_protection_passed"]
     )
 
     return {
-        "command_volume_values_db": [round(value, 3) for value in volume_values],
+        "command_volume_values_db": [round(value, 3) for value in final_mix_values],
         "command_volume_average_db": round(average_gain, 3),
         "command_volume_min_db": round(min_gain, 3),
         "command_volume_max_db": round(max_gain, 3),
@@ -498,6 +601,16 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
         "command_volume_all_too_quiet": all_too_quiet,
         "command_volume_audibility_gate_passed": gate_passed,
         "music_audibility_gate_failure_reason": None if gate_passed else "music_audibility_gate_failed",
+        "track_stage_volume_db_values": [round(value, 3) for value in track_stage_values],
+        "automation_stage_volume_db_values": [round(value, 3) for value in automation_stage_values],
+        "all_command_volume_db_values": [round(value, 3) for value in all_volume_values],
+        "per_track_strong_negative_gain_count": len(per_track_strong_negative_values),
+        "automation_strong_negative_gain_count": len(automation_strong_negative_values),
+        "music_gain_application_mode": MUSIC_GAIN_APPLICATION_MODE,
+        "double_music_gain_fix_enabled": DOUBLE_MUSIC_GAIN_FIX_ENABLED,
+        "per_track_final_mix_gain_applied": per_track_final_mix_gain_applied,
+        "automation_final_mix_gain_applied": automation_final_mix_gain_applied,
+        **{key: value for key, value in double_gain_gate.items() if key != "status"},
     }
 
 
@@ -826,6 +939,8 @@ def build_ffmpeg_command(
     if music_start_offset_sec < 0.0:
         raise ControlledMusicPreviewError("music_start_offset_sec must not be negative")
 
+    segmented_automation_active = len(_automation_gain_windows_from_plan(music_automation_plan)) > 1
+
     if music_volume_gain_db_by_track is None:
         volume_gains = [float(music_volume_gain_db)] * len(selected_music_files)
     else:
@@ -833,10 +948,16 @@ def build_ffmpeg_command(
         if len(volume_gains) != len(selected_music_files):
             raise ControlledMusicPreviewError("per-track music gain count must match selected music files")
 
+    allowed_gain_range = (
+        PER_TRACK_NORMALIZATION_GAIN_RANGE_DB
+        if segmented_automation_active
+        else OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB
+    )
+
     for gain in volume_gains:
-        if gain < min(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB) or gain > max(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB):
+        if gain < min(allowed_gain_range) or gain > max(allowed_gain_range):
             raise ControlledMusicPreviewError(
-                f"music gain {gain:.1f}dB outside owner range {OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB}"
+                f"music gain {gain:.1f}dB outside allowed range {allowed_gain_range}"
             )
 
     command = [

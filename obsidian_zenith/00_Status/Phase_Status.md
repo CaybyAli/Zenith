@@ -325,3 +325,27 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Schritt: Controlled Music Preview Run nur nach Master-GO und Owner Review.
 - Controlled Music Preview 16B-R-FIX: DONE / remote gesichert / naechster Schritt 16B-R2 nur nach Master-GO.
+
+## Controlled Music Preview Step 18B-FIX Ergebnis
+
+- Phase 5.5 Musik: 100% / DONE.
+- Controlled Music Preview Step 18B-FIX: DONE / technical GO.
+- Root Cause aus Step 18A behoben: doppelte Musik-Absenkung entfernt.
+- Track-Level macht nur noch leichte Normalisierung.
+- Finaler Musikbus-Gain liegt genau einmal in der Automation.
+- per_track_final_mix_gain_applied: false.
+- automation_final_mix_gain_applied: true.
+- music_bus_double_gain_protection_passed: true.
+- effective_music_gain_double_applied: false.
+- per_track_strong_negative_gain_count: 0.
+- automation_strong_negative_gain_count: 106.
+- dynamic_gain_expression_strategy: segmented_atrim_volume_concat.
+- command_volume_audibility_gate_passed: true.
+- sidechain_ratio: 3.0.
+- ratio=12 absent.
+- py_compile: gruen.
+- Pytest: 60 passed.
+- Dry-Run Proof erzeugt unter reports/controlled_music_preview_run/step18b_fix_single_music_bus_gain/run_20260611_205205/.
+- Kein Render, kein Upload, kein Qwen, kein Runtime Learning, kein Ingest.
+- Reportordner lokal/untracked, nicht committen.
+- Naechster Schritt: Commit + Push nur erlaubte Dateien. Kein Step 18C ohne neuen Master-GO.

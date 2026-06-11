@@ -2055,3 +2055,82 @@ Safety:
 Nächster Schritt:
 Step 18B-FIX nur nach Master-GO.
 Nicht rendern. Nicht uploaden. Kein Runtime Learning. Kein Qwen.
+
+---
+
+## 2026-06-11 20:52:05 ? Controlled Music Preview Step 18B-FIX Single Final Music Bus Gain
+
+Status: DONE / technical GO
+Owner Review Decision from Step 18A: FIX
+Problem: Musik war im gerenderten Video praktisch nicht hoerbar.
+
+Root Cause aus Step 18A:
+- Musikrouting war vorhanden.
+- Musiktracks waren nicht silent.
+- FFmpeg baute [music_auto], sidechaincompress, amix und [aout].
+- Fehler war doppelte Musik-Absenkung:
+  - Track-Level vorher ca. -26.9 dB bis -31.4 dB
+  - Automation danach nochmal volume=-32.0dB
+  - effektiver Musikbus dadurch ca. -59 bis -63 dB
+
+18B-FIX Ergebnis:
+- music_gain_application_mode: single_final_automation_gain
+- double_music_gain_fix_enabled: true
+- per_track_final_mix_gain_applied: false
+- automation_final_mix_gain_applied: true
+- music_bus_double_gain_protection_enabled: true
+- music_bus_double_gain_protection_passed: true
+- effective_music_gain_double_applied: false
+
+Track Stage:
+- Track-Level macht nur noch leichte Normalisierung.
+- ffmpeg_music_volume_gain_db_by_track: [0.6, -1.4, 3.1, -0.6]
+- track_stage_volume_db_values: [0.6, -1.4, 3.1, -0.6]
+- per_track_strong_negative_gain_count: 0
+- alte Track-Final-Gains wie volume=-33.5dB, -31.5dB, -28.5dB, -26.0dB vor afade sind absent.
+
+Automation Stage:
+- Automation bleibt finaler Musikbus-Gain.
+- automation_stage_volume_db_values: -32.0 dB pro Chunk
+- automation_strong_negative_gain_count: 106
+- automation_window_count: 106
+- segmented_gain_volume_count: 106
+- dynamic_gain_expression_strategy: segmented_atrim_volume_concat
+- command_volume_audibility_gate_passed: true
+
+Sidechain / Voice Safety:
+- sidechain_ratio: 3.0
+- ratio=12 absent
+- double_ducking_protection_enabled: true
+- ffmpeg_clean_transition_applied: true
+
+Tests / Proof:
+- py_compile: gruen
+- pytest tests/test_controlled_music_preview_render.py -vv: 60 passed
+- Dry-Run Proof Manifest:
+  - reports/controlled_music_preview_run/step18b_fix_single_music_bus_gain/run_20260611_205205/preview_render_manifest.json
+  - reports/controlled_music_preview_run/step18b_fix_single_music_bus_gain/run_20260611_205205/ffmpeg_command.txt
+- Reportordner bleibt lokal/untracked und wird nicht committed.
+
+Safety:
+- Kein Render gestartet.
+- Keine MP4 erstellt.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Keine Musikdateien geaendert.
+- Kein Ingest.
+- Reports bleiben untracked.
+
+Geaenderte Code-Dateien:
+- scripts/controlled_music_preview_render.py
+- tests/test_controlled_music_preview_render.py
+
+Naechster Schritt:
+- Commit nur mit erlaubten Dateien:
+  - scripts/controlled_music_preview_render.py
+  - tests/test_controlled_music_preview_render.py
+  - obsidian_zenith/
+- Reports nicht committen.
+- Danach Push und Remote-Verifikation.
+- Kein Step 18C ohne neuen Master-GO.
