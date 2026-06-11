@@ -1656,3 +1656,78 @@ Wichtig:
 - Owner Review Schritt 16 ist Pflicht.
 - Kein Upload ohne neues Master-GO.
 - Kein Runtime Learning.
+
+## 2026-06-11 16:04:24 — Controlled Music Preview Step 16A — Dynamic Music Automation Planner
+
+Status: DONE / CODE-GO / NO RENDER
+
+Code Commit:
+- 76b574a feat(preview): add dynamic music automation planner
+- full hash: 76b574a2ae237a9baea91b3f604ddd1da0f10d00
+
+Owner Review Step 16:
+- Entscheidung: FIX
+- Grund 1: Songs sind nicht immer gleich laut.
+- Grund 2: Songabschnitte innerhalb eines Songs können leise/lauter sein.
+- Grund 3: Stimmen/Freunde müssen Music-Ceiling beeinflussen.
+- Grund 4: Songwechsel müssen sauberer werden.
+
+Umgesetzt:
+- neuer Planner: core/music_automation_planner.py
+- neue Tests: tests/test_music_automation_planner.py
+- Preview-Script Manifest/Dry-Run angebunden
+- Preview-Tests erweitert
+
+Dynamic Music Automation:
+- music_automation_planner_enabled: True
+- automation_window_sec: 5.0
+- automation_window_count: 106
+- voice_aware_music_ceiling_enabled: True
+- music_section_loudness_aware: True
+- gain_smoothing_enabled: True
+- max_gain_change_per_window_db: 2.0
+- automation_all_final_gains_between_minus_40_and_minus_35: True
+
+Speaker / Voice:
+- ali_friend_separation_confirmed: False
+- speaker_voice_source: mixed_audio_level
+- wichtig: keine falsche Ali/Friend-Trennung behauptet
+
+Clean Transition Policy:
+- clean_transition_policy_enabled: True
+- track_start_trim_sec: 30.0
+- track_end_trim_sec: 15.0
+- crossfade_sec: 3.0
+- hard_cut_transitions: False
+- track_intro_outro_trim_enabled: True
+
+Test-Beweis:
+- py_compile: OK
+- tests/test_music_automation_planner.py: 9 passed
+- tests/test_music_timeline_planner.py: 10 passed
+- tests/test_controlled_music_preview_render.py: 47 passed
+
+Dry-Run-Beweis:
+- status: dry_run
+- dry_run: True
+- owner_execute_required: True
+- kein MP4 im neuesten Dry-Run-Ordner erzeugt
+- music_timeline_planner_enabled: True
+- music_automation_planner_enabled: True
+- automation_window_count: 106
+- qwen_used: False
+- runtime_learning_started: False
+- upload_started: False
+
+Safety:
+- kein Render gestartet
+- kein Audio-Mix gestartet
+- keine Musik in Video eingefügt
+- kein Upload
+- kein Qwen
+- kein Runtime Learning
+- keine Musikdateien committed
+- Reports bleiben lokal und untracked
+
+Nächster Schritt:
+- Step 16B Render mit Dynamic Music Automation nur nach Master-GO.

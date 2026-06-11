@@ -1,35 +1,39 @@
-﻿PROJECT ZENITH — CONTROLLED MUSIC PREVIEW RUN — SCHRITT 16 — OWNER REVIEW MUSIC TIMELINE PLANNER PROPER RUN
+﻿PROJECT ZENITH — CONTROLLED MUSIC PREVIEW RUN — SCHRITT 16B — RENDER WITH DYNAMIC MUSIC AUTOMATION
+
+Nur nach Master-GO.
+
+Aktueller Stand:
+- Phase 5: 100% / DONE
+- P5-L: 100% / CLOSED
+- Phase 5.5 Infrastruktur: 100% / DONE
+- Step 16A Dynamic Music Automation Planner: DONE / CODE-GO
+- Code Commit: 76b574a feat(preview): add dynamic music automation planner
 
 Ziel:
-Ali prüft den echten visuellen 8.8-Minuten-Run mit:
-- Music Timeline Planner
-- Video-Dauer/Song-Dauer berücksichtigt
-- mehreren Songs
-- keinem Single-Song-Dauerloop
-- Adaptive Per-Track Gain
-- final gains zwischen -40 und -35 dB
+Visuell gültigen Proper Run erneut rendern:
+exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
 
-Output prüfen:
-D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_144301\controlled_music_preview_main.mp4
+Regeln:
+- Music Timeline Planner aktiv
+- Dynamic Music Automation aktiv
+- 5s Fensteranalyse
+- Voice-aware music ceiling
+- Music-section loudness aware
+- Gain smoothing
+- Clean song transitions
+- 30s Track-Intro vermeiden
+- 15s Track-Outro vermeiden
+- Crossfade vorbereitet
+- ali_friend_separation_confirmed nur true, wenn wirklich bewiesen
+- aktuell ehrlich: speaker_voice_source=mixed_audio_level
+- kein volume=0.08
+- kein -27dB final
+- kein Upload
+- kein Runtime Learning
+- kein Qwen
 
-Bewertung:
-- Gameplay sichtbar?
-- Keine Facecam fullscreen?
-- Musik jetzt insgesamt leise genug?
-- Einzelne Songs gleichmäßig genug?
-- Kein Song sticht zu laut raus?
-- Kein Song ist zu leise/verschwindet komplett?
-- Stimme/Freunde klar?
-- Musik bei Sprache nicht störend?
-- Mehrere Songs besser als Loop?
-- Wechsel nicht zu hektisch?
-- Keine Audio-Sprünge?
-- Gesamtgefühl uploadfähig?
-
-Entscheidung:
-GO / FIX / NO-GO
-
-Wenn GO:
-Danach Abschlussbericht Phase 5 + Phase 5.5 für Claude erstellen.
-Kein Upload ohne neues Master-GO.
-Kein Runtime Learning.
+Vor Render prüfen:
+- Tests grün
+- Manifest-Felder aktiv
+- owner_execute_required nur bei Dry-Run true
+- Render nur mit explizitem Master-GO / Owner-GO
