@@ -1876,3 +1876,24 @@ Nächster Schritt:
 - Command: `asplit=106`, `atrim=106`, `volume=106`, `concat=n=106:v=0:a=1[music_auto]`.
 - Safety: kein Render im Fix-Dry-Run, kein Upload, kein Qwen, kein Runtime Learning.
 - Naechster Schritt: Schritt 16B-R2 Execute-Render nur nach Master-GO.
+
+## 2026-06-11 — Controlled Music Preview Schritt 16B-R2 DONE
+
+- Status: DONE / lokaler Execute-Render erfolgreich.
+- Ausgangs-HEAD vor Render-Doku: `fc98c21`.
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- Input-Dauer: ca. `528.348813s` / ca. 8.8 Minuten.
+- Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_172534/controlled_music_preview_main.mp4`.
+- Output-Groesse: `1623614198` Bytes.
+- Content-Type: `gaming_main`.
+- Channel-Type: `main`.
+- Dynamic Music Strategy: `segmented_atrim_volume_concat`.
+- Segmented Automation: `asplit=106`, `atrim=106`, `volume=106`, `concat=n=106:v=0:a=1[music_auto]`.
+- Nested IF entfernt: kein `between(t,`, kein `eval=frame`, keine `volume='if` Expression im Command.
+- Clean Transitions: aktiv.
+- Track-Intro-Trim: `30.0s`.
+- Track-Outro-Trim: `15.0s`.
+- Crossfade: `3.0s`.
+- Manifest-Command-Consistency Gate: gruen.
+- Safety: kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning, keine Musikdateien committed.
+- Owner Review Schritt 17 ist jetzt Pflicht.

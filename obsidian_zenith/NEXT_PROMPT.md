@@ -1,70 +1,61 @@
-PROJECT ZENITH — CONTROLLED MUSIC PREVIEW RUN — SCHRITT 16B-R2 — EXECUTE RENDER NACH SEGMENTED-GAIN-FIX
+PROJECT ZENITH — CONTROLLED MUSIC PREVIEW RUN — SCHRITT 17 — OWNER REVIEW SEGMENTED DYNAMIC MUSIC AUTOMATION RENDER
 
 ROLLE:
-Bauchat/Engineer.
-Ali führt lokal aus.
+Bauchat/Owner-Review-Begleiter.
+Ali prüft selbst lokal das gerenderte Video.
+Nicht selbst entscheiden, ob das Video gut ist.
 
 AKTUELLER STATUS:
 - Phase 5: 100% / DONE
 - P5-L: 100% / CLOSED
 - Phase 5.5 Infrastruktur: 100% / DONE
-- Step 16B-R-FIX: DONE / remote gesichert
-- Runtime Learning: locked
+- Controlled Music Preview Schritt 16B-R2: DONE / lokaler Render erzeugt
+- Runtime Learning: locked / later
 
-LETZTER REMOTE-COMMIT:
-- `efaff10` fix(preview): replace nested music gain expression
-- Full Hash: `efaff1049c2784d894c0a12e090e788e62da672d`
+RENDER:
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
+- Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_172534/controlled_music_preview_main.mp4`
+- Output-Groesse: `1623614198` Bytes
+- Content-Type: `gaming_main`
+- Channel-Type: `main`
 
-WAS WURDE GEFIXT:
-Die alte 106-fach verschachtelte FFmpeg-Volume-Expression mit `if(between(t,...))` wurde ersetzt durch FFmpeg-sichere segmentierte Gain-Automation:
-
-- Strategie: `segmented_atrim_volume_concat`
-- `[musicbed]asplit=106[...]`
-- pro Fenster: `atrim=start=...:end=...,asetpts=PTS-STARTPTS,volume=-39.0dB`
-- danach: `[ag0]...[ag105]concat=n=106:v=0:a=1[music_auto]`
-
-BEWIESEN:
-- Tests gruen: `tests/test_controlled_music_preview_render.py` = `52 passed`
-- Dry-Run gruen
-- `status=dry_run`
-- `owner_execute_required=true`
-- `owner_go=false`
+TECHNIK BEWIESEN:
+- Music Timeline Planner aktiv
+- Segmented Dynamic 5s Music Automation aktiv
+- Keine nested IF Expression
 - `dynamic_gain_expression_strategy=segmented_atrim_volume_concat`
 - `segmented_gain_asplit_count=106`
 - `segmented_gain_atrim_count=106`
 - `segmented_gain_volume_count=106`
 - `command_contains_nested_if_volume_automation=false`
-- `manifest_command_consistency_gate=true`
-- Forbidden/Nested Command Check leer
-- Kein neuer MP4 im 17:12 Dry-Run
+- Manifest-Command-Gate gruen
+- Clean song transitions aktiv
+- Track-Intro 30s vermieden
+- Track-Outro 15s vermieden
+- Fade/Crossfade aktiv
 - Kein Upload
-- Kein Qwen
+- Kein Final-Render
 - Kein Runtime Learning
+- Kein Qwen
 
-WICHTIG:
-Step 16B-R-FIX ist nur Code/Dry-Run-Fix.
-Der echte Execute-Render darf erst in Schritt 16B-R2 mit neuem Master-GO laufen.
+OWNER REVIEW ZIEL:
+Ali prüft den echten visuellen 8.8-Minuten-Run mit:
+- Gameplay sichtbar?
+- Keine Facecam fullscreen?
+- Musik insgesamt leise genug?
+- Musik verschwindet nicht mehr in leisen Songabschnitten?
+- Kein Song sticht zu laut raus?
+- Stimme/Freunde klar?
+- Musik bei Sprache nicht störend?
+- Übergänge sauber?
+- Keine harten Songwechsel?
+- Keine Audio-Sprünge?
+- Gesamtgefühl uploadfähig?
 
-ZIEL NÄCHSTER SCHRITT:
-Schritt 16B-R2 soll den echten kontrollierten Execute-Render mit der neuen segmented-gain FFmpeg-Strategie ausführen und danach Owner Review vorbereiten.
+ENTSCHEIDUNG:
+GO / FIX / NO-GO
 
-VERBOTEN OHNE MASTER-GO:
-- kein Render
-- kein Execute
-- kein Upload
-- kein Runtime Learning
-- kein Qwen
-- kein Qwen-Autocut
-- kein Ingest
-- keine Musikdateien ändern/committen
-- keine Produktionsdateien überschreiben
-- kein `git add .`
-- kein `git add -A`
-
-ERLAUBT NACH MASTER-GO:
-- exakt kontrollierter Execute-Render für den bestätigten Visual Proper Run:
-  `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
-- Output-Root bleibt:
-  `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`
-- danach Manifest/Command/MP4/Safety prüfen
-- Owner Review vorbereiten
+WENN GO:
+Danach Abschlussbericht Phase 5 + Phase 5.5 für Claude erstellen.
+Kein Upload ohne neues Master-GO.
+Kein Runtime Learning.

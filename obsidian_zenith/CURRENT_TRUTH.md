@@ -48,6 +48,18 @@ Stand: 2026-06-11
 - Controlled Music Preview Run Schritt 14: Owner Review = NO-GO.
 - Controlled Music Preview Run Schritt 14A: DONE / Musik auf Adobe-Range `-38.0dB` gesenkt + Long-Run-Playlist vorbereitet / kein Render.
 - Controlled Music Preview Run Schritt 14B: DONE / Lower-Music Multi-Song Proper Run lokal gerendert / Owner Review Schritt 15 Pflicht.
+- Controlled Music Preview Run Schritt 16B-R2: DONE / echter 8.8-Minuten Visual Proper Run mit segmented dynamic music automation lokal gerendert / Owner Review Schritt 17 Pflicht.
+- 16B-R2 Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`.
+- 16B-R2 Output-MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_172534/controlled_music_preview_main.mp4`.
+- 16B-R2 Output-Groesse: `1623614198` Bytes.
+- 16B-R2 Content-Type: `gaming_main`, Channel-Type: `main`.
+- 16B-R2 Dynamic Strategy: `segmented_atrim_volume_concat`.
+- 16B-R2 Automation: `106` Fenster, `asplit=106`, `atrim=106`, `volume=106`, `concat=n=106:v=0:a=1[music_auto]`.
+- 16B-R2 Clean Transitions: FFmpeg-Fade und Track-Trim aktiv.
+- 16B-R2 Track-Intro-Trim: `30.0s`; Track-Outro-Trim: `15.0s`; Crossfade: `3.0s`.
+- 16B-R2 Manifest-Command-Consistency Gate: gruen.
+- 16B-R2 Safety: kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning, keine Musikdateien committed.
+- Naechster Schritt: Schritt 17 Owner Review / GO-FIX-NO-GO durch Ali.
 - Controlled Music Preview Run Schritt 16B-R-FIX: DONE / Nested-IF FFmpeg-Volume-Expression ersetzt durch segmentierte Gain-Automation.
 - 16B-R-FIX Commit: `efaff10` / `efaff1049c2784d894c0a12e090e788e62da672d`.
 - 16B-R-FIX Tests: `tests/test_controlled_music_preview_render.py` gruen mit `52 passed`.
@@ -55,7 +67,7 @@ Stand: 2026-06-11
 - 16B-R-FIX Dynamic Strategy: `segmented_atrim_volume_concat`.
 - 16B-R-FIX Automation: `106` Fenster, `asplit=106`, `atrim=106`, `volume=106`, `concat=n=106:v=0:a=1[music_auto]`.
 - 16B-R-FIX Safety: kein Nested-IF, kein `between(t,`, kein `eval=frame`, kein Upload, kein Qwen, kein Runtime Learning.
-- Naechster Schritt: Controlled Music Preview Schritt 16B-R2 Execute-Render nur nach neuem Master-GO.
+- Schritt 16B-R2 Execute-Render ist erledigt; naechster Schritt ist Schritt 17 Owner Review durch Ali.
 - Phase 5.5-4A-R: Main-Account-Musikordner-Taxonomie auf Alis echte Epidemic-Sound-Ordner gepatcht.
 - Offizielle Main-Musik-Kategorien: `intro`, `outro`, `vlog_background`, `funny_gaming_background`, `fail`, `hype`, `sad`.
 - `hype` bedeutet spannend / Action / Peak / Clutch.
@@ -94,7 +106,7 @@ Stand: 2026-06-11
 
 ## Naechster Schritt
 
-Controlled Music Preview Schritt 16B-R-FIX ist remote gesichert. Naechster erlaubter Schritt ist Schritt 16B-R2 Execute-Render nur nach neuem Master-GO. Kein Render ohne Master-GO. Kein Upload, kein Qwen, kein Runtime Learning.
+Controlled Music Preview Schritt 16B-R2 Render ist lokal erzeugt. Naechster erlaubter Schritt ist Schritt 17 Owner Review durch Ali. Kein Upload, kein Qwen, kein Runtime Learning.
 
 
 Ali hat manuell Epidemic-Sound-Musik in die offiziellen lokalen Main-Account-Ordner einsortiert.
