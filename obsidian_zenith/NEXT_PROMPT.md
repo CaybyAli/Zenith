@@ -1,36 +1,46 @@
-# PROJECT ZENITH ? CONTROLLED MUSIC PREVIEW RUN ? SCHRITT 18 ? OWNER REVIEW AUDIBLE DYNAMIC MUSIC RENDER
+﻿PROJECT ZENITH — CONTROLLED MUSIC PREVIEW — SCHRITT 18B-FIX — FIX MUSIC ROUTING / MIX PRESENCE
+
+Nur nach Master-GO.
+
+Status:
+- Phase 5: 100% / DONE
+- P5-L: 100% / CLOSED
+- Phase 5.5 Infrastruktur: 100% / DONE
+- Controlled Music Preview Schritt 18A: DONE / diagnosis only
+- Runtime Learning: locked
+
+Owner Review:
+- Entscheidung: FIX
+- Problem: Musik ist gar nicht hörbar
+- Stimmen/Game sind hörbar
+
+Step 18A Root Cause Diagnose:
+- Output Audio Stream existiert
+- Musiktracks existieren und sind nicht silent
+- FFmpeg Command enthält Musikinputs
+- FFmpeg Command baut [music_auto]
+- FFmpeg Command enthält sidechaincompress
+- FFmpeg Command enthält amix
+- Finaler Audio-Map nutzt [aout]
+- Falscher finaler Audio-Map ist unwahrscheinlich
+- Stärkster Verdacht: doppelte Musik-Absenkung im Musikbus
+  - Tracks erst ca. -26.9 dB bis -31.4 dB
+  - danach Automation-Chunks nochmal volume=-32.0dB
+  - Musikbus dadurch effektiv ca. -59 bis -63 dB und praktisch unhörbar
+- Output ist in Mess-Samples ca. 6 dB leiser als Input
 
 Ziel:
-Ali pr?ft den echten visuellen 8.8-Minuten-Run mit:
-- h?rbarer Music Policy
-- Gain Range [-35,-26]
-- Target -30
-- Audibility Floor -35
-- weniger aggressiver Sidechain
-- Double-Ducking-Schutz
-- Segmented Dynamic Automation
-- Clean Transitions
+Root Cause aus Step 18A beheben:
+- Musik wird im finalen Output hörbar
+- finaler Audio-Stream muss gemischtes Audio mappen
+- Musikbus darf nicht effektiv silent sein
+- amix/sidechain darf Musik nicht komplett killen
+- keine blinde Lautstärke-Erhöhung ohne Routing-Beweis
 
-Zu pr?fendes Video:
-reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_192336/controlled_music_preview_main.mp4
-
-Bewertung:
-- Gameplay sichtbar?
-- Keine Facecam fullscreen?
-- Musik jetzt h?rbar?
-- Musik zu laut oder angenehm?
-- Stimmen/Freunde klar?
-- Musik bei Sprache nicht st?rend?
-- Musik verschwindet nicht mehr komplett?
-- Kein Song sticht zu laut raus?
-- ?berg?nge sauber?
-- Keine Audio-Spr?nge?
-- Gesamtgef?hl uploadf?hig?
-
-Entscheidung:
-GO / FIX / NO-GO
-
-Wenn GO:
-Danach Abschlussbericht Phase 5 + Phase 5.5 f?r Claude erstellen.
-Kein Upload ohne neues Master-GO.
-Kein Runtime Learning.
+Verbote:
+- Kein Render ohne neues GO
+- Kein Upload
+- Kein Runtime Learning
+- Kein Qwen
+- Keine Musikdateien löschen/ändern
+- Kein Scope-Drift

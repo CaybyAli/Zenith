@@ -1989,3 +1989,44 @@ Next:
 - Owner Review Schritt 18 is mandatory.
 - Ali must judge the real rendered video by eye/ear.
 - No upload without new Master-GO.
+
+---
+
+## 2026-06-11 20:22:21 — Controlled Music Preview Step 18A Audio Routing Diagnose
+
+Status: DONE / diagnosis only
+Owner Review Decision: FIX
+Owner Issue: Musik ist gar nicht hörbar.
+
+Affected output:
+reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_192336/controlled_music_preview_main.mp4
+
+Diagnose-Befund:
+- Output Audio Stream existiert: true
+- Output full mean volume: -32.9 dB
+- Input full mean volume: -29.2 dB
+- Output ist in Samples ca. 6 dB leiser als Input
+- Musiktracks existieren: true
+- Musiktracks sind nicht silent: true
+- FFmpeg Command enthält Musikinputs: true
+- FFmpeg Command baut [music_auto]: true
+- FFmpeg Command enthält sidechaincompress: true
+- FFmpeg Command enthält amix: true
+- Finaler Audio-Map nutzt [aout]: true
+
+Verdacht Root Cause:
+Routing ist grundsätzlich vorhanden. Musikdateien sind normal laut und nicht silent. Stärkster Root-Cause-Kandidat ist doppelte Musik-Absenkung:
+Erst ca. -26.9 dB bis -31.4 dB pro Track, danach nochmal volume=-32.0dB pro Automation-Chunk.
+Dadurch landet der Musikbus effektiv ungefähr bei -59 bis -63 dB und ist praktisch unhörbar.
+
+Safety:
+- Render gestartet: false
+- Upload gestartet: false
+- Qwen genutzt: false
+- Runtime Learning gestartet: false
+- Code geändert: false
+- Musikdateien geändert: false
+
+Nächster Schritt:
+Step 18B-FIX nur nach Master-GO.
+Nicht rendern. Nicht uploaden. Kein Runtime Learning. Kein Qwen.
