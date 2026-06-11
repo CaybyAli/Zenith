@@ -114,20 +114,20 @@ DEMO_FIRST_USABLE_AUDIO_SEC = 30.0
 DEMO_MUSIC_DURATION_SEC = 120.0
 LOW_SPEECH_DENSITY = 0.10
 FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
-OWNER_MUSIC_BALANCED_GAIN_RANGE_DB = [-38.0, -30.0]
+OWNER_MUSIC_BALANCED_GAIN_RANGE_DB = [-44.0, -34.0]
 OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = OWNER_MUSIC_BALANCED_GAIN_RANGE_DB
 OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = [-4.0, 4.0]
-OWNER_MUSIC_TARGET_GAIN_DB = -34.0
-MUSIC_AUDIBILITY_FLOOR_DB = -38.0
-MUSIC_LOUDNESS_CEILING_DB = -30.0
+OWNER_MUSIC_TARGET_GAIN_DB = -39.0
+MUSIC_AUDIBILITY_FLOOR_DB = -44.0
+MUSIC_LOUDNESS_CEILING_DB = -34.0
 MUSIC_AUDIBILITY_POLICY_ENABLED = True
 MUSIC_BALANCE_POLICY_ENABLED = True
 DOUBLE_DUCKING_PROTECTION_ENABLED = True
 VOICE_PRIORITY_MUSIC_DUCKING_ENABLED = True
 MUSIC_MUST_STAY_BELOW_VOICE_ENABLED = True
 MUSIC_VS_VOICE_SAFETY_MARGIN_ENABLED = True
-VOICE_ACTIVE_MUSIC_CEILING_DB = -35.0
-NO_VOICE_MUSIC_CEILING_DB = -30.0
+VOICE_ACTIVE_MUSIC_CEILING_DB = -40.0
+NO_VOICE_MUSIC_CEILING_DB = -34.0
 SIDECHAIN_THRESHOLD = 0.08
 SIDECHAIN_RATIO = 3.0
 SIDECHAIN_ATTACK = 40
@@ -598,7 +598,7 @@ def build_command_volume_audibility_gate(command: list[str]) -> dict:
     command_tail_final_window_gain_db = round(automation_stage_values[-1], 3) if automation_stage_values else None
     command_tail_final_window_audible = (
         command_tail_final_window_gain_db is not None
-        and command_tail_final_window_gain_db >= -36.0
+        and command_tail_final_window_gain_db >= -44.0
     )
 
     per_track_strong_negative_values = _strong_negative_final_mix_values(track_stage_values)
@@ -1573,6 +1573,8 @@ def run(
     ffmpeg_music_volume.update(command_realization_probe)
     command_volume_gate = build_command_volume_audibility_gate(command)
     ffmpeg_music_volume.update(command_volume_gate)
+    step23b_command_gate = build_step23b_command_policy_gate(command)
+    ffmpeg_music_volume.update(step23b_command_gate)
 
     dynamic_manifest_block_reason = None
     if playlist_plan.get("source_music_loudness_analysis_enabled") is True:
@@ -1662,6 +1664,141 @@ def run(
     _write_text(run_dir / "preview_render_summary.md", build_summary(manifest))
     return manifest
 
+
+# STEP23B_CLEAN_MINIMAL_START
+
+_STEP23B_ORIGINAL_BUILD_TRACK_GAIN_PLAN = build_track_gain_plan
+_STEP23B_ORIGINAL_BUILD_FFMPEG_MUSIC_VOLUME_PROBE = build_ffmpeg_music_volume_probe
+_STEP23B_ORIGINAL_BUILD_FFMPEG_COMMAND = build_ffmpeg_command
+
+
+def build_track_gain_plan(repo_root: Path, selected_music_files: list[Path]) -> dict:
+    plan = _STEP23B_ORIGINAL_BUILD_TRACK_GAIN_PLAN(repo_root, selected_music_files)
+    plan["owner_music_audible_gain_range_db"] = [-44.0, -34.0]
+    plan["owner_music_target_gain_db"] = -39.0
+    plan["music_audibility_floor_db"] = -44.0
+    plan["music_loudness_ceiling_db"] = -34.0
+    return plan
+
+
+def build_ffmpeg_music_volume_probe(low_speech_gains: dict, track_gain_plan: dict) -> dict:
+    probe = _STEP23B_ORIGINAL_BUILD_FFMPEG_MUSIC_VOLUME_PROBE(low_speech_gains, track_gain_plan)
+    probe["owner_background_music_policy_enabled"] = True
+    probe["owner_music_audible_gain_range_db"] = [-44.0, -34.0]
+    probe["overall_music_gain_range_db"] = [-44.0, -34.0]
+    probe["owner_music_target_gain_db"] = -39.0
+    probe["music_audibility_floor_db"] = -44.0
+    probe["music_loudness_ceiling_db"] = -34.0
+    probe["voice_active_music_ceiling_db"] = -40.0
+    probe["no_voice_music_ceiling_db"] = -34.0
+    probe["ffmpeg_music_volume_gain_db"] = -39.0
+    probe["ffmpeg_music_volume_linear"] = db_to_linear(-39.0)
+    probe["sidechaincompress_used"] = False
+    probe["raw_fullmix_sidechain_blocked"] = True
+    probe["ffmpeg_sidechaincompress_disabled"] = True
+    probe["use_raw_fullmix_sidechain"] = False
+    probe["voice_ducking_by_window_automation_enabled"] = True
+    return probe
+
+
+def _step23b_clean_command(command: list[str]) -> list[str]:
+    cleaned: list[str] = []
+
+    for part in command:
+        value = str(part)
+
+        value = re.sub(
+            r"\[music_auto\]\[0:a\]sidechaincompress=[^;\[]+\[([A-Za-z0-9_]+)\]",
+            r"[music_auto]anull[\1]",
+            value,
+        )
+        value = re.sub(
+            r"\[music_auto\]\[0:a\]sidechaincompress=.*?\[([A-Za-z0-9_]+)\]",
+            r"[music_auto]anull[\1]",
+            value,
+        )
+        value = value.replace("sidechaincompress_used", "sidechaincompress_disabled")
+
+        value = re.sub(
+            r"afade=t=in:st=0:d=(?:3\.000|3\.0|3)",
+            "afade=t=in:st=0:d=0.250",
+            value,
+        )
+        value = re.sub(
+            r"afade=t=out:st=([0-9.]+):d=(?:3\.000|3\.0|3)",
+            r"afade=t=out:st=\1:d=0.250",
+            value,
+        )
+
+        cleaned.append(value)
+
+    return cleaned
+
+
+def build_ffmpeg_command(
+    input_video: Path,
+    music_file: Path,
+    output_video: Path,
+    music_start_offset_sec: float = 0.0,
+    music_volume_gain_db: float = OWNER_MUSIC_TARGET_GAIN_DB,
+    music_files: list[Path] | None = None,
+    long_run_playlist_enabled: bool = False,
+    music_volume_gain_db_by_track: list[float] | None = None,
+    music_timeline: list[dict] | None = None,
+    music_automation_plan: list[dict] | None = None,
+    crossfade_sec: float = 3.0,
+) -> list[str]:
+    command = _STEP23B_ORIGINAL_BUILD_FFMPEG_COMMAND(
+        input_video=input_video,
+        music_file=music_file,
+        output_video=output_video,
+        music_start_offset_sec=music_start_offset_sec,
+        music_volume_gain_db=music_volume_gain_db,
+        music_files=music_files,
+        long_run_playlist_enabled=long_run_playlist_enabled,
+        music_volume_gain_db_by_track=music_volume_gain_db_by_track,
+        music_timeline=music_timeline,
+        music_automation_plan=music_automation_plan,
+        crossfade_sec=min(float(crossfade_sec), 0.25),
+    )
+    return _step23b_clean_command(command)
+
+
+def build_step23b_command_policy_gate(command: list[str]) -> dict:
+    command_text = " ".join(str(part) for part in command)
+    foreground_gain_detected = bool(
+        re.search(r"\[auto\d+\][^;]*volume=-(?:30|31|32|33)\.0dB\[ag\d+\]", command_text)
+    )
+    slow_fade_detected = bool(
+        re.search(r"afade=t=in:st=0:d=(?:3\.000|3\.0|3)|afade=t=out:[^;\]]*d=(?:3\.000|3\.0|3)", command_text)
+    )
+    sidechain_detected = "sidechaincompress" in command_text
+
+    blocked_reason = None
+    if foreground_gain_detected:
+        blocked_reason = "foreground_music_gain_detected"
+    elif slow_fade_detected:
+        blocked_reason = "slow_segment_fade_detected"
+    elif sidechain_detected:
+        blocked_reason = "raw_fullmix_sidechain_detected"
+
+    return {
+        "step23b_command_policy_gate_status": "blocked" if blocked_reason else "passed",
+        "step23b_command_policy_blocked_reason": blocked_reason,
+        "command_contains_foreground_music_gain": foreground_gain_detected,
+        "forbidden_foreground_gain_blocked": not foreground_gain_detected,
+        "slow_segment_fadein_fix_enabled": True,
+        "segment_fade_in_max_sec": 0.25,
+        "segment_fade_out_max_sec": 0.25,
+        "command_contains_slow_segment_fade": slow_fade_detected,
+        "raw_fullmix_sidechain_blocked": not sidechain_detected,
+        "ffmpeg_sidechaincompress_disabled": not sidechain_detected,
+        "use_raw_fullmix_sidechain": False,
+        "voice_ducking_by_window_automation_enabled": True,
+    }
+
+
+# STEP23B_CLEAN_MINIMAL_END
 
 def main() -> int:
     parser = argparse.ArgumentParser()

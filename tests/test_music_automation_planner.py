@@ -58,17 +58,17 @@ def test_gain_clamp_keeps_all_final_gains_inside_owner_audible_range():
     assert gains
     assert all(MUSIC_AUDIBILITY_FLOOR_DB <= gain <= MUSIC_LOUDNESS_CEILING_DB for gain in gains)
     assert plan["music_audibility_policy_enabled"] is True
-    assert plan["owner_music_audible_gain_range_db"] == [-38.0, -30.0]
+    assert plan["owner_music_audible_gain_range_db"] == [-44.0, -34.0]
     assert plan["owner_music_target_gain_db"] == DEFAULT_BASE_TARGET_GAIN_DB
     assert plan["automation_all_final_gains_between_audible_range"] is True
     assert plan["automation_all_final_gains_between_minus_40_and_minus_35"] is False
 
 
 def test_owner_review_music_not_audible_updates_gain_policy():
-    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-38.0, -30.0)
-    assert DEFAULT_BASE_TARGET_GAIN_DB == -34.0
-    assert MUSIC_AUDIBILITY_FLOOR_DB == -38.0
-    assert MUSIC_LOUDNESS_CEILING_DB == -30.0
+    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-44.0, -34.0)
+    assert DEFAULT_BASE_TARGET_GAIN_DB == -39.0
+    assert MUSIC_AUDIBILITY_FLOOR_DB == -44.0
+    assert MUSIC_LOUDNESS_CEILING_DB == -34.0
 
 
 def test_106_window_final_gains_are_audible_without_sticking_to_floor():
@@ -84,7 +84,7 @@ def test_106_window_final_gains_are_audible_without_sticking_to_floor():
 
     assert len(gains) == 106
     assert all(MUSIC_AUDIBILITY_FLOOR_DB <= gain <= MUSIC_LOUDNESS_CEILING_DB for gain in gains)
-    assert -38.0 <= average_gain <= -34.0
+    assert -42.0 <= average_gain <= -34.0
     assert not all(gain <= -38.0 for gain in gains)
     assert not all(gain == MUSIC_AUDIBILITY_FLOOR_DB for gain in gains)
 
@@ -145,10 +145,10 @@ def test_no_render_safety_terms_in_automation_planner_source():
     assert "Remove-Item" not in source
 
 def test_owner_review_19_balance_policy():
-    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-38.0, -30.0)
-    assert DEFAULT_BASE_TARGET_GAIN_DB == -34.0
-    assert MUSIC_AUDIBILITY_FLOOR_DB == -38.0
-    assert MUSIC_LOUDNESS_CEILING_DB == -30.0
+    assert OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB == (-44.0, -34.0)
+    assert DEFAULT_BASE_TARGET_GAIN_DB == -39.0
+    assert MUSIC_AUDIBILITY_FLOOR_DB == -44.0
+    assert MUSIC_LOUDNESS_CEILING_DB == -34.0
 
 
 def test_music_not_as_loud_as_voice_when_voice_active():
@@ -168,7 +168,7 @@ def test_music_remains_audible_without_voice():
         music_section_level_db=-30.0,
     )
 
-    assert -34.0 <= result["final_gain_db"] <= -30.0
+    assert -34.0 <= result["final_gain_db"] <= -34.0
 
 
 def test_known_gap_103_110_has_music_coverage():
@@ -319,7 +319,7 @@ def test_quiet_music_section_boosts_when_no_voice():
     )
     window = plan["music_automation_plan"][0]
 
-    assert -33.0 <= window["final_gain_db"] <= -30.0
+    assert window["final_gain_db"] == -34.0
     assert "quiet_section_boost" in window["reason"]
 
 
@@ -332,7 +332,7 @@ def test_loud_music_section_cuts_gain():
     )
     window = plan["music_automation_plan"][0]
 
-    assert -40.0 <= window["final_gain_db"] <= -37.0
+    assert -44.0 <= window["final_gain_db"] <= -40.0
     assert "loud_section_cut" in window["reason"]
 
 
@@ -358,7 +358,7 @@ def test_tail_final_window_not_forced_silent():
     )
 
     assert plan["tail_music_no_final_fadeout_guard_enabled"] is True
-    assert plan["tail_music_final_window_gain_db"] >= -36.0
+    assert plan["tail_music_final_window_gain_db"] >= -44.0
     assert plan["tail_music_final_window_audible"] is True
 
 
@@ -390,3 +390,31 @@ def test_loud_section_cut_guard_prevents_zero_loud_count():
         "loud_section_cut" in window["reason"] and window["final_gain_db"] <= -37.0
         for window in plan["music_automation_plan"]
     )
+
+
+def test_step23b_background_music_policy_caps_foreground_gain():
+    result = compute_dynamic_music_gain(
+        voice_level_db=-20.0,
+        music_section_level_db=-44.0,
+    )
+
+    assert result["final_gain_db"] <= -40.0
+
+
+def test_step23b_owner_tail_windows_have_audible_floor():
+    plan = build_music_automation_plan(
+        video_duration_sec=528.348813,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0, -55.0, -55.0],
+        music_section_levels_db=[-42.0, -36.0, -30.0],
+    )
+
+    tail_windows = [
+        window
+        for window in plan["music_automation_plan"]
+        if window["start_sec"] >= 471.0
+    ]
+
+    assert tail_windows
+    assert all(window["final_gain_db"] >= -38.0 for window in tail_windows)
+    assert plan["owner_tail_music_guard_passed"] is True

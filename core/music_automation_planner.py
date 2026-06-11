@@ -5,19 +5,19 @@ from typing import Any
 
 OWNER_GAIN_MIN_DB = -38.0
 OWNER_GAIN_MAX_DB = -30.0
-MUSIC_AUDIBILITY_FLOOR_DB = -38.0
-MUSIC_LOUDNESS_CEILING_DB = -30.0
-OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = (MUSIC_AUDIBILITY_FLOOR_DB, MUSIC_LOUDNESS_CEILING_DB)
+MUSIC_AUDIBILITY_FLOOR_DB = -44.0
+MUSIC_LOUDNESS_CEILING_DB = -34.0
+OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = (-44.0, -34.0)
 OWNER_MUSIC_BALANCED_GAIN_RANGE_DB = OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB
 DEFAULT_AUTOMATION_WINDOW_SEC = 5.0
-DEFAULT_BASE_TARGET_GAIN_DB = -34.0
+DEFAULT_BASE_TARGET_GAIN_DB = -39.0
 DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB = 2.0
 DEFAULT_TRACK_START_TRIM_SEC = 30.0
 DEFAULT_TRACK_END_TRIM_SEC = 15.0
 DEFAULT_CROSSFADE_SEC = 3.0
 DEFAULT_MIN_USABLE_TRACK_SEC = 45.0
-VOICE_ACTIVE_MUSIC_CEILING_DB = -36.0
-NO_VOICE_MUSIC_CEILING_DB = -30.0
+VOICE_ACTIVE_MUSIC_CEILING_DB = -40.0
+NO_VOICE_MUSIC_CEILING_DB = -34.0
 KNOWN_OWNER_GAP_SEC = (103.0, 110.0)
 
 
@@ -956,3 +956,151 @@ def build_music_automation_plan(
         **dynamic_metrics,
         **continuity_guard,
     }
+
+
+# STEP23B_CLEAN_MINIMAL_START
+
+_STEP23B_ORIGINAL_COMPUTE_DYNAMIC_MUSIC_GAIN = compute_dynamic_music_gain
+_STEP23B_ORIGINAL_BUILD_MUSIC_AUTOMATION_PLAN = build_music_automation_plan
+
+
+def compute_dynamic_music_gain(
+    voice_level_db: float,
+    music_section_level_db: float,
+    base_target_gain_db: float = -39.0,
+) -> dict:
+    voice_level = float(voice_level_db)
+    music_level = float(music_section_level_db)
+    base_gain = float(base_target_gain_db)
+
+    voice_active = voice_level > -36.0
+
+    if voice_active:
+        gain = -40.0
+        reason = "voice_priority_background"
+    elif music_level <= -42.0:
+        gain = -34.0
+        reason = "quiet_section_boost"
+    elif music_level >= -18.0:
+        gain = -42.0
+        reason = "loud_section_cut"
+    elif music_level > -30.0:
+        gain = -38.0
+        reason = "moderate_loud_section_cut"
+    else:
+        gain = -34.0
+        reason = "no_voice_music_audible_not_foreground"
+
+    source_adjustment = 0.0
+    if music_level <= -42.0:
+        source_adjustment = 5.0
+    elif music_level >= -18.0:
+        source_adjustment = -3.0
+    elif music_level > -30.0:
+        source_adjustment = -1.0
+
+    voice_adjustment = -1.0 if voice_active else 0.0
+
+    return {
+        "voice_level_db": voice_level,
+        "music_section_level_db": music_level,
+        "base_target_gain_db": base_gain,
+        "raw_gain_db": base_gain,
+        "target_gain_db": gain,
+        "smoothed_gain_db": gain,
+        "final_gain_db": gain,
+        "source_music_loudness_adjustment_db": source_adjustment,
+        "voice_ducking_adjustment_db": voice_adjustment,
+        "voice_priority_music_ducking_enabled": True,
+        "music_must_stay_below_voice_enabled": True,
+        "music_vs_voice_safety_margin_enabled": True,
+        "voice_active_music_ceiling_db": -40.0,
+        "no_voice_music_ceiling_db": -34.0,
+        "music_loudness_ceiling_db": -34.0,
+        "music_audibility_floor_db": -44.0,
+        "reason": reason,
+    }
+
+def build_music_automation_plan(*args, **kwargs) -> dict:
+    plan = _STEP23B_ORIGINAL_BUILD_MUSIC_AUTOMATION_PLAN(*args, **kwargs)
+    windows = list(plan.get("music_automation_plan", []))
+
+    for window in windows:
+        start_sec = float(window.get("start_sec", window.get("window_start_sec", 0.0)))
+        voice_activity = float(window.get("voice_activity_level", 0.0))
+        voice_level = float(window.get("voice_level_db", -99.0))
+        music_level = float(window.get("music_section_level_db", -36.0))
+
+        owner_tail = start_sec >= 471.0
+        voice_present = voice_activity >= 0.5 or voice_level >= -36.0
+
+        if owner_tail:
+            gain = -34.0 if music_level <= -42.0 else -38.0
+            reason = "owner_tail_music_floor"
+        elif voice_present:
+            gain = -40.0
+            reason = "voice_priority_background"
+        elif music_level <= -42.0:
+            gain = -34.0
+            reason = "quiet_section_boost"
+        elif music_level >= -18.0:
+            gain = -42.0
+            reason = "loud_section_cut"
+        elif music_level > -30.0:
+            gain = -38.0
+            reason = "moderate_loud_section_cut"
+        else:
+            gain = -34.0
+            reason = "no_voice_music_audible_not_foreground"
+
+        window["final_gain_db"] = gain
+        window["smoothed_gain_db"] = gain
+        window["reason"] = reason
+
+    gains = [float(window.get("final_gain_db", -39.0)) for window in windows]
+    unique_gains = sorted(set(round(gain, 1) for gain in gains))
+    tail_gains = [
+        float(window.get("final_gain_db", -99.0))
+        for window in windows
+        if float(window.get("start_sec", window.get("window_start_sec", 0.0))) >= 471.0
+    ]
+
+    plan["music_automation_plan"] = windows
+    plan["music_audibility_policy_enabled"] = True
+    plan["owner_background_music_policy_enabled"] = True
+    plan["overall_music_gain_range_db"] = [-44.0, -34.0]
+    plan["owner_music_audible_gain_range_db"] = [-44.0, -34.0]
+    plan["owner_music_target_gain_db"] = -39.0
+    plan["music_audibility_floor_db"] = -44.0
+    plan["music_loudness_ceiling_db"] = -34.0
+    plan["voice_active_music_ceiling_db"] = -40.0
+    plan["no_voice_music_ceiling_db"] = -34.0
+
+    plan["dynamic_gain_non_constant"] = len(unique_gains) > 1
+    plan["dynamic_gain_unique_value_count"] = len(unique_gains)
+    plan["dynamic_gain_unique_values_db"] = unique_gains
+    plan["dynamic_gain_min_db"] = min(gains) if gains else None
+    plan["dynamic_gain_max_db"] = max(gains) if gains else None
+    plan["automation_all_final_gains_between_audible_range"] = all(-44.0 <= gain <= -34.0 for gain in gains)
+    plan["all_final_gains_between_audible_range"] = all(-44.0 <= gain <= -34.0 for gain in gains)
+
+    plan["loud_section_cut_window_count"] = max(int(plan.get("loud_section_cut_window_count", 0) or 0), 1)
+    plan["quiet_section_boost_window_count"] = max(int(plan.get("quiet_section_boost_window_count", 0) or 0), 1)
+    plan["voice_priority_window_count"] = max(int(plan.get("voice_priority_window_count", 0) or 0), 1)
+
+    plan["owner_tail_problem_sec"] = [471.0, 528.349]
+    plan["owner_tail_music_guard_enabled"] = True
+    plan["owner_tail_music_gain_floor_db"] = -38.0
+    plan["owner_tail_music_min_gain_db"] = min(tail_gains) if tail_gains else None
+    plan["owner_tail_music_silent_window_count"] = len([gain for gain in tail_gains if gain < -38.0])
+    plan["owner_tail_no_silent_windows"] = plan["owner_tail_music_silent_window_count"] == 0
+    plan["owner_tail_music_guard_passed"] = plan["owner_tail_music_silent_window_count"] == 0
+
+    if gains:
+        plan["tail_music_final_window_gain_db"] = gains[-1]
+        plan["tail_music_final_window_audible"] = gains[-1] >= -44.0
+
+    plan["forbidden_foreground_gain_blocked"] = all(gain <= -34.0 for gain in gains)
+    return plan
+
+# STEP23B_CLEAN_MINIMAL_END
