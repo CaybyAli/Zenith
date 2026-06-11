@@ -850,3 +850,37 @@ def test_step15a2_dry_run_manifest_contains_music_timeline_planner(tmp_path):
     assert manifest["qwen_used"] is False
     assert manifest["runtime_learning_started"] is False
     assert manifest["owner_execute_required"] is True
+
+
+
+def test_step16a_dry_run_manifest_contains_dynamic_music_automation(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["music_timeline_planner_enabled"] is True
+    assert manifest["music_automation_planner_enabled"] is True
+    assert manifest["automation_window_sec"] == 5.0
+    assert manifest["automation_window_count"] > 0
+    assert manifest["voice_aware_music_ceiling_enabled"] is True
+    assert manifest["music_section_loudness_aware"] is True
+    assert manifest["gain_smoothing_enabled"] is True
+    assert manifest["max_gain_change_per_window_db"] == 2.0
+    assert manifest["ali_friend_separation_confirmed"] is False
+    assert manifest["speaker_voice_source"] == "mixed_audio_level"
+    assert manifest["automation_all_final_gains_between_minus_40_and_minus_35"] is True
+    assert manifest["clean_transition_policy_enabled"] is True
+    assert manifest["track_start_trim_sec"] == 30.0
+    assert manifest["track_end_trim_sec"] == 15.0
+    assert manifest["crossfade_sec"] == 3.0
+    assert manifest["hard_cut_transitions"] is False
+    assert manifest["owner_execute_required"] is True
+    assert manifest["music_timeline"][0]["transition_type"] == "crossfade"
+    assert manifest["music_timeline"][0]["track_source_start_sec"] >= 0.0

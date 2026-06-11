@@ -23,6 +23,11 @@ from core.music_timeline_planner import (
     plan_music_timeline as planner_plan_music_timeline,
 )
 
+from core.music_automation_planner import (
+    apply_clean_transition_policy_to_timeline,
+    build_music_automation_plan,
+)
+
 REPO_IMPORT_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_IMPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_IMPORT_ROOT))
@@ -626,6 +631,23 @@ def build_low_speech_gain_probe(music_category: str) -> dict:
     }
 
 
+
+def build_music_automation_probe(
+    *,
+    video_duration_sec: float,
+    music_timeline: list,
+    selected_music_tracks: list,
+) -> dict:
+    enhanced_timeline = apply_clean_transition_policy_to_timeline(music_timeline)
+    automation_plan = build_music_automation_plan(
+        video_duration_sec=video_duration_sec,
+        music_timeline=enhanced_timeline,
+        selected_music_tracks=selected_music_tracks,
+        window_sec=5.0,
+    )
+    automation_plan["music_timeline"] = enhanced_timeline
+    return automation_plan
+
 def build_manifest(
     *,
     status: str,
@@ -791,6 +813,12 @@ def run(
     music_timeline_probe = dict(music_timeline_probe)
     music_timeline_probe["music_timeline_planner_status"] = music_timeline_probe.pop("status", "ok")
     playlist_plan.update(music_timeline_probe)
+    music_automation_probe = build_music_automation_probe(
+        video_duration_sec=duration_sec,
+        music_timeline=music_timeline_probe.get("music_timeline", []),
+        selected_music_tracks=playlist_plan.get("selected_music_tracks", []),
+    )
+    playlist_plan.update(music_automation_probe)
     track_gain_plan = build_track_gain_plan(root, selected_music_files)
     ffmpeg_music_volume = build_ffmpeg_music_volume_probe(low_speech_gains, track_gain_plan)
 
