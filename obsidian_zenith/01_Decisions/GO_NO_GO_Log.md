@@ -2180,3 +2180,19 @@ Next:
 - Ali prueft Bild/Ton selbst.
 - Entscheidung: GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
+
+## 2026-06-11 21:42:15 ? Step 19B GO for Code-Fix Only
+
+Decision: GO for local code-fix commit only.
+Commit: 08ac0b8 fix(preview): balance music against voice and prevent gaps
+
+Important:
+- Step 19B is NOT a final owner visual/audio GO.
+- Step 19C render remains locked until Master-GO.
+- Upload remains locked.
+- Runtime learning remains locked.
+- Qwen remains locked.
+
+Reason:
+- Dry-run manifest gate passed with checks_failed = [].
+- Music balance and known-gap guards are now represented in manifest fields.

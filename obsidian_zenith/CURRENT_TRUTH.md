@@ -1891,3 +1891,39 @@ Next:
 - Ali prueft Bild/Ton selbst.
 - Entscheidung: GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
+
+## Step 19B Owner Music Balance Fix ? DONE
+
+Status: DONE / CODE-FIX COMMITTED LOCAL
+Commit: 08ac0b8 fix(preview): balance music against voice and prevent gaps
+
+Result:
+- Owner review issue addressed:
+  - 01:43?01:50 known music gap protected by guard.
+  - Music balance reduced under voice.
+- New balance policy active:
+  - owner_music_balanced_gain_range_db = [-38.0, -30.0]
+  - owner_music_target_gain_db = -34.0
+  - music_audibility_floor_db = -38.0
+  - music_loudness_ceiling_db = -30.0
+  - voice_active_music_ceiling_db = -35.0
+  - no_voice_music_ceiling_db = -30.0
+- Gap guard active:
+  - music_continuity_guard_enabled = true
+  - music_gap_detection_enabled = true
+  - known_owner_gap_sec = [103.0, 110.0]
+  - music_gap_at_103_110_fixed = true
+  - musicbed_full_coverage_required = true
+  - musicbed_no_silent_gaps = true
+- Voice priority active:
+  - voice_priority_music_ducking_enabled = true
+  - music_must_stay_below_voice_enabled = true
+  - music_vs_voice_safety_margin_enabled = true
+- Dry-run gate passed:
+  - checks_failed = []
+  - known_gap_final_gain_db_values = [-36.0, -36.0]
+- No render executed.
+- No upload executed.
+- No Qwen executed.
+- No runtime learning executed.
+- Reports remain untracked.

@@ -2227,3 +2227,20 @@ Next:
 - Ali prueft Bild/Ton selbst.
 - Entscheidung: GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
+
+## 2026-06-11 21:42:15 ? Step 19B Owner Music Balance Fix
+
+Status: DONE / CODE-FIX COMMITTED LOCAL
+Commit: 08ac0b8 fix(preview): balance music against voice and prevent gaps
+
+Proof:
+- Target tests passed after final assertion update.
+- Step 19B dry-run manifest gate passed.
+- checks_failed = []
+- known_gap_final_gain_db_values = [-36.0, -36.0]
+- New music balance policy:
+  - [-38.0, -30.0]
+  - target -34.0 dB
+  - voice-active ceiling -35.0 dB
+- Known gap 103?110 sec marked fixed by guard.
+- No render/upload/Qwen/runtime learning.

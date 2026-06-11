@@ -2202,3 +2202,23 @@ Next:
 - Ali prueft Bild/Ton selbst.
 - Entscheidung: GO / FIX / NO-GO.
 - Kein Upload ohne neues Master-GO.
+
+## 2026-06-11 21:42:15 ? Step 19B Music Balance + Gap Fix
+
+Status: DONE / local code commit
+
+Commit:
+- 08ac0b8 fix(preview): balance music against voice and prevent gaps
+
+Owner Review Fix:
+- General music too loud over voice: fixed by voice-priority ceiling.
+- Known 103?110 sec music gap: protected by continuity guard.
+- Dry-run only; no render.
+
+Dry-run proof:
+- checks_failed = []
+- known_gap_final_gain_db_values = [-36.0, -36.0]
+- music_balance_policy_enabled = true
+- music_gap_at_103_110_fixed = true
+- musicbed_no_silent_gaps = true
+- voice_priority_music_ducking_enabled = true
