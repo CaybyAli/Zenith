@@ -64,17 +64,19 @@ EXPECTED_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step2_preview_
 STEP9_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step9_new_clip_final_tuning_render")
 STEP11_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step11_proper_run_final_music_render")
 STEP13_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step13_visual_proper_run_music_render")
+STEP17B_OUTPUT_ROOT = Path("reports/controlled_music_preview_run/step17b_music_audibility_policy_fix")
 ALLOWED_CONTROLLED_PREVIEW_OUTPUT_ROOTS = {
     "step2_preview_render": EXPECTED_OUTPUT_ROOT,
     "step9_new_clip_final_tuning_render": STEP9_OUTPUT_ROOT,
     "step11_proper_run_final_music_render": STEP11_OUTPUT_ROOT,
     "step13_visual_proper_run_music_render": STEP13_OUTPUT_ROOT,
+    "step17b_music_audibility_policy_fix": STEP17B_OUTPUT_ROOT,
 }
 ALLOWED_CONTROLLED_PREVIEW_RUN_TARGETS = {
     CONFIRMED_INPUT_VIDEO.as_posix(): {EXPECTED_OUTPUT_ROOT.as_posix()},
     SELECTED_NEW_INPUT_VIDEO.as_posix(): {STEP9_OUTPUT_ROOT.as_posix()},
     PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP11_OUTPUT_ROOT.as_posix()},
-    VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP13_OUTPUT_ROOT.as_posix()},
+    VISUAL_PROPER_RUN_INPUT_VIDEO.as_posix(): {STEP13_OUTPUT_ROOT.as_posix(), STEP17B_OUTPUT_ROOT.as_posix()},
 }
 MAIN_MUSIC_ROOT = Path("local_assets/music/main_account")
 OUTPUT_FILENAME = "controlled_music_preview_main.mp4"
@@ -103,9 +105,18 @@ DEMO_FIRST_USABLE_AUDIO_SEC = 30.0
 DEMO_MUSIC_DURATION_SEC = 120.0
 LOW_SPEECH_DENSITY = 0.10
 FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
-OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = [-40.0, -35.0]
-OWNER_MUSIC_TARGET_GAIN_DB = -38.0
-OWNER_MUSIC_VOLUME_SOURCE = "owner_adobe_reference_gain_db"
+OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = [-35.0, -26.0]
+OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB
+OWNER_MUSIC_TARGET_GAIN_DB = -30.0
+MUSIC_AUDIBILITY_FLOOR_DB = -35.0
+MUSIC_LOUDNESS_CEILING_DB = -26.0
+MUSIC_AUDIBILITY_POLICY_ENABLED = True
+DOUBLE_DUCKING_PROTECTION_ENABLED = True
+SIDECHAIN_THRESHOLD = 0.08
+SIDECHAIN_RATIO = 3.0
+SIDECHAIN_ATTACK = 40
+SIDECHAIN_RELEASE = 350
+OWNER_MUSIC_VOLUME_SOURCE = "owner_music_audible_gain_db"
 ADAPTIVE_TRACK_GAIN_ENABLED = True
 TRACK_GAIN_STRATEGY = "relative_track_loudness_with_owner_range_clamp"
 TRACK_GAIN_REFERENCE = "median_selected_track_mean_volume_db"
@@ -311,17 +322,27 @@ def build_track_gain_plan(repo_root: Path, selected_music_files: list[Path]) -> 
 
     return {
         "adaptive_track_gain_enabled": ADAPTIVE_TRACK_GAIN_ENABLED,
+        "music_audibility_policy_enabled": MUSIC_AUDIBILITY_POLICY_ENABLED,
+        "owner_music_audible_gain_range_db": OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB,
         "owner_adobe_reference_gain_range_db": OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB,
         "owner_music_target_gain_db": OWNER_MUSIC_TARGET_GAIN_DB,
+        "music_audibility_floor_db": MUSIC_AUDIBILITY_FLOOR_DB,
+        "music_loudness_ceiling_db": MUSIC_LOUDNESS_CEILING_DB,
+        "double_ducking_protection_enabled": DOUBLE_DUCKING_PROTECTION_ENABLED,
         "track_gain_strategy": TRACK_GAIN_STRATEGY,
         "track_gain_reference": TRACK_GAIN_REFERENCE,
         "reference_track_mean_volume_db": round(reference_mean, 3),
         "selected_music_tracks": selected_tracks_manifest,
         "ffmpeg_music_volume_gain_db_by_track": final_gains,
-        "all_final_gains_between_minus_40_and_minus_35": all(
-            min(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB) <= gain <= max(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB)
+        "all_final_gains_between_audible_range": all(
+            min(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB) <= gain <= max(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB)
             for gain in final_gains
         ),
+        "all_final_gains_between_minus_35_and_minus_26": all(
+            min(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB) <= gain <= max(OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB)
+            for gain in final_gains
+        ),
+        "all_final_gains_between_minus_40_and_minus_35": False,
         "all_tracks_same_gain": len(set(final_gains)) == 1,
     }
 
@@ -427,6 +448,56 @@ def build_ffmpeg_music_volume_probe(low_speech_gains: dict, track_gain_plan: dic
         "manifest_gains_applied_to_ffmpeg_command": True,
         "speech_aware_ducking_confirmed": False,
         "sidechaincompress_used": True,
+        "sidechain_threshold": SIDECHAIN_THRESHOLD,
+        "sidechain_ratio": SIDECHAIN_RATIO,
+        "sidechain_attack": SIDECHAIN_ATTACK,
+        "sidechain_release": SIDECHAIN_RELEASE,
+        "double_ducking_protection_enabled": DOUBLE_DUCKING_PROTECTION_ENABLED,
+    }
+
+
+def build_command_volume_audibility_gate(command: list[str]) -> dict:
+    command_text = " ".join(command)
+    volume_values = [
+        float(match.group(1))
+        for match in re.finditer(r"volume=(-?\d+(?:\.\d+)?)dB", command_text)
+    ]
+    if not volume_values:
+        return {
+            "command_volume_values_db": [],
+            "command_volume_average_db": None,
+            "command_volume_min_db": None,
+            "command_volume_max_db": None,
+            "command_volume_audibility_gate_passed": False,
+            "music_audibility_gate_failure_reason": "no_volume_db_tokens_found",
+        }
+
+    average_gain = sum(volume_values) / len(volume_values)
+    min_gain = min(volume_values)
+    max_gain = max(volume_values)
+    all_at_floor = all(abs(value - MUSIC_AUDIBILITY_FLOOR_DB) <= 0.001 for value in volume_values)
+    all_too_quiet = all(value <= -38.0 for value in volume_values)
+
+    gate_passed = (
+        average_gain > MUSIC_AUDIBILITY_FLOOR_DB
+        and -33.0 <= average_gain <= -28.0
+        and min_gain >= MUSIC_AUDIBILITY_FLOOR_DB
+        and max_gain <= MUSIC_LOUDNESS_CEILING_DB
+        and SIDECHAIN_RATIO <= 4.0
+        and ("ratio=" + "12") not in command_text
+        and not all_at_floor
+        and not all_too_quiet
+    )
+
+    return {
+        "command_volume_values_db": [round(value, 3) for value in volume_values],
+        "command_volume_average_db": round(average_gain, 3),
+        "command_volume_min_db": round(min_gain, 3),
+        "command_volume_max_db": round(max_gain, 3),
+        "command_volume_all_at_floor": all_at_floor,
+        "command_volume_all_too_quiet": all_too_quiet,
+        "command_volume_audibility_gate_passed": gate_passed,
+        "music_audibility_gate_failure_reason": None if gate_passed else "music_audibility_gate_failed",
     }
 
 
@@ -831,8 +902,11 @@ def build_ffmpeg_command(
         + ";"
         + automation_filter
         + ";"
-        "[music_auto][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
-        "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
+        + (
+            f"[music_auto][0:a]sidechaincompress=threshold={SIDECHAIN_THRESHOLD}:"
+            f"ratio={SIDECHAIN_RATIO:g}:attack={SIDECHAIN_ATTACK}:release={SIDECHAIN_RELEASE}[ducked];"
+        )
+        + "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
     )
 
     command.extend(
@@ -1030,8 +1104,13 @@ def build_summary(manifest: dict) -> str:
         f"{str(manifest['vlog_background_blocked_for_gaming_main']).lower()}",
         f"- music_file_path: `{manifest['music_file_path']}`",
         f"- input_duration_sec: {manifest['input_duration_sec']}",
+        f"- music_audibility_policy_enabled: {str(manifest['music_audibility_policy_enabled']).lower()}",
+        f"- owner_music_audible_gain_range_db: {manifest['owner_music_audible_gain_range_db']}",
         f"- owner_adobe_reference_gain_range_db: {manifest['owner_adobe_reference_gain_range_db']}",
         f"- owner_music_target_gain_db: {manifest['owner_music_target_gain_db']}",
+        f"- music_audibility_floor_db: {manifest['music_audibility_floor_db']}",
+        f"- music_loudness_ceiling_db: {manifest['music_loudness_ceiling_db']}",
+        f"- double_ducking_protection_enabled: {str(manifest['double_ducking_protection_enabled']).lower()}",
         f"- intro_offset_policy_used: {str(manifest['intro_offset_policy_used']).lower()}",
         f"- quiet_intro_detected: {str(manifest['quiet_intro_detected']).lower()}",
         f"- music_start_offset_sec: {manifest['music_start_offset_sec']}",
@@ -1059,6 +1138,14 @@ def build_summary(manifest: dict) -> str:
         f"{str(manifest['manifest_gains_applied_to_ffmpeg_command']).lower()}",
         f"- speech_aware_ducking_confirmed: {str(manifest['speech_aware_ducking_confirmed']).lower()}",
         f"- sidechaincompress_used: {str(manifest['sidechaincompress_used']).lower()}",
+        f"- sidechain_threshold: {manifest['sidechain_threshold']}",
+        f"- sidechain_ratio: {manifest['sidechain_ratio']}",
+        f"- sidechain_attack: {manifest['sidechain_attack']}",
+        f"- sidechain_release: {manifest['sidechain_release']}",
+        f"- command_volume_average_db: {manifest['command_volume_average_db']}",
+        f"- command_volume_min_db: {manifest['command_volume_min_db']}",
+        f"- command_volume_max_db: {manifest['command_volume_max_db']}",
+        f"- command_volume_audibility_gate_passed: {str(manifest['command_volume_audibility_gate_passed']).lower()}",
         f"- long_run_playlist_enabled: {str(manifest['long_run_playlist_enabled']).lower()}",
         f"- music_single_track_loop: {str(manifest['music_single_track_loop']).lower()}",
         f"- selected_music_track_count: {manifest['selected_music_track_count']}",
@@ -1159,6 +1246,7 @@ def run(
         command,
     )
     ffmpeg_music_volume.update(command_realization_probe)
+    ffmpeg_music_volume.update(build_command_volume_audibility_gate(command))
 
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 

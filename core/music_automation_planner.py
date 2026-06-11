@@ -3,10 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import Any
 
-OWNER_GAIN_MIN_DB = -40.0
-OWNER_GAIN_MAX_DB = -35.0
+OWNER_GAIN_MIN_DB = -35.0
+OWNER_GAIN_MAX_DB = -26.0
+MUSIC_AUDIBILITY_FLOOR_DB = -35.0
+MUSIC_LOUDNESS_CEILING_DB = -26.0
+OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = (MUSIC_AUDIBILITY_FLOOR_DB, MUSIC_LOUDNESS_CEILING_DB)
 DEFAULT_AUTOMATION_WINDOW_SEC = 5.0
-DEFAULT_BASE_TARGET_GAIN_DB = -38.0
+DEFAULT_BASE_TARGET_GAIN_DB = -30.0
 DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB = 2.0
 DEFAULT_TRACK_START_TRIM_SEC = 30.0
 DEFAULT_TRACK_END_TRIM_SEC = 15.0
@@ -163,26 +166,26 @@ def compute_dynamic_music_gain(
     reasons: list[str] = []
 
     if voice_level_db >= -24.0:
-        raw_gain_db -= 2.0
+        raw_gain_db -= 4.0
         reasons.append("voice_loud")
     elif voice_level_db >= -32.0:
-        raw_gain_db -= 1.0
+        raw_gain_db -= 2.0
         reasons.append("voice_active")
     elif voice_level_db <= -45.0:
-        raw_gain_db += 2.0
+        raw_gain_db += 3.0
         reasons.append("voice_quiet")
     else:
-        raw_gain_db += 0.5
+        raw_gain_db += 1.0
         reasons.append("voice_low")
 
     if music_section_level_db >= -22.0:
         raw_gain_db -= 1.0
         reasons.append("song_loud")
     elif music_section_level_db <= -36.0:
-        raw_gain_db += 1.5
+        raw_gain_db += 1.0
         reasons.append("song_quiet")
     elif music_section_level_db <= -31.0:
-        raw_gain_db += 0.75
+        raw_gain_db += 0.5
         reasons.append("song_low")
     else:
         reasons.append("song_normal")
@@ -194,6 +197,9 @@ def compute_dynamic_music_gain(
         "raw_gain_db": _round_db(raw_gain_db),
         "final_gain_db": _round_db(final_gain_db),
         "reason": "_".join(reasons),
+        "music_audibility_policy_enabled": True,
+        "music_audibility_floor_db": MUSIC_AUDIBILITY_FLOOR_DB,
+        "music_loudness_ceiling_db": MUSIC_LOUDNESS_CEILING_DB,
     }
 
 
@@ -395,10 +401,21 @@ def build_music_automation_plan(
         "speaker_voice_source": speaker_voice_source,
         "automation_window_count": len(automation_windows),
         "music_automation_plan": automation_windows,
-        "automation_all_final_gains_between_minus_40_and_minus_35": all(
+        "music_audibility_policy_enabled": True,
+        "owner_music_audible_gain_range_db": [OWNER_GAIN_MIN_DB, OWNER_GAIN_MAX_DB],
+        "owner_music_target_gain_db": DEFAULT_BASE_TARGET_GAIN_DB,
+        "music_audibility_floor_db": MUSIC_AUDIBILITY_FLOOR_DB,
+        "music_loudness_ceiling_db": MUSIC_LOUDNESS_CEILING_DB,
+        "double_ducking_protection_enabled": True,
+        "automation_all_final_gains_between_audible_range": all(
             OWNER_GAIN_MIN_DB <= float(window["final_gain_db"]) <= OWNER_GAIN_MAX_DB
             for window in automation_windows
         ),
+        "automation_all_final_gains_between_minus_35_and_minus_26": all(
+            OWNER_GAIN_MIN_DB <= float(window["final_gain_db"]) <= OWNER_GAIN_MAX_DB
+            for window in automation_windows
+        ),
+        "automation_all_final_gains_between_minus_40_and_minus_35": False,
         "clean_transition_policy_enabled": True,
         "track_start_trim_sec": DEFAULT_TRACK_START_TRIM_SEC,
         "track_end_trim_sec": DEFAULT_TRACK_END_TRIM_SEC,
