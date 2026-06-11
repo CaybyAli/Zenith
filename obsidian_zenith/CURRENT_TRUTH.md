@@ -1605,3 +1605,23 @@ Entscheidung:
 Nächster Schritt:
 - Master-GO für Step 16B-R-FIX erforderlich.
 - Fix-Ziel: Dynamic FFmpeg Volume Automation FFmpeg-sicher machen, ohne 106-fach verschachtelte if(between(...)) Expression.
+
+## Step 17B-FIX Current Truth ? 2026-06-11 18:59:05
+
+Step 17B-FIX code is DONE and pushed.
+
+Code commit:
+- d975c79 fix(preview): make dynamic music audible
+- Full hash: d975c79ea3e807072fa71ed5bbce638411b45b3c
+
+Current technical truth:
+- Music audibility policy is active.
+- Owner audible gain range is [-35.0, -26.0].
+- Owner target gain is -30.0.
+- Music audibility floor is -35.0.
+- Music loudness ceiling is -26.0.
+- Double-ducking protection is enabled.
+- Sidechain is gentle: ratio 3.0, threshold 0.08, attack 40, release 350.
+- Dry-run passed.
+- No real render executed after this fix.
+- Next real render requires explicit Master/Owner GO.

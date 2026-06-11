@@ -154,3 +154,44 @@ Safety:
 - Keine Musik.
 - Kein echter Learning-Loop.
 - Reports bleiben lokal/untracked und nicht committed.
+
+## 2026-06-11 18:59:05 ? Step 17B-FIX Music Audibility Policy ? CODE DONE
+
+Status: DONE / pushed.
+
+Commit:
+- d975c79 fix(preview): make dynamic music audible
+- Full hash: d975c79ea3e807072fa71ed5bbce638411b45b3c
+
+Proof:
+- py_compile: PASS
+- Target tests: 65 passed
+- Controlled preview tests: 54 passed
+- Music automation tests: 11 passed
+- Dry-run only: PASS
+- No render executed
+- No upload
+- No Qwen / no runtime learning
+- No ingest
+
+Policy result:
+- owner_music_target_gain_db: -30.0
+- owner_music_audible_gain_range_db: [-35.0, -26.0]
+- music_audibility_floor_db: -35.0
+- music_loudness_ceiling_db: -26.0
+- sidechain_ratio: 3.0
+- sidechain_threshold: 0.08
+- double_ducking_protection_enabled: true
+- old ratio=12 removed from command path
+- old inaudible -38/-40 command values blocked
+
+Dry-run proof:
+- output_root: reports/controlled_music_preview_run/step17b_music_audibility_policy_fix
+- command_volume_avg_db: -31.912
+- command_contains_ratio_12: false
+- command_contains_volume_minus_38: false
+- command_contains_volume_minus_40: false
+
+Next:
+- Obsidian documentation commit.
+- Then wait for Master/Owner decision before any real render.

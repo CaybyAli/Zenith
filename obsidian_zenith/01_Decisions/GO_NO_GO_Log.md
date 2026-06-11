@@ -1897,3 +1897,20 @@ Nächster Schritt:
 - Manifest-Command-Consistency Gate: gruen.
 - Safety: kein Upload, kein Final-Render, kein Qwen, kein Runtime Learning, keine Musikdateien committed.
 - Owner Review Schritt 17 ist jetzt Pflicht.
+
+## 2026-06-11 18:59:05 ? GO: Step 17B-FIX Code Commit
+
+Decision: GO for code commit.
+
+Commit:
+- d975c79 fix(preview): make dynamic music audible
+
+Reason:
+- Compile passed.
+- Target tests passed: 65 passed.
+- Dry-run passed with audible command gain average.
+- Forbidden old ratio/value checks clean.
+
+Restriction:
+- No render GO given here.
+- Real preview/render remains locked until explicit Master/Owner GO.
