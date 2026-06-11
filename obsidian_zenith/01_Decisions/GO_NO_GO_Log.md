@@ -1680,3 +1680,71 @@ Safety:
 
 Nächster Schritt:
 - Step 16B Render mit Dynamic Music Automation nur nach Master-GO.
+
+## 2026-06-11 16:22:29 — Controlled Music Preview Step 16B — STOPP vor Execute
+
+Status: STOPP / NO-GO BEFORE EXECUTE / NO RENDER
+
+Ausgangslage:
+- Step 16B sollte den visuellen Proper Run mit Dynamic Music Automation rendern.
+- Vor Execute wurde Dry-Run + Command-Gate geprüft.
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+- Dauer: ca. 528.348813s
+- content_type: gaming_main
+- channel_type: main
+
+Dry-Run:
+- run_dir: reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_162056
+- status: dry_run
+- dry_run: True
+- MP4 im Dry-Run-Ordner: 0
+- owner_execute_required: True
+
+Manifest OK:
+- music_timeline_planner_enabled: True
+- music_automation_planner_enabled: True
+- automation_window_sec: 5.0
+- automation_window_count: 106
+- voice_aware_music_ceiling_enabled: True
+- music_section_loudness_aware: True
+- gain_smoothing_enabled: True
+- max_gain_change_per_window_db: 2.0
+- ali_friend_separation_confirmed: False
+- speaker_voice_source: mixed_audio_level
+- clean_transition_policy_enabled: True
+- track_start_trim_sec: 30.0
+- track_end_trim_sec: 15.0
+- crossfade_sec: 3.0
+- hard_cut_transitions: False
+
+Command Gate:
+- forbidden hits: False
+- has_volume: True
+- has_trim_30s: True
+- has_concat: True
+- has_funny_gaming_background: True
+- has_stream_loop: False
+- has_afade: False
+- has_acrossfade: False
+
+STOPP-Grund:
+- Manifest behauptet Clean Transition Policy / Crossfade.
+- Echter FFMPEG-Command enthält aber kein afade und kein acrossfade.
+- Deshalb darf kein Render mit --execute-owner-go gestartet werden.
+- Zusätzlich ist Dynamic Automation bisher im Manifest geplant, aber noch nicht als echte 5s Gain-Kurve im FFMPEG-Command umgesetzt.
+
+Safety:
+- kein Render gestartet
+- kein Execute gestartet
+- kein Upload
+- kein Runtime Learning
+- kein Qwen
+- keine Musikdateien committed
+- keine Produktionsdateien geändert
+- Reports bleiben lokal und untracked
+
+Nächster Schritt:
+- Step 16B-FIX nur nach neuem Master-GO.
+- Ziel: echte FFMPEG Clean Transitions und echte Dynamic-Automation-Command-Abbildung bauen.
