@@ -324,3 +324,4 @@ Fruehere Zwischenstaende wie "P5-L3 offen", "P5-L4 naechster offener Bereich" od
 - Kein Qwen gestartet.
 - Runtime Learning Gate bleibt later / locked.
 - Naechster Schritt: Controlled Music Preview Run nur nach Master-GO und Owner Review.
+- Controlled Music Preview 16B-R-FIX: DONE / remote gesichert / naechster Schritt 16B-R2 nur nach Master-GO.

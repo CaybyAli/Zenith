@@ -1864,3 +1864,15 @@ Entscheidung:
 Nächster Schritt:
 - Master-GO für Step 16B-R-FIX erforderlich.
 - Fix-Ziel: Dynamic FFmpeg Volume Automation FFmpeg-sicher machen, ohne 106-fach verschachtelte if(between(...)) Expression.
+
+## 2026-06-11 — Controlled Music Preview Schritt 16B-R-FIX DONE
+
+- Status: DONE / remote gesichert.
+- Commit: `efaff10` / `efaff1049c2784d894c0a12e090e788e62da672d`.
+- Problem: echter FFmpeg Execute scheiterte an 106-fach verschachtelter `if(between(t,...))` Volume-Expression.
+- Fix: segmentierte Gain-Automation `segmented_atrim_volume_concat`.
+- Tests: `tests/test_controlled_music_preview_render.py` = `52 passed`.
+- Dry-Run: gruen.
+- Command: `asplit=106`, `atrim=106`, `volume=106`, `concat=n=106:v=0:a=1[music_auto]`.
+- Safety: kein Render im Fix-Dry-Run, kein Upload, kein Qwen, kein Runtime Learning.
+- Naechster Schritt: Schritt 16B-R2 Execute-Render nur nach Master-GO.
