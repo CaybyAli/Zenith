@@ -1211,3 +1211,62 @@ Tests:
 
 N?chster Schritt:
 - Controlled Music Preview Step 15B Render mit Adaptive Per-Track Gain nur nach Master-GO.
+
+## 2026-06-11 14:36:01 — Controlled Music Preview Step 15A2 — Music Timeline Planner
+
+Status: DONE / CODE-GO
+
+Commit:
+- ca2ed05 feat(preview): plan music timeline by video and track duration
+- full hash: ca2ed05f339aac2526b645494b3721fa774e7799
+
+Owner-Anforderung:
+- Video-Dauer berücksichtigen
+- Song-Dauer berücksichtigen
+- Song-Anzahl aus Timeline ableiten
+- Mood/Kategorie-Mapping vorbereiten
+- keine falsche KI-Mood-Behauptung
+
+Umgesetzt:
+- neuer Planner: core/music_timeline_planner.py
+- neue Tests: tests/test_music_timeline_planner.py
+- Preview-Script mit Music-Timeline-Manifest erweitert
+- Direct-Run Importpfad für Scriptstart repariert
+- adaptive Track-Gain bleibt aktiv
+- Planner-Status als music_timeline_planner_status, damit dry_run status nicht überschrieben wird
+
+Test-Beweis:
+- python -m py_compile core\music_timeline_planner.py scripts\controlled_music_preview_render.py: OK
+- tests/test_music_timeline_planner.py: 10 passed
+- tests/test_controlled_music_preview_render.py: 46 passed
+
+Dry-Run-Beweis:
+- status: dry_run
+- video_duration_sec: 528.348
+- music_timeline_planner_enabled: True
+- music_timeline_planner_status: ok
+- music_timeline_segment_count: 5
+- selected_music_track_count: 4
+- duration_based_song_count: True
+- track_duration_aware_selection: True
+- mood_category_mapping_enabled: True
+- mood_based_category_switching: fallback_only
+- true_ai_mood_detection_used: False
+- mood_analysis_source: fallback_neutral_gaming
+- single_song_loop: False
+- qwen_used: False
+- runtime_learning_started: False
+- upload_started: False
+- music_files_committed: False
+- kein MP4 im Dry-Run erzeugt
+
+Wichtig:
+- Es wurde nicht gerendert.
+- Es wurde nichts hochgeladen.
+- Qwen wurde nicht genutzt.
+- Runtime Learning bleibt gesperrt.
+- local_assets/music bleibt untracked / nicht committed.
+- Reports bleiben lokal und werden nicht committed.
+
+Nächster Schritt:
+- Step 15B Render mit Music Timeline Planner nur nach Master-GO.
