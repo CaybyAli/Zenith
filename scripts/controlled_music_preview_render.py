@@ -462,6 +462,139 @@ def _assert_command_uses_music_gains(command: list[str], gain_dbs: list[float]) 
             )
 
 
+def _music_command_sec(value: float) -> str:
+    return f"{max(0.0, float(value)):.3f}"
+
+
+def _automation_gain_expression_from_plan(music_automation_plan: list[dict] | None) -> tuple[str | None, int]:
+    windows: list[tuple[float, float, float]] = []
+
+    for window in music_automation_plan or []:
+        try:
+            start_sec = float(window.get("start_sec", 0.0))
+            end_sec = float(window.get("end_sec", start_sec))
+            gain_db = float(
+                window.get(
+                    "final_gain_db",
+                    window.get("smoothed_gain_db", window.get("target_music_gain_db", OWNER_MUSIC_TARGET_GAIN_DB)),
+                )
+            )
+        except (TypeError, ValueError):
+            continue
+
+        if end_sec <= start_sec:
+            continue
+
+        windows.append((start_sec, end_sec, db_to_linear(gain_db)))
+
+    if len(windows) <= 1:
+        return None, len(windows)
+
+    expression = f"{windows[-1][2]:.6f}"
+    for start_sec, end_sec, linear_gain in reversed(windows):
+        expression = (
+            f"if(between(t,{start_sec:.3f},{end_sec:.3f}),"
+            f"{linear_gain:.6f},{expression})"
+        )
+
+    return expression, len(windows)
+
+
+def _timeline_segment_for_music_input(music_timeline: list[dict] | None, input_index: int) -> dict:
+    timeline = music_timeline or []
+    if not timeline:
+        return {}
+
+    safe_index = min(max(input_index - 1, 0), len(timeline) - 1)
+    segment = timeline[safe_index]
+    return segment if isinstance(segment, dict) else {}
+
+
+def _safe_music_track_trim_for_command(
+    segment: dict,
+    fallback_used_duration_sec: float,
+    crossfade_sec: float,
+) -> dict:
+    try:
+        start_sec = float(segment.get("track_source_start_sec", 30.0))
+    except (TypeError, ValueError):
+        start_sec = 30.0
+
+    try:
+        end_sec = float(segment.get("track_source_end_sec"))
+    except (TypeError, ValueError):
+        end_sec = 0.0
+
+    try:
+        used_duration_sec = float(segment.get("track_used_duration_sec", fallback_used_duration_sec))
+    except (TypeError, ValueError):
+        used_duration_sec = fallback_used_duration_sec
+
+    start_sec = max(0.0, start_sec)
+    minimum_duration_sec = max(float(crossfade_sec) * 2.0 + 0.5, 1.0)
+
+    if end_sec <= start_sec + minimum_duration_sec:
+        end_sec = start_sec + max(used_duration_sec, minimum_duration_sec)
+
+    duration_sec = max(0.001, end_sec - start_sec)
+    safe_crossfade_sec = min(float(crossfade_sec), max(0.001, duration_sec / 3.0))
+    fade_out_start_sec = max(0.0, duration_sec - safe_crossfade_sec)
+
+    return {
+        "start_sec": start_sec,
+        "end_sec": end_sec,
+        "duration_sec": duration_sec,
+        "crossfade_sec": safe_crossfade_sec,
+        "fade_out_start_sec": fade_out_start_sec,
+    }
+
+
+def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
+    filter_complex = _filter_complex_from_command(command)
+
+    command_contains_fade = "afade" in filter_complex or "acrossfade" in filter_complex
+    command_contains_track_trim = "atrim=start=30" in filter_complex or "atrim=start=30.0" in filter_complex
+    command_contains_time_based_volume_automation = (
+        "between(t," in filter_complex
+        and "eval=frame" in filter_complex
+        and "volume='if(" in filter_complex
+    )
+    dynamic_gain_zone_count = filter_complex.count("between(t,")
+
+    ffmpeg_clean_transition_applied = command_contains_fade and command_contains_track_trim
+    ffmpeg_dynamic_automation_applied = (
+        command_contains_time_based_volume_automation and dynamic_gain_zone_count > 1
+    )
+
+    return {
+        "ffmpeg_clean_transition_applied": ffmpeg_clean_transition_applied,
+        "ffmpeg_command_contains_fade": command_contains_fade,
+        "ffmpeg_command_contains_track_trim": command_contains_track_trim,
+        "ffmpeg_dynamic_automation_applied": ffmpeg_dynamic_automation_applied,
+        "automation_window_command_applied": ffmpeg_dynamic_automation_applied,
+        "command_contains_time_based_volume_automation": command_contains_time_based_volume_automation,
+        "command_dynamic_gain_zone_count": dynamic_gain_zone_count,
+        "dynamic_gain_expression_strategy": (
+            "volume_if_between_eval_frame" if command_contains_time_based_volume_automation else "none"
+        ),
+        "manifest_command_consistency_gate": ffmpeg_clean_transition_applied and ffmpeg_dynamic_automation_applied,
+    }
+
+
+def assert_manifest_command_consistency(manifest: dict, command: list[str]) -> dict:
+    features = build_ffmpeg_command_realization_probe(command)
+
+    if manifest.get("clean_transition_policy_enabled") is True:
+        if not features["ffmpeg_clean_transition_applied"]:
+            raise ControlledMusicPreviewError("clean_transition_manifest_command_mismatch")
+
+    if manifest.get("music_automation_planner_enabled") is True:
+        if not features["ffmpeg_dynamic_automation_applied"]:
+            raise ControlledMusicPreviewError("dynamic_automation_manifest_command_mismatch")
+
+    return features
+
+
 def build_ffmpeg_command(
     input_video: Path,
     music_file: Path,
@@ -471,6 +604,9 @@ def build_ffmpeg_command(
     music_files: list[Path] | None = None,
     long_run_playlist_enabled: bool = False,
     music_volume_gain_db_by_track: list[float] | None = None,
+    music_timeline: list[dict] | None = None,
+    music_automation_plan: list[dict] | None = None,
+    crossfade_sec: float = 3.0,
 ) -> list[str]:
     selected_music_files = list(music_files or [music_file])
     if not selected_music_files or not str(selected_music_files[0]).strip():
@@ -486,9 +622,12 @@ def build_ffmpeg_command(
         volume_gains = [float(gain) for gain in music_volume_gain_db_by_track]
         if len(volume_gains) != len(selected_music_files):
             raise ControlledMusicPreviewError("per-track music gain count must match selected music files")
+
     for gain in volume_gains:
         if gain < min(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB) or gain > max(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB):
-            raise ControlledMusicPreviewError("music gain must stay inside owner Adobe reference range")
+            raise ControlledMusicPreviewError(
+                f"music gain {gain:.1f}dB outside owner range {OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB}"
+            )
 
     command = [
         "ffmpeg",
@@ -497,60 +636,93 @@ def build_ffmpeg_command(
         "-i",
         str(input_video),
     ]
-    if long_run_playlist_enabled:
-        if len(selected_music_files) < LONG_RUN_MIN_UNIQUE_TRACKS:
-            raise ControlledMusicPreviewError("long run playlist requires at least 3 unique tracks")
-        for track in selected_music_files:
-            if music_start_offset_sec > 0.0:
-                command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
-            command.extend(["-i", str(track)])
-        volume_filters = [
-            f"[{index}:a]volume={volume_gains[index - 1]:.1f}dB[music{index}]"
-            for index in range(1, len(selected_music_files) + 1)
-        ]
+
+    for selected_music_file in selected_music_files:
+        command.extend(
+            [
+                "-ss",
+                f"{float(music_start_offset_sec):.3f}",
+                "-i",
+                str(selected_music_file),
+            ]
+        )
+
+    dynamic_expression, dynamic_zone_count = _automation_gain_expression_from_plan(music_automation_plan)
+
+    music_filters: list[str] = []
+    for index, gain_db in enumerate(volume_gains, start=1):
+        segment = _timeline_segment_for_music_input(music_timeline, index)
+        trim = _safe_music_track_trim_for_command(
+            segment,
+            fallback_used_duration_sec=120.0,
+            crossfade_sec=crossfade_sec,
+        )
+
+        start_token = _music_command_sec(trim["start_sec"])
+        end_token = _music_command_sec(trim["end_sec"])
+        fade_token = _music_command_sec(trim["crossfade_sec"])
+        fade_out_start_token = _music_command_sec(trim["fade_out_start_sec"])
+
+        music_filters.append(
+            f"[{index}:a]"
+            f"atrim=start={start_token}:end={end_token},"
+            "asetpts=PTS-STARTPTS,"
+            f"volume={gain_db:.1f}dB,"
+            f"afade=t=in:st=0:d={fade_token},"
+            f"afade=t=out:st={fade_out_start_token}:d={fade_token}"
+            f"[music{index}]"
+        )
+
+    if len(selected_music_files) > 1:
         concat_inputs = "".join(f"[music{index}]" for index in range(1, len(selected_music_files) + 1))
-        filter_complex = (
-            ";".join(volume_filters)
-            + f";{concat_inputs}concat=n={len(selected_music_files)}:v=0:a=1[musicquiet];"
-            "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
-            "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
-        )
+        music_bed_filter = f"{concat_inputs}concat=n={len(selected_music_files)}:v=0:a=1[musicbed]"
     else:
-        command.extend(["-stream_loop", "-1"])
-        if music_start_offset_sec > 0.0:
-            command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
-        command.extend(["-i", str(selected_music_files[0])])
-        filter_complex = (
-            f"[1:a]volume={volume_gains[0]:.1f}dB[musicquiet];"
-            "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
-            "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
-        )
-    command.extend([
-        "-filter_complex",
-        filter_complex,
-        "-map",
-        "0:v:0",
-        "-map",
-        "[aout]",
-        "-c:v",
-        "copy",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "160k",
-        "-shortest",
-        str(output_video),
-    ])
+        music_bed_filter = "[music1]anull[musicbed]"
+
+    if dynamic_expression and dynamic_zone_count > 1:
+        automation_filter = f"[musicbed]volume='{dynamic_expression}':eval=frame[musicquiet]"
+    else:
+        automation_filter = "[musicbed]anull[musicquiet]"
+
+    filter_complex = (
+        ";".join(music_filters)
+        + ";"
+        + music_bed_filter
+        + ";"
+        + automation_filter
+        + ";"
+        "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
+        "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
+    )
+
+    command.extend(
+        [
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "0:v:0",
+            "-map",
+            "[aout]",
+            "-c:v",
+            "copy",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "160k",
+            "-shortest",
+            str(output_video),
+        ]
+    )
+
     command = validate_ffmpeg_command(
         command,
-        music_file=selected_music_files[0],
+        music_file=music_file,
         output_video=output_video,
         music_files=selected_music_files,
         long_run_playlist_enabled=long_run_playlist_enabled,
     )
     _assert_command_uses_music_gains(command, volume_gains)
     return command
-
 
 def validate_ffmpeg_command(
     command: list[str],
@@ -835,7 +1007,19 @@ def run(
         ],
         music_files=selected_music_files,
         long_run_playlist_enabled=bool(playlist_plan["long_run_playlist_enabled"]),
+            music_timeline=playlist_plan.get("music_timeline", []),
+        music_automation_plan=playlist_plan.get("music_automation_plan", []),
+        crossfade_sec=float(playlist_plan.get("crossfade_sec", 3.0)),
+)
+    command_realization_probe = assert_manifest_command_consistency(
+        {
+            "clean_transition_policy_enabled": playlist_plan.get("clean_transition_policy_enabled"),
+            "music_automation_planner_enabled": playlist_plan.get("music_automation_planner_enabled"),
+        },
+        command,
     )
+    ffmpeg_music_volume.update(command_realization_probe)
+
     _write_text(run_dir / "ffmpeg_command.txt", json.dumps(command, indent=2) + "\n")
 
     if not execute_owner_go:

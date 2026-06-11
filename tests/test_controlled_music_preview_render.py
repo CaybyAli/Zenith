@@ -1,4 +1,5 @@
-from __future__ import annotations
+﻿from __future__ import annotations
+import json
 
 from pathlib import Path
 
@@ -530,21 +531,22 @@ def test_ffmpeg_command_with_intro_offset_is_complete(tmp_path):
         music_start_offset_sec=30.0,
     )
 
-    assert "-stream_loop" in command
-    assert "-1" in command
-    assert "-ss" in command
-    assert "30.000" in command
-    assert command.count("-i") == 2
+    assert command[0] == "ffmpeg"
+    assert str(input_video) in command
     assert str(music_path) in command
+    assert str(output_path) == command[-1]
+    assert "-stream_loop" not in command
     assert "-filter_complex" in command
-    assert "-map" in command
-    assert command[-1] == str(output_path)
+
     filter_complex = command[command.index("-filter_complex") + 1]
+
+    assert "atrim=start=30.000" in filter_complex
+    assert "afade" in filter_complex
     assert "volume=0.08" not in filter_complex
     assert "volume=-38.0dB" in filter_complex
     assert "volume=-27.0dB" not in filter_complex
     assert "sidechaincompress" in filter_complex
-
+    assert "[aout]" in filter_complex
 
 def test_db_to_linear_converts_planned_preview_gain():
     assert preview.db_to_linear(-38.0) == pytest.approx(0.0126, abs=0.0001)
@@ -884,3 +886,152 @@ def test_step16a_dry_run_manifest_contains_dynamic_music_automation(tmp_path):
     assert manifest["owner_execute_required"] is True
     assert manifest["music_timeline"][0]["transition_type"] == "crossfade"
     assert manifest["music_timeline"][0]["track_source_start_sec"] >= 0.0
+
+def test_step16b_fix_command_realizes_clean_transitions_trim_and_dynamic_automation(tmp_path):
+    input_video = tmp_path / "input.mp4"
+    output_video = tmp_path / "out.mp4"
+    music_files = [tmp_path / f"song_{index}.mp3" for index in range(1, 5)]
+
+    timeline = [
+        {"track_source_start_sec": 30.0, "track_source_end_sec": 150.0, "track_used_duration_sec": 120.0},
+        {"track_source_start_sec": 30.0, "track_source_end_sec": 138.276, "track_used_duration_sec": 108.276},
+        {"track_source_start_sec": 30.0, "track_source_end_sec": 150.0, "track_used_duration_sec": 120.0},
+        {"track_source_start_sec": 30.0, "track_source_end_sec": 125.571, "track_used_duration_sec": 95.571},
+    ]
+
+    automation_plan = [
+        {"start_sec": 0.0, "end_sec": 5.0, "final_gain_db": -39.0},
+        {"start_sec": 5.0, "end_sec": 10.0, "final_gain_db": -37.0},
+        {"start_sec": 10.0, "end_sec": 15.0, "final_gain_db": -40.0},
+    ]
+
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_files[0],
+        output_video,
+        music_start_offset_sec=30.0,
+        music_volume_gain_db=-38.0,
+        music_files=music_files,
+        long_run_playlist_enabled=True,
+        music_volume_gain_db_by_track=[-37.4, -39.4, -35.0, -38.6],
+        music_timeline=timeline,
+        music_automation_plan=automation_plan,
+        crossfade_sec=3.0,
+    )
+
+    filter_complex = command[command.index("-filter_complex") + 1]
+
+    assert "atrim=start=30.000" in filter_complex
+    assert "afade" in filter_complex
+    assert "concat=n=4" in filter_complex
+    assert "between(t," in filter_complex
+    assert "eval=frame" in filter_complex
+    assert "volume='if(" in filter_complex
+    assert "volume=0.08" not in filter_complex
+    assert "volume=-27.0dB" not in filter_complex
+    assert "stream_loop" not in command
+
+    probe = preview.build_ffmpeg_command_realization_probe(command)
+    assert probe["ffmpeg_clean_transition_applied"] is True
+    assert probe["ffmpeg_command_contains_fade"] is True
+    assert probe["ffmpeg_command_contains_track_trim"] is True
+    assert probe["ffmpeg_dynamic_automation_applied"] is True
+    assert probe["automation_window_command_applied"] is True
+    assert probe["command_contains_time_based_volume_automation"] is True
+    assert probe["command_dynamic_gain_zone_count"] == 3
+    assert probe["dynamic_gain_expression_strategy"] == "volume_if_between_eval_frame"
+    assert probe["manifest_command_consistency_gate"] is True
+
+
+def test_step16b_fix_consistency_gate_blocks_false_clean_transition_claim(tmp_path):
+    bad_command = [
+        "ffmpeg",
+        "-i",
+        str(tmp_path / "input.mp4"),
+        "-i",
+        str(tmp_path / "song.mp3"),
+        "-filter_complex",
+        "[1:a]volume=-38.0dB[musicquiet];"
+        "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
+        "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]",
+        str(tmp_path / "out.mp4"),
+    ]
+
+    with pytest.raises(preview.ControlledMusicPreviewError, match="clean_transition_manifest_command_mismatch"):
+        preview.assert_manifest_command_consistency(
+            {
+                "clean_transition_policy_enabled": True,
+                "music_automation_planner_enabled": False,
+            },
+            bad_command,
+        )
+
+
+def test_step16b_fix_consistency_gate_blocks_false_dynamic_automation_claim(tmp_path):
+    bad_command = [
+        "ffmpeg",
+        "-i",
+        str(tmp_path / "input.mp4"),
+        "-i",
+        str(tmp_path / "song.mp3"),
+        "-filter_complex",
+        "[1:a]atrim=start=30.000:end=150.000,asetpts=PTS-STARTPTS,"
+        "volume=-38.0dB,afade=t=in:st=0:d=3.000,afade=t=out:st=117.000:d=3.000[musicquiet];"
+        "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
+        "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]",
+        str(tmp_path / "out.mp4"),
+    ]
+
+    with pytest.raises(preview.ControlledMusicPreviewError, match="dynamic_automation_manifest_command_mismatch"):
+        preview.assert_manifest_command_consistency(
+            {
+                "clean_transition_policy_enabled": True,
+                "music_automation_planner_enabled": True,
+            },
+            bad_command,
+        )
+
+
+def test_step16b_fix_dry_run_manifest_contains_command_realization_fields(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    output_root = repo_root / "reports/controlled_music_preview_run/step13_visual_proper_run_music_render"
+
+    preview.run(
+        repo_root=repo_root,
+        input_video="exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4",
+        channel_type="main",
+        content_type="gaming_main",
+        output_root="reports/controlled_music_preview_run/step13_visual_proper_run_music_render",
+        execute_owner_go=False,
+    )
+
+    command_path = sorted(
+        output_root.glob("run_*/ffmpeg_command.txt"),
+        key=lambda path: path.stat().st_mtime,
+    )[-1]
+    run_dir = command_path.parent
+
+    manifest = json.loads((run_dir / "preview_render_manifest.json").read_text(encoding="utf-8"))
+    command_text = command_path.read_text(encoding="utf-8")
+
+    assert manifest["status"] == "dry_run"
+    assert manifest["dry_run"] is True
+    assert manifest["music_automation_planner_enabled"] is True
+    assert manifest["clean_transition_policy_enabled"] is True
+    assert manifest["ffmpeg_clean_transition_applied"] is True
+    assert manifest["ffmpeg_command_contains_fade"] is True
+    assert manifest["ffmpeg_command_contains_track_trim"] is True
+    assert manifest["ffmpeg_dynamic_automation_applied"] is True
+    assert manifest["automation_window_command_applied"] is True
+    assert manifest["command_contains_time_based_volume_automation"] is True
+    assert manifest["command_dynamic_gain_zone_count"] > 1
+    assert manifest["dynamic_gain_expression_strategy"] == "volume_if_between_eval_frame"
+    assert manifest["manifest_command_consistency_gate"] is True
+
+    assert "atrim=start=30.000" in command_text
+    assert "afade" in command_text or "acrossfade" in command_text
+    assert "between(t," in command_text
+    assert "eval=frame" in command_text
+    assert "volume=0.08" not in command_text
+    assert "volume=-27.0dB" not in command_text
+    assert "stream_loop" not in command_text
