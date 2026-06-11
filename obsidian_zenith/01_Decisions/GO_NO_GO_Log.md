@@ -2087,3 +2087,45 @@ Naechster Schritt:
 - Reports nicht committen.
 - Danach Push und Remote-Verifikation.
 - Kein Step 18C ohne neuen Master-GO.
+---
+
+## 2026-06-11 ? Controlled Music Preview Step 18B-FIX Double Music Gain Fix Remote
+
+Status: DONE / remote documented
+Code Commit: `aed15c0 fix(music): remove double music bus gain`
+Full Hash: `aed15c0cddff3bee352e4720bfc8ff0565420b8d`
+
+Step 18A Diagnose:
+- Musiktracks waren vorhanden.
+- Musiktracks waren nicht silent.
+- Finaler Audio-Map war wahrscheinlich korrekt.
+- FFmpeg Command enthielt Musikinputs.
+- FFmpeg Command baute `[music_auto]`, `sidechaincompress`, `amix` und final `[aout]`.
+- Wahrscheinlicher Root Cause: doppelte Musik-Absenkung.
+- Vorher wurde Musik erst auf Track-Level stark abgesenkt und danach in der Automation nochmal abgesenkt.
+- Dadurch wurde der Musikbus praktisch unhoerbar.
+
+Step 18B-FIX Ergebnis:
+- Double Music Bus Gain entfernt.
+- Track-Level macht nur noch leichte Normalisierung.
+- Finaler Musik-Gain liegt nur noch in der Automation.
+- `music_gain_application_mode`: `single_final_automation_gain`
+- `per_track_final_mix_gain_applied`: false
+- `automation_final_mix_gain_applied`: true
+- `music_bus_double_gain_protection_passed`: true
+- `effective_music_gain_double_applied`: false
+- Segmented Dynamic Automation bleibt aktiv.
+- Clean Transitions bleiben aktiv.
+- Sidechain bleibt sanft mit Ratio <= 4.
+
+Safety:
+- Kein Render gestartet.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Kein Ingest.
+- Keine Musikdateien geaendert.
+
+Naechster Schritt:
+- Step 18C Render nur nach Master-GO.
+- Step 18C bleibt gesperrt, bis diese Obsidian-Dokumentation remote gesichert ist.
