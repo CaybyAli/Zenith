@@ -112,4 +112,3 @@ def test_music_vs_voice_relative_gate_blocks_foreground_music(tmp_path):
     assert foreground["voice_window_music_below_voice_passed"] is False
     assert background["status"] == "diagnosis_ok"
     assert background["voice_window_music_below_voice_passed"] is True
-
