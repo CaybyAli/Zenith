@@ -49,6 +49,27 @@ def _repo_fixture(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def _fake_music_loudness(music_file: Path) -> dict:
+    mean_by_name = {
+        "a_first.mp3": -18.0,
+        "b_second.mp3": -20.0,
+        "c_third.mp3": -23.0,
+        "d_fourth.mp3": -28.0,
+        "a_hype.mp3": -21.0,
+        "a_vlog.mp3": -24.0,
+    }
+    return {
+        "mean_volume_db": mean_by_name.get(music_file.name, -22.0),
+        "max_volume_db": -1.0,
+        "loudness_probe": "test_fake_loudness",
+    }
+
+
+@pytest.fixture(autouse=True)
+def _patch_music_loudness(monkeypatch):
+    monkeypatch.setattr(preview, "measure_music_track_loudness_db", _fake_music_loudness)
+
+
 def test_default_is_dry_run_and_starts_no_render(tmp_path, monkeypatch):
     repo_root = _repo_fixture(tmp_path)
 
@@ -251,6 +272,11 @@ def test_step13_dry_run_with_visual_proper_run_uses_owner_volume_and_playlist_fi
     assert manifest["ffmpeg_music_volume_gain_db"] == -38.0
     assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0126, abs=0.0001)
     assert manifest["ffmpeg_music_volume_source"] == "owner_adobe_reference_gain_db"
+    assert manifest["adaptive_track_gain_enabled"] is True
+    assert manifest["track_gain_strategy"] == "relative_track_loudness_with_owner_range_clamp"
+    assert manifest["track_gain_reference"] == "median_selected_track_mean_volume_db"
+    assert manifest["all_final_gains_between_minus_40_and_minus_35"] is True
+    assert manifest["all_tracks_same_gain"] is False
     assert manifest["manifest_gains_applied_to_ffmpeg_command"] is True
     assert manifest["speech_aware_ducking_confirmed"] is False
     assert manifest["sidechaincompress_used"] is True
@@ -258,7 +284,7 @@ def test_step13_dry_run_with_visual_proper_run_uses_owner_volume_and_playlist_fi
     assert manifest["long_run_playlist_enabled"] is True
     assert manifest["music_single_track_loop"] is False
     assert manifest["selected_music_track_count"] >= 3
-    assert len(set(manifest["selected_music_tracks"])) == manifest["selected_music_track_count"]
+    assert len({track["path"] for track in manifest["selected_music_tracks"]}) == manifest["selected_music_track_count"]
     assert manifest["music_playlist_no_immediate_repeat"] is True
     assert manifest["music_playlist_category"] == CATEGORY_FUNNY_GAMING_BACKGROUND
     assert manifest["music_playlist_fast_switching"] is False
@@ -521,6 +547,11 @@ def test_ffmpeg_music_volume_manifest_fields_match_owner_adobe_reference_gain(tm
     assert manifest["ffmpeg_music_volume_gain_db"] == -38.0
     assert manifest["ffmpeg_music_volume_linear"] == pytest.approx(0.0126, abs=0.0001)
     assert manifest["ffmpeg_music_volume_source"] == "owner_adobe_reference_gain_db"
+    assert manifest["adaptive_track_gain_enabled"] is True
+    assert manifest["track_gain_strategy"] == "relative_track_loudness_with_owner_range_clamp"
+    assert manifest["track_gain_reference"] == "median_selected_track_mean_volume_db"
+    assert manifest["all_final_gains_between_minus_40_and_minus_35"] is True
+    assert manifest["all_tracks_same_gain"] is False
     assert manifest["manifest_gains_applied_to_ffmpeg_command"] is True
     assert manifest["speech_aware_ducking_confirmed"] is False
 
@@ -561,13 +592,16 @@ def test_long_visual_proper_run_uses_multi_song_playlist_command(tmp_path):
     assert manifest["long_run_playlist_enabled"] is True
     assert manifest["music_single_track_loop"] is False
     assert manifest["selected_music_track_count"] >= 3
-    assert len(set(manifest["selected_music_tracks"])) == manifest["selected_music_track_count"]
-    assert all(CATEGORY_FUNNY_GAMING_BACKGROUND in track for track in manifest["selected_music_tracks"])
-    assert all(CATEGORY_VLOG_BACKGROUND not in track for track in manifest["selected_music_tracks"])
-    assert all("uncut" not in Path(track).parts for track in manifest["selected_music_tracks"])
+    assert len({track["path"] for track in manifest["selected_music_tracks"]}) == manifest["selected_music_track_count"]
+    assert all(CATEGORY_FUNNY_GAMING_BACKGROUND in track["path"] for track in manifest["selected_music_tracks"])
+    assert all(CATEGORY_VLOG_BACKGROUND not in track["path"] for track in manifest["selected_music_tracks"])
+    assert all("uncut" not in Path(track["path"]).parts for track in manifest["selected_music_tracks"])
     assert manifest["music_playlist_no_immediate_repeat"] is True
     assert manifest["music_playlist_fast_switching"] is False
-    assert "volume=-38.0dB" in command
+    assert "volume=-40.0dB" in command
+    assert "volume=-39.5dB" in command
+    assert "volume=-36.5dB" in command
+    assert "volume=-35.0dB" in command
     assert "volume=0.08" not in command
     assert "volume=-27.0dB" not in command
     assert "concat=n=" in command
@@ -709,3 +743,66 @@ def test_manifest_safety_flags(tmp_path):
     assert manifest["production_files_modified"] is False
     assert manifest["final_render_used"] is False
     assert manifest["owner_review_required"] is True
+
+def test_adaptive_track_gain_calculates_per_track_owner_clamped_values(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    tracks = [
+        repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "a_first.mp3",
+        repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "b_second.mp3",
+        repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "c_third.mp3",
+        repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "d_fourth.mp3",
+    ]
+
+    plan = preview.build_track_gain_plan(repo_root, tracks)
+
+    assert plan["adaptive_track_gain_enabled"] is True
+    assert plan["owner_adobe_reference_gain_range_db"] == [-40.0, -35.0]
+    assert plan["owner_music_target_gain_db"] == -38.0
+    assert plan["track_gain_strategy"] == "relative_track_loudness_with_owner_range_clamp"
+    assert plan["track_gain_reference"] == "median_selected_track_mean_volume_db"
+    assert plan["reference_track_mean_volume_db"] == -21.5
+    assert plan["ffmpeg_music_volume_gain_db_by_track"] == [-40.0, -39.5, -36.5, -35.0]
+    assert plan["all_final_gains_between_minus_40_and_minus_35"] is True
+    assert plan["all_tracks_same_gain"] is False
+    assert plan["selected_music_tracks"][0]["mean_volume_db"] == -18.0
+    assert plan["selected_music_tracks"][0]["final_gain_db"] == -40.0
+    assert plan["selected_music_tracks"][-1]["mean_volume_db"] == -28.0
+    assert plan["selected_music_tracks"][-1]["final_gain_db"] == -35.0
+
+
+def test_adaptive_track_gain_fails_fast_without_mean_volume(tmp_path, monkeypatch):
+    repo_root = _repo_fixture(tmp_path)
+    track = repo_root / preview.MAIN_MUSIC_ROOT / CATEGORY_FUNNY_GAMING_BACKGROUND / "a_first.mp3"
+
+    def missing_mean_volume(_music_file: Path) -> dict:
+        return {"max_volume_db": -1.0}
+
+    monkeypatch.setattr(preview, "measure_music_track_loudness_db", missing_mean_volume)
+
+    with pytest.raises(preview.ControlledMusicPreviewError, match="mean_volume_db"):
+        preview.build_track_gain_plan(repo_root, [track])
+
+
+def test_long_run_command_uses_different_adaptive_volume_values(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert manifest["selected_music_track_count"] == 4
+    assert manifest["ffmpeg_music_volume_gain_db_by_track"] == [-40.0, -39.5, -36.5, -35.0]
+    assert len(set(manifest["ffmpeg_music_volume_gain_db_by_track"])) > 1
+    assert "volume=-40.0dB" in command
+    assert "volume=-39.5dB" in command
+    assert "volume=-36.5dB" in command
+    assert "volume=-35.0dB" in command
+    assert "volume=0.08" not in command
+    assert "volume=-27.0dB" not in command
+    assert "-stream_loop" not in command
+    assert "concat=n=4" in command

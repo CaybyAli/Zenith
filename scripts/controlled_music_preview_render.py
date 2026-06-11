@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from statistics import median
 
 REPO_IMPORT_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_IMPORT_ROOT) not in sys.path:
@@ -85,6 +87,9 @@ FFMPEG_MUSIC_VOLUME_SOURCE = "low_speech_base_music_gain_db"
 OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB = [-40.0, -35.0]
 OWNER_MUSIC_TARGET_GAIN_DB = -38.0
 OWNER_MUSIC_VOLUME_SOURCE = "owner_adobe_reference_gain_db"
+ADAPTIVE_TRACK_GAIN_ENABLED = True
+TRACK_GAIN_STRATEGY = "relative_track_loudness_with_owner_range_clamp"
+TRACK_GAIN_REFERENCE = "median_selected_track_mean_volume_db"
 LONG_RUN_PLAYLIST_THRESHOLD_SEC = 180.0
 LONG_RUN_MIN_UNIQUE_TRACKS = 3
 LONG_RUN_MAX_UNIQUE_TRACKS = 5
@@ -213,6 +218,95 @@ def db_to_linear(gain_db: float) -> float:
     return 10 ** (gain_db / 20)
 
 
+def clamp_gain_db(value: float, gain_range_db: list[float] | tuple[float, float]) -> float:
+    lower = float(min(gain_range_db))
+    upper = float(max(gain_range_db))
+    return min(max(float(value), lower), upper)
+
+
+def measure_music_track_loudness_db(music_file: Path) -> dict:
+    null_output = "NUL" if sys.platform.startswith("win") else "/dev/null"
+    command = [
+        "ffmpeg",
+        "-hide_banner",
+        "-nostats",
+        "-i",
+        str(music_file),
+        "-filter:a",
+        "volumedetect",
+        "-f",
+        "null",
+        null_output,
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True)
+    probe_output = f"{completed.stdout}\n{completed.stderr}"
+    if completed.returncode != 0:
+        raise ControlledMusicPreviewError(
+            f"music loudness probe failed for {music_file}: ffmpeg exited with {completed.returncode}"
+        )
+    mean_match = re.search(r"mean_volume:\s*(-?\d+(?:\.\d+)?)\s*dB", probe_output)
+    max_match = re.search(r"max_volume:\s*(-?\d+(?:\.\d+)?)\s*dB", probe_output)
+    if not mean_match:
+        raise ControlledMusicPreviewError(f"music loudness probe missing mean_volume_db for {music_file}")
+    return {
+        "mean_volume_db": float(mean_match.group(1)),
+        "max_volume_db": float(max_match.group(1)) if max_match else None,
+        "loudness_probe": "ffmpeg_volumedetect_mean_volume",
+    }
+
+
+def build_track_gain_plan(repo_root: Path, selected_music_files: list[Path]) -> dict:
+    if not selected_music_files:
+        raise ControlledMusicPreviewError("adaptive track gain requires selected music tracks")
+
+    measured_tracks = []
+    mean_values = []
+    for track in selected_music_files:
+        loudness = measure_music_track_loudness_db(track)
+        if "mean_volume_db" not in loudness or loudness["mean_volume_db"] is None:
+            raise ControlledMusicPreviewError("adaptive track gain requires mean_volume_db per track")
+        mean_volume_db = float(loudness["mean_volume_db"])
+        mean_values.append(mean_volume_db)
+        measured_tracks.append((track, loudness, mean_volume_db))
+
+    reference_mean = float(median(mean_values))
+    selected_tracks_manifest = []
+    final_gains = []
+
+    for track, loudness, mean_volume_db in measured_tracks:
+        raw_gain_db = OWNER_MUSIC_TARGET_GAIN_DB + (reference_mean - mean_volume_db)
+        final_gain_db = clamp_gain_db(raw_gain_db, OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB)
+        rounded_raw = round(raw_gain_db, 3)
+        rounded_final = round(final_gain_db, 3)
+        final_gains.append(rounded_final)
+        selected_tracks_manifest.append(
+            {
+                "path": track.relative_to(repo_root).as_posix(),
+                "mean_volume_db": round(mean_volume_db, 3),
+                "max_volume_db": loudness.get("max_volume_db"),
+                "raw_gain_db": rounded_raw,
+                "final_gain_db": rounded_final,
+                "clamped": abs(rounded_raw - rounded_final) > 0.0001,
+            }
+        )
+
+    return {
+        "adaptive_track_gain_enabled": ADAPTIVE_TRACK_GAIN_ENABLED,
+        "owner_adobe_reference_gain_range_db": OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB,
+        "owner_music_target_gain_db": OWNER_MUSIC_TARGET_GAIN_DB,
+        "track_gain_strategy": TRACK_GAIN_STRATEGY,
+        "track_gain_reference": TRACK_GAIN_REFERENCE,
+        "reference_track_mean_volume_db": round(reference_mean, 3),
+        "selected_music_tracks": selected_tracks_manifest,
+        "ffmpeg_music_volume_gain_db_by_track": final_gains,
+        "all_final_gains_between_minus_40_and_minus_35": all(
+            min(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB) <= gain <= max(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB)
+            for gain in final_gains
+        ),
+        "all_tracks_same_gain": len(set(final_gains)) == 1,
+    }
+
+
 def input_duration_sec(input_video: Path, repo_root: Path) -> float:
     return float(KNOWN_INPUT_DURATIONS_SEC.get(input_video.relative_to(repo_root).as_posix(), 0.0))
 
@@ -250,21 +344,22 @@ def build_music_playlist_plan(
         "min_unique_tracks": LONG_RUN_MIN_UNIQUE_TRACKS if duration_sec > LONG_RUN_PLAYLIST_THRESHOLD_SEC else 1,
         "target_unique_tracks": target_count,
         "selected_music_track_count": len(selected_tracks),
-        "selected_music_tracks": selected_track_paths,
+        "selected_music_track_paths": selected_track_paths,
         "music_playlist_no_immediate_repeat": no_immediate_repeat,
         "music_playlist_category": music_category,
         "music_playlist_fast_switching": False,
     }
 
 
-def build_ffmpeg_music_volume_probe(low_speech_gains: dict) -> dict:
+def build_ffmpeg_music_volume_probe(low_speech_gains: dict, track_gain_plan: dict) -> dict:
     _unused_low_speech_gain = float(low_speech_gains[FFMPEG_MUSIC_VOLUME_SOURCE])
-    gain_db = OWNER_MUSIC_TARGET_GAIN_DB
+    gain_by_track = [float(gain) for gain in track_gain_plan["ffmpeg_music_volume_gain_db_by_track"]]
+    if not gain_by_track:
+        raise ControlledMusicPreviewError("adaptive track gain produced no ffmpeg gains")
     return {
-        "owner_adobe_reference_gain_range_db": OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB,
-        "owner_music_target_gain_db": OWNER_MUSIC_TARGET_GAIN_DB,
-        "ffmpeg_music_volume_gain_db": gain_db,
-        "ffmpeg_music_volume_linear": db_to_linear(gain_db),
+        **track_gain_plan,
+        "ffmpeg_music_volume_gain_db": OWNER_MUSIC_TARGET_GAIN_DB,
+        "ffmpeg_music_volume_linear": db_to_linear(OWNER_MUSIC_TARGET_GAIN_DB),
         "ffmpeg_music_volume_source": OWNER_MUSIC_VOLUME_SOURCE,
         "manifest_gains_applied_to_ffmpeg_command": True,
         "speech_aware_ducking_confirmed": False,
@@ -281,14 +376,27 @@ def _filter_complex_from_command(command: list[str]) -> str:
     return command[filter_index]
 
 
-def _assert_command_uses_music_gain(command: list[str], gain_db: float) -> None:
-    filter_complex = _filter_complex_from_command(command)
+def _gain_token_present(filter_complex: str, gain_db: float) -> bool:
     gain_token = f"volume={gain_db:.1f}dB"
     linear_token = f"volume={db_to_linear(gain_db):.4f}"
-    if gain_token not in filter_complex and linear_token not in filter_complex:
+    return gain_token in filter_complex or linear_token in filter_complex
+
+
+def _assert_command_uses_music_gain(command: list[str], gain_db: float) -> None:
+    filter_complex = _filter_complex_from_command(command)
+    if not _gain_token_present(filter_complex, gain_db):
         raise ControlledMusicPreviewError(
             "manifest_gains_applied_to_ffmpeg_command requires ffmpeg volume gain"
         )
+
+
+def _assert_command_uses_music_gains(command: list[str], gain_dbs: list[float]) -> None:
+    filter_complex = _filter_complex_from_command(command)
+    for gain_db in gain_dbs:
+        if not _gain_token_present(filter_complex, gain_db):
+            raise ControlledMusicPreviewError(
+                "manifest_gains_applied_to_ffmpeg_command requires every track gain"
+            )
 
 
 def build_ffmpeg_command(
@@ -299,6 +407,7 @@ def build_ffmpeg_command(
     music_volume_gain_db: float = OWNER_MUSIC_TARGET_GAIN_DB,
     music_files: list[Path] | None = None,
     long_run_playlist_enabled: bool = False,
+    music_volume_gain_db_by_track: list[float] | None = None,
 ) -> list[str]:
     selected_music_files = list(music_files or [music_file])
     if not selected_music_files or not str(selected_music_files[0]).strip():
@@ -307,6 +416,16 @@ def build_ffmpeg_command(
         raise ControlledMusicPreviewError("output video path is required")
     if music_start_offset_sec < 0.0:
         raise ControlledMusicPreviewError("music_start_offset_sec must not be negative")
+
+    if music_volume_gain_db_by_track is None:
+        volume_gains = [float(music_volume_gain_db)] * len(selected_music_files)
+    else:
+        volume_gains = [float(gain) for gain in music_volume_gain_db_by_track]
+        if len(volume_gains) != len(selected_music_files):
+            raise ControlledMusicPreviewError("per-track music gain count must match selected music files")
+    for gain in volume_gains:
+        if gain < min(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB) or gain > max(OWNER_ADOBE_REFERENCE_GAIN_RANGE_DB):
+            raise ControlledMusicPreviewError("music gain must stay inside owner Adobe reference range")
 
     command = [
         "ffmpeg",
@@ -323,7 +442,7 @@ def build_ffmpeg_command(
                 command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
             command.extend(["-i", str(track)])
         volume_filters = [
-            f"[{index}:a]volume={music_volume_gain_db:.1f}dB[music{index}]"
+            f"[{index}:a]volume={volume_gains[index - 1]:.1f}dB[music{index}]"
             for index in range(1, len(selected_music_files) + 1)
         ]
         concat_inputs = "".join(f"[music{index}]" for index in range(1, len(selected_music_files) + 1))
@@ -339,7 +458,7 @@ def build_ffmpeg_command(
             command.extend(["-ss", f"{music_start_offset_sec:.3f}"])
         command.extend(["-i", str(selected_music_files[0])])
         filter_complex = (
-            f"[1:a]volume={music_volume_gain_db:.1f}dB[musicquiet];"
+            f"[1:a]volume={volume_gains[0]:.1f}dB[musicquiet];"
             "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
             "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
         )
@@ -366,7 +485,7 @@ def build_ffmpeg_command(
         music_files=selected_music_files,
         long_run_playlist_enabled=long_run_playlist_enabled,
     )
-    _assert_command_uses_music_gain(command, music_volume_gain_db)
+    _assert_command_uses_music_gains(command, volume_gains)
     return command
 
 
@@ -488,8 +607,8 @@ def build_manifest(
     }
     manifest.update(intro_offset)
     manifest.update(low_speech_gains)
-    manifest.update(ffmpeg_music_volume)
     manifest.update(playlist_plan)
+    manifest.update(ffmpeg_music_volume)
     manifest.update(SAFE_MANIFEST_FLAGS)
     if error:
         manifest["error"] = error
@@ -527,7 +646,12 @@ def build_summary(manifest: dict) -> str:
         f"- low_speech_ducking_gain_db: {manifest['low_speech_ducking_gain_db']}",
         f"- low_speech_max_music_gain_db: {manifest['low_speech_max_music_gain_db']}",
         f"- low_speech_volume_reduced_total_db: {manifest['low_speech_volume_reduced_total_db']}",
+        f"- adaptive_track_gain_enabled: {str(manifest['adaptive_track_gain_enabled']).lower()}",
+        f"- track_gain_strategy: {manifest['track_gain_strategy']}",
+        f"- track_gain_reference: {manifest['track_gain_reference']}",
+        f"- reference_track_mean_volume_db: {manifest['reference_track_mean_volume_db']}",
         f"- ffmpeg_music_volume_gain_db: {manifest['ffmpeg_music_volume_gain_db']}",
+        f"- ffmpeg_music_volume_gain_db_by_track: {manifest['ffmpeg_music_volume_gain_db_by_track']}",
         f"- ffmpeg_music_volume_linear: {manifest['ffmpeg_music_volume_linear']}",
         f"- ffmpeg_music_volume_source: {manifest['ffmpeg_music_volume_source']}",
         f"- manifest_gains_applied_to_ffmpeg_command: "
@@ -583,14 +707,15 @@ def run(
     selected_music = music_tracks[0]
     intro_offset = build_demo_intro_offset_decision(selected_music)
     low_speech_gains = build_low_speech_gain_probe(music_category)
-    ffmpeg_music_volume = build_ffmpeg_music_volume_probe(low_speech_gains)
     playlist_plan = build_music_playlist_plan(
         repo_root=root,
         input_video=full_input,
         music_tracks=music_tracks,
         music_category=music_category,
     )
-    selected_music_files = [root / Path(track) for track in playlist_plan["selected_music_tracks"]]
+    selected_music_files = [root / Path(track) for track in playlist_plan["selected_music_track_paths"]]
+    track_gain_plan = build_track_gain_plan(root, selected_music_files)
+    ffmpeg_music_volume = build_ffmpeg_music_volume_probe(low_speech_gains, track_gain_plan)
 
     run_dir = create_run_dir(full_output_root)
     output_video = run_dir / OUTPUT_FILENAME
@@ -600,6 +725,9 @@ def run(
         output_video,
         music_start_offset_sec=float(intro_offset["music_start_offset_sec"]),
         music_volume_gain_db=float(ffmpeg_music_volume["ffmpeg_music_volume_gain_db"]),
+        music_volume_gain_db_by_track=[
+            float(gain) for gain in ffmpeg_music_volume["ffmpeg_music_volume_gain_db_by_track"]
+        ],
         music_files=selected_music_files,
         long_run_playlist_enabled=bool(playlist_plan["long_run_playlist_enabled"]),
     )
