@@ -1270,3 +1270,56 @@ Wichtig:
 
 Nächster Schritt:
 - Step 15B Render mit Music Timeline Planner nur nach Master-GO.
+
+## 2026-06-11 14:45:35 — Controlled Music Preview Step 15B — Render mit Music Timeline Planner
+
+Status: DONE / TECH-GO / OWNER REVIEW REQUIRED
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+- Dauer: 528.348s
+- content_type: gaming_main
+- channel_type: main
+
+Output:
+- reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_144301/controlled_music_preview_main.mp4
+- lokale MP4: D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_144301\controlled_music_preview_main.mp4
+- Größe Bytes: 1623778212
+- Run: D:\Zenith\reports\controlled_music_preview_run\step13_visual_proper_run_music_render\run_20260611_144301
+
+Music Timeline Planner:
+- music_timeline_planner_enabled: True
+- music_timeline_planner_status: ok
+- music_timeline_segment_count: 5
+- selected_music_track_count: 4
+- duration_based_song_count: True
+- track_duration_aware_selection: True
+- mood_category_mapping_enabled: True
+- true_ai_mood_detection_used: False
+- mood_analysis_source: fallback_neutral_gaming
+- mood_based_category_switching: fallback_only
+- single_song_loop: False
+
+Adaptive Track Gain:
+- local_assets/music/main_account/funny_gaming_background/ES_Ain't No Thing But To Swing - Jules Gaia.mp3 | category= | mean=-11.6 | raw=-37.4 | final=-37.4 | clamped=False
+- local_assets/music/main_account/funny_gaming_background/ES_B Positive - Jules Gaia.mp3 | category= | mean=-9.6 | raw=-39.4 | final=-39.4 | clamped=False
+- local_assets/music/main_account/funny_gaming_background/ES_Bop It - Jules Gaia.mp3 | category= | mean=-14.1 | raw=-34.9 | final=-35.0 | clamped=True
+- local_assets/music/main_account/funny_gaming_background/ES_Break Fast - Jules Gaia.mp3 | category= | mean=-10.4 | raw=-38.6 | final=-38.6 | clamped=False
+
+Safety:
+- kein Upload: False
+- kein Runtime Learning: False
+- kein Qwen: False
+- preview_render_used: True
+- final_render_used: False
+- uncut_music_allowed: False
+- owner_review_required: True
+- keine Musikdateien committed
+- Reports/MP4 bleiben lokal und untracked
+
+Wichtig:
+- Technischer Render ist erzeugt.
+- Qualität wurde nicht bewertet.
+- Owner Review Schritt 16 ist Pflicht.
+- Kein Upload ohne neues Master-GO.
+- Kein Runtime Learning.
