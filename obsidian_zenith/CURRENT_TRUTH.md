@@ -1,3 +1,49 @@
+<!-- STEP22B_FIX_CURRENT_TRUTH_START -->
+# CURRENT TRUTH ADDENDUM ? Step 22B-FIX
+
+Stand: 2026-06-11
+
+## Status
+- Phase 5: 100% / DONE
+- P5-L: 100% / CLOSED
+- Phase 5.5: 100% / DONE
+- Step 22 Owner Review: FIX / NO-GO
+- Step 22B-FIX Code: DONE / PUSHED
+- Step 22B Obsidian: DOCUMENTED
+- Step 22C Render: LOCKED until Master-GO
+- Runtime Learning: locked
+
+## Current HEAD
+- Short: 86f2952
+- Full: 86f295272f18558a3d03117cd2b6b3d34b139e8d
+- Commit: fix(music): apply real dynamic automation and remove tail fadeout
+
+## Root Cause
+- Kein Cache-Problem: alter und neuer Render hatten unterschiedliche Hashes.
+- Die echte FFmpeg-Automation war vorher nicht dynamisch.
+- Alle 106 Automationsfenster waren vorher effektiv `volume=-36.0dB`.
+- Das finale Musiksegment hatte einen Tail-Fadeout.
+
+## Step 22B-FIX Ergebnis
+- Echte dynamische Musikautomation eingebaut.
+- Dry-Run Command-Werte: `-30 / -32 / -34 / -36 / -38`.
+- `quiet_section_boost_window_count: 20`.
+- `loud_section_cut_window_count: 4`.
+- `voice_priority_window_count: 45`.
+- Finaler Tail-Fadeout entfernt.
+- Musik-Tail bleibt h?rbar.
+
+## Safety / Locks
+- Kein Render gestartet.
+- Kein Upload gestartet.
+- Kein Qwen genutzt.
+- Kein Runtime Learning gestartet.
+- Kein Ingest gestartet.
+
+## N?chster Schritt
+- Step 22C Render nur nach Master-GO.
+<!-- STEP22B_FIX_CURRENT_TRUTH_END -->
+
 # CURRENT TRUTH - PROJECT ZENITH
 
 Stand: 2026-06-11
@@ -2049,4 +2095,3 @@ Evidence:
 Next:
 - Step 22 Owner Review.
 - No upload without new Master-GO.
-

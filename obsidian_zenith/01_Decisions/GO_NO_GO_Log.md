@@ -2319,3 +2319,28 @@ Next:
 - Step 22 Owner Review.
 - No upload without new Master-GO.
 
+<!-- STEP22B_FIX_GO_NO_GO_LOG -->
+## 2026-06-11 ? Step 22B-FIX Code GO / Step 22C Render locked
+
+Decision:
+- Step 22B-FIX Code: GO / DONE / PUSHED.
+- Step 22 Owner Review: weiterhin FIX / NO-GO bis neuer Owner-Render gepr?ft ist.
+- Step 22C Render: NO-GO / LOCKED until Master-GO.
+
+Evidence:
+- Commit: `86f2952`.
+- Full hash: `86f295272f18558a3d03117cd2b6b3d34b139e8d`.
+- Dry-Run dynamic automation values: `-30 / -32 / -34 / -36 / -38`.
+- `dynamic_gain_unique_value_count >= 4`.
+- `quiet_section_boost_window_count: 20`.
+- `loud_section_cut_window_count: 4`.
+- `voice_priority_window_count: 45`.
+- Final tail fadeout removed.
+
+Hard Locks:
+- Do not start Step 22C without Master-GO.
+- Do not render.
+- Do not upload.
+- Do not start Runtime Learning.
+- Do not use Qwen.
+- Do not ingest.

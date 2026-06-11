@@ -2367,3 +2367,35 @@ Next:
 - Step 22 Owner Review.
 - No upload without new Master-GO.
 
+<!-- STEP22B_FIX_PROGRESS_LOG -->
+## 2026-06-11 ? Step 22B-FIX: real dynamic music automation fix documented
+
+Status:
+- Step 22 Owner Review bleibt FIX / NO-GO.
+- Step 22B-FIX Code ist DONE / PUSHED.
+- Commit: `86f2952 fix(music): apply real dynamic automation and remove tail fadeout`.
+- Full hash: `86f295272f18558a3d03117cd2b6b3d34b139e8d`.
+
+Root Cause:
+- Kein Cache-Problem: alter und neuer Render hatten unterschiedliche Hashes.
+- Echte FFmpeg-Automation war vorher nicht dynamisch.
+- Alle 106 Automationsfenster waren vorher `volume=-36.0dB`.
+- Finales Musiksegment hatte Tail-Fadeout.
+
+Fix:
+- Echte dynamische Musikautomation eingebaut.
+- Dry-Run Command-Werte: `-30 / -32 / -34 / -36 / -38`.
+- `quiet_section_boost_window_count: 20`.
+- `loud_section_cut_window_count: 4`.
+- `voice_priority_window_count: 45`.
+- Finaler Tail-Fadeout entfernt.
+
+Safety:
+- Kein Render gestartet.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
+- Kein Ingest.
+
+Next:
+- Step 22C Render bleibt gesperrt bis Master-GO.

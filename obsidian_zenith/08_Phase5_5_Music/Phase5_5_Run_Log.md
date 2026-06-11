@@ -2345,3 +2345,34 @@ Next:
 - Step 22 Owner Review.
 - No upload without new Master-GO.
 
+<!-- STEP22B_FIX_PHASE5_5_RUN_LOG -->
+## 2026-06-11 ? Phase 5.5 / Step 22B-FIX run record
+
+Step:
+- Step 22B-FIX ? real dynamic music automation + no tail fadeout.
+
+Result:
+- Code DONE / PUSHED.
+- Obsidian documentation created.
+- Step 22C Render remains locked.
+
+Root Cause:
+- No cache issue.
+- Previous command automation was effectively constant.
+- 106 automation windows were `volume=-36.0dB`.
+- Final music segment had tail fadeout.
+
+Fix Evidence:
+- Dynamic command gain values: `-30 / -32 / -34 / -36 / -38`.
+- Quiet boost windows: `20`.
+- Loud cut windows: `4`.
+- Voice priority windows: `45`.
+- Final music segment no longer fades out at tail.
+- Tail music remains audible.
+
+Safety:
+- No render.
+- No upload.
+- No Runtime Learning.
+- No Qwen.
+- No ingest.
