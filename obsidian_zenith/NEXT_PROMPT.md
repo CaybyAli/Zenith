@@ -1,34 +1,41 @@
-﻿PROJECT ZENITH — CONTROLLED MUSIC PREVIEW RUN — SCHRITT 16B-FIX — REAL FFMPEG CLEAN TRANSITIONS + DYNAMIC AUTOMATION COMMAND
+﻿PROJECT ZENITH — CONTROLLED MUSIC PREVIEW RUN — SCHRITT 16B-R — RENDER AFTER COMMAND REALIZATION FIX
 
 Nur nach Master-GO.
 
 Aktueller Stand:
-- Phase 5: 100% / DONE
-- P5-L: 100% / CLOSED
-- Phase 5.5 Infrastruktur: 100% / DONE
-- Step 16A Dynamic Music Automation Planner: DONE / CODE-GO
-- Step 16B Render: STOPP vor Execute
-- Grund: clean_transition_policy_enabled=true, aber FFMPEG Command ohne afade/acrossfade
+- Step 16B-FIX Code ist remote gepusht.
+- Code Commit: 80b91de006c267efa3e90dc5b70a75626f0d2e34
+- Tests grün:
+  - music_automation: 9 passed
+  - music_timeline: 10 passed
+  - controlled_preview: 51 passed
+- Dry-Run Command-Gate grün.
+- Kein Render gestartet.
+- Kein Upload.
+- Kein Qwen.
+- Kein Runtime Learning.
 
-Ziel:
-Kein Render.
-Erst echte Command-Abbildung bauen/testen:
-- Clean song transitions müssen im FFMPEG-Command sichtbar sein
-- 3s Crossfade oder saubere Fade-Übergänge
-- 30s Track-Intro vermeiden
-- 15s Track-Outro vermeiden
-- Dynamic Music Automation muss als echte Gain-Kurve/Segmentsteuerung im Command sichtbar werden
-- 5s Fensteranalyse bedeutet Lautstärkeplanung, nicht Songwechsel alle 5s
+Ziel nächster Schritt:
+Visuell gültigen Proper Run erneut rendern:
+exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
 
-Pflicht:
+Regeln:
+- Music Timeline Planner aktiv
+- Dynamic Music Automation aktiv
+- 5s Gain Automation wirklich im FFmpeg-Command
+- Clean Transitions wirklich im FFmpeg-Command
+- Track-Intro 30s vermeiden
+- Track-Outro 15s vermeiden
+- Crossfade/Fade sichtbar
+- Manifest-Command-Consistency Gate muss grün sein
+- kein volume=0.08
+- kein -27dB final
+- kein stream_loop
 - kein Upload
 - kein Runtime Learning
 - kein Qwen
-- kein Ingest
-- keine Musikdateien löschen/kopieren/committen
-- keine video_configs ändern
-- keine learning_corpus ändern
-- kein git add .
-- kein git add -A
 
-Nächster Render erst nach neuem Dry-Run-Command-Gate.
+STOPP:
+Nicht rendern ohne Master-GO.
+Nicht uploaden.
+Nicht Runtime Learning starten.

@@ -1748,3 +1748,60 @@ Safety:
 Nächster Schritt:
 - Step 16B-FIX nur nach neuem Master-GO.
 - Ziel: echte FFMPEG Clean Transitions und echte Dynamic-Automation-Command-Abbildung bauen.
+
+## 2026-06-11 16:42:41 — Controlled Music Preview Step 16B-FIX — FFmpeg Command Realization
+
+Status: CODE-GO / DRY-RUN COMMAND-GATE GREEN / NO RENDER
+
+Code Commit:
+- 80b91de fix(preview): apply music automation and transitions in ffmpeg
+- Full Hash: 80b91de006c267efa3e90dc5b70a75626f0d2e34
+
+Vorheriger STOPP:
+- Step 16B wurde korrekt vor Execute gestoppt.
+- Grund: Manifest behauptete Clean Transition / Dynamic Automation, aber alter FFmpeg-Command zeigte kein afade/acrossfade und keine echte 5s Gain-Automation.
+
+Fix-Ergebnis:
+- Clean Transition ist jetzt im FFmpeg-Command sichtbar.
+- Track-Trim ist jetzt im FFmpeg-Command sichtbar.
+- Dynamic 5s Gain Automation ist jetzt im FFmpeg-Command sichtbar.
+- Manifest-Command-Consistency Gate ist aktiv und grün.
+
+Dry-Run:
+- run_dir: reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_163927
+- status: dry_run
+- dry_run: True
+- owner_execute_required: True
+- mp4_created_count: 0
+
+Command-Gate:
+- ffmpeg_clean_transition_applied: True
+- ffmpeg_command_contains_fade: True
+- ffmpeg_command_contains_track_trim: True
+- ffmpeg_dynamic_automation_applied: True
+- automation_window_command_applied: True
+- command_contains_time_based_volume_automation: True
+- command_dynamic_gain_zone_count: 106
+- dynamic_gain_expression_strategy: volume_if_between_eval_frame
+- manifest_command_consistency_gate: True
+- forbidden_command_hits: False
+
+Tests:
+- py_compile: OK
+- tests/test_music_automation_planner.py: 9 passed
+- tests/test_music_timeline_planner.py: 10 passed
+- tests/test_controlled_music_preview_render.py: 51 passed
+
+Safety:
+- Execute Render gestartet: False
+- Render gestartet: False
+- Audio-Mix gestartet: False
+- Upload gestartet: False
+- Qwen gestartet: False
+- Runtime Learning gestartet: False
+- Musikdateien committed: False
+- Reports committed: False
+- Final tracked-only nach Code Push: leer
+
+Nächster Schritt:
+- Controlled Music Preview Step 16B-R Render nur nach Master-GO.
