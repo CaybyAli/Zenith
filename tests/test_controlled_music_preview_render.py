@@ -924,9 +924,17 @@ def test_step16b_fix_command_realizes_clean_transitions_trim_and_dynamic_automat
     assert "atrim=start=30.000" in filter_complex
     assert "afade" in filter_complex
     assert "concat=n=4" in filter_complex
-    assert "between(t," in filter_complex
-    assert "eval=frame" in filter_complex
-    assert "volume='if(" in filter_complex
+    assert "asplit=3" in filter_complex
+    assert "[auto0]atrim=start=0.000:end=5.000" in filter_complex
+    assert "[auto1]atrim=start=5.000:end=10.000" in filter_complex
+    assert "[auto2]atrim=start=10.000:end=15.000" in filter_complex
+    assert "volume=-39.0dB" in filter_complex
+    assert "volume=-37.0dB" in filter_complex
+    assert "volume=-40.0dB" in filter_complex
+    assert "[ag0][ag1][ag2]concat=n=3:v=0:a=1[music_auto]" in filter_complex
+    assert "between(t," not in filter_complex
+    assert "eval=frame" not in filter_complex
+    assert "volume='if(" not in filter_complex
     assert "volume=0.08" not in filter_complex
     assert "volume=-27.0dB" not in filter_complex
     assert "stream_loop" not in command
@@ -937,9 +945,61 @@ def test_step16b_fix_command_realizes_clean_transitions_trim_and_dynamic_automat
     assert probe["ffmpeg_command_contains_track_trim"] is True
     assert probe["ffmpeg_dynamic_automation_applied"] is True
     assert probe["automation_window_command_applied"] is True
-    assert probe["command_contains_time_based_volume_automation"] is True
+    assert probe["command_contains_time_based_volume_automation"] is False
+    assert probe["command_contains_segmented_gain_automation"] is True
+    assert probe["command_contains_nested_if_volume_automation"] is False
     assert probe["command_dynamic_gain_zone_count"] == 3
-    assert probe["dynamic_gain_expression_strategy"] == "volume_if_between_eval_frame"
+    assert probe["dynamic_gain_expression_strategy"] == "segmented_atrim_volume_concat"
+    assert probe["segmented_gain_concat_enabled"] is True
+    assert probe["segmented_gain_asplit_count"] == 3
+    assert probe["segmented_gain_atrim_count"] == 3
+    assert probe["segmented_gain_volume_count"] == 3
+    assert probe["manifest_command_consistency_gate"] is True
+
+
+def test_step16b_r_fix_large_window_count_uses_segmented_strategy_without_nested_if(tmp_path):
+    input_video = tmp_path / "input.mp4"
+    output_video = tmp_path / "out.mp4"
+    music_files = [tmp_path / f"song_{index}.mp3" for index in range(1, 5)]
+
+    automation_plan = [
+        {
+            "start_sec": float(index * 5),
+            "end_sec": float((index + 1) * 5),
+            "final_gain_db": -39.0,
+        }
+        for index in range(106)
+    ]
+
+    command = preview.build_ffmpeg_command(
+        input_video,
+        music_files[0],
+        output_video,
+        music_start_offset_sec=30.0,
+        music_volume_gain_db=-38.0,
+        music_files=music_files,
+        long_run_playlist_enabled=True,
+        music_volume_gain_db_by_track=[-37.4, -39.4, -35.0, -38.6],
+        music_automation_plan=automation_plan,
+        crossfade_sec=3.0,
+    )
+
+    filter_complex = command[command.index("-filter_complex") + 1]
+    probe = preview.build_ffmpeg_command_realization_probe(command)
+
+    assert "asplit=106" in filter_complex
+    assert "concat=n=106:v=0:a=1[music_auto]" in filter_complex
+    assert filter_complex.count("between(t,") == 0
+    assert "eval=frame" not in filter_complex
+    assert "volume='if(" not in filter_complex
+    assert probe["large_window_count_requires_segmented_strategy"] is True
+    assert probe["dynamic_gain_expression_strategy"] == "segmented_atrim_volume_concat"
+    assert probe["command_contains_segmented_gain_automation"] is True
+    assert probe["command_contains_nested_if_volume_automation"] is False
+    assert probe["command_dynamic_gain_zone_count"] == 106
+    assert probe["segmented_gain_asplit_count"] == 106
+    assert probe["segmented_gain_atrim_count"] == 106
+    assert probe["segmented_gain_volume_count"] == 106
     assert probe["manifest_command_consistency_gate"] is True
 
 
@@ -1023,15 +1083,25 @@ def test_step16b_fix_dry_run_manifest_contains_command_realization_fields(tmp_pa
     assert manifest["ffmpeg_command_contains_track_trim"] is True
     assert manifest["ffmpeg_dynamic_automation_applied"] is True
     assert manifest["automation_window_command_applied"] is True
-    assert manifest["command_contains_time_based_volume_automation"] is True
+    assert manifest["command_contains_time_based_volume_automation"] is False
+    assert manifest["command_contains_segmented_gain_automation"] is True
+    assert manifest["command_contains_nested_if_volume_automation"] is False
     assert manifest["command_dynamic_gain_zone_count"] > 1
-    assert manifest["dynamic_gain_expression_strategy"] == "volume_if_between_eval_frame"
+    assert manifest["dynamic_gain_expression_strategy"] == "segmented_atrim_volume_concat"
+    assert manifest["segmented_gain_concat_enabled"] is True
+    assert manifest["segmented_gain_asplit_count"] == manifest["automation_window_count"]
+    assert manifest["segmented_gain_atrim_count"] == manifest["automation_window_count"]
+    assert manifest["segmented_gain_volume_count"] == manifest["automation_window_count"]
+    assert manifest["large_window_count_requires_segmented_strategy"] is True
     assert manifest["manifest_command_consistency_gate"] is True
 
     assert "atrim=start=30.000" in command_text
     assert "afade" in command_text or "acrossfade" in command_text
-    assert "between(t," in command_text
-    assert "eval=frame" in command_text
+    assert "asplit=" in command_text
+    assert "concat=n=" in command_text
+    assert "between(t," not in command_text
+    assert "eval=frame" not in command_text
+    assert "volume='if(" not in command_text
     assert "volume=0.08" not in command_text
     assert "volume=-27.0dB" not in command_text
     assert "stream_loop" not in command_text

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import json
@@ -466,13 +466,13 @@ def _music_command_sec(value: float) -> str:
     return f"{max(0.0, float(value)):.3f}"
 
 
-def _automation_gain_expression_from_plan(music_automation_plan: list[dict] | None) -> tuple[str | None, int]:
-    windows: list[tuple[float, float, float]] = []
+def _automation_gain_windows_from_plan(music_automation_plan: list[dict] | None) -> list[dict[str, float]]:
+    windows: list[dict[str, float]] = []
 
     for window in music_automation_plan or []:
         try:
-            start_sec = float(window.get("start_sec", 0.0))
-            end_sec = float(window.get("end_sec", start_sec))
+            start_sec = max(0.0, float(window.get("start_sec", 0.0)))
+            end_sec = max(0.0, float(window.get("end_sec", start_sec)))
             gain_db = float(
                 window.get(
                     "final_gain_db",
@@ -485,19 +485,74 @@ def _automation_gain_expression_from_plan(music_automation_plan: list[dict] | No
         if end_sec <= start_sec:
             continue
 
-        windows.append((start_sec, end_sec, db_to_linear(gain_db)))
-
-    if len(windows) <= 1:
-        return None, len(windows)
-
-    expression = f"{windows[-1][2]:.6f}"
-    for start_sec, end_sec, linear_gain in reversed(windows):
-        expression = (
-            f"if(between(t,{start_sec:.3f},{end_sec:.3f}),"
-            f"{linear_gain:.6f},{expression})"
+        windows.append(
+            {
+                "start_sec": start_sec,
+                "end_sec": end_sec,
+                "gain_db": gain_db,
+            }
         )
 
-    return expression, len(windows)
+    return windows
+
+
+def _automation_segments_filter_from_plan(
+    music_automation_plan: list[dict] | None,
+    *,
+    source_label: str = "musicbed",
+    output_label: str = "music_auto",
+) -> tuple[str | None, dict]:
+    windows = _automation_gain_windows_from_plan(music_automation_plan)
+    window_count = len(windows)
+
+    metrics = {
+        "segmented_gain_concat_enabled": False,
+        "command_contains_segmented_gain_automation": False,
+        "segmented_gain_asplit_count": 0,
+        "segmented_gain_atrim_count": 0,
+        "segmented_gain_volume_count": 0,
+        "large_window_count_requires_segmented_strategy": window_count > 30,
+    }
+
+    if window_count <= 1:
+        return None, metrics
+
+    split_labels = [f"[auto{index}]" for index in range(window_count)]
+    gain_labels = [f"[ag{index}]" for index in range(window_count)]
+
+    filters: list[str] = [
+        f"[{source_label}]asplit={window_count}" + "".join(split_labels)
+    ]
+
+    for index, window in enumerate(windows):
+        start_token = _music_command_sec(window["start_sec"])
+        end_token = _music_command_sec(window["end_sec"])
+        gain_db = float(window["gain_db"])
+
+        filters.append(
+            f"{split_labels[index]}"
+            f"atrim=start={start_token}:end={end_token},"
+            "asetpts=PTS-STARTPTS,"
+            f"volume={gain_db:.1f}dB"
+            f"{gain_labels[index]}"
+        )
+
+    filters.append(
+        "".join(gain_labels)
+        + f"concat=n={window_count}:v=0:a=1[{output_label}]"
+    )
+
+    metrics.update(
+        {
+            "segmented_gain_concat_enabled": True,
+            "command_contains_segmented_gain_automation": True,
+            "segmented_gain_asplit_count": window_count,
+            "segmented_gain_atrim_count": window_count,
+            "segmented_gain_volume_count": window_count,
+        }
+    )
+
+    return ";".join(filters), metrics
 
 
 def _timeline_segment_for_music_input(music_timeline: list[dict] | None, input_index: int) -> dict:
@@ -554,16 +609,90 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
 
     command_contains_fade = "afade" in filter_complex or "acrossfade" in filter_complex
     command_contains_track_trim = "atrim=start=30" in filter_complex or "atrim=start=30.0" in filter_complex
-    command_contains_time_based_volume_automation = (
+
+    command_contains_nested_if_volume_automation = (
         "between(t," in filter_complex
         and "eval=frame" in filter_complex
-        and "volume='if(" in filter_complex
+        and ("volume='if(" in filter_complex or 'volume="if(' in filter_complex)
     )
-    dynamic_gain_zone_count = filter_complex.count("between(t,")
+    nested_if_zone_count = filter_complex.count("between(t,")
+
+    segmented_gain_asplit_count = 0
+    if "asplit=" in filter_complex:
+        after_asplit = filter_complex.split("asplit=", 1)[1]
+        digits = []
+        for character in after_asplit:
+            if character.isdigit():
+                digits.append(character)
+            else:
+                break
+        if digits:
+            segmented_gain_asplit_count = int("".join(digits))
+
+    def _segment_has_atrim(index: int) -> bool:
+        return f"[auto{index}]atrim=start=" in filter_complex
+
+    def _segment_has_volume(index: int) -> bool:
+        start_marker = f"[auto{index}]atrim=start="
+        end_marker = f"[ag{index}]"
+        start_pos = filter_complex.find(start_marker)
+        if start_pos < 0:
+            return False
+        end_pos = filter_complex.find(end_marker, start_pos)
+        if end_pos < 0:
+            return False
+        return "volume=" in filter_complex[start_pos:end_pos]
+
+    segmented_gain_atrim_count = sum(
+        1 for index in range(segmented_gain_asplit_count) if _segment_has_atrim(index)
+    )
+    segmented_gain_volume_count = sum(
+        1 for index in range(segmented_gain_asplit_count) if _segment_has_volume(index)
+    )
+
+    command_contains_segmented_gain_automation = (
+        segmented_gain_asplit_count > 1
+        and segmented_gain_atrim_count == segmented_gain_asplit_count
+        and segmented_gain_volume_count == segmented_gain_asplit_count
+        and f"concat=n={segmented_gain_asplit_count}:v=0:a=1[music_auto]" in filter_complex
+    )
+
+    dynamic_gain_zone_count = (
+        segmented_gain_asplit_count
+        if command_contains_segmented_gain_automation
+        else nested_if_zone_count
+    )
+    large_window_count_requires_segmented_strategy = dynamic_gain_zone_count > 30
+
+    command_contains_time_based_volume_automation = (
+        command_contains_nested_if_volume_automation
+        and not command_contains_segmented_gain_automation
+    )
+
+    dynamic_gain_expression_strategy = "none"
+    if command_contains_segmented_gain_automation:
+        dynamic_gain_expression_strategy = "segmented_atrim_volume_concat"
+    elif command_contains_time_based_volume_automation:
+        dynamic_gain_expression_strategy = "volume_if_between_eval_frame"
 
     ffmpeg_clean_transition_applied = command_contains_fade and command_contains_track_trim
     ffmpeg_dynamic_automation_applied = (
-        command_contains_time_based_volume_automation and dynamic_gain_zone_count > 1
+        command_contains_segmented_gain_automation
+        or (
+            command_contains_time_based_volume_automation
+            and dynamic_gain_zone_count > 1
+            and dynamic_gain_zone_count <= 30
+        )
+    )
+
+    manifest_command_consistency_gate = (
+        ffmpeg_clean_transition_applied
+        and ffmpeg_dynamic_automation_applied
+        and not command_contains_nested_if_volume_automation
+        and (
+            not large_window_count_requires_segmented_strategy
+            or dynamic_gain_expression_strategy == "segmented_atrim_volume_concat"
+        )
     )
 
     return {
@@ -573,11 +702,16 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
         "ffmpeg_dynamic_automation_applied": ffmpeg_dynamic_automation_applied,
         "automation_window_command_applied": ffmpeg_dynamic_automation_applied,
         "command_contains_time_based_volume_automation": command_contains_time_based_volume_automation,
+        "command_contains_segmented_gain_automation": command_contains_segmented_gain_automation,
+        "command_contains_nested_if_volume_automation": command_contains_nested_if_volume_automation,
         "command_dynamic_gain_zone_count": dynamic_gain_zone_count,
-        "dynamic_gain_expression_strategy": (
-            "volume_if_between_eval_frame" if command_contains_time_based_volume_automation else "none"
-        ),
-        "manifest_command_consistency_gate": ffmpeg_clean_transition_applied and ffmpeg_dynamic_automation_applied,
+        "dynamic_gain_expression_strategy": dynamic_gain_expression_strategy,
+        "segmented_gain_concat_enabled": command_contains_segmented_gain_automation,
+        "segmented_gain_asplit_count": segmented_gain_asplit_count,
+        "segmented_gain_atrim_count": segmented_gain_atrim_count,
+        "segmented_gain_volume_count": segmented_gain_volume_count,
+        "large_window_count_requires_segmented_strategy": large_window_count_requires_segmented_strategy,
+        "manifest_command_consistency_gate": manifest_command_consistency_gate,
     }
 
 
@@ -591,6 +725,11 @@ def assert_manifest_command_consistency(manifest: dict, command: list[str]) -> d
     if manifest.get("music_automation_planner_enabled") is True:
         if not features["ffmpeg_dynamic_automation_applied"]:
             raise ControlledMusicPreviewError("dynamic_automation_manifest_command_mismatch")
+        if (
+            features["large_window_count_requires_segmented_strategy"]
+            and features["dynamic_gain_expression_strategy"] != "segmented_atrim_volume_concat"
+        ):
+            raise ControlledMusicPreviewError("dynamic_automation_requires_segmented_strategy")
 
     return features
 
@@ -647,8 +786,6 @@ def build_ffmpeg_command(
             ]
         )
 
-    dynamic_expression, dynamic_zone_count = _automation_gain_expression_from_plan(music_automation_plan)
-
     music_filters: list[str] = []
     for index, gain_db in enumerate(volume_gains, start=1):
         segment = _timeline_segment_for_music_input(music_timeline, index)
@@ -679,10 +816,13 @@ def build_ffmpeg_command(
     else:
         music_bed_filter = "[music1]anull[musicbed]"
 
-    if dynamic_expression and dynamic_zone_count > 1:
-        automation_filter = f"[musicbed]volume='{dynamic_expression}':eval=frame[musicquiet]"
-    else:
-        automation_filter = "[musicbed]anull[musicquiet]"
+    automation_filter, _automation_metrics = _automation_segments_filter_from_plan(
+        music_automation_plan,
+        source_label="musicbed",
+        output_label="music_auto",
+    )
+    if automation_filter is None:
+        automation_filter = "[musicbed]anull[music_auto]"
 
     filter_complex = (
         ";".join(music_filters)
@@ -691,7 +831,7 @@ def build_ffmpeg_command(
         + ";"
         + automation_filter
         + ";"
-        "[musicquiet][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
+        "[music_auto][0:a]sidechaincompress=threshold=0.035:ratio=12:attack=30:release=500[ducked];"
         "[0:a][ducked]amix=inputs=2:duration=first:dropout_transition=0,volume=1.0[aout]"
     )
 
