@@ -2222,3 +2222,41 @@ Dry-run proof:
 - music_gap_at_103_110_fixed = true
 - musicbed_no_silent_gaps = true
 - voice_priority_music_ducking_enabled = true
+## 2026-06-11 21:48:03 ? Step 19C Render After Owner Music Balance Fix
+
+Status: DONE / RENDER EXECUTED / OWNER REVIEW REQUIRED
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+
+Output:
+- reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_214754/controlled_music_preview_main.mp4
+- size: 1623726974
+
+Active fixes:
+- music_balance_policy_enabled = true
+- owner_music_balanced_gain_range_db = [-38.0, -30.0]
+- owner_music_target_gain_db = -34.0
+- music_audibility_floor_db = -38.0
+- music_loudness_ceiling_db = -30.0
+- voice_priority_music_ducking_enabled = true
+- music_must_stay_below_voice_enabled = true
+- music_continuity_guard_enabled = true
+- known_owner_gap_sec = [103.0, 110.0]
+- music_gap_at_103_110_fixed = true
+- double_music_gain_fix_enabled = true
+- per_track_final_mix_gain_applied = false
+- automation_final_mix_gain_applied = true
+- sidechain_ratio = 3.0
+- dynamic_gain_expression_strategy = segmented_atrim_volume_concat
+- clean_transition_policy_enabled = true
+
+Safety:
+- upload_started = false
+- runtime_learning_started = false
+- qwen_used = false
+
+Next:
+- Owner Review Schritt 20 is mandatory.
+- No upload without new Master-GO.
+- No runtime learning.
