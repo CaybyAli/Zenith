@@ -1,49 +1,43 @@
-PROJECT ZENITH ? CONTROLLED MUSIC PREVIEW RUN ? STEP 23 ? OWNER REVIEW AFTER REAL DYNAMIC MUSIC AUTOMATION FIX
+PROJECT ZENITH ? CONTROLLED MUSIC PREVIEW RUN ? STEP 24 ? OWNER REVIEW AFTER BACKGROUND MUSIC MIX FIX
 
-Ali pr?ft:
-- Musik l?uft von Anfang bis Ende h?rbar?
-- Ist am Ende Musik h?rbar?
-- Verschwindet Musik am Tail nicht mehr?
-- Ist Musik nicht zu laut?
-- Ist Musik nicht zu leise?
-- Bleibt Stimme klar vorne?
-- Wird Musik bei Sprache korrekt abgesenkt?
-- Werden leise Songanf?nge h?rbar angehoben?
-- Werden laute Musikstellen korrekt gesenkt?
-- Gibt es keine Audio-Spr?nge?
+Current HEAD before Step 23C Obsidian commit:
+683bfb5e3be62947fb4fafc1b13df4e7491bd7bb
+
+Step 23C Render:
+- Input: exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+- Output: reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260612_004039/controlled_music_preview_main.mp4
+- Manifest status: ok
+- Owner Review required: true
+
+Technical policy evidence:
+- Background-Music-Policy active
+- No foreground gains -30/-31/-32/-33 dB
+- 3s segment fades blocked
+- raw fullmix sidechain blocked
+- no sidechaincompress in command
+- Tail Guard for 07:51 to end active and passed
+- Tail audio smoke completed
+- No upload
+- No Qwen
+- No Runtime Learning
+
+Ali checks:
+- Musik ist jetzt wirklich Hintergrund?
+- Musik nicht zu laut?
+- Musik nicht zu leise?
+- Stimme klar vorne?
+- Neue Songstarts ohne langsame Stille-Rampe?
+- Musik ab 07:51 bis Ende h?rbar?
+- Musik l?uft bis zum Ende?
+- Keine Audio-Spr?nge?
 - ?berg?nge sauber?
 - Gesamtgef?hl uploadf?hig?
 
-Entscheidung:
+Decision:
 GO / FIX / NO-GO
 
-Kein Upload ohne neues Master-GO.
-Kein Runtime Learning.
-Kein Qwen.
-Kein Ingest.
-# NEXT PROMPT ? Project Zenith Step 23B-FIX complete, await Master-GO for render
-
-Current HEAD:
-0c261fb fix(music): keep preview music in background
-
-Status:
-- Phase 5: 100% / DONE
-- P5-L: 100% / CLOSED
-- Phase 5.5: 100% / DONE
-- Step 23B-FIX: code/test/proof DONE
-- Render: LOCKED until new Master-GO
-
-Evidence:
-- Targeted tests: 121 passed
-- Dry-run policy proof: PASS
-- Commit pushed to origin/main: 0c261fb8538e8edee4527fa35d94b25e2b30fc16
-
-Important:
-- Do not render without new Master-GO.
-- Do not upload.
-- Do not start runtime learning.
-- Do not use Qwen.
-- Do not ingest.
-
-Next action:
-- Ask Master/Owner for GO/NO-GO for new controlled render based on Step23B policy fix.
+Hard locks:
+- Kein Upload ohne neues Master-GO.
+- Kein Runtime Learning.
+- Kein Qwen.
+- Kein Ingest.

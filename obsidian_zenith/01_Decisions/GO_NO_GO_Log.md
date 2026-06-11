@@ -2384,3 +2384,60 @@ Evidence:
 - Targeted tests: 121 passed.
 - Dry-run proof: PASS.
 - Policy removes sidechaincompress, blocks foreground gains, shortens segment fades, protects owner tail music.
+## 2026-06-12 ? Step 23C Controlled Preview Render after Background Music Mix Fix
+
+Status:
+- Step 23C render: DONE
+- Owner Review: REQUIRED / Step 24
+- Render was executed exactly once after dry-run gates passed.
+- No upload.
+- No runtime learning.
+- No Qwen.
+- No ingest.
+
+Input:
+- exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4
+- duration: 528.348813 sec
+
+Output:
+- reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260612_004039/controlled_music_preview_main.mp4
+- size: 1623778742 bytes
+- manifest: reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260612_004039/preview_render_manifest.json
+- summary: reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260612_004039/preview_render_summary.md
+
+Policy evidence:
+- owner_background_music_policy_enabled: true
+- overall_music_gain_range_db: [-44.0, -34.0]
+- owner_music_target_gain_db: -39.0
+- voice_active_music_ceiling_db: -40.0
+- no_voice_music_ceiling_db: -34.0
+- command_contains_foreground_music_gain: false
+- slow_segment_fadein_fix_enabled: true
+- segment_fade_in_max_sec: 0.25
+- segment_fade_out_max_sec: 0.25
+- raw_fullmix_sidechain_blocked: true
+- ffmpeg_sidechaincompress_disabled: true
+- final_music_segment_tail_fade_disabled: true
+- owner_tail_music_guard_enabled: true
+- owner_tail_music_guard_passed: true
+- owner_tail_music_min_gain_db: -38.0
+- tail_music_final_window_audible: true
+- dynamic_gain_non_constant: true
+- musicbed_command_matches_timeline: true
+
+Forbidden command checks:
+- volume=-30.0dB/-31.0dB/-32.0dB/-33.0dB: no hits
+- 3s segment fades: no hits
+- sidechaincompress: no hits
+
+Tail audio smoke:
+- 07:51-end volumedetect mean_volume: -30.3 dB
+- 07:51-end volumedetect max_volume: -15.3 dB
+- last 20 sec mean_volume: -29.6 dB
+- last 20 sec max_volume: -15.5 dB
+- astats RMS level: -36.640643 dB
+- astats Peak level: -27.813287 dB
+
+Important:
+- Technical smoke does not replace Owner Review.
+- Ali must decide GO / FIX / NO-GO by watching and listening.
