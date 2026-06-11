@@ -1914,3 +1914,56 @@ Reason:
 Restriction:
 - No render GO given here.
 - Real preview/render remains locked until explicit Master/Owner GO.
+
+## 2026-06-11 19:26:49 ? Step 17C Audible Dynamic Music Render
+
+Status: DONE / render executed / Owner Review required.
+
+Render:
+- Input: `exports/gaming_main/job_aa2953e15914/job_aa2953e15914_v1_final.mp4`
+- Input duration sec: 528.348813
+- Output root: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render`
+- Output MP4: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_192336/controlled_music_preview_main.mp4`
+- Output size bytes: 1623615243
+- Run dir: `reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_192336`
+- content_type: gaming_main
+- channel_type: main
+
+Music audibility policy:
+- music_audibility_policy_enabled: true
+- owner_music_audible_gain_range_db: [-35.0, -26.0]
+- owner_music_target_gain_db: -30.0
+- music_audibility_floor_db: -35.0
+- music_loudness_ceiling_db: -26.0
+- command_volume_average_db: -31.912
+- command_volume_min_db: -32.0
+- command_volume_max_db: -26.9
+- command_volume_audibility_gate_passed: true
+
+Sidechain / voice safety:
+- double_ducking_protection_enabled: true
+- sidechain_ratio: 3.0
+- sidechain_threshold: 0.08
+- sidechain_attack: 40
+- sidechain_release: 350
+
+Automation / transitions:
+- dynamic_gain_expression_strategy: segmented_atrim_volume_concat
+- command_contains_nested_if_volume_automation: false
+- manifest_command_consistency_gate: true
+- segmented dynamic automation: active
+- clean transitions: active
+
+Safety:
+- upload_started: false
+- runtime_learning_started: false
+- qwen_used: false
+- no final render
+- no ingest
+- no music files committed
+- reports/MP4 remain untracked
+
+Next:
+- Owner Review Schritt 18 is mandatory.
+- Ali must judge the real rendered video by eye/ear.
+- No upload without new Master-GO.

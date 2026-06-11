@@ -1,30 +1,36 @@
-# NEXT PROMPT ? Project Zenith
+# PROJECT ZENITH ? CONTROLLED MUSIC PREVIEW RUN ? SCHRITT 18 ? OWNER REVIEW AUDIBLE DYNAMIC MUSIC RENDER
 
-Status:
-- Phase 5: 100% / DONE
-- P5-L: 100% / CLOSED
-- Phase 5.5: 100% / DONE
-- Step 17B-FIX: CODE DONE / PUSHED
+Ziel:
+Ali pr?ft den echten visuellen 8.8-Minuten-Run mit:
+- h?rbarer Music Policy
+- Gain Range [-35,-26]
+- Target -30
+- Audibility Floor -35
+- weniger aggressiver Sidechain
+- Double-Ducking-Schutz
+- Segmented Dynamic Automation
+- Clean Transitions
 
-Latest code commit:
-- d975c79 fix(preview): make dynamic music audible
-- Full hash: d975c79ea3e807072fa71ed5bbce638411b45b3c
+Zu pr?fendes Video:
+reports/controlled_music_preview_run/step13_visual_proper_run_music_render/run_20260611_192336/controlled_music_preview_main.mp4
 
-Important:
-- Do not render unless Master/Owner explicitly gives GO.
-- Do not upload.
-- Do not start Qwen/runtime learning.
-- Do not ingest.
-- Reports remain untracked.
+Bewertung:
+- Gameplay sichtbar?
+- Keine Facecam fullscreen?
+- Musik jetzt h?rbar?
+- Musik zu laut oder angenehm?
+- Stimmen/Freunde klar?
+- Musik bei Sprache nicht st?rend?
+- Musik verschwindet nicht mehr komplett?
+- Kein Song sticht zu laut raus?
+- ?berg?nge sauber?
+- Keine Audio-Spr?nge?
+- Gesamtgef?hl uploadf?hig?
 
-Latest proof:
-- py_compile PASS
-- target tests: 65 passed
-- dry-run PASS
-- audible music policy active
-- sidechain ratio 3.0
-- old ratio=12 absent from source search
-- old -38/-40 command values absent from dry-run command
+Entscheidung:
+GO / FIX / NO-GO
 
-Next recommended action:
-- Master/Owner review should decide whether to run a real controlled music preview render using the new audibility policy.
+Wenn GO:
+Danach Abschlussbericht Phase 5 + Phase 5.5 f?r Claude erstellen.
+Kein Upload ohne neues Master-GO.
+Kein Runtime Learning.
