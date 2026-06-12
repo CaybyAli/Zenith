@@ -50,6 +50,7 @@ from shared.enums import (
     JobStatus,
     Mode,
     TargetFormat,
+    ValidatorStatus,
     classify_job_status_for_runner,
 )
 
@@ -63,6 +64,40 @@ from core.faceless_pipeline import run_faceless_pipeline_for_job
 
 EXPORTS_BASE = Path("exports")
 
+
+
+def _is_longform_floor_fail(job, exc: BaseException) -> bool:
+    message = str(exc)
+    if "Longform floor 480s unreachable" not in message:
+        return False
+
+    debug_context = getattr(job, "debug_context", None)
+    if not isinstance(debug_context, dict):
+        return False
+
+    diagnostics = debug_context.get("longform_floor_fail")
+    return isinstance(diagnostics, dict) and diagnostics.get("reason") in {
+        "floor_unreachable_after_guards",
+        "floor_unreachable_before_guards",
+    }
+
+
+def _apply_dispatch_exception_to_job(job, exc: BaseException) -> None:
+    if _is_longform_floor_fail(job, exc):
+        job.status = JobStatus.VALIDATION_FAILED
+        job.validator_status = ValidatorStatus.FAILED
+        job.error_message = f"floor_unreachable:{exc}"
+
+        diagnostics = job.debug_context.get("longform_floor_fail", {})
+        diagnostics["pipeline_status"] = "validation_failed"
+        diagnostics["render_blocked"] = True
+        diagnostics["error_message"] = str(exc)
+        job.debug_context["longform_floor_fail"] = diagnostics
+    else:
+        job.status = JobStatus.CRASHED
+        job.error_message = str(exc)
+
+    job.touch()
 
 def _safe_log_error(
     job,
@@ -510,9 +545,7 @@ def run_pending_jobs(
             })
 
         except Exception as exc:
-            job.status = JobStatus.CRASHED
-            job.error_message = str(exc)
-            job.touch()
+            _apply_dispatch_exception_to_job(job, exc)
 
             export_dir = _make_export_dir(channel, job.job_id)
 
@@ -548,12 +581,20 @@ def run_pending_jobs(
                     f"job={job.job_id} error={job_json_exc}"
                 )
 
+            runner_status = (
+                classify_job_status_for_runner(job.status)
+                if job.status == JobStatus.VALIDATION_FAILED
+                else "error"
+            )
+            job_status_value = str(getattr(job.status, "value", job.status))
+
             results.append({
-                "job_id":   job.job_id,
-                "channel":  channel,
-                "status":   "error",
-                "pipeline": channel,
-                "error":    str(exc),
+                "job_id":     job.job_id,
+                "channel":    channel,
+                "status":     runner_status,
+                "job_status": job_status_value,
+                "pipeline":   channel,
+                "error":      str(exc),
             })
 
     return results

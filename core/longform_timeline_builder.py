@@ -1390,6 +1390,49 @@ class LongformTimelineBuilder:
                 f"reserve={len(reserve_scored_candidates)} "
                 f"target={target_duration:.3f}s"
             )
+            self._write_floor_fail_diagnostics(
+                job=job,
+                reason="floor_unreachable_after_guards",
+                selected_before_guards=selected_items_duration,
+                selected_after_guards=final_selected_duration,
+                duration_floor=duration_floor,
+                target_duration=target_duration,
+                primary_count=len(scored_candidates),
+                reserve_count=len(reserve_scored_candidates),
+                selected_segments=selected_segments,
+                duration_ledger=[
+                    {
+                        "guard": "TIMELINE-SILENCE",
+                        "before": round(float(silence_summary.duration_before), 3),
+                        "after": round(float(silence_summary.duration_after), 3),
+                        "delta": round(float(silence_summary.duration_after - silence_summary.duration_before), 3),
+                    },
+                    {
+                        "guard": "TIMELINE-FINAL-GUARD",
+                        "before": round(float(final_guard_summary.duration_before), 3),
+                        "after": round(float(final_guard_summary.duration_after), 3),
+                        "delta": round(float(final_guard_summary.duration_after - final_guard_summary.duration_before), 3),
+                    },
+                    {
+                        "guard": "TIMELINE-ROUND-WAIT-GUARD",
+                        "before": round(float(round_wait_summary.duration_before), 3),
+                        "after": round(float(round_wait_summary.duration_after), 3),
+                        "delta": round(float(round_wait_summary.duration_after - round_wait_summary.duration_before), 3),
+                    },
+                    {
+                        "guard": "TIMELINE-PRIVATE-MENU-SPEECH",
+                        "before": round(float(private_menu_summary.duration_before), 3),
+                        "after": round(float(private_menu_summary.duration_after), 3),
+                        "delta": round(float(private_menu_summary.duration_after - private_menu_summary.duration_before), 3),
+                    },
+                    {
+                        "guard": "TIMELINE-SENTENCE-ATOMICITY",
+                        "before": round(float(sentence_atomicity_summary.duration_before), 3),
+                        "after": round(float(sentence_atomicity_summary.duration_after), 3),
+                        "delta": round(float(sentence_atomicity_summary.duration_after - sentence_atomicity_summary.duration_before), 3),
+                    },
+                ],
+            )
             raise ValidationError(
                 f"Longform floor 480s unreachable: only {final_selected_duration:.0f}s of usable material after guards"
             )
@@ -1687,6 +1730,70 @@ class LongformTimelineBuilder:
             timeline_score=timeline_score,
             timeline_notes=timeline_notes,
         )
+
+
+    def _write_floor_fail_diagnostics(
+        self,
+        *,
+        job,
+        reason: str,
+        selected_before_guards: float | None,
+        selected_after_guards: float,
+        duration_floor: float | None,
+        target_duration: float,
+        primary_count: int,
+        reserve_count: int,
+        selected_segments: list[TimelineSegment],
+        duration_ledger: list[dict] | None = None,
+    ) -> None:
+        """Persist compact floor-fail diagnostics before raising the controlled NO-GO."""
+        floor = float(duration_floor or 0.0)
+        selected_after = round(float(selected_after_guards or 0.0), 3)
+        selected_before = (
+            round(float(selected_before_guards), 3)
+            if selected_before_guards is not None
+            else None
+        )
+        missing_seconds = round(max(0.0, floor - selected_after), 3)
+
+        selected_timeline = []
+        for segment in selected_segments:
+            selected_timeline.append(
+                {
+                    "segment_id": str(segment.segment_id),
+                    "candidate_id": segment.candidate_id,
+                    "role": segment.segment_role,
+                    "start_time": round(float(segment.start_time), 3),
+                    "end_time": round(float(segment.end_time), 3),
+                    "duration": round(float(segment.duration), 3),
+                    "selection_score": round(float(segment.selection_score), 3),
+                    "notes": list(segment.notes)[:20],
+                }
+            )
+
+        debug_context = getattr(job, "debug_context", None)
+        if not isinstance(debug_context, dict):
+            debug_context = {}
+            try:
+                job.debug_context = debug_context
+            except Exception:
+                return
+
+        debug_context["longform_floor_fail"] = {
+            "status": "controlled_no_go",
+            "reason": str(reason),
+            "render_blocked": True,
+            "selected_before_guards": selected_before,
+            "selected_after_guards": selected_after,
+            "floor": round(floor, 3),
+            "missing_seconds": missing_seconds,
+            "target_duration": round(float(target_duration or 0.0), 3),
+            "primary_count": int(primary_count),
+            "reserve_count": int(reserve_count),
+            "segment_count": len(selected_timeline),
+            "selected_timeline": selected_timeline,
+            "duration_ledger": list(duration_ledger or []),
+        }
 
     def _count_analysis_boosts(self, selected_segments: list[TimelineSegment]) -> dict[str, int]:
         return {
