@@ -185,6 +185,7 @@ class SentenceAtomicityGuard:
         states = self._state_windows(gameplay_state_result)
         phases = self._phase_windows(round_phase_result)
 
+        ordered = self._merge_shared_speech_boundaries(ordered, sources, summary)
         self._restore_round_start_action_lead(ordered, states, phases, indicators, audio_windows, summary)
         self._fix_speech_edges(ordered, sources, audio_windows, states, phases, indicators, summary)
         self._trim_long_action_leads(ordered, sources, states, phases, indicators, audio_windows, summary)
@@ -199,9 +200,70 @@ class SentenceAtomicityGuard:
         )
         self._close_micro_gaps(ordered, sources, audio_windows, states, indicators, phases, summary)
         ordered = self._cleanup(ordered, states, indicators, audio_windows, summary)
+        self._snap_boundaries_out_of_speech(ordered, sources, summary)
+        ordered = self._cleanup(ordered, states, indicators, audio_windows, summary)
 
         summary.duration_after = round(sum(segment.duration for segment in ordered), 3)
         return ordered, summary
+
+    def _merge_shared_speech_boundaries(
+        self,
+        segments: list[TimelineSegment],
+        sources: list[_SpeechSource],
+        summary: SentenceAtomicitySummary,
+    ) -> list[TimelineSegment]:
+        if not segments or not sources:
+            return segments
+
+        kept: list[TimelineSegment] = []
+        for segment in sorted(
+            (item for item in segments if item.end_time > item.start_time),
+            key=lambda item: (item.start_time, item.end_time, item.segment_id),
+        ):
+            if not kept:
+                kept.append(segment)
+                continue
+
+            previous = kept[-1]
+            boundary_gap = round(float(segment.start_time) - float(previous.end_time), 3)
+            if abs(boundary_gap) > 0.08:
+                kept.append(segment)
+                continue
+
+            boundary = round((float(previous.end_time) + float(segment.start_time)) / 2.0, 3)
+            source = self._source_containing_boundary(boundary, sources)
+            if source is None:
+                kept.append(segment)
+                continue
+
+            old_end = previous.end_time
+            previous.end_time = round(max(float(previous.end_time), float(segment.end_time)), 3)
+            previous.notes.append(
+                f"sentence_atomicity_shared_speech_boundary_merge="
+                f"{boundary:.3f}:{segment.segment_id}:{old_end:.3f}->{previous.end_time:.3f}"
+            )
+            previous.touch()
+            summary.micro_segments_merged += 1
+            summary.add_example(
+                f"{previous.segment_id} merged shared_speech_boundary "
+                f"{boundary:.2f} with {segment.segment_id}"
+            )
+
+        return kept
+
+    def _source_containing_boundary(
+        self,
+        boundary: float,
+        sources: list[_SpeechSource],
+    ) -> _SpeechSource | None:
+        boundary = round(float(boundary), 3)
+        epsilon = 0.05
+        for source in sources:
+            start = round(float(source.start_seconds), 3)
+            end = round(float(source.end_seconds), 3)
+            if start + epsilon < boundary < end - epsilon:
+                return source
+        return None
 
     def _restore_round_start_action_lead(
         self,
@@ -660,6 +722,62 @@ class SentenceAtomicityGuard:
             current.touch()
             summary.micro_segments_merged += 1
             summary.add_example(f"{current.segment_id} closed micro_gap {gap:.2f}s")
+
+    def _snap_boundaries_out_of_speech(
+        self,
+        segments: list[TimelineSegment],
+        sources: list[_SpeechSource],
+        summary: SentenceAtomicitySummary,
+    ) -> None:
+        if not segments or not sources:
+            return
+
+        ordered = sorted(
+            (segment for segment in segments if segment.end_time > segment.start_time),
+            key=lambda segment: (segment.start_time, segment.end_time, segment.segment_id),
+        )
+
+        for index, segment in enumerate(ordered):
+            previous = ordered[index - 1] if index > 0 else None
+            next_segment = ordered[index + 1] if index + 1 < len(ordered) else None
+
+            start_source = self._source_containing_boundary(segment.start_time, sources)
+            if start_source is not None:
+                desired_start = round(max(0.0, float(start_source.start_seconds)), 3)
+                if (
+                    desired_start < segment.start_time
+                    and (previous is None or desired_start >= previous.end_time)
+                    and segment.end_time - desired_start >= MIN_SEGMENT_DURATION_SECONDS
+                ):
+                    old_start = segment.start_time
+                    segment.start_time = desired_start
+                    segment.notes.append(
+                        f"sentence_atomicity_boundary_snap_start={old_start:.3f}->{desired_start:.3f}"
+                    )
+                    segment.touch()
+                    summary.sentence_start_fixed += 1
+                    summary.add_example(
+                        f"{segment.segment_id} snapped start {old_start:.2f}->{desired_start:.2f}"
+                    )
+
+            end_source = self._source_containing_boundary(segment.end_time, sources)
+            if end_source is not None:
+                desired_end = round(float(end_source.end_seconds), 3)
+                if (
+                    desired_end > segment.end_time
+                    and (next_segment is None or desired_end <= next_segment.start_time)
+                    and desired_end - segment.start_time >= MIN_SEGMENT_DURATION_SECONDS
+                ):
+                    old_end = segment.end_time
+                    segment.end_time = desired_end
+                    segment.notes.append(
+                        f"sentence_atomicity_boundary_snap_end={old_end:.3f}->{desired_end:.3f}"
+                    )
+                    segment.touch()
+                    summary.sentence_end_fixed += 1
+                    summary.add_example(
+                        f"{segment.segment_id} snapped end {old_end:.2f}->{desired_end:.2f}"
+                    )
 
     def _cleanup(
         self,

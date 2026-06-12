@@ -229,6 +229,52 @@ def test_final_invariants() -> None:
     _assert_invariants(result)
 
 
+def test_shared_speech_boundary_inside_same_sentence_merges_segments() -> None:
+    """A shared cut inside the same speech sentence must merge adjacent segments."""
+    result, summary = SentenceAtomicityGuard().apply(
+        [
+            _seg("left", 56.158, 65.5),
+            _seg("right", 65.5, 75.673),
+        ],
+        transcript_result=_transcript(
+            _t(64.344, 66.846, "Nielst, erklaerst du ihn mal bitte?")
+        ),
+    )
+
+    assert len(result) == 1
+    assert result[0].segment_id == "left"
+    assert result[0].start_time == 56.158
+    assert result[0].end_time == 75.673
+    assert summary.micro_segments_merged >= 1
+    assert any(
+        "sentence_atomicity_shared_speech_boundary_merge=" in note
+        for note in result[0].notes
+    )
+    _assert_invariants(result)
+
+
+def test_partial_end_trim_does_not_create_new_speech_boundary_cut() -> None:
+    """Trimming away from one sentence must not land inside another speech segment."""
+    result, summary = SentenceAtomicityGuard().apply(
+        [_seg("trim_target", 75.673, 129.35)],
+        transcript_result=_transcript(
+            _t(124.880, 128.962, "Ach nix!"),
+            _t(129.062, 139.187, "Oh mein Gott, nix, warum machst du das mit mir?"),
+        ),
+    )
+
+    assert len(result) == 1
+    boundary = result[0].end_time
+    assert not (124.880 < boundary < 128.962), (
+        f"end boundary landed inside earlier speech: {boundary}"
+    )
+    assert not (129.062 < boundary < 139.187), (
+        f"end boundary stayed inside later speech: {boundary}"
+    )
+    assert summary.sentence_partial_removed + summary.sentence_end_fixed >= 1
+    _assert_invariants(result)
+
+
 def test_sentence_atomicity_guard_smoke() -> None:
     test_partial_sentence_start_fixed_or_removed()
     test_partial_sentence_end_fixed_or_removed()
@@ -238,6 +284,8 @@ def test_sentence_atomicity_guard_smoke() -> None:
     test_smart_action_lead_trim()
     test_round_start_with_action_protected()
     test_final_invariants()
+    test_shared_speech_boundary_inside_same_sentence_merges_segments()
+    test_partial_end_trim_does_not_create_new_speech_boundary_cut()
     print("SENTENCE ATOMICITY GUARD SMOKE TEST PASSED")
 
 
