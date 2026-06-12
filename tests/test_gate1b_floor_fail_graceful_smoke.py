@@ -108,3 +108,81 @@ def test_non_floor_exception_still_crashes() -> None:
 
     assert job.status == JobStatus.CRASHED
     assert job.error_message == "real unexpected crash"
+
+def test_floor_fail_diagnostics_include_lock_metric_fields_with_not_available_defaults() -> None:
+    job = _job()
+    segment = _seg("seg_lock_metric", 0.0, 463.746)
+
+    builder = LongformTimelineBuilder()
+    builder._write_floor_fail_diagnostics(
+        job=job,
+        reason="floor_unreachable_after_guards",
+        selected_before_guards=484.0,
+        selected_after_guards=463.746,
+        duration_floor=YOUTUBE_MIN_DURATION,
+        target_duration=590.308,
+        primary_count=7,
+        reserve_count=197,
+        selected_segments=[segment],
+        duration_ledger=[],
+    )
+
+    diag = job.debug_context["longform_floor_fail"]
+
+    assert diag["status"] == "controlled_no_go"
+    assert diag["reason"] == "floor_unreachable_after_guards"
+    assert diag["render_blocked"] is True
+    assert diag["floor"] == 480.0
+    assert diag["selected_before_guards"] == 484.0
+    assert diag["selected_after_guards"] == 463.746
+    assert diag["missing_seconds"] == 16.254
+
+    assert "removed_speech_seconds" in diag
+    assert "removed_speech_source" in diag
+    assert "boundary_hits_count" in diag
+    assert "boundary_hits_source" in diag
+    assert "overlap_count" in diag
+    assert "timeline_safety_overlap_count" in diag
+
+    assert diag["removed_speech_seconds"] is None
+    assert diag["removed_speech_source"] == "not_available"
+    assert diag["boundary_hits_count"] is None
+    assert diag["boundary_hits_source"] == "not_available"
+    assert diag["overlap_count"] is None
+    assert diag["timeline_safety_overlap_count"] is None
+
+
+def test_floor_fail_diagnostics_persist_explicit_lock_metrics_when_provided() -> None:
+    job = _job()
+    segment = _seg("seg_lock_metric", 0.0, 463.746)
+
+    builder = LongformTimelineBuilder()
+    builder._write_floor_fail_diagnostics(
+        job=job,
+        reason="floor_unreachable_after_guards",
+        selected_before_guards=484.0,
+        selected_after_guards=463.746,
+        duration_floor=YOUTUBE_MIN_DURATION,
+        target_duration=590.308,
+        primary_count=7,
+        reserve_count=197,
+        selected_segments=[segment],
+        duration_ledger=[],
+        lock_metrics={
+            "removed_speech_seconds": 1.234,
+            "removed_speech_source": "test_lock_metric",
+            "boundary_hits_count": 2,
+            "boundary_hits_source": "test_boundary_metric",
+            "overlap_count": 0,
+            "timeline_safety_overlap_count": 0,
+        },
+    )
+
+    diag = job.debug_context["longform_floor_fail"]
+
+    assert diag["removed_speech_seconds"] == 1.234
+    assert diag["removed_speech_source"] == "test_lock_metric"
+    assert diag["boundary_hits_count"] == 2
+    assert diag["boundary_hits_source"] == "test_boundary_metric"
+    assert diag["overlap_count"] == 0
+    assert diag["timeline_safety_overlap_count"] == 0

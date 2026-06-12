@@ -1745,6 +1745,7 @@ class LongformTimelineBuilder:
         reserve_count: int,
         selected_segments: list[TimelineSegment],
         duration_ledger: list[dict] | None = None,
+        lock_metrics: dict | None = None,
     ) -> None:
         """Persist compact floor-fail diagnostics before raising the controlled NO-GO."""
         floor = float(duration_floor or 0.0)
@@ -1779,8 +1780,11 @@ class LongformTimelineBuilder:
             except Exception:
                 return
 
+        lock_metric_fields = self._normalize_floor_fail_lock_metrics(lock_metrics)
+
         debug_context["longform_floor_fail"] = {
             "status": "controlled_no_go",
+            **lock_metric_fields,
             "reason": str(reason),
             "render_blocked": True,
             "selected_before_guards": selected_before,
@@ -1794,6 +1798,45 @@ class LongformTimelineBuilder:
             "selected_timeline": selected_timeline,
             "duration_ledger": list(duration_ledger or []),
         }
+
+    def _normalize_floor_fail_lock_metrics(self, lock_metrics: dict | None = None) -> dict:
+        raw = dict(lock_metrics or {})
+
+        normalized = {
+            "removed_speech_seconds": None,
+            "removed_speech_source": "not_available",
+            "boundary_hits_count": None,
+            "boundary_hits_source": "not_available",
+            "overlap_count": None,
+            "timeline_safety_overlap_count": None,
+        }
+
+        removed_speech_seconds = raw.get("removed_speech_seconds")
+        if removed_speech_seconds is not None:
+            normalized["removed_speech_seconds"] = round(float(removed_speech_seconds), 3)
+            normalized["removed_speech_source"] = str(
+                raw.get("removed_speech_source") or "explicit_lock_metrics"
+            )
+
+        boundary_hits_count = raw.get("boundary_hits_count")
+        if boundary_hits_count is not None:
+            normalized["boundary_hits_count"] = int(boundary_hits_count)
+            normalized["boundary_hits_source"] = str(
+                raw.get("boundary_hits_source") or "explicit_lock_metrics"
+            )
+
+        overlap_count = raw.get("overlap_count")
+        if overlap_count is not None:
+            normalized["overlap_count"] = int(overlap_count)
+
+        timeline_safety_overlap_count = raw.get("timeline_safety_overlap_count")
+        if timeline_safety_overlap_count is not None:
+            normalized["timeline_safety_overlap_count"] = int(
+                timeline_safety_overlap_count
+            )
+
+        return normalized
+
 
     def _count_analysis_boosts(self, selected_segments: list[TimelineSegment]) -> dict[str, int]:
         return {
