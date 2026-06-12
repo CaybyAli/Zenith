@@ -1024,6 +1024,25 @@ class LongformTimelineBuilder:
                 f"reserve={len(reserve_scored_candidates)} "
                 f"target={target_duration:.3f}s"
             )
+            self._write_floor_fail_diagnostics(
+                job=job,
+                reason="floor_unreachable_before_guards",
+                selected_before_guards=None,
+                selected_after_guards=selected_items_duration,
+                duration_floor=duration_floor,
+                target_duration=target_duration,
+                primary_count=len(scored_candidates),
+                reserve_count=len(reserve_scored_candidates),
+                selected_segments=[],
+                duration_ledger=[
+                    {
+                        "guard": "TIMELINE-DURATION-FLOOR",
+                        "before": round(float(selected_items_duration), 3),
+                        "after": round(float(selected_items_duration), 3),
+                        "delta": 0.0,
+                    }
+                ],
+            )
             raise ValidationError(
                 f"Longform floor 480s unreachable: only {selected_items_duration:.0f}s of usable material"
             )
