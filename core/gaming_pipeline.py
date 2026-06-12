@@ -11061,14 +11061,28 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
 
     gate1b_boundary_hits_count = None
     gate1b_boundary_hits_source = "not_available"
-    if phase_2b_final_review_report is not None:
-        gate1b_boundary_hits_count = int(
-            getattr(phase_2b_final_review_report, "keep_with_boundary_warning", 0)
-            or 0
+    gate1b_removed_speech_seconds = None
+    gate1b_removed_speech_source = "not_available"
+
+    if universal_boundary_evidence_report is not None:
+        gate1b_real_word_cut = int(
+            getattr(universal_boundary_evidence_report, "real_word_cut", 0) or 0
+        )
+        gate1b_real_sentence_cut = int(
+            getattr(universal_boundary_evidence_report, "real_sentence_cut", 0) or 0
+        )
+        gate1b_boundary_hits_count = (
+            gate1b_real_word_cut + gate1b_real_sentence_cut
         )
         gate1b_boundary_hits_source = (
-            "phase_2b_final_review.keep_with_boundary_warning"
+            "universal_boundary_evidence.real_word_cut+real_sentence_cut"
         )
+
+        if gate1b_boundary_hits_count == 0:
+            gate1b_removed_speech_seconds = 0.0
+            gate1b_removed_speech_source = (
+                "universal_boundary_evidence.no_real_word_or_sentence_cut"
+            )
 
     gate1b_timeline_safety_overlap_count = getattr(
         job,
@@ -11077,8 +11091,8 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
     )
 
     gate1b_lock_metrics = {
-        "removed_speech_seconds": None,
-        "removed_speech_source": "not_available",
+        "removed_speech_seconds": gate1b_removed_speech_seconds,
+        "removed_speech_source": gate1b_removed_speech_source,
         "boundary_hits_count": gate1b_boundary_hits_count,
         "boundary_hits_source": gate1b_boundary_hits_source,
         "overlap_count": gate1b_timeline_safety_overlap_count,

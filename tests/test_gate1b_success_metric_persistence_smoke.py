@@ -11,8 +11,8 @@ def test_job_model_roundtrips_gate1b_success_lock_metrics() -> None:
             "validator_status": "passed",
             "removed_speech_seconds": 0.0,
             "removed_speech_source": "dead_air_trim",
-            "boundary_hits_count": 17,
-            "boundary_hits_source": "phase_2b_final_review.keep_with_boundary_warning",
+            "boundary_hits_count": 0,
+            "boundary_hits_source": "universal_boundary_evidence.real_word_cut+real_sentence_cut",
             "overlap_count": 0,
             "timeline_safety_overlap_count": 0,
         }
@@ -22,8 +22,8 @@ def test_job_model_roundtrips_gate1b_success_lock_metrics() -> None:
 
     assert data["removed_speech_seconds"] == 0.0
     assert data["removed_speech_source"] == "dead_air_trim"
-    assert data["boundary_hits_count"] == 17
-    assert data["boundary_hits_source"] == "phase_2b_final_review.keep_with_boundary_warning"
+    assert data["boundary_hits_count"] == 0
+    assert data["boundary_hits_source"] == "universal_boundary_evidence.real_word_cut+real_sentence_cut"
     assert data["overlap_count"] == 0
     assert data["timeline_safety_overlap_count"] == 0
 
@@ -54,3 +54,7 @@ def test_gaming_pipeline_returns_gate1b_lock_metrics() -> None:
     assert '"boundary_hits_source"' in source
     assert '"overlap_count"' in source
     assert '"timeline_safety_overlap_count"' in source
+    assert "real_word_cut" in source
+    assert "real_sentence_cut" in source
+    assert "universal_boundary_evidence.real_word_cut+real_sentence_cut" in source
+    assert "universal_boundary_evidence.no_real_word_or_sentence_cut" in source
