@@ -119,8 +119,9 @@ def test_focus_decision_facecam_overrides_reframe_layout_for_32x9() -> None:
     assert policy["policy_source"] == "focus_decision"
     assert policy["focus_target"] == "facecam"
     assert policy["layout_kind"] == "facecam_emphasis"
-    assert "crop=1920:1080:0:0" in fc
-    assert "overlay=" not in fc
+    assert "crop=1920:1080:1920:0" in fc
+    assert "[gp][fc]overlay=" in fc
+    assert "overlay=" in fc
 
 
 def test_focus_decision_balanced_keeps_pip_layout_for_32x9() -> None:

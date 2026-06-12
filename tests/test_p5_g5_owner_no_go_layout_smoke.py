@@ -70,3 +70,41 @@ def test_p5_g5_gameplay_crop_still_renders_gameplay_only_for_32x9_source():
     assert out_label == "[out]"
     assert "crop=1920:1080:1920:0" in filter_complex
     assert "overlay=" not in filter_complex
+
+def test_p5_g5_facecam_emphasis_with_reframe_plan_keeps_gameplay_visible_for_32x9_source():
+    driver = FinalRenderDriver()
+
+    segment = SimpleNamespace(
+        segment_id="seg_owner_no_go_reframe",
+        segment_role="hook",
+    )
+    reframe_plan = SimpleNamespace(
+        instructions=[
+            SimpleNamespace(
+                segment_id="seg_owner_no_go_reframe",
+                layout_kind="facecam_emphasis",
+            )
+        ]
+    )
+
+    focus_policy = {
+        "layout_kind": "facecam_emphasis",
+        "policy_source": "focus_decision",
+        "focus_target": "facecam",
+    }
+
+    filter_complex, out_label = driver._build_filter_complex(
+        segment=segment,
+        reframe_plan=reframe_plan,
+        dynamic_edit_plan=None,
+        audio_peaks=[],
+        src_w=3840,
+        src_h=1080,
+        focus_policy=focus_policy,
+        smooth_zoom_policy=None,
+    )
+
+    assert out_label == "[out]"
+    assert "crop=1920:1080:1920:0" in filter_complex
+    assert "[gp][fc]overlay=" in filter_complex
+    assert "overlay=" in filter_complex

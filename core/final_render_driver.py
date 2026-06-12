@@ -896,14 +896,6 @@ class FinalRenderDriver:
                 )
 
             if layout_kind == "facecam_emphasis":
-                if reframe_plan is not None:
-                    print(f"[DEBUG] -> Rendering FACECAM FOCUS ONLY (left half)")
-                    return self._build_32x9_focus_crop_filter(
-                        src_w=src_w,
-                        src_h=src_h,
-                        side="left",
-                        smooth_zoom_policy=smooth_zoom_policy,
-                    )
                 sizes = self._resolve_facecam_pip_sizes(job)
                 position = self._resolve_facecam_pip_position(job)
                 large_w, large_h = sizes["large"]

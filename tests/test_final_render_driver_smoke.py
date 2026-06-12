@@ -298,10 +298,11 @@ def test_reaction_shot_reframe_instruction_changes_32x9_filter_complex() -> None
     assert "split=2" in base_filter
     assert "overlay=" in base_filter
 
-    assert "crop=1920:1080:0:0" in reaction_filter
+    assert "crop=1920:1080:1920:0" in reaction_filter
     assert "scale_cuda=1920:1080" in reaction_filter
-    assert reaction_filter.endswith("hwdownload,format=yuv420p[out]")
-    assert "overlay=" not in reaction_filter
+    assert reaction_filter.endswith("[out]")
+    assert "[gp][fc]overlay=" in reaction_filter
+    assert "overlay=" in reaction_filter
 
 
 def test_segment_render_worker_count_uses_two_nvenc_workers_for_performance() -> None:
