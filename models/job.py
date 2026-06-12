@@ -1241,6 +1241,11 @@ class Job:
     exported_video_path: str | None = None
     render_version: int | None = None
     focus_decisions_count: int = 0
+    removed_speech_seconds: float | None = None
+    removed_speech_source: str | None = None
+    boundary_hits_count: int | None = None
+    boundary_hits_source: str | None = None
+    overlap_count: int | None = None
     phase_2b_stabilization_result: dict[str, Any] = field(default_factory=dict)
     style_dna_consumption: dict[str, Any] = field(default_factory=dict)
 
@@ -3304,6 +3309,23 @@ shorts=[
                 else None
             ),
             focus_decisions_count=int(data.get("focus_decisions_count", 0) or 0),
+            removed_speech_seconds=(
+                float(data["removed_speech_seconds"])
+                if data.get("removed_speech_seconds") is not None
+                else None
+            ),
+            removed_speech_source=data.get("removed_speech_source"),
+            boundary_hits_count=(
+                int(data["boundary_hits_count"])
+                if data.get("boundary_hits_count") is not None
+                else None
+            ),
+            boundary_hits_source=data.get("boundary_hits_source"),
+            overlap_count=(
+                int(data["overlap_count"])
+                if data.get("overlap_count") is not None
+                else None
+            ),
             phase_2b_stabilization_result=dict(
                 data.get("phase_2b_stabilization_result") or {}
             ),

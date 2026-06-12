@@ -11059,6 +11059,38 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             f"path={phase_2b_stabilization_paths[-1]}"
         )
 
+    gate1b_boundary_hits_count = None
+    gate1b_boundary_hits_source = "not_available"
+    if phase_2b_final_review_report is not None:
+        gate1b_boundary_hits_count = int(
+            getattr(phase_2b_final_review_report, "keep_with_boundary_warning", 0)
+            or 0
+        )
+        gate1b_boundary_hits_source = (
+            "phase_2b_final_review.keep_with_boundary_warning"
+        )
+
+    gate1b_timeline_safety_overlap_count = getattr(
+        job,
+        "timeline_safety_overlap_count",
+        None,
+    )
+
+    gate1b_lock_metrics = {
+        "removed_speech_seconds": None,
+        "removed_speech_source": "not_available",
+        "boundary_hits_count": gate1b_boundary_hits_count,
+        "boundary_hits_source": gate1b_boundary_hits_source,
+        "overlap_count": gate1b_timeline_safety_overlap_count,
+        "timeline_safety_overlap_count": gate1b_timeline_safety_overlap_count,
+    }
+
+    job.removed_speech_seconds = gate1b_lock_metrics["removed_speech_seconds"]
+    job.removed_speech_source = gate1b_lock_metrics["removed_speech_source"]
+    job.boundary_hits_count = gate1b_lock_metrics["boundary_hits_count"]
+    job.boundary_hits_source = gate1b_lock_metrics["boundary_hits_source"]
+    job.overlap_count = gate1b_lock_metrics["overlap_count"]
+
     # ------------------------------------------------------------------
     # 11) Repositories speichern
     # ------------------------------------------------------------------
@@ -11293,6 +11325,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         "metadata":              metadata,
         # Validierung
         "validator_result":      validator_result,
+        "gate1b_lock_metrics":    gate1b_lock_metrics,
         "job_status":             getattr(job.status, "value", job.status),
         "final_job_status":       _final_job_status.value,
         # Repo-Daten (fÃ¼r pipeline_runner zum Speichern)

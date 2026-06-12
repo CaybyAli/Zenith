@@ -475,6 +475,37 @@ def run_pending_jobs(
             if isinstance(style_dna_consumption, dict):
                 job.style_dna_consumption = dict(style_dna_consumption)
 
+            gate1b_lock_metrics = result.get("gate1b_lock_metrics")
+            if isinstance(gate1b_lock_metrics, dict):
+                removed_speech_seconds = gate1b_lock_metrics.get("removed_speech_seconds")
+                job.removed_speech_seconds = (
+                    float(removed_speech_seconds)
+                    if removed_speech_seconds is not None
+                    else None
+                )
+                job.removed_speech_source = gate1b_lock_metrics.get("removed_speech_source")
+
+                boundary_hits_count = gate1b_lock_metrics.get("boundary_hits_count")
+                job.boundary_hits_count = (
+                    int(boundary_hits_count)
+                    if boundary_hits_count is not None
+                    else None
+                )
+                job.boundary_hits_source = gate1b_lock_metrics.get("boundary_hits_source")
+
+                overlap_count = gate1b_lock_metrics.get("overlap_count")
+                job.overlap_count = (
+                    int(overlap_count)
+                    if overlap_count is not None
+                    else None
+                )
+
+                timeline_safety_overlap_count = gate1b_lock_metrics.get(
+                    "timeline_safety_overlap_count"
+                )
+                if timeline_safety_overlap_count is not None:
+                    job.timeline_safety_overlap_count = int(timeline_safety_overlap_count)
+
             title_package = result.get("title_package")
             if title_package is not None:
                 job.title = title_package.primary_title
