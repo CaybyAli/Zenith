@@ -36,10 +36,10 @@
   "max_clip_duration": 45.0,
   "version": "1.0.0",
   "facecam_crop": {
-    "x": 16,
-    "y": 8,
-    "w": 1848,
-    "h": 1056
+    "x": 0,
+    "y": 0,
+    "w": 1864,
+    "h": 1072
   },
   "facecam_pip": {
     "position": {

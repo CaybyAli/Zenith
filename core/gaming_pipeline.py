@@ -10676,7 +10676,15 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         },
     )
     render_edit_timeline = edit_timeline
-    render_facecam_static_tiny = False
+    # Reconnect der vorhandenen Kamera-Wahrheit an den Produktions-Render:
+    # final_render_pipeline.py (korrekter Contract) ruft render() mit
+    # facecam_static_tiny=True. Das erzwingt die static-tiny Basis 480x270 und
+    # koppelt facecam_emphasis_big_disabled + facecam_audio_peak_growth_disabled
+    # an True (FinalRenderDriver). Profil-Crop {1848:1056:16:8} kommt weiterhin
+    # ueber den Profil-Fallback. Dynamisches Groesserwerden via
+    # reaction_size_events ist im Single-raw.mp4-Produktionspfad nicht verfuegbar
+    # und bleibt bewusst aus (Owner: static-tiny jetzt, Zoom spaeter).
+    render_facecam_static_tiny = True
 
     if os.environ.get("ZENITH_RENDER_USE_G8_PLAN") == "1":
         try:
@@ -10708,7 +10716,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 )
         except Exception as _g8_render_exc:
             render_edit_timeline = edit_timeline
-            render_facecam_static_tiny = False
+            render_facecam_static_tiny = True
             print(
                 f"[gaming_pipeline] RENDER_G8_PLAN {job.job_id} "
                 f"fallback=old_edit_timeline reason={type(_g8_render_exc).__name__}:{_g8_render_exc}"
