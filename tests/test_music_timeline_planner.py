@@ -76,6 +76,34 @@ def test_20_minute_video_uses_more_songs_than_8_8_minute_video():
     assert long_plan["music_timeline_segment_count"] >= 8
 
 
+def test_music_transition_crossfade_count_matches_segments():
+    plan = plan_music_timeline(
+        video_duration_sec=1200.0,
+        available_tracks=_tracks(count=8, duration=150.0),
+        content_type="gaming_main",
+    )
+
+    assert plan["music_timeline_segment_count"] >= 8
+    assert plan["music_crossfade_count"] == plan["music_timeline_segment_count"] - 1
+    assert plan["music_expected_crossfade_count"] == plan["music_timeline_segment_count"] - 1
+    assert plan["music_transition_crossfade_enabled"] is True
+
+
+def test_music_transition_has_overlap_not_hard_cut():
+    plan = plan_music_timeline(
+        video_duration_sec=300.0,
+        available_tracks=_tracks(count=4, duration=90.0),
+        content_type="gaming_main",
+    )
+    second = plan["music_timeline"][1]
+
+    assert second["crossfade_in_sec"] > 0.0
+    assert second["transition_overlap_start_sec"] < second["start_sec"]
+    assert second["command_start_sec"] < second["start_sec"]
+    assert plan["music_transition_overlap_enabled"] is True
+    assert plan["music_transition_hard_cut_detected"] is False
+
+
 def test_30_minute_video_uses_more_segments_without_single_song_loop():
     plan = plan_music_timeline(
         video_duration_sec=1800.0,

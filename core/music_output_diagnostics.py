@@ -52,6 +52,7 @@ def build_audio_stem_truth_gate(
     expected_duration_sec: float | None = None,
     tail_window_stats: list[dict[str, Any]] | None = None,
     song_start_window_stats: list[dict[str, Any]] | None = None,
+    transition_window_stats: list[dict[str, Any]] | None = None,
     voice_music_relative_stats: list[dict[str, Any]] | None = None,
     final_mix_tail_stats: list[dict[str, Any]] | None = None,
     audible_floor_db: float = MUSIC_STEM_AUDIBLE_FLOOR_DB,
@@ -59,6 +60,7 @@ def build_audio_stem_truth_gate(
 ) -> dict[str, Any]:
     tail_windows = list(tail_window_stats or [])
     song_windows = list(song_start_window_stats or [])
+    transition_windows = list(transition_window_stats or [])
     relative_windows = list(voice_music_relative_stats or [])
     final_tail_windows = list(final_mix_tail_stats or [])
 
@@ -70,6 +72,12 @@ def build_audio_stem_truth_gate(
         and duration is not None
         and expected is not None
         and duration >= expected - 0.75
+    )
+    music_auto_shorter_than_video = bool(
+        stem_exists
+        and duration is not None
+        and expected is not None
+        and duration < expected - 1.0
     )
     missing_tail_duration = bool(
         stem_exists
@@ -87,6 +95,10 @@ def build_audio_stem_truth_gate(
     song_start_silent_window_count = sum(1 for window in song_windows if not _is_audible(window, audible_floor_db))
     song_checked = bool(stem_exists and song_windows)
     song_starts_audible = song_checked and song_start_silent_window_count == 0
+
+    transition_energy_drop_count = sum(1 for window in transition_windows if not _is_audible(window, audible_floor_db))
+    transition_checked = bool(stem_exists and transition_windows)
+    transition_passed = not transition_checked or transition_energy_drop_count == 0
 
     margins: list[float] = []
     for window in relative_windows:
@@ -116,10 +128,14 @@ def build_audio_stem_truth_gate(
     blocked_reason = None
     if not stem_exists:
         blocked_reason = "audio_stem_probe_missing"
+    elif music_auto_shorter_than_video:
+        blocked_reason = "music_auto_shorter_than_video"
     elif not tail_audible:
         blocked_reason = "music_auto_tail_not_audible"
     elif not song_starts_audible:
         blocked_reason = "song_start_music_not_audible"
+    elif not transition_passed:
+        blocked_reason = "music_transition_energy_drop_detected"
     elif not relative_passed:
         blocked_reason = "music_too_close_to_voice"
 
@@ -129,13 +145,17 @@ def build_audio_stem_truth_gate(
         "music_auto_stem_generated_for_gate": stem_exists,
         "music_auto_stem_path": str(music_auto_stem_path) if music_auto_stem_path else None,
         "music_auto_stem_duration_sec": _round_sec(duration) if duration is not None else None,
+        "music_auto_duration_sec": _round_sec(duration) if duration is not None else None,
         "music_auto_expected_duration_sec": _round_sec(expected) if expected is not None else None,
+        "video_duration_sec": _round_sec(expected) if expected is not None else None,
         "music_auto_stem_reaches_expected_end": stem_reaches_expected_end,
         "music_auto_tail_rms_checked": tail_checked,
         "music_auto_tail_audible": tail_audible,
         "music_auto_tail_silent_window_count": int(tail_silent_window_count),
         "song_start_music_stem_checked": song_checked,
         "song_start_silent_window_count": int(song_start_silent_window_count),
+        "transition_crossfade_stem_probe_passed": transition_passed,
+        "transition_energy_drop_count": int(transition_energy_drop_count),
         "music_vs_voice_relative_gate_enabled": True,
         "voice_window_music_below_voice_db_min": float(relative_min_db),
         "voice_window_music_below_voice_min_observed_db": _round_db(min(margins)) if margins else None,
@@ -161,6 +181,8 @@ def apply_audio_stem_truth_gate(manifest: dict[str, Any], gate: dict[str, Any]) 
         and int(result.get("music_auto_tail_silent_window_count", 1) or 0) == 0
         and result.get("song_start_music_stem_checked") is True
         and int(result.get("song_start_silent_window_count", 1) or 0) == 0
+        and result.get("transition_crossfade_stem_probe_passed", True) is True
+        and int(result.get("transition_energy_drop_count", 0) or 0) == 0
         and result.get("voice_window_music_below_voice_passed") is True
         and result.get("final_mix_tail_probe_passed") is True
     )
@@ -213,6 +235,8 @@ def build_audio_stem_command(command: list[str], *, stem_label: str, output_path
 
     filter_index = command.index("-filter_complex")
     prefix = list(command[:filter_index])
+    if "-fflags" not in prefix:
+        prefix = prefix[:1] + ["-fflags", "+discardcorrupt", "-err_detect", "ignore_err"] + prefix[1:]
     return prefix + [
         "-filter_complex",
         stem_filter,
@@ -227,10 +251,23 @@ def build_audio_stem_command(command: list[str], *, stem_label: str, output_path
 
 def run_checked_command(command: list[str], *, stdout_path: Path | None = None, stderr_path: Path | None = None) -> None:
     completed = subprocess.run(command, capture_output=True, text=True)
+    first_failure: subprocess.CompletedProcess[str] | None = None
+    if completed.returncode != 0 and "ignore_err" in command:
+        first_failure = completed
+        completed = subprocess.run(command, capture_output=True, text=True)
     if stdout_path:
         stdout_path.write_text(completed.stdout, encoding="utf-8")
     if stderr_path:
-        stderr_path.write_text(completed.stderr, encoding="utf-8")
+        stderr_text = completed.stderr
+        if first_failure is not None:
+            stderr_text = (
+                "FIRST DIAGNOSIS ATTEMPT FAILED; RETRIED SAME COMMAND.\n"
+                f"first_returncode={first_failure.returncode}\n"
+                f"{first_failure.stderr}\n"
+                "RETRY STDERR:\n"
+                f"{completed.stderr}"
+            )
+        stderr_path.write_text(stderr_text, encoding="utf-8")
     if completed.returncode != 0:
         raise MusicOutputDiagnosticsError(f"command failed with exit code {completed.returncode}: {command[0]}")
 
@@ -338,6 +375,29 @@ def song_start_probe_windows(music_timeline: list[dict[str, Any]], video_duratio
                 "track_path": segment.get("track_path") or segment.get("path"),
                 "start_sec": _round_sec(start),
                 "end_sec": _round_sec(end),
+            }
+        )
+    return windows
+
+
+def transition_probe_windows(music_timeline: list[dict[str, Any]], video_duration_sec: float) -> list[dict[str, Any]]:
+    duration = float(video_duration_sec)
+    windows: list[dict[str, Any]] = []
+    for index, segment in enumerate((music_timeline or [])[1:], start=1):
+        boundary = float(segment.get("start_sec", 0.0))
+        crossfade = float(segment.get("crossfade_in_sec", 3.0) or 0.0)
+        if crossfade <= 0.0:
+            continue
+        start = max(0.0, boundary - crossfade)
+        end = min(duration, boundary + crossfade)
+        if end <= start:
+            continue
+        windows.append(
+            {
+                "transition_index": index,
+                "start_sec": _round_sec(start),
+                "end_sec": _round_sec(end),
+                "crossfade_in_sec": _round_sec(crossfade),
             }
         )
     return windows

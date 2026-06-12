@@ -10,6 +10,7 @@ from core.music_automation_planner import (
     OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB,
     build_analysis_windows,
     build_clean_transition_policy_for_track,
+    build_gain_smoothing_guard,
     build_music_automation_plan,
     build_music_continuity_guard,
     compute_dynamic_music_gain,
@@ -85,7 +86,8 @@ def test_106_window_final_gains_are_audible_without_sticking_to_floor():
     assert len(gains) == 106
     assert all(MUSIC_AUDIBILITY_FLOOR_DB <= gain <= MUSIC_LOUDNESS_CEILING_DB for gain in gains)
     assert -42.0 <= average_gain <= -34.0
-    assert not all(gain <= -38.0 for gain in gains)
+    assert len(set(gains)) >= 4
+    assert plan["max_adjacent_gain_delta_db"] <= 1.5
     assert not all(gain == MUSIC_AUDIBILITY_FLOOR_DB for gain in gains)
 
 
@@ -101,6 +103,51 @@ def test_smoothing_limits_gain_jumps_to_2db():
 
     for previous, current in zip(gains, gains[1:]):
         assert abs(current - previous) <= 2.0
+
+
+def test_music_gain_envelope_limits_adjacent_jumps():
+    plan = build_music_automation_plan(
+        video_duration_sec=30.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-55.0, -20.0, -55.0, -20.0, -55.0, -55.0],
+        music_section_levels_db=[-50.0, -18.0, -50.0, -18.0, -50.0, -30.0],
+    )
+    gains = [window["final_gain_db"] for window in plan["music_automation_plan"]]
+
+    assert plan["smooth_music_automation_enabled"] is True
+    assert plan["max_adjacent_gain_delta_passed"] is True
+    assert plan["max_adjacent_gain_delta_db"] <= 1.5
+    for previous, current in zip(gains, gains[1:]):
+        assert abs(current - previous) <= 1.5
+
+
+def test_five_second_pumping_pattern_is_blocked():
+    windows = [
+        {"start_sec": 0.0, "end_sec": 5.0, "final_gain_db": -40.0},
+        {"start_sec": 5.0, "end_sec": 10.0, "final_gain_db": -34.0},
+        {"start_sec": 10.0, "end_sec": 15.0, "final_gain_db": -40.0},
+        {"start_sec": 15.0, "end_sec": 20.0, "final_gain_db": -34.0},
+    ]
+
+    guard = build_gain_smoothing_guard(windows, raw_windows=windows)
+
+    assert guard["status"] == "blocked"
+    assert guard["blocked_reason"] == "five_second_music_pumping_detected"
+    assert guard["five_second_pumping_detected"] is True
+
+
+def test_voice_release_is_smooth_not_instant_loud():
+    plan = build_music_automation_plan(
+        video_duration_sec=20.0,
+        music_timeline=[],
+        mixed_audio_levels_db=[-24.0, -24.0, -55.0, -55.0],
+        music_section_levels_db=[-30.0, -30.0, -50.0, -50.0],
+    )
+    gains = [window["final_gain_db"] for window in plan["music_automation_plan"]]
+
+    assert plan["automation_release_sec"] >= 6.0
+    assert gains[2] <= gains[1] + 1.5
+    assert gains[2] < -38.0
 
 
 def test_ali_friend_separation_is_honest_without_separated_data():

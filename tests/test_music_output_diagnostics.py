@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from core.music_output_diagnostics import apply_audio_stem_truth_gate, build_audio_stem_truth_gate
+from core.music_output_diagnostics import (
+    apply_audio_stem_truth_gate,
+    build_audio_stem_truth_gate,
+    transition_probe_windows,
+)
 
 
 def _base_manifest() -> dict:
@@ -59,10 +63,60 @@ def test_tail_guard_uses_music_auto_stem_not_only_timeline(tmp_path):
     manifest = apply_audio_stem_truth_gate(_base_manifest(), gate)
 
     assert manifest["status"] == "blocked"
-    assert manifest["blocked_reason"] == "music_auto_tail_not_audible"
+    assert manifest["blocked_reason"] == "music_auto_shorter_than_video"
     assert manifest["music_auto_tail_audible"] is False
     assert manifest["music_auto_tail_silent_window_count"] == 1
     assert manifest["musicbed_no_silent_gaps"] is False
+
+
+def test_tail_music_duration_still_matches_video(tmp_path):
+    stem = tmp_path / "music_auto_after_gain.mka"
+    stem.write_bytes(b"stem")
+
+    gate = build_audio_stem_truth_gate(
+        music_auto_stem_path=stem,
+        music_auto_stem_duration_sec=527.3,
+        expected_duration_sec=528.0,
+        tail_window_stats=[_audible()],
+        song_start_window_stats=[_audible(0.0, 10.0)],
+        transition_window_stats=[_audible(117.0, 123.0)],
+        voice_music_relative_stats=[{"music_below_voice_db": 22.0}],
+        final_mix_tail_stats=[_audible()],
+    )
+
+    assert gate["status"] == "diagnosis_ok"
+    assert gate["music_auto_duration_sec"] >= gate["video_duration_sec"] - 1.0
+
+
+def test_transition_energy_does_not_drop_to_silence(tmp_path):
+    stem = tmp_path / "music_auto_after_gain.mka"
+    stem.write_bytes(b"stem")
+
+    gate = build_audio_stem_truth_gate(
+        music_auto_stem_path=stem,
+        music_auto_stem_duration_sec=528.0,
+        expected_duration_sec=528.0,
+        tail_window_stats=[_audible()],
+        song_start_window_stats=[_audible(0.0, 10.0)],
+        transition_window_stats=[_audible(117.0, 123.0, -52.0)],
+        voice_music_relative_stats=[{"music_below_voice_db": 22.0}],
+        final_mix_tail_stats=[_audible()],
+    )
+
+    assert gate["transition_crossfade_stem_probe_passed"] is True
+    assert gate["transition_energy_drop_count"] == 0
+
+
+def test_transition_probe_windows_cover_overlap():
+    windows = transition_probe_windows(
+        [
+            {"start_sec": 0.0, "end_sec": 120.0, "crossfade_out_sec": 3.0},
+            {"start_sec": 120.0, "end_sec": 240.0, "crossfade_in_sec": 3.0},
+        ],
+        240.0,
+    )
+
+    assert windows == [{"transition_index": 1, "start_sec": 117.0, "end_sec": 123.0, "crossfade_in_sec": 3.0}]
 
 
 def test_song_start_guard_blocks_silent_segment_start(tmp_path):

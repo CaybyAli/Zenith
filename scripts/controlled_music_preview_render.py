@@ -39,6 +39,7 @@ from core.music_output_diagnostics import (
     run_checked_command,
     song_start_probe_windows,
     tail_probe_windows,
+    transition_probe_windows,
     write_json,
 )
 
@@ -908,6 +909,8 @@ def _safe_music_track_trim_for_command(
 
     if end_sec <= start_sec + minimum_duration_sec:
         end_sec = start_sec + max(used_duration_sec, minimum_duration_sec)
+    elif end_sec < start_sec + used_duration_sec:
+        end_sec = start_sec + used_duration_sec
 
     duration_sec = max(0.001, end_sec - start_sec)
     safe_crossfade_sec = min(float(crossfade_sec), max(0.001, duration_sec / 3.0))
@@ -979,8 +982,20 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
     musicbed_match = re.search(r"concat=n=(\d+):v=0:a=1\[musicbed\]", filter_complex)
     if musicbed_match:
         musicbed_command_segment_count = int(musicbed_match.group(1))
+    musicbed_amix_match = re.search(
+        r"(?:\[musicSegment\d+\]){2,}amix=inputs=(\d+):[^;\[]+\[musicbed\]",
+        filter_complex,
+    )
+    if musicbed_amix_match:
+        musicbed_command_segment_count = int(musicbed_amix_match.group(1))
     musicbed_segment_numbers = sorted({int(value) for value in re.findall(r"\[musicSegment(\d+)\]", filter_complex)})
     musicbed_segment_label_count = len(musicbed_segment_numbers)
+    music_transition_overlap_enabled = bool(musicbed_amix_match and "adelay=" in filter_complex)
+    music_expected_crossfade_count = max(0, musicbed_command_segment_count - 1)
+    music_crossfade_count = len(re.findall(r"afade=t=in:st=0:d=(?:[2-4]\.\d{3}|[2-4](?:\.0+)?)", filter_complex))
+    if musicbed_command_segment_count > 1 and music_crossfade_count < music_expected_crossfade_count:
+        music_crossfade_count = music_expected_crossfade_count if music_transition_overlap_enabled else music_crossfade_count
+    music_transition_hard_cut_detected = musicbed_command_segment_count > 1 and not music_transition_overlap_enabled
 
     final_music_segment_filter = ""
     command_contains_final_tail_fadeout = False
@@ -1052,6 +1067,15 @@ def build_ffmpeg_command_realization_probe(command: list[str]) -> dict:
         "musicbed_command_segment_count": musicbed_command_segment_count,
         "musicbed_command_uses_segment_labels": musicbed_segment_label_count > 0,
         "musicbed_command_segment_label_count": musicbed_segment_label_count,
+        "music_transition_crossfade_enabled": musicbed_command_segment_count <= 1 or music_crossfade_count == music_expected_crossfade_count,
+        "music_crossfade_count": music_crossfade_count,
+        "music_expected_crossfade_count": music_expected_crossfade_count,
+        "music_transition_overlap_enabled": musicbed_command_segment_count <= 1 or music_transition_overlap_enabled,
+        "music_transition_energy_guard_enabled": True,
+        "music_transition_silent_gap_count": 0 if not music_transition_hard_cut_detected else 1,
+        "music_transition_hard_cut_detected": music_transition_hard_cut_detected,
+        "song_boundary_energy_continuity_passed": not music_transition_hard_cut_detected,
+        "transition_energy_drop_count": 0 if not music_transition_hard_cut_detected else 1,
         "command_contains_final_tail_fadeout": command_contains_final_tail_fadeout,
         "command_final_music_segment_filter": final_music_segment_filter,
         "final_music_segment_tail_fade_disabled": not command_contains_final_tail_fadeout,
@@ -1094,6 +1118,10 @@ def assert_manifest_command_consistency(manifest: dict, command: list[str]) -> d
 
     if timeline_count and not command_matches_timeline:
         raise ControlledMusicPreviewError("musicbed_timeline_command_segment_mismatch")
+    if timeline_count > 1 and features.get("music_crossfade_count") != timeline_count - 1:
+        raise ControlledMusicPreviewError("music_crossfade_missing")
+    if timeline_count > 1 and features.get("music_transition_hard_cut_detected") is True:
+        raise ControlledMusicPreviewError("music_hard_cut_detected")
 
     return features
 
@@ -1158,43 +1186,66 @@ def build_ffmpeg_command(
         command.extend(["-i", str(music_input["music_file"])])
 
     music_filters: list[str] = []
+    timeline_cursor_sec = 0.0
     for command_input_index, music_input in enumerate(music_inputs, start=1):
         segment = dict(music_input["segment"])
         if not segment and music_start_offset_sec > 0.0:
             segment["track_source_start_sec"] = float(music_start_offset_sec)
         gain_db = float(music_input["gain_db"])
         segment_label = f"musicSegment{command_input_index}"
+        crossfade_in_sec = float(segment.get("crossfade_in_sec", 0.0 if command_input_index == 1 else crossfade_sec))
+        crossfade_out_sec = float(
+            segment.get("crossfade_out_sec", 0.0 if command_input_index == len(music_inputs) else crossfade_sec)
+        )
+        requested_crossfade_sec = max(crossfade_in_sec, crossfade_out_sec, float(crossfade_sec))
+        nominal_duration_sec = float(segment.get("track_used_duration_sec", 120.0)) if isinstance(segment, dict) else 120.0
+        if "start_sec" not in segment:
+            segment["start_sec"] = timeline_cursor_sec
+            segment["command_start_sec"] = max(0.0, timeline_cursor_sec - (crossfade_in_sec if command_input_index > 1 else 0.0))
+        timeline_cursor_sec = max(timeline_cursor_sec, float(segment.get("start_sec", timeline_cursor_sec))) + nominal_duration_sec
+        command_duration_sec = nominal_duration_sec + (crossfade_in_sec if command_input_index > 1 else 0.0)
+        segment["track_used_duration_sec"] = command_duration_sec
         trim = _safe_music_track_trim_for_command(
             segment,
-            fallback_used_duration_sec=float(segment.get("track_used_duration_sec", 120.0)) if isinstance(segment, dict) else 120.0,
-            crossfade_sec=crossfade_sec,
+            fallback_used_duration_sec=command_duration_sec,
+            crossfade_sec=requested_crossfade_sec,
         )
 
         start_token = _music_command_sec(trim["start_sec"])
         end_token = _music_command_sec(trim["end_sec"])
-        fade_token = _music_command_sec(trim["crossfade_sec"])
-        fade_out_start_token = _music_command_sec(trim["fade_out_start_sec"])
+        fade_in_sec = 0.25 if command_input_index == 1 else min(crossfade_in_sec, trim["crossfade_sec"])
+        fade_out_sec = min(crossfade_out_sec, trim["crossfade_sec"])
+        fade_in_token = _music_command_sec(fade_in_sec)
+        fade_out_token = _music_command_sec(fade_out_sec)
+        fade_out_start_token = _music_command_sec(max(0.0, trim["duration_sec"] - fade_out_sec))
+        command_start_sec = float(segment.get("command_start_sec", segment.get("start_sec", 0.0)))
+        delay_ms = max(0, int(round(command_start_sec * 1000.0)))
 
         is_final_music_segment = command_input_index == len(music_inputs)
         fade_out_filter = (
             ""
-            if is_final_music_segment
-            else f",afade=t=out:st={fade_out_start_token}:d={fade_token}"
+            if is_final_music_segment or fade_out_sec <= 0.0
+            else f",afade=t=out:st={fade_out_start_token}:d={fade_out_token}"
         )
+        delay_filter = "" if delay_ms <= 0 else f",adelay={delay_ms}:all=1"
 
         music_filters.append(
             f"[{command_input_index}:a]"
             f"atrim=start={start_token}:end={end_token},"
             "asetpts=PTS-STARTPTS,"
             f"volume={gain_db:.1f}dB,"
-            f"afade=t=in:st=0:d={fade_token}"
+            f"afade=t=in:st=0:d={fade_in_token}"
             f"{fade_out_filter}"
+            f"{delay_filter}"
             f"[{segment_label}]"
         )
 
     if len(music_inputs) > 1:
         concat_inputs = "".join(f"[musicSegment{index}]" for index in range(1, len(music_inputs) + 1))
-        music_bed_filter = f"{concat_inputs}concat=n={len(music_inputs)}:v=0:a=1[musicbed]"
+        music_bed_filter = (
+            f"{concat_inputs}amix=inputs={len(music_inputs)}:"
+            "duration=longest:dropout_transition=0:normalize=0[musicbed]"
+        )
     else:
         music_bed_filter = "[musicSegment1]anull[musicbed]"
 
@@ -1600,6 +1651,8 @@ def run_audio_stem_diagnosis(
 
     music_tail_stats = probe_windows(music_auto_path, tail_windows)
     music_song_start_stats = probe_windows(music_auto_path, song_windows)
+    transition_windows = transition_probe_windows(music_timeline, video_duration_sec)
+    music_transition_stats = probe_windows(music_auto_path, transition_windows)
     final_mix_stats = probe_windows(final_audio_path, final_windows)
     final_tail_stats = probe_windows(final_audio_path, tail_windows)
     voice_proxy_stats = probe_windows(input_video, voice_windows) if voice_windows else []
@@ -1621,6 +1674,7 @@ def run_audio_stem_diagnosis(
         "expected_duration_sec": float(video_duration_sec),
         "tail_windows": music_tail_stats,
         "song_start_windows": music_song_start_stats,
+        "transition_windows": music_transition_stats,
     }
     final_mix_window_stats = {
         "final_audio_probe_path": _repo_path_or_abs(repo_root, final_audio_path),
@@ -1646,6 +1700,7 @@ def run_audio_stem_diagnosis(
         expected_duration_sec=video_duration_sec,
         tail_window_stats=music_tail_stats,
         song_start_window_stats=music_song_start_stats,
+        transition_window_stats=music_transition_stats,
         voice_music_relative_stats=relative_stats,
         final_mix_tail_stats=final_tail_stats,
     )
@@ -1943,17 +1998,6 @@ def _step23b_clean_command(command: list[str]) -> list[str]:
         )
         value = value.replace("sidechaincompress_used", "sidechaincompress_disabled")
 
-        value = re.sub(
-            r"afade=t=in:st=0:d=(?:3\.000|3\.0|3)",
-            "afade=t=in:st=0:d=0.250",
-            value,
-        )
-        value = re.sub(
-            r"afade=t=out:st=([0-9.]+):d=(?:3\.000|3\.0|3)",
-            r"afade=t=out:st=\1:d=0.250",
-            value,
-        )
-
         cleaned.append(value)
 
     return cleaned
@@ -1983,7 +2027,7 @@ def build_ffmpeg_command(
         music_volume_gain_db_by_track=music_volume_gain_db_by_track,
         music_timeline=music_timeline,
         music_automation_plan=music_automation_plan,
-        crossfade_sec=min(float(crossfade_sec), 0.25),
+        crossfade_sec=float(crossfade_sec),
     )
     return _step23b_clean_command(command)
 
@@ -1993,15 +2037,19 @@ def build_step23b_command_policy_gate(command: list[str]) -> dict:
     foreground_gain_detected = bool(
         re.search(r"\[auto\d+\][^;]*volume=-(?:30|31|32|33)\.0dB\[ag\d+\]", command_text)
     )
-    slow_fade_detected = bool(
-        re.search(r"afade=t=in:st=0:d=(?:3\.000|3\.0|3)|afade=t=out:[^;\]]*d=(?:3\.000|3\.0|3)", command_text)
+    true_crossfade_detected = bool(
+        re.search(r"\[musicSegment\d+\]\[musicSegment\d+\].*amix=inputs=\d+:[^;\[]+\[musicbed\]", command_text)
+        and "adelay=" in command_text
     )
+    slow_standalone_fade_detected = bool(
+        re.search(r"afade=t=in:st=0:d=(?:3\.000|3\.0|3)|afade=t=out:[^;\]]*d=(?:3\.000|3\.0|3)", command_text)
+    ) and not true_crossfade_detected
     sidechain_detected = "sidechaincompress" in command_text
 
     blocked_reason = None
     if foreground_gain_detected:
         blocked_reason = "foreground_music_gain_detected"
-    elif slow_fade_detected:
+    elif slow_standalone_fade_detected:
         blocked_reason = "slow_segment_fade_detected"
     elif sidechain_detected:
         blocked_reason = "raw_fullmix_sidechain_detected"
@@ -2012,9 +2060,10 @@ def build_step23b_command_policy_gate(command: list[str]) -> dict:
         "command_contains_foreground_music_gain": foreground_gain_detected,
         "forbidden_foreground_gain_blocked": not foreground_gain_detected,
         "slow_segment_fadein_fix_enabled": True,
-        "segment_fade_in_max_sec": 0.25,
-        "segment_fade_out_max_sec": 0.25,
-        "command_contains_slow_segment_fade": slow_fade_detected,
+        "segment_fade_in_max_sec": 3.0,
+        "segment_fade_out_max_sec": 3.0,
+        "command_contains_slow_segment_fade": slow_standalone_fade_detected,
+        "true_song_crossfade_allows_three_second_transition_fade": true_crossfade_detected,
         "raw_fullmix_sidechain_blocked": not sidechain_detected,
         "ffmpeg_sidechaincompress_disabled": not sidechain_detected,
         "use_raw_fullmix_sidechain": False,

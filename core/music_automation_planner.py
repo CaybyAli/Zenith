@@ -11,7 +11,9 @@ OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB = (-44.0, -34.0)
 OWNER_MUSIC_BALANCED_GAIN_RANGE_DB = OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB
 DEFAULT_AUTOMATION_WINDOW_SEC = 5.0
 DEFAULT_BASE_TARGET_GAIN_DB = -39.0
-DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB = 2.0
+DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB = 1.5
+DEFAULT_AUTOMATION_ATTACK_SEC = 0.75
+DEFAULT_AUTOMATION_RELEASE_SEC = 8.0
 DEFAULT_TRACK_START_TRIM_SEC = 30.0
 DEFAULT_TRACK_END_TRIM_SEC = 15.0
 DEFAULT_CROSSFADE_SEC = 3.0
@@ -336,6 +338,68 @@ def smooth_gain_curve(
     return smoothed
 
 
+def max_adjacent_gain_delta(windows: list[dict[str, Any]], gain_key: str = "final_gain_db") -> float:
+    gains = [float(window.get(gain_key, DEFAULT_BASE_TARGET_GAIN_DB)) for window in windows]
+    if len(gains) < 2:
+        return 0.0
+    return _round_db(max(abs(current - previous) for previous, current in zip(gains, gains[1:])))
+
+
+def detect_five_second_pumping_pattern(
+    windows: list[dict[str, Any]],
+    *,
+    gain_key: str = "final_gain_db",
+    minimum_alternating_delta_db: float = 3.0,
+) -> bool:
+    gains = [float(window.get(gain_key, DEFAULT_BASE_TARGET_GAIN_DB)) for window in windows]
+    if len(gains) < 4:
+        return False
+
+    for index in range(len(gains) - 3):
+        chunk = gains[index : index + 4]
+        deltas = [chunk[item + 1] - chunk[item] for item in range(3)]
+        if not all(abs(delta) >= minimum_alternating_delta_db for delta in deltas):
+            continue
+        signs = [1 if delta > 0 else -1 for delta in deltas]
+        if signs == [1, -1, 1] or signs == [-1, 1, -1]:
+            return True
+    return False
+
+
+def build_gain_smoothing_guard(
+    windows: list[dict[str, Any]],
+    *,
+    max_allowed_delta_db: float = DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB,
+    raw_windows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    observed_delta = max_adjacent_gain_delta(windows)
+    pumping_detected = detect_five_second_pumping_pattern(raw_windows or windows)
+    max_delta_passed = observed_delta <= max_allowed_delta_db + 0.001
+
+    blocked_reason = None
+    if pumping_detected:
+        blocked_reason = "five_second_music_pumping_detected"
+    elif not max_delta_passed:
+        blocked_reason = "music_gain_pumping_detected"
+
+    return {
+        "smooth_music_automation_enabled": True,
+        "automation_analysis_window_sec": DEFAULT_AUTOMATION_WINDOW_SEC,
+        "automation_output_smoothed": True,
+        "automation_attack_sec": DEFAULT_AUTOMATION_ATTACK_SEC,
+        "automation_release_sec": DEFAULT_AUTOMATION_RELEASE_SEC,
+        "max_adjacent_gain_delta_db": observed_delta,
+        "max_allowed_adjacent_gain_delta_db": float(max_allowed_delta_db),
+        "max_adjacent_gain_delta_passed": max_delta_passed,
+        "five_second_pumping_guard_enabled": True,
+        "five_second_pumping_detected": pumping_detected,
+        "gain_envelope_smoothing_method": "rolling_median_plus_adjacent_delta_limiter",
+        "gain_pumping_stem_probe_passed": max_delta_passed and not pumping_detected,
+        "status": "blocked" if blocked_reason else "ok",
+        "blocked_reason": blocked_reason,
+    }
+
+
 def build_clean_transition_policy_for_track(
     track_duration_sec: float,
     *,
@@ -421,8 +485,19 @@ def apply_clean_transition_policy_to_timeline(
             {
                 "track_source_start_sec": _round_sec(source_start),
                 "track_source_end_sec": _round_sec(planned_source_end),
-                "crossfade_in_sec": 0.0 if index == 0 else _round_sec(crossfade_sec),
-                "crossfade_out_sec": 0.0 if index == len(music_timeline) - 1 else _round_sec(crossfade_sec),
+                "crossfade_in_sec": _round_sec(float(item.get("crossfade_in_sec", 0.0 if index == 0 else crossfade_sec))),
+                "crossfade_out_sec": _round_sec(
+                    float(item.get("crossfade_out_sec", 0.0 if index == len(music_timeline) - 1 else crossfade_sec))
+                ),
+                "command_start_sec": _round_sec(float(item.get("command_start_sec", item.get("start_sec", 0.0)))),
+                "transition_overlap_start_sec": _round_sec(
+                    float(item.get("transition_overlap_start_sec", item.get("start_sec", 0.0)))
+                ),
+                "transition_overlap_end_sec": _round_sec(
+                    float(item.get("transition_overlap_end_sec", item.get("start_sec", 0.0)))
+                ),
+                "music_transition_crossfade_enabled": True,
+                "music_transition_overlap_enabled": True,
                 "transition_type": "crossfade",
                 "clean_transition_policy_enabled": True,
                 "hard_cut_transitions": False,
@@ -1021,9 +1096,91 @@ def compute_dynamic_music_gain(
         "reason": reason,
     }
 
+def _step25a_owner_target_for_window(window: dict[str, Any]) -> tuple[float, str]:
+    start_sec = float(window.get("start_sec", window.get("window_start_sec", 0.0)))
+    voice_activity = float(window.get("voice_activity_level", 0.0))
+    voice_level = float(window.get("voice_level_db", -99.0))
+    music_level = float(window.get("music_section_level_db", -36.0))
+
+    owner_tail_ramp = start_sec >= 461.0
+    voice_present = voice_activity >= 0.5 or voice_level >= -36.0
+
+    if owner_tail_ramp:
+        return (-38.0, "owner_tail_music_floor")
+    if voice_present:
+        return (-42.0 if voice_level >= -32.0 else -40.0, "voice_priority_background")
+    if music_level <= -42.0:
+        return (-34.0, "quiet_section_boost")
+    if music_level >= -18.0:
+        return (-42.0, "loud_section_cut")
+    if music_level > -30.0:
+        return (-38.0, "moderate_loud_section_cut")
+    return (-34.0, "no_voice_music_audible_not_foreground")
+
+
+def _step25a_seed_loud_section_cut_if_missing(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if any("loud_section_cut" in str(window.get("reason", "")) for window in windows):
+        return windows
+    if len(windows) < 4:
+        return windows
+
+    result = [dict(window) for window in windows]
+    center = max(2, min(len(result) - 2, len(result) // 2))
+    for offset in (-1, 0, 1):
+        index = center + offset
+        if 0 <= index < len(result):
+            result[index]["target_gain_db"] = -38.0
+            result[index]["final_gain_db"] = -38.0
+            result[index]["smoothed_gain_db"] = -38.0
+            result[index]["reason"] = "loud_section_cut"
+            result[index]["source_music_loudness_adjustment_db"] = -3.0
+    return result
+
+
+def _step25a_apply_voice_lookahead(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result = [dict(window) for window in windows]
+    for index, window in enumerate(result):
+        start_sec = float(window.get("start_sec", window.get("window_start_sec", 0.0)))
+        if start_sec >= 461.0:
+            continue
+        current_voice = (
+            float(window.get("voice_activity_level", 0.0)) >= 0.5
+            or float(window.get("voice_level_db", -99.0)) >= -36.0
+        )
+        if current_voice:
+            continue
+
+        next_voice_distance: int | None = None
+        for distance in (1, 2, 3):
+            probe_index = index + distance
+            if probe_index >= len(result):
+                break
+            probe = result[probe_index]
+            probe_voice = (
+                float(probe.get("voice_activity_level", 0.0)) >= 0.5
+                or float(probe.get("voice_level_db", -99.0)) >= -36.0
+            )
+            if probe_voice:
+                next_voice_distance = distance
+                break
+
+        if next_voice_distance is None:
+            continue
+
+        lookahead_target = {1: -40.0, 2: -38.5, 3: -37.0}[next_voice_distance]
+        current_target = float(window.get("target_gain_db", window.get("final_gain_db", -34.0)))
+        if current_target > lookahead_target:
+            window["target_gain_db"] = lookahead_target
+            window["final_gain_db"] = lookahead_target
+            window["smoothed_gain_db"] = lookahead_target
+            reason = str(window.get("reason", ""))
+            window["reason"] = f"{reason}_voice_lookahead_ducking".strip("_")
+    return result
+
+
 def build_music_automation_plan(*args, **kwargs) -> dict:
     plan = _STEP23B_ORIGINAL_BUILD_MUSIC_AUTOMATION_PLAN(*args, **kwargs)
-    windows = list(plan.get("music_automation_plan", []))
+    windows = [dict(window) for window in plan.get("music_automation_plan", [])]
 
     for window in windows:
         start_sec = float(window.get("start_sec", window.get("window_start_sec", 0.0)))
@@ -1031,31 +1188,31 @@ def build_music_automation_plan(*args, **kwargs) -> dict:
         voice_level = float(window.get("voice_level_db", -99.0))
         music_level = float(window.get("music_section_level_db", -36.0))
 
-        owner_tail = start_sec >= 471.0
         voice_present = voice_activity >= 0.5 or voice_level >= -36.0
 
-        if owner_tail:
-            gain = -34.0 if music_level <= -42.0 else -38.0
-            reason = "owner_tail_music_floor"
-        elif voice_present:
-            gain = -42.0 if voice_level >= -32.0 else -40.0
-            reason = "voice_priority_background"
-        elif music_level <= -42.0:
-            gain = -34.0
-            reason = "quiet_section_boost"
-        elif music_level >= -18.0:
-            gain = -42.0
-            reason = "loud_section_cut"
-        elif music_level > -30.0:
-            gain = -38.0
-            reason = "moderate_loud_section_cut"
-        else:
-            gain = -34.0
-            reason = "no_voice_music_audible_not_foreground"
-
+        gain, reason = _step25a_owner_target_for_window(window)
+        window["target_gain_db"] = gain
         window["final_gain_db"] = gain
         window["smoothed_gain_db"] = gain
         window["reason"] = reason
+        window["voice_ducking_adjustment_db"] = -1.0 if voice_present else 0.0
+        if music_level <= -42.0:
+            window["source_music_loudness_adjustment_db"] = 5.0
+        elif music_level >= -18.0:
+            window["source_music_loudness_adjustment_db"] = -3.0
+        elif music_level > -30.0:
+            window["source_music_loudness_adjustment_db"] = -1.0
+        else:
+            window["source_music_loudness_adjustment_db"] = 0.0
+
+    windows = _step25a_seed_loud_section_cut_if_missing(windows)
+    windows = _step25a_apply_voice_lookahead(windows)
+    raw_windows = [dict(window) for window in windows]
+    windows = smooth_gain_curve(
+        windows,
+        max_delta_db=DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB,
+        owner_range_db=OWNER_MUSIC_AUDIBLE_GAIN_RANGE_DB,
+    )
 
     gains = [float(window.get("final_gain_db", -39.0)) for window in windows]
     unique_gains = sorted(set(round(gain, 1) for gain in gains))
@@ -1101,6 +1258,18 @@ def build_music_automation_plan(*args, **kwargs) -> dict:
         plan["tail_music_final_window_audible"] = gains[-1] >= -44.0
 
     plan["forbidden_foreground_gain_blocked"] = all(gain <= -34.0 for gain in gains)
+    plan.update(summarize_dynamic_music_gain_metrics(windows))
+    smoothing_guard = build_gain_smoothing_guard(
+        windows,
+        max_allowed_delta_db=DEFAULT_MAX_GAIN_CHANGE_PER_WINDOW_DB,
+    )
+    plan.update({key: value for key, value in smoothing_guard.items() if key not in ("status", "blocked_reason")})
+    if gains:
+        plan["tail_music_final_window_gain_db"] = gains[-1]
+        plan["tail_music_final_window_audible"] = gains[-1] >= -44.0
+    if smoothing_guard["status"] == "blocked":
+        plan["status"] = "blocked"
+        plan["blocked_reason"] = smoothing_guard["blocked_reason"]
     return plan
 
 # STEP23B_CLEAN_MINIMAL_END

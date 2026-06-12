@@ -26,6 +26,9 @@ MOOD_ANALYSIS_SOURCE_FALLBACK_ENERGY_TIMELINE = "fallback_energy_timeline"
 
 DEFAULT_OWNER_GAIN_RANGE_DB = [-40.0, -35.0]
 DEFAULT_OWNER_BASE_GAIN_DB = -38.0
+DEFAULT_MUSIC_CROSSFADE_DURATION_SEC = 3.0
+MIN_MUSIC_CROSSFADE_DURATION_SEC = 2.0
+MAX_MUSIC_CROSSFADE_DURATION_SEC = 4.0
 
 
 class MusicTimelinePlannerError(RuntimeError):
@@ -226,6 +229,93 @@ MINIMUM_MUSIC_SEGMENT_DURATION_SEC = 45.0
 MINIMUM_REUSE_SEGMENT_DURATION_SEC = 60.0
 
 
+def _safe_crossfade_duration(
+    previous_segment: dict[str, Any],
+    current_segment: dict[str, Any],
+    requested_sec: float = DEFAULT_MUSIC_CROSSFADE_DURATION_SEC,
+) -> float:
+    requested = max(MIN_MUSIC_CROSSFADE_DURATION_SEC, min(MAX_MUSIC_CROSSFADE_DURATION_SEC, float(requested_sec)))
+    previous_duration = max(0.0, float(previous_segment["end_sec"]) - float(previous_segment["start_sec"]))
+    current_duration = max(0.0, float(current_segment["end_sec"]) - float(current_segment["start_sec"]))
+    safe = min(requested, previous_duration / 3.0, current_duration / 3.0)
+    if safe < 0.25:
+        return 0.0
+    return _round_sec(safe)
+
+
+def apply_crossfade_metadata_to_timeline(
+    music_timeline: list[dict[str, Any]],
+    *,
+    crossfade_duration_sec: float = DEFAULT_MUSIC_CROSSFADE_DURATION_SEC,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    timeline = [dict(segment) for segment in music_timeline]
+    expected_count = max(0, len(timeline) - 1)
+    crossfade_count = 0
+    silent_gap_count = 0
+    hard_cut_detected = False
+
+    for index, segment in enumerate(timeline):
+        crossfade_in = 0.0
+        crossfade_out = 0.0
+        if index > 0:
+            crossfade_in = _safe_crossfade_duration(timeline[index - 1], segment, crossfade_duration_sec)
+            if crossfade_in > 0.0:
+                crossfade_count += 1
+            else:
+                hard_cut_detected = True
+        if index < len(timeline) - 1:
+            crossfade_out = _safe_crossfade_duration(segment, timeline[index + 1], crossfade_duration_sec)
+            if crossfade_out <= 0.0:
+                hard_cut_detected = True
+
+        segment_start = float(segment["start_sec"])
+        command_start = max(0.0, segment_start - crossfade_in)
+        transition_overlap_start = max(0.0, segment_start - crossfade_in) if index > 0 else segment_start
+        transition_overlap_end = segment_start if index > 0 else segment_start
+
+        segment.update(
+            {
+                "music_transition_crossfade_enabled": True,
+                "music_transition_overlap_enabled": True,
+                "crossfade_in_sec": _round_sec(crossfade_in),
+                "crossfade_out_sec": _round_sec(crossfade_out),
+                "command_start_sec": _round_sec(command_start),
+                "transition_overlap_start_sec": _round_sec(transition_overlap_start),
+                "transition_overlap_end_sec": _round_sec(transition_overlap_end),
+                "transition_type": "crossfade",
+                "hard_cut_transition": crossfade_in <= 0.0 and index > 0,
+            }
+        )
+
+    overlap_enabled = expected_count == 0 or crossfade_count == expected_count
+    if hard_cut_detected:
+        silent_gap_count = 1
+
+    metrics = {
+        "music_transition_crossfade_enabled": True,
+        "music_crossfade_duration_sec": _round_sec(crossfade_duration_sec),
+        "music_crossfade_count": crossfade_count,
+        "music_expected_crossfade_count": expected_count,
+        "music_transition_overlap_enabled": overlap_enabled,
+        "music_transition_energy_guard_enabled": True,
+        "music_transition_silent_gap_count": silent_gap_count,
+        "music_transition_hard_cut_detected": hard_cut_detected,
+        "song_boundary_energy_continuity_passed": overlap_enabled and silent_gap_count == 0 and not hard_cut_detected,
+        "transition_energy_drop_count": silent_gap_count,
+    }
+    if expected_count > 0 and crossfade_count != expected_count:
+        metrics["status"] = "blocked"
+        metrics["blocked_reason"] = "music_crossfade_missing"
+    elif hard_cut_detected:
+        metrics["status"] = "blocked"
+        metrics["blocked_reason"] = "music_hard_cut_detected"
+    else:
+        metrics["status"] = "ok"
+        metrics["blocked_reason"] = None
+
+    return timeline, metrics
+
+
 def _usable_track_window(duration_sec: float) -> dict[str, float]:
     duration = max(0.0, float(duration_sec))
     source_start = min(DEFAULT_TRACK_START_TRIM_SEC, duration)
@@ -421,8 +511,9 @@ def plan_music_timeline(
         timeline[index]["track_path"] == timeline[index - 1]["track_path"]
         for index in range(1, len(timeline))
     )
+    timeline, crossfade_metrics = apply_crossfade_metadata_to_timeline(timeline)
 
-    return {
+    result = {
         "status": "ok",
         "music_timeline_planner_enabled": True,
         "video_duration_sec": _round_sec(duration),
@@ -447,3 +538,8 @@ def plan_music_timeline(
             for segment in timeline
         ),
     }
+    result.update({key: value for key, value in crossfade_metrics.items() if key not in ("status", "blocked_reason")})
+    if crossfade_metrics["status"] == "blocked":
+        result["status"] = "blocked"
+        result["blocked_reason"] = crossfade_metrics["blocked_reason"]
+    return result

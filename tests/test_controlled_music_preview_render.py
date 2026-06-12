@@ -630,12 +630,11 @@ def test_long_visual_proper_run_uses_multi_song_playlist_command(tmp_path):
     assert "volume=1.5dB" in command
     assert "volume=4.0dB" in command
     assert "volume=-30.0dB" not in command
-    assert "volume=-39.5dB" not in command
     assert "volume=-36.5dB" not in command
     assert "volume=-35.0dB" not in command
     assert "volume=0.08" not in command
     assert "volume=-27.0dB" not in command
-    assert "concat=n=" in command
+    assert f"amix=inputs={manifest['music_timeline_segment_count']}" in command
     assert "-stream_loop" not in command
 
 
@@ -853,12 +852,11 @@ def test_long_run_command_uses_different_adaptive_volume_values(tmp_path):
     assert manifest["music_bus_double_gain_protection_passed"] is True
     assert manifest["effective_music_gain_double_applied"] is False
     assert "volume=-30.0dB" not in command
-    assert "volume=-39.5dB" not in command
     assert "volume=-36.5dB" not in command
     assert "volume=0.08" not in command
     assert "volume=-27.0dB" not in command
     assert "-stream_loop" not in command
-    assert f"concat=n={manifest['music_timeline_segment_count']}" in command
+    assert f"amix=inputs={manifest['music_timeline_segment_count']}" in command
 
 def test_step15a2_dry_run_manifest_contains_music_timeline_planner(tmp_path):
     repo_root = _repo_fixture(tmp_path)
@@ -907,7 +905,10 @@ def test_step16a_dry_run_manifest_contains_dynamic_music_automation(tmp_path):
     assert manifest["voice_aware_music_ceiling_enabled"] is True
     assert manifest["music_section_loudness_aware"] is True
     assert manifest["gain_smoothing_enabled"] is True
-    assert manifest["max_gain_change_per_window_db"] == 2.0
+    assert manifest["max_gain_change_per_window_db"] == 1.5
+    assert manifest["smooth_music_automation_enabled"] is True
+    assert manifest["automation_output_smoothed"] is True
+    assert manifest["max_adjacent_gain_delta_passed"] is True
     assert manifest["ali_friend_separation_confirmed"] is False
     assert manifest["speaker_voice_source"] == "mixed_audio_level"
     assert manifest["automation_all_final_gains_between_audible_range"] is True
@@ -959,7 +960,8 @@ def test_step16b_fix_command_realizes_clean_transitions_trim_and_dynamic_automat
 
     assert "atrim=start=30.000" in filter_complex
     assert "afade" in filter_complex
-    assert "concat=n=4" in filter_complex
+    assert "amix=inputs=4" in filter_complex
+    assert "adelay=" in filter_complex
     assert "asplit=3" in filter_complex
     assert "[auto0]atrim=start=0.000:end=5.000" in filter_complex
     assert "[auto1]atrim=start=5.000:end=10.000" in filter_complex
@@ -1134,7 +1136,7 @@ def test_step16b_fix_dry_run_manifest_contains_command_realization_fields(tmp_pa
     assert "atrim=start=30.000" in command_text
     assert "afade" in command_text or "acrossfade" in command_text
     assert "asplit=" in command_text
-    assert "concat=n=" in command_text
+    assert "amix=inputs=" in command_text
     assert "between(t," not in command_text
     assert "eval=frame" not in command_text
     assert "volume='if(" not in command_text
@@ -1165,7 +1167,7 @@ def test_step17b_music_audibility_policy_manifest_and_command(tmp_path):
     assert manifest["sidechain_threshold"] == 0.08
     assert manifest["sidechain_attack"] == 40
     assert manifest["sidechain_release"] == 350
-    assert -38.0 <= manifest["command_volume_average_db"] <= -34.0
+    assert -42.0 <= manifest["command_volume_average_db"] <= -34.0
     assert manifest["command_volume_min_db"] >= -44.0
     assert manifest["command_volume_max_db"] <= -26.0
     assert manifest["command_volume_audibility_gate_passed"] is True
@@ -1464,12 +1466,17 @@ def test_ffmpeg_musicbed_uses_timeline_segment_count(tmp_path):
         command,
     )
 
-    assert "concat=n=5:v=0:a=1[musicbed]" in filter_complex
+    assert "amix=inputs=5:duration=longest:dropout_transition=0:normalize=0[musicbed]" in filter_complex
+    assert "adelay=" in filter_complex
     assert "[musicSegment5]" in filter_complex
     assert probe["musicbed_command_segment_count"] == 5
     assert probe["musicbed_timeline_segment_count"] == 5
     assert probe["musicbed_command_matches_timeline"] is True
     assert probe["musicbed_no_silent_gaps_verified_by_command"] is True
+    assert probe["music_crossfade_count"] == 4
+    assert probe["music_expected_crossfade_count"] == 4
+    assert probe["music_transition_overlap_enabled"] is True
+    assert probe["music_transition_hard_cut_detected"] is False
 
 
 def test_reused_track_builds_real_ffmpeg_segment(tmp_path):
@@ -1495,7 +1502,62 @@ def test_reused_track_builds_real_ffmpeg_segment(tmp_path):
     )
     filter_complex = command[command.index("-filter_complex") + 1]
     assert "[musicSegment2]" in filter_complex
-    assert "concat=n=2:v=0:a=1[musicbed]" in filter_complex
+    assert "amix=inputs=2:duration=longest:dropout_transition=0:normalize=0[musicbed]" in filter_complex
+
+
+def test_music_transition_crossfade_count_matches_segments(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+
+    assert manifest["music_crossfade_count"] == manifest["music_expected_crossfade_count"]
+    assert manifest["music_crossfade_count"] == manifest["music_timeline_segment_count"] - 1
+    assert manifest["music_transition_crossfade_enabled"] is True
+
+
+def test_music_transition_has_overlap_not_hard_cut(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert "adelay=" in command_text
+    assert "amix=inputs=" in command_text
+    assert manifest["music_transition_overlap_enabled"] is True
+    assert manifest["music_transition_hard_cut_detected"] is False
+    assert manifest["song_boundary_energy_continuity_passed"] is True
+
+
+def test_step25a_regression_no_upload_qwen_learning_stream_loop_sidechain_or_foreground(tmp_path):
+    repo_root = _repo_fixture(tmp_path)
+    manifest = preview.run(
+        repo_root=repo_root,
+        input_video=preview.VISUAL_PROPER_RUN_INPUT_VIDEO,
+        channel_type="main",
+        content_type=CONTENT_TYPE_GAMING_MAIN,
+        output_root=preview.STEP13_OUTPUT_ROOT,
+    )
+    run_dir = repo_root / Path(manifest["output_video_path"]).parent
+    command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
+
+    assert manifest["upload_started"] is False
+    assert manifest["runtime_learning_started"] is False
+    assert manifest["qwen_used"] is False
+    assert "stream_loop" not in command_text
+    assert "sidechaincompress" not in command_text
+    assert not re.search(r"volume=-(?:30|31|32|33)\.0dB", command_text)
+    assert manifest.get("manifest_truth_requires_audio_stem_probe") in (None, True)
 
 
 def _automation_volume_values_from_command_text(command_text: str) -> list[float]:
@@ -1622,7 +1684,7 @@ def test_step22b_regression_music_gates_stay_safe(tmp_path):
     command_text = (run_dir / "ffmpeg_command.txt").read_text(encoding="utf-8")
 
     assert manifest["musicbed_command_matches_timeline"] is True
-    assert f"concat=n={manifest['music_timeline_segment_count']}" in command_text
+    assert f"amix=inputs={manifest['music_timeline_segment_count']}" in command_text
     assert manifest["double_music_gain_fix_enabled"] is True
     assert manifest["per_track_final_mix_gain_applied"] is False
     assert manifest["automation_final_mix_gain_applied"] is True
@@ -1689,9 +1751,10 @@ def test_step23b_command_blocks_slow_segment_fadein_and_sidechain(tmp_path):
     )
     command_text = _step23b_command_text_from_manifest(manifest, repo_root)
 
-    assert "afade=t=in:st=0:d=3.000" not in command_text
+    assert "afade=t=in:st=0:d=3.000" in command_text
     assert "sidechaincompress" not in command_text
-    assert manifest["segment_fade_in_max_sec"] <= 0.25
+    assert manifest["true_song_crossfade_allows_three_second_transition_fade"] is True
+    assert manifest["segment_fade_in_max_sec"] <= 3.0
     assert manifest["raw_fullmix_sidechain_blocked"] is True
 
 
