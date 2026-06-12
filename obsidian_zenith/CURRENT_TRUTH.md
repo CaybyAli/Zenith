@@ -2328,3 +2328,58 @@ Proof:
 Next:
 - Controlled Render only after Master-GO.
 
+## Step 25A Smooth Music Automation + Crossfade Fix ? 2026-06-12 02:27
+
+Status:
+- Step 25 Owner Review: FIX / NO-GO
+- Step 25A Code Fix: DONE / pushed
+- Controlled Render: locked until Master-GO
+- Upload: blocked
+- Qwen: blocked
+- Runtime Learning: blocked
+- Ingest: blocked
+
+Owner Issue:
+- Tail music is now fixed and music reaches the end.
+- Remaining problem: 5-second automation is audible.
+- Music sometimes feels perfect, then 5 seconds too loud, then good again.
+- Song transitions are too hard.
+- Desired behavior: outgoing song fades down while incoming song fades up.
+
+Fix:
+- Added smooth gain envelope.
+- Added max adjacent gain delta gate: 1.5 dB.
+- Added voice lookahead / attack / release behavior.
+- Added five-second pumping guard.
+- Added true song crossfade using overlapping delayed segments and amix.
+- Replaced hard segment concat behavior for music transitions.
+- Added transition energy diagnostics.
+- Kept audio stem gates from Step 24A/24B.
+- Tail protection remains active.
+
+Proof:
+- Code Commit: f93bea8 fix(music): smooth automation and crossfadetransitions
+- Tests: 140 passed
+- Dry-run status: diagnosis_ok
+- audio_stem_probe_passed=True
+- max_adjacent_gain_delta_db=1.5
+- max_adjacent_gain_delta_passed=True
+- five_second_pumping_detected=False
+- music_crossfade_count=7
+- music_expected_crossfade_count=7
+- music_transition_silent_gap_count=0
+- music_transition_hard_cut_detected=False
+- music_auto_tail_audible=True
+- final_mix_tail_probe_passed=True
+- upload_started=False
+- qwen_used=False
+- runtime_learning_started=False
+- mp4_exists=False
+
+Report:
+- reports/controlled_music_preview_run/step25a_smooth_music_crossfade_fix/step25a_manifest.json
+- reports/controlled_music_preview_run/step25a_smooth_music_crossfade_fix/step25a_summary.md
+
+Next:
+- Step 25B Controlled Render only after Master-GO.
+- No upload without separate Master-GO.
