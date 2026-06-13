@@ -107,8 +107,8 @@ def test_pipeline_profile_fallback_does_not_crash(tmp_path, monkeypatch):
     assert Path(snapshot_path).exists()
 
 
-def test_resolve_track_roles_prefers_profile_audio_tracks():
-    profile = {
+def _profile_audio_tracks():
+    return {
         "audio_tracks": [
             {
                 "role": "owner",
@@ -127,6 +127,10 @@ def test_resolve_track_roles_prefers_profile_audio_tracks():
         ],
     }
 
+
+def test_resolve_track_roles_uses_profile_for_non_corpus_path(capsys):
+    profile = _profile_audio_tracks()
+
     roles = resolve_track_roles("inbox/gaming_main/raw.mp4", profile)
 
     assert roles is not None
@@ -135,12 +139,13 @@ def test_resolve_track_roles_prefers_profile_audio_tracks():
         ("friend", "discord", "friend"),
     ]
     assert [role.ffmpeg_audio_index for role in roles] == [0, 1]
+    assert "role_source=profile" in capsys.readouterr().out
 
 
-def test_resolve_track_roles_uses_pair_truth_only_for_learning_corpus_pairs():
+def test_resolve_track_roles_prefers_pair_truth_for_learning_corpus_pairs(capsys):
     roles = resolve_track_roles(
-        "learning_corpus/pairs/pair_009/raw.mp4",
-        {},
+        "D:/ZENITH/LEARNING_CORPUS/PAIRS/PAIR_009/raw.mp4",
+        _profile_audio_tracks(),
     )
 
     assert roles is not None
@@ -151,3 +156,4 @@ def test_resolve_track_roles_uses_pair_truth_only_for_learning_corpus_pairs():
         (3, "still", "silent", "unknown"),
     ]
     assert [role.transcribe_for_captions for role in roles] == [True, True, False, False]
+    assert "role_source=legacy_truth" in capsys.readouterr().out

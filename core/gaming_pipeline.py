@@ -705,17 +705,17 @@ def resolve_track_roles(
     raw_video_path: str | os.PathLike[str] | None,
     json_profile: dict,
 ) -> list[AudioTrackRole] | None:
-    profile_roles = _track_roles_from_profile(json_profile)
-    if profile_roles:
-        _log_track_role_source("profile", profile_roles)
-        return profile_roles
-
     pair_id = _legacy_pair_id_from_learning_corpus_path(raw_video_path)
     if pair_id:
         legacy_roles = _track_roles_from_pair_truth(pair_id)
         if legacy_roles:
             _log_track_role_source("legacy_truth", legacy_roles, pair_id=pair_id)
             return legacy_roles
+
+    profile_roles = _track_roles_from_profile(json_profile)
+    if profile_roles:
+        _log_track_role_source("profile", profile_roles)
+        return profile_roles
 
     _log_track_role_source("heuristic_fallback", None, pair_id=pair_id)
     return None
@@ -786,11 +786,12 @@ def _legacy_pair_id_from_learning_corpus_path(
     if raw_video_path is None:
         return None
 
-    parts = [part.lower() for part in Path(raw_video_path).parts]
+    normalized_path = str(Path(raw_video_path)).replace("\\", "/")
+    parts = [part.casefold() for part in normalized_path.split("/") if part]
     for index in range(0, max(0, len(parts) - 2)):
         if parts[index] == "learning_corpus" and parts[index + 1] == "pairs":
             pair_id = parts[index + 2]
-            if pair_id.startswith("pair_"):
+            if pair_id.startswith("pair_") and pair_id[5:].isdigit():
                 return pair_id
     return None
 
