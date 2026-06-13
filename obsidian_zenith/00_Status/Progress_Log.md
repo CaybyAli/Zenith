@@ -2710,3 +2710,16 @@ Next:
 - OFFEN B1b: `friend=0`, weil `a1 521 → unknown`.
 - OFFEN B1b: `game a2 307 → unknown` und sollte nicht transkribiert werden.
 - OFFEN B1b: `speaker_identification_summary` fehlt noch in `job.json`.
+
+## B1b GO / Track-Rollen Attribution gebaut — 2026-06-13
+
+- B1b ist GO auf `origin/main 89eea13`.
+- Sprecher-Attribution läuft über Track-Rollen statt Kanal-Heuristik.
+- pair_009: `ali=740`, `friend=521`, `unknown=0`.
+- Game-/Still-Spuren werden nicht transkribiert.
+- `speaker_identification_summary` ist in `job.json`.
+- Mix-Lock bewiesen durch `probe_track_roles`: pair_015/pair_020 `a0=mix -> unknown(skip)`, `a1 -> ali`.
+- Reihenfolge: `legacy_truth` vor `profile` bei `learning_corpus`-Pairs.
+- Suite-Stand: 7 rot. Das ist Baseline, 0 neue rote Tests.
+- Block B1 ist komplett.
+- Nächster Schritt: B2 Friend-Reaction-Beats.

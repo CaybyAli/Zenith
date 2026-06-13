@@ -1,5 +1,15 @@
 ## Aktueller Block-B-Stand — 2026-06-13
 
+- B1b ist GO auf `origin/main 89eea13`: Sprecher-Attribution läuft jetzt über Track-Rollen statt Kanal-Heuristik.
+- pair_009 beweist: `ali=740`, `friend=521`, `unknown=0`; Game-/Still-Spuren werden nicht transkribiert.
+- `speaker_identification_summary` ist in `job.json`.
+- Mix-Lock ist über `probe_track_roles` bewiesen: pair_015/pair_020 `a0=mix -> unknown(skip)`, `a1 -> ali`.
+- Block B1 ist komplett.
+- Nächster Schritt: B2 Friend-Reaction-Beats.
+
+---
+## Aktueller Block-B-Stand — 2026-06-13
+
 - B1a ist GO auf `origin/main 838eda3`: per-Stream-Isolation für `transcribe_all_streams` ist gebaut und gepusht.
 - pair_009 beweist `STREAM_SKIP stream_4 (still)`, kein Legacy-Fallback und `SPEAKERS track_based ali=740 friend=0 unknown=828`.
 - Nächster offener Schritt ist B1b: `friend=0` korrigieren, Game-Spur nicht transkribieren und `speaker_identification_summary` in `job.json` speichern.
