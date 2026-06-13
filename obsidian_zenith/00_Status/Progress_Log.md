@@ -2665,3 +2665,48 @@ Important:
 Next:
 - Step 26 Final Pre-Upload Safety Check.
 - Then Upload Master-GO only if clean.
+
+## 2026-06-13 — Phase 5 Block A geschlossen / Block B Diagnose geöffnet
+- HEAD: 553fdfd
+- Entscheidung: Block A GO / geschlossen.
+- Phase 5 ehrlicher Stand: ~55%.
+- Reihenfolge fix: A Render-Korrektheit → B Reaction-Editing → C Musik → D Deep Night Learning.
+- Offene Schuld: 7 Baseline-Tests rot; alle grün vor Phase-5-Final.
+- Nächster Schritt: Block B Schritt 1 Diagnose, kein Bau, kein Commit.
+
+
+## 2026-06-13 — Phase 5 Block B Step 1 NO-GO / Code-Map Re-Issue geöffnet
+
+
+- Erste Diagnose lieferte 5 Code-Mappings NICHT, sondern nur pair_009-Render. Ergebnis: NO-GO.
+- Re-Issue ist jetzt klar begrenzt: nur Code-Map, inline, kein Render.
+- pair_009 Basis-Render: `floor_unreachable` wegen 376s usable < 480s. Das ist ein bekanntes Pattern wie bei pair_001.
+- Render-/Floor-Frage wird vertagt bis nach der Code-Map.
+- Reaction-Test braucht ohnehin nur ein kurzes Segment mit Freund-Beat, kein volles Longform.
+- SCHULD notiert: `job.json` speichert `failure_reason` / `error` nicht. Der Grund steht aktuell nur im Log.
+- Fix später, nicht jetzt.
+
+## Block B Diagnose angenommen / Kern-Blocker gefunden — 2026-06-13 05:18
+
+* Diagnose ist jetzt angenommen, weil echter Code geprüft wurde.
+* Kern-Blocker gefunden: Der pair_009-Job erzeugt für alle Segmente `speaker="unknown"` und `audio_track="mic"`.
+* Owner/Freund werden dadurch nicht getrennt. Friend-Reaction ist damit an der Wurzel blockiert.
+* Wahrscheinliche Ursache: `pipeline_runner` bekam nur den Dateipfad, aber keine `pair_id`. Dadurch wurde `pair_track_truth` nie konsultiert.
+* Loader existiert, wird im Render-Pfad aber nirgends benutzt.
+* `reaction_size_events` ist owner-only und nicht produktiv verdrahtet (`gaming_pipeline:10685`).
+* Layout-Stand: `gameplay_zoom` und `facecam_opacity` existieren. Ein `facecam_hidden`-Modus fehlt.
+* Musik-Stand: Es gibt nur Ducking, kein Voll-Mute. `music_allowed=False` ist aber als nutzbarer Mute-Mechanismus vorhanden.
+* ARCHITEKTUR-LOCK: Friend-Attribution wird für Produktion über OBS-Multitrack gebaut. `pair_track_truth` bleibt nur Legacy-Test-Override.
+* Nächster Schritt: B0 `ffprobe` Spur-Check durch ChatGPT. Ergebnis entscheidet den B1-Ansatz.
+
+## B1a GO / per-Stream-Isolation gebaut — 2026-06-13
+
+- B1a ist GO auf `origin/main 838eda3`.
+- `transcribe_all_streams`: per-Stream-Isolation wurde gebaut und gepusht.
+- Beweis pair_009 `job_7620c9a58771`: `STREAM_SKIP stream_4 (still)`.
+- Kein Legacy-Fallback.
+- Speaker-Beweis: `SPEAKERS track_based ali=740 friend=0 unknown=828`.
+- Suite-Stand: 7 rot / 4454 grün. Das ist Baseline, 0 neue rote Tests.
+- OFFEN B1b: `friend=0`, weil `a1 521 → unknown`.
+- OFFEN B1b: `game a2 307 → unknown` und sollte nicht transkribiert werden.
+- OFFEN B1b: `speaker_identification_summary` fehlt noch in `job.json`.

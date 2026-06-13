@@ -1,3 +1,10 @@
+## Aktueller Block-B-Stand — 2026-06-13
+
+- B1a ist GO auf `origin/main 838eda3`: per-Stream-Isolation für `transcribe_all_streams` ist gebaut und gepusht.
+- pair_009 beweist `STREAM_SKIP stream_4 (still)`, kein Legacy-Fallback und `SPEAKERS track_based ali=740 friend=0 unknown=828`.
+- Nächster offener Schritt ist B1b: `friend=0` korrigieren, Game-Spur nicht transkribieren und `speaker_identification_summary` in `job.json` speichern.
+
+---
 <!-- STEP22C_RENDER_CURRENT_TRUTH_START -->
 # CURRENT TRUTH ADDENDUM ? Step 22C Render
 
@@ -2413,3 +2420,36 @@ Important:
 Next:
 - Step 26 Final Pre-Upload Safety Check.
 - Then Upload Master-GO only if clean.
+
+---
+
+## Zenith — Stand 13.06.2026
+**Phase 5 neu definiert (Owner):** fertig erst wenn (1) Deep-Night-Learning Qwen
+seinen Schnitt lernt, (2) Musik immer passend (nur In-Game; Intro/Outro=Phase 6),
+(3) Freund-Reaction-Editing drin. Ehrlicher Stand: ~55%.
+
+**Plan (4 Blöcke, Reihenfolge fix):** A Render-Korrektheit → B Reaction-Editing
+(Owner+Freund) → C Musik passend+Mute → D Deep Night Learning.
+Lernen MUSS nach Reaction-Editing (sonst lernt Qwen unvollständig).
+
+**Block A — GESCHLOSSEN.** Commit 553fdfd auf main (facecam static-tiny in
+Produktion + symmetrischer crop 0:0:1864:1072). Suite: 7 rot / 4454 grün;
+die 7 sind Baseline (identisch rot auf Parent afbbd42), 0 neu. Owner-Auge: perfekt.
+
+**Offene Test-Schuld (grün vor Phase-5-Final):** 7 Baseline-Tests rot —
+2 caption-hygiene owner/friend (→ in Block B lösen), Rest: transcript
+word_timestamps, smooth_zoom-Signatur, longform/shorts run-Signatur,
+single-render keyword-Signatur.
+
+**Block B — START: Diagnose (read-only).** Kein Bau bis Master (Claude) aus
+Fakten plant.
+
+**Rollen:** Claude=Master/GO-NO-GO. ChatGPT=Bauchat. Ali=Brücke+Auge/Ohr.
+
+
+## Block B Step 1 Diagnose NO-GO / Code-Map Re-Issue geöffnet — 2026-06-13
+### Aktueller nächster Schritt
+
+* Block B Step 1 ist noch nicht abgeschlossen. Erste Diagnose war NO-GO, weil die geforderten 5 Code-Mappings fehlten. Nächster Schritt: Re-Issue nur als Code-Map, inline, ohne Render.
+
+* Block B Diagnose ist angenommen. Kern-Blocker: Produktion trennt Owner/Freund aktuell nicht sauber, weil pair_009 alle Segmente als `speaker="unknown"` und `audio_track="mic"` erzeugt. Nächster Schritt ist B0 `ffprobe` Spur-Check; danach wird der B1-Ansatz entschieden.
