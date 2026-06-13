@@ -882,6 +882,34 @@ def _default_transcribe_for_role(role: str) -> bool:
     return role in {"ali", "owner", "friend", "friend_discord"}
 
 
+def _friend_voice_track_role(track_roles: list[AudioTrackRole] | None) -> AudioTrackRole | None:
+    for track in track_roles or []:
+        role = str(track.role or "").casefold()
+        audio_track = str(track.audio_track or "").casefold()
+        speaker = str(track.speaker or "").casefold()
+        if (
+            speaker == "friend"
+            or role in {"friend", "friend_discord"}
+            or audio_track in {"friend", "friend_discord"}
+        ):
+            return track
+    return None
+
+
+def _voice_intensity_label(point: object) -> str:
+    intensity = getattr(point, "intensity", None)
+    label = getattr(intensity, "label", None)
+    if label:
+        return str(label)
+    if isinstance(point, dict):
+        return str(point.get("intensity_label") or "")
+    return ""
+
+
+def _voice_intensity_label_count(points: list[object], label: str) -> int:
+    return sum(1 for point in points if _voice_intensity_label(point) == label)
+
+
 def _write_profile_snapshot(job, profile: dict) -> str:
     channel_type = getattr(job, "channel_type", None)
     channel_value = getattr(channel_type, "value", channel_type) or "gaming_main"
@@ -9307,7 +9335,9 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         return _existing_shorts_result
 
     transcript_result = None
+    track_roles = None
     voice_intensity_points = []
+    friend_voice_intensity_points = []
     voice_intensity_distribution = {}
     face_detection_points = []
     face_detection_rate = 0.0
@@ -9413,6 +9443,37 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             print(
                 f"[gaming_pipeline] VOICE_INTENSITY {job.job_id} "
                 f"skipped reason={voice_intensity_exc}"
+            )
+
+        try:
+            if track_roles is None:
+                track_roles = resolve_track_roles(str(job.raw_video_path), json_profile)
+            friend_track = _friend_voice_track_role(track_roles)
+            if friend_track is None:
+                friend_voice_intensity_points = []
+            else:
+                friend_voice_intensity_analyzer = (
+                    services.get("voice_intensity_analyzer") or VoiceIntensityAnalyzer()
+                )
+                with transcript_processor._selected_audio_source(
+                    str(job.raw_video_path),
+                    int(friend_track.ffmpeg_audio_index),
+                ) as selected_audio:
+                    friend_voice_intensity_points = friend_voice_intensity_analyzer.analyze(
+                        selected_audio.source_path,
+                        speaker="friend",
+                    )
+            print(
+                f"[gaming_pipeline] FRIEND_VOICE_INTENSITY job={job.job_id} "
+                f"count={len(friend_voice_intensity_points)} "
+                f"schreien={_voice_intensity_label_count(friend_voice_intensity_points, 'schreien')} "
+                f"bruellen={_voice_intensity_label_count(friend_voice_intensity_points, 'bruellen')}"
+            )
+        except Exception as friend_voice_intensity_exc:
+            friend_voice_intensity_points = []
+            print(
+                f"[gaming_pipeline] FRIEND_VOICE_INTENSITY job={job.job_id} "
+                f"count=0 schreien=0 bruellen=0 skipped reason={friend_voice_intensity_exc}"
             )
 
     if job.channel_type == ChannelType.GAMING_MAIN and job.raw_video_path:
@@ -9626,24 +9687,33 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             friend_reaction_beats = [
                 beat.to_dict()
                 for beat in build_friend_reaction_beats(
-                    list(getattr(transcript_result, "segments", []) or [])
+                    list(getattr(transcript_result, "segments", []) or []),
+                    ali_intensity_points=voice_intensity_points,
+                    friend_intensity_points=friend_voice_intensity_points,
                 )
             ]
         job.friend_reaction_beats = list(friend_reaction_beats)
-        friend_reaction_count = sum(
+        keyword_count = sum(
             1
             for beat in friend_reaction_beats
             if beat.get("beat_type") == "friend_reaction_keyword"
         )
+        loud_count = sum(
+            1
+            for beat in friend_reaction_beats
+            if beat.get("beat_type") == "friend_loud_reaction"
+        )
         call_pause_count = sum(
             1
             for beat in friend_reaction_beats
-            if beat.get("beat_type") == "owner_call_pause_friend"
+            if beat.get("beat_type") == "owner_call_pause"
+            or "owner_call_pause" in (beat.get("evidence", {}).get("tags") or [])
         )
         print(
             f"[gaming_pipeline] FRIEND_BEATS job={job.job_id} "
             f"count={len(friend_reaction_beats)} "
-            f"reaction={friend_reaction_count} "
+            f"keyword={keyword_count} "
+            f"loud={loud_count} "
             f"call_pause={call_pause_count}"
         )
 
@@ -11340,6 +11410,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             point.to_dict() if callable(getattr(point, "to_dict", None)) else point
             for point in (voice_intensity_points or [])
         ],
+        "friend_voice_intensity_points": [
+            point.to_dict() if callable(getattr(point, "to_dict", None)) else point
+            for point in (friend_voice_intensity_points or [])
+        ],
         "voice_intensity_distribution": dict(voice_intensity_distribution or {}),
         "face_detection_points": [
             point.to_dict() if callable(getattr(point, "to_dict", None)) else point
@@ -11496,6 +11570,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
         # Analyse
         "transcript_result":     transcript_result,
         "voice_intensity_points": voice_intensity_points,
+        "friend_voice_intensity_points": friend_voice_intensity_points,
         "voice_intensity_distribution": voice_intensity_distribution,
         "face_detection_points": face_detection_points,
         "face_detection_rate": face_detection_rate,
