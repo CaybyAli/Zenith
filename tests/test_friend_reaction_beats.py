@@ -26,7 +26,7 @@ def test_build_detects_owner_call_pause_friend_pattern() -> None:
     beats = build(
         [
             TranscriptSegment(0.0, 1.0, "warte kurz", speaker="ali"),
-            TranscriptSegment(1.8, 2.4, "ich bin da", speaker="friend"),
+            TranscriptSegment(1.8, 2.4, "krass ich bin da", speaker="friend"),
         ]
     )
 
@@ -35,17 +35,18 @@ def test_build_detects_owner_call_pause_friend_pattern() -> None:
     ]
 
     assert len(call_pause_beats) == 1
-    assert call_pause_beats[0].start == 0.0
+    assert call_pause_beats[0].start == 1.8
     assert call_pause_beats[0].end == 2.4
     assert call_pause_beats[0].ali_context_text == "warte kurz"
-    assert call_pause_beats[0].friend_text == "ich bin da"
+    assert call_pause_beats[0].friend_text == "krass ich bin da"
+    assert call_pause_beats[0].evidence["keyword"] == "krass"
     assert call_pause_beats[0].evidence["gap_seconds"] == 0.8
 
 
 def test_build_respects_configured_call_pause_window() -> None:
     segments = [
         TranscriptSegment(0.0, 1.0, "warte kurz", speaker="ali"),
-        TranscriptSegment(1.7, 2.4, "ich bin da", speaker="friend"),
+        TranscriptSegment(1.7, 2.4, "krass ich bin da", speaker="friend"),
     ]
 
     beats = build(
@@ -56,4 +57,27 @@ def test_build_respects_configured_call_pause_window() -> None:
         ),
     )
 
-    assert all(beat.beat_type != "owner_call_pause_friend" for beat in beats)
+    assert [beat.beat_type for beat in beats] == ["friend_reaction_keyword"]
+
+
+def test_build_ignores_call_pause_without_reaction_keyword() -> None:
+    beats = build(
+        [
+            TranscriptSegment(0.0, 1.0, "warte kurz", speaker="ali"),
+            TranscriptSegment(1.8, 2.4, "ich bin da", speaker="friend"),
+        ]
+    )
+
+    assert beats == []
+
+
+def test_build_requires_true_silence_gap_for_call_pause_tag() -> None:
+    beats = build(
+        [
+            TranscriptSegment(0.0, 1.0, "warte kurz", speaker="ali"),
+            TranscriptSegment(1.3, 1.5, "noch ein satz", speaker="ali"),
+            TranscriptSegment(1.8, 2.4, "krass ich bin da", speaker="friend"),
+        ]
+    )
+
+    assert [beat.beat_type for beat in beats] == ["friend_reaction_keyword"]
