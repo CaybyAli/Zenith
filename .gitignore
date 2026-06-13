@@ -120,3 +120,14 @@ scratch/
 test.ass
 temp_test.ass
 test_valid.ass
+
+
+# Diagnose-/Evidenz-Output — regenerierbar, kein Source
+reports/
+
+# Streu-Dumps im Repo-Root
+/failed_only.txt
+/test_full.txt
+/test_loader.txt
+/test_loader_full.txt
+/test_output_2e2.txt
