@@ -10,6 +10,7 @@ from core.audio_stream_inspector import (
     AudioStreamInspectionError,
     AudioStreamInspector,
 )
+from core.audio_track_mapping_config import AudioTrackRole
 from core.transcription_engine import (
     DEFAULT_TRANSCRIPTION_ENGINE,
     FasterWhisperEngine,
@@ -70,7 +71,11 @@ class TranscriptProcessor:
                 sanitize_segments=self._sanitize_segments,
             )
 
-    def transcribe_all_streams(self, video_path: str) -> dict[str, TranscriptResult]:
+    def transcribe_all_streams(
+        self,
+        video_path: str,
+        track_roles: list[AudioTrackRole] | None = None,
+    ) -> dict[str, TranscriptResult]:
         source_path = str(video_path)
         source = Path(source_path)
 
@@ -86,11 +91,27 @@ class TranscriptProcessor:
         if not inventory.streams:
             raise TranscriptUnavailableError("No audio streams available for transcription")
 
+        role_by_audio_ordinal = {
+            int(track.ffmpeg_audio_index): track
+            for track in (track_roles or [])
+            if track.ffmpeg_audio_index is not None
+        }
+
         results: dict[str, TranscriptResult] = {}
-        for stream in inventory.streams:
-            label = self._unique_track_label(stream.label, results)
+        for audio_ordinal, stream in enumerate(inventory.streams):
+            track_role = role_by_audio_ordinal.get(audio_ordinal)
+            base_label = track_role.audio_track if track_role is not None else stream.label
+            label = self._unique_track_label(base_label, results)
+            if track_role is not None and not track_role.transcribe_for_captions:
+                print(
+                    f"[transcript_processor] ROLE_SKIP label={label} "
+                    f"index={stream.index} role={track_role.role}"
+                )
+                continue
             if self.allow_test_fallback:
                 results[label] = self._test_fallback(source_path, audio_track=label)
+                if track_role is not None:
+                    self._stamp_track_role(results[label], track_role, label)
                 continue
 
             try:
@@ -101,7 +122,10 @@ class TranscriptProcessor:
                     f"index={stream.index} reason={exc}"
                 )
                 continue
-            self._stamp_audio_track(result, label)
+            if track_role is not None:
+                self._stamp_track_role(result, track_role, label)
+            else:
+                self._stamp_audio_track(result, label)
             results[label] = result
 
         if not results:
@@ -408,6 +432,23 @@ class TranscriptProcessor:
         safe_track = self._safe_audio_track(audio_track, "unknown")
         for segment in result.segments or []:
             segment.audio_track = safe_track
+            for word in segment.words or []:
+                word.audio_track = safe_track
+
+    def _stamp_track_role(
+        self,
+        result: TranscriptResult,
+        track_role: AudioTrackRole,
+        audio_track: str | None = None,
+    ) -> None:
+        safe_track = self._safe_audio_track(audio_track or track_role.audio_track, "unknown")
+        safe_speaker = self._safe_speaker(track_role.speaker)
+        for segment in result.segments or []:
+            segment.audio_track = safe_track
+            segment.speaker = safe_speaker
+            for word in segment.words or []:
+                word.audio_track = safe_track
+                word.speaker = safe_speaker
 
     def _safe_audio_track(self, value: Any, default: str) -> str:
         clean = str(value or "").strip().lower()

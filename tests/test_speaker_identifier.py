@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
+from core.audio_track_mapping_config import AudioTrackRole
 from core.speaker_identifier import SpeakerIdentifier, cosine_similarity
 from models.transcript_result import TranscriptResult, TranscriptSegment
 
@@ -58,6 +59,28 @@ def test_hybrid_result_uses_track_based_when_tracks_are_separated() -> None:
 
     assert result.engine == "test"
     assert [segment.speaker for segment in result.segments] == ["ali", "friend"]
+
+
+def test_track_based_identification_uses_supplied_role_speaker() -> None:
+    identifier = SpeakerIdentifier()
+
+    result = identifier.identify_track_based(
+        {
+            "mic": [_segment(0.0, 1.0, "ali")],
+            "unknown": [_segment(1.0, 2.0, "friend")],
+        },
+        track_roles=[
+            AudioTrackRole("owner", "mic", "ali", 0, True),
+            AudioTrackRole("friend", "unknown", "friend", 1, True),
+        ],
+    )
+
+    assert [(segment.audio_track, segment.speaker) for segment in result] == [
+        ("mic", "ali"),
+        ("unknown", "friend"),
+    ]
+    assert identifier.last_summary is not None
+    assert identifier.last_summary.friend_segments == 1
 
 
 def test_single_track_embedding_labels_similarity_bands(tmp_path) -> None:

@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from core.gaming_pipeline import (
     _load_json_profile_for_job,
     _write_profile_snapshot,
+    resolve_track_roles,
 )
 
 
@@ -104,3 +105,49 @@ def test_pipeline_profile_fallback_does_not_crash(tmp_path, monkeypatch):
     assert profile["quality_mode"] == "balanced"
     assert profile["_is_fallback"] is True
     assert Path(snapshot_path).exists()
+
+
+def test_resolve_track_roles_prefers_profile_audio_tracks():
+    profile = {
+        "audio_tracks": [
+            {
+                "role": "owner",
+                "audio_track": "mic",
+                "speaker": "ali",
+                "ffmpeg_audio_index": "0:a:0",
+                "transcribe_for_captions": True,
+            },
+            {
+                "role": "friend",
+                "audio_track": "discord",
+                "speaker": "friend",
+                "ffmpeg_audio_index": "0:a:1",
+                "transcribe_for_captions": True,
+            },
+        ],
+    }
+
+    roles = resolve_track_roles("inbox/gaming_main/raw.mp4", profile)
+
+    assert roles is not None
+    assert [(role.role, role.audio_track, role.speaker) for role in roles] == [
+        ("owner", "mic", "ali"),
+        ("friend", "discord", "friend"),
+    ]
+    assert [role.ffmpeg_audio_index for role in roles] == [0, 1]
+
+
+def test_resolve_track_roles_uses_pair_truth_only_for_learning_corpus_pairs():
+    roles = resolve_track_roles(
+        "learning_corpus/pairs/pair_009/raw.mp4",
+        {},
+    )
+
+    assert roles is not None
+    assert [(role.ffmpeg_audio_index, role.role, role.audio_track, role.speaker) for role in roles] == [
+        (0, "owner", "mic", "ali"),
+        (1, "friend", "discord", "friend"),
+        (2, "game", "ingame", "unknown"),
+        (3, "still", "silent", "unknown"),
+    ]
+    assert [role.transcribe_for_captions for role in roles] == [True, True, False, False]

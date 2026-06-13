@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from core.audio_track_mapping_config import AudioTrackRole
 from core.audio_stream_inspector import AudioStream, AudioStreamInventory
 from core.transcript_processor import TranscriptProcessor
 from models.transcript_result import TranscriptResult
@@ -34,6 +35,22 @@ class FakeDuplicateLabelInspector:
             streams=[
                 AudioStream(1, 2, 48000, "aac", 10.0, "unknown"),
                 AudioStream(2, 2, 48000, "aac", 10.0, "unknown"),
+            ],
+            is_multi_track=True,
+            has_mic_track=False,
+            has_discord_track=False,
+            has_ingame_track=False,
+        )
+
+
+class FakeFourMonoTrackInspector:
+    def inspect(self, video_path: str) -> AudioStreamInventory:
+        return AudioStreamInventory(
+            streams=[
+                AudioStream(1, 1, 48000, "aac", 10.0, "unknown"),
+                AudioStream(2, 1, 48000, "aac", 10.0, "unknown"),
+                AudioStream(3, 1, 48000, "aac", 10.0, "unknown"),
+                AudioStream(4, 1, 48000, "aac", 10.0, "unknown"),
             ],
             is_multi_track=True,
             has_mic_track=False,
@@ -78,6 +95,32 @@ def test_transcribe_all_streams_disambiguates_duplicate_labels() -> None:
     assert list(results) == ["unknown", "unknown_2"]
     assert results["unknown"].segments[0].audio_track == "unknown"
     assert results["unknown_2"].segments[0].audio_track == "unknown_2"
+
+
+def test_transcribe_all_streams_uses_track_roles_and_skips_non_caption_roles(capsys) -> None:
+    processor = TranscriptProcessor(
+        allow_test_fallback=True,
+        audio_stream_inspector=FakeFourMonoTrackInspector(),
+    )
+    track_roles = [
+        AudioTrackRole("owner", "mic", "ali", 0, True),
+        AudioTrackRole("friend", "discord", "friend", 1, True),
+        AudioTrackRole("game", "ingame", "unknown", 2, False),
+        AudioTrackRole("still", "silent", "unknown", 3, False),
+    ]
+
+    results = processor.transcribe_all_streams(
+        "placeholder.mp4",
+        track_roles=track_roles,
+    )
+
+    assert list(results) == ["mic", "discord"]
+    assert results["mic"].segments[0].speaker == "ali"
+    assert results["discord"].segments[0].speaker == "friend"
+    assert results["discord"].segments[0].audio_track == "discord"
+    output = capsys.readouterr().out
+    assert "[transcript_processor] ROLE_SKIP label=ingame index=3 role=game" in output
+    assert "[transcript_processor] ROLE_SKIP label=silent index=4 role=still" in output
 
 
 def test_sanitize_segments_accepts_audio_track_from_raw_segment() -> None:

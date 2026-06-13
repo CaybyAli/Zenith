@@ -101,6 +101,7 @@ class Job:
     transcript_has_word_level_timestamps: bool = False
     transcript_segment_normalization_status: str | None = None
     transcript_segment_normalization_recommendation: str | None = None
+    speaker_identification_summary: dict[str, Any] = field(default_factory=dict)
 
     sentence_boundary_report: dict[str, Any] = field(default_factory=dict)
     sentence_boundary_status: str | None = None
@@ -1367,6 +1368,7 @@ class Job:
             transcript_has_word_level_timestamps=bool(data.get("transcript_has_word_level_timestamps", False)),
             transcript_segment_normalization_status=data.get("transcript_segment_normalization_status"),
             transcript_segment_normalization_recommendation=data.get("transcript_segment_normalization_recommendation"),
+            speaker_identification_summary=dict(data.get("speaker_identification_summary") or {}),
             sentence_boundary_report=dict(data.get("sentence_boundary_report") or {}),
             sentence_boundary_status=data.get("sentence_boundary_status"),
             sentence_boundary_boundaries=list(data.get("sentence_boundary_boundaries") or []),

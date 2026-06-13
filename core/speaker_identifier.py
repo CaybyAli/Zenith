@@ -9,6 +9,7 @@ from typing import Any, Iterable, Protocol
 
 import numpy as np
 
+from core.audio_track_mapping_config import AudioTrackRole
 from models.transcript_result import TranscriptResult, TranscriptSegment
 
 
@@ -90,8 +91,14 @@ class SpeakerIdentifier:
     def identify_track_based(
         self,
         segments: dict[str, list[TranscriptSegment]],
+        *,
+        track_roles: list[AudioTrackRole] | None = None,
     ) -> list[TranscriptSegment]:
         result: list[TranscriptSegment] = []
+        role_speaker_by_track = {
+            _safe_track(track.audio_track): _safe_speaker(track.speaker)
+            for track in (track_roles or [])
+        }
 
         for track_label, segments_list in segments.items():
             safe_track = _safe_track(track_label)
@@ -99,9 +106,16 @@ class SpeakerIdentifier:
                 continue
 
             speaker = self.TRACK_TO_SPEAKER.get(safe_track, "unknown")
+            role_speaker = role_speaker_by_track.get(safe_track, "unknown")
             for segment in segments_list:
                 segment.audio_track = safe_track
-                segment.speaker = speaker
+                segment_speaker = _safe_speaker(segment.speaker)
+                if segment_speaker in {"ali", "friend"}:
+                    segment.speaker = segment_speaker
+                elif role_speaker in {"ali", "friend"}:
+                    segment.speaker = role_speaker
+                else:
+                    segment.speaker = speaker
                 result.append(segment)
 
         result.sort(key=lambda segment: segment.start_seconds)
@@ -113,6 +127,7 @@ class SpeakerIdentifier:
         transcript_results: dict[str, TranscriptResult],
         *,
         source_media_path: str | Path | None = None,
+        track_roles: list[AudioTrackRole] | None = None,
     ) -> TranscriptResult:
         if not transcript_results:
             raise ValueError("transcript_results must not be empty")
@@ -124,7 +139,7 @@ class SpeakerIdentifier:
 
         has_track_separation = "mic" in normalized or "discord" in normalized
         if has_track_separation and len(normalized) > 1:
-            segments = self.identify_track_based(normalized)
+            segments = self.identify_track_based(normalized, track_roles=track_roles)
             strategy = "track_based"
         else:
             only_track, only_segments = next(iter(normalized.items()))
@@ -337,3 +352,10 @@ def cosine_similarity(left: np.ndarray, right: np.ndarray) -> float:
 def _safe_track(track_label: Any) -> str:
     clean = str(track_label or "").strip().lower()
     return clean or "unknown"
+
+
+def _safe_speaker(value: Any) -> str:
+    clean = str(value or "").strip().lower()
+    if clean in {"ali", "friend", "unknown"}:
+        return clean
+    return "unknown"

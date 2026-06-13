@@ -18,9 +18,11 @@ import json
 import logging
 import os
 import time
+from pathlib import Path
 
 from shared.enums import ChannelType, JobStatus, TargetFormat, ValidatorStatus
 
+from core.audio_track_mapping_config import AudioTrackRole
 from core.gaming_analyzer import GamingAnalyzer
 from core.gaming_cutter import GamingCutter
 from core.render_processor import RenderProcessor
@@ -74,6 +76,7 @@ from core.ffmpeg_helper import ensure_ffmpeg_on_path
 from core.debug_mode import build_debug_context
 from core.channel_cut_profile_provider import ChannelCutProfileProvider
 from core.profile_manager import ProfileManager
+from core.pair_track_truth_loader import load_truth as load_pair_track_truth
 from core.job_profile_metadata import apply_profile_metadata_to_job
 from core.file_handler import run_file_handler_for_job
 from core.preprocessing_pipeline import run_preprocessing_pipeline_for_job
@@ -696,6 +699,185 @@ def _load_json_profile_for_job(job) -> dict:
     print(log_line)
 
     return profile
+
+
+def resolve_track_roles(
+    raw_video_path: str | os.PathLike[str] | None,
+    json_profile: dict,
+) -> list[AudioTrackRole] | None:
+    profile_roles = _track_roles_from_profile(json_profile)
+    if profile_roles:
+        _log_track_role_source("profile", profile_roles)
+        return profile_roles
+
+    pair_id = _legacy_pair_id_from_learning_corpus_path(raw_video_path)
+    if pair_id:
+        legacy_roles = _track_roles_from_pair_truth(pair_id)
+        if legacy_roles:
+            _log_track_role_source("legacy_truth", legacy_roles, pair_id=pair_id)
+            return legacy_roles
+
+    _log_track_role_source("heuristic_fallback", None, pair_id=pair_id)
+    return None
+
+
+def _log_track_role_source(
+    role_source: str,
+    track_roles: list[AudioTrackRole] | None,
+    *,
+    pair_id: str | None = None,
+) -> None:
+    details = [
+        f"[gaming_pipeline] TRACK_ROLES role_source={role_source}",
+        f"count={len(track_roles or [])}",
+    ]
+    if pair_id:
+        details.append(f"pair_id={pair_id}")
+    if track_roles:
+        details.append(
+            "tracks="
+            + ",".join(
+                f"0:a:{track.ffmpeg_audio_index}:{track.role}:{track.audio_track}:{track.speaker}:"
+                f"transcribe={str(track.transcribe_for_captions).lower()}"
+                for track in track_roles
+            )
+        )
+    line = " ".join(details)
+    logger.info(line)
+    print(line)
+
+
+def _track_roles_from_profile(json_profile: dict) -> list[AudioTrackRole] | None:
+    raw_tracks = json_profile.get("audio_tracks") if isinstance(json_profile, dict) else None
+    if not isinstance(raw_tracks, list) or not raw_tracks:
+        return None
+
+    track_roles: list[AudioTrackRole] = []
+    for raw in raw_tracks:
+        if not isinstance(raw, dict):
+            continue
+        track_roles.append(_track_role_from_mapping(raw))
+
+    return track_roles or None
+
+
+def _track_role_from_mapping(raw: dict) -> AudioTrackRole:
+    role = _safe_track_role_label(raw.get("role"), "unknown")
+    audio_track = _safe_track_role_label(
+        raw.get("audio_track"),
+        _default_audio_track_for_role(role),
+    )
+    speaker = _safe_track_role_label(
+        raw.get("speaker"),
+        _default_speaker_for_role(role),
+    )
+    return AudioTrackRole(
+        role=role,
+        audio_track=audio_track,
+        speaker=speaker,
+        ffmpeg_audio_index=_parse_ffmpeg_audio_index(raw.get("ffmpeg_audio_index")),
+        transcribe_for_captions=bool(raw.get("transcribe_for_captions", False)),
+    )
+
+
+def _legacy_pair_id_from_learning_corpus_path(
+    raw_video_path: str | os.PathLike[str] | None,
+) -> str | None:
+    if raw_video_path is None:
+        return None
+
+    parts = [part.lower() for part in Path(raw_video_path).parts]
+    for index in range(0, max(0, len(parts) - 2)):
+        if parts[index] == "learning_corpus" and parts[index + 1] == "pairs":
+            pair_id = parts[index + 2]
+            if pair_id.startswith("pair_"):
+                return pair_id
+    return None
+
+
+def _track_roles_from_pair_truth(pair_id: str) -> list[AudioTrackRole] | None:
+    truth = load_pair_track_truth()
+    pair_truth = truth.get(pair_id)
+    if not isinstance(pair_truth, dict):
+        return None
+
+    raw_track_roles = pair_truth.get("track_roles")
+    if not isinstance(raw_track_roles, dict):
+        return None
+
+    track_roles: list[AudioTrackRole] = []
+    for track_name, truth_role in sorted(raw_track_roles.items()):
+        audio_index = _parse_truth_audio_index(track_name)
+        role = _safe_track_role_label(truth_role, "unknown")
+        track_roles.append(
+            AudioTrackRole(
+                role=_legacy_schema_role(role),
+                audio_track=_default_audio_track_for_role(role),
+                speaker=_default_speaker_for_role(role),
+                ffmpeg_audio_index=audio_index,
+                transcribe_for_captions=_default_transcribe_for_role(role),
+            )
+        )
+    return track_roles or None
+
+
+def _parse_ffmpeg_audio_index(value: object) -> int:
+    if isinstance(value, int) and not isinstance(value, bool):
+        if value < 0:
+            raise ValueError("ffmpeg_audio_index must not be negative")
+        return value
+
+    text = str(value or "").strip().lower()
+    if text.isdigit():
+        return int(text)
+    if text.startswith("0:a:") and text[4:].isdigit():
+        return int(text[4:])
+    raise ValueError(f"Invalid ffmpeg_audio_index: {value!r}")
+
+
+def _parse_truth_audio_index(track_name: object) -> int:
+    text = str(track_name or "").strip().lower()
+    if len(text) >= 2 and text[0] == "a" and text[1:].isdigit():
+        return int(text[1:])
+    raise ValueError(f"Invalid pair truth audio track name: {track_name!r}")
+
+
+def _safe_track_role_label(value: object, default: str) -> str:
+    clean = str(value or "").strip().lower()
+    return clean or default
+
+
+def _legacy_schema_role(role: str) -> str:
+    if role == "ali":
+        return "owner"
+    if role == "friend_discord":
+        return "friend"
+    return role
+
+
+def _default_audio_track_for_role(role: str) -> str:
+    return {
+        "ali": "mic",
+        "owner": "mic",
+        "friend": "discord",
+        "friend_discord": "discord",
+        "discord_plus_game": "discord",
+        "game": "ingame",
+        "still": "silent",
+    }.get(role, role or "unknown")
+
+
+def _default_speaker_for_role(role: str) -> str:
+    return {
+        "ali": "ali",
+        "owner": "ali",
+        "friend": "friend",
+        "friend_discord": "friend",
+    }.get(role, "unknown")
+
+
+def _default_transcribe_for_role(role: str) -> bool:
+    return role in {"ali", "owner", "friend", "friend_discord"}
 
 
 def _write_profile_snapshot(job, profile: dict) -> str:
@@ -9146,8 +9328,10 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             )
         elif job.raw_video_path:
             try:
+                track_roles = resolve_track_roles(str(job.raw_video_path), json_profile)
                 transcript_stream_results = transcript_processor.transcribe_all_streams(
-                    str(job.raw_video_path)
+                    str(job.raw_video_path),
+                    track_roles=track_roles,
                 )
                 speaker_identifier = (
                     services.get("speaker_identifier") or SpeakerIdentifier()
@@ -9155,6 +9339,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 transcript_result = speaker_identifier.identify_transcript_results(
                     transcript_stream_results,
                     source_media_path=str(job.raw_video_path),
+                    track_roles=track_roles,
                 )
                 speaker_summary = getattr(speaker_identifier, "last_summary", None)
                 speaker_summary_data = (
@@ -9163,8 +9348,7 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                     and callable(getattr(speaker_summary, "to_dict", None))
                     else {}
                 )
-                if hasattr(job, "speaker_identification_summary"):
-                    job.speaker_identification_summary = speaker_summary_data
+                job.speaker_identification_summary = speaker_summary_data
                 print(
                     f"[gaming_pipeline] TRANSCRIPT {job.job_id} "
                     f"segments={len(transcript_result.segments)} "

@@ -35,6 +35,36 @@
   "min_clip_duration": 2.0,
   "max_clip_duration": 45.0,
   "version": "1.0.0",
+  "audio_tracks": [
+    {
+      "role": "owner",
+      "audio_track": "mic",
+      "speaker": "ali",
+      "ffmpeg_audio_index": "0:a:0",
+      "transcribe_for_captions": true
+    },
+    {
+      "role": "friend",
+      "audio_track": "discord",
+      "speaker": "friend",
+      "ffmpeg_audio_index": "0:a:1",
+      "transcribe_for_captions": true
+    },
+    {
+      "role": "game",
+      "audio_track": "ingame",
+      "speaker": "unknown",
+      "ffmpeg_audio_index": "0:a:2",
+      "transcribe_for_captions": false
+    },
+    {
+      "role": "still",
+      "audio_track": "silent",
+      "speaker": "unknown",
+      "ffmpeg_audio_index": "0:a:3",
+      "transcribe_for_captions": false
+    }
+  ],
   "facecam_crop": {
     "x": 0,
     "y": 0,
