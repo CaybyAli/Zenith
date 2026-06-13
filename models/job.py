@@ -102,6 +102,7 @@ class Job:
     transcript_segment_normalization_status: str | None = None
     transcript_segment_normalization_recommendation: str | None = None
     speaker_identification_summary: dict[str, Any] = field(default_factory=dict)
+    friend_reaction_beats: list[dict[str, Any]] = field(default_factory=list)
 
     sentence_boundary_report: dict[str, Any] = field(default_factory=dict)
     sentence_boundary_status: str | None = None
@@ -1369,6 +1370,7 @@ class Job:
             transcript_segment_normalization_status=data.get("transcript_segment_normalization_status"),
             transcript_segment_normalization_recommendation=data.get("transcript_segment_normalization_recommendation"),
             speaker_identification_summary=dict(data.get("speaker_identification_summary") or {}),
+            friend_reaction_beats=list(data.get("friend_reaction_beats") or []),
             sentence_boundary_report=dict(data.get("sentence_boundary_report") or {}),
             sentence_boundary_status=data.get("sentence_boundary_status"),
             sentence_boundary_boundaries=list(data.get("sentence_boundary_boundaries") or []),

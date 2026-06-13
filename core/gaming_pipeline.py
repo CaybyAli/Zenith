@@ -40,6 +40,7 @@ from core.facial_expression_analyzer import FacialExpressionAnalyzer
 from core.gameplay_menu_detector import GameplayMenuDetector
 from core.smooth_zoom_engine import SmoothZoomEngine
 from core.focus_switch_engine import FocusSwitchEngine, focus_decision_log_path
+from core.friend_reaction_beats import build as build_friend_reaction_beats
 from core.hook_keyword_extractor import HookKeywordExtractor
 from core.sentence_timeline_builder import SentenceTimelineBuilder
 
@@ -9618,6 +9619,33 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
             )
         else:
             print(f"[gaming_pipeline] SENTENCES {job.job_id} skipped reason=no transcript")
+
+    friend_reaction_beats = []
+    if job.channel_type == ChannelType.GAMING_MAIN:
+        if transcript_result is not None:
+            friend_reaction_beats = [
+                beat.to_dict()
+                for beat in build_friend_reaction_beats(
+                    list(getattr(transcript_result, "segments", []) or [])
+                )
+            ]
+        job.friend_reaction_beats = list(friend_reaction_beats)
+        friend_reaction_count = sum(
+            1
+            for beat in friend_reaction_beats
+            if beat.get("beat_type") == "friend_reaction_keyword"
+        )
+        call_pause_count = sum(
+            1
+            for beat in friend_reaction_beats
+            if beat.get("beat_type") == "owner_call_pause_friend"
+        )
+        print(
+            f"[gaming_pipeline] FRIEND_BEATS job={job.job_id} "
+            f"count={len(friend_reaction_beats)} "
+            f"reaction={friend_reaction_count} "
+            f"call_pause={call_pause_count}"
+        )
 
     # ------------------------------------------------------------------
     # Profile laden (channel-specific cut scoring)
