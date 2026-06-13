@@ -93,9 +93,19 @@ class TranscriptProcessor:
                 results[label] = self._test_fallback(source_path, audio_track=label)
                 continue
 
-            result = self.transcribe(source_path, audio_stream_index=stream.index)
+            try:
+                result = self.transcribe(source_path, audio_stream_index=stream.index)
+            except TranscriptUnavailableError as exc:
+                print(
+                    f"[transcript_processor] STREAM_SKIP label={label} "
+                    f"index={stream.index} reason={exc}"
+                )
+                continue
             self._stamp_audio_track(result, label)
             results[label] = result
+
+        if not results:
+            raise TranscriptUnavailableError("no audio stream produced a transcript")
 
         return results
 
