@@ -12,6 +12,27 @@ class MusicApplyTimelineRepository:
     def _file_path(self, export_path: str | Path) -> Path:
         return Path(export_path) / "music_apply_timeline.json"
 
+    def _segment_to_dict(self, segment: MusicApplySegment) -> dict[str, Any]:
+        return {
+            "segment_id": segment.segment_id,
+            "job_id": segment.job_id,
+            "asset_id": segment.asset_id,
+            "cue_kind": segment.cue_kind,
+            "source_file_path": segment.source_file_path,
+            "video_start_time": segment.video_start_time,
+            "video_end_time": segment.video_end_time,
+            "music_offset_start": segment.music_offset_start,
+            "music_offset_end": segment.music_offset_end,
+            "music_level": segment.music_level,
+            "voice_priority": segment.voice_priority,
+            "ducking_required": segment.ducking_required,
+            "fade_in_seconds": segment.fade_in_seconds,
+            "fade_out_seconds": segment.fade_out_seconds,
+            "notes": list(segment.notes),
+            "created_at": segment.created_at,
+            "updated_at": segment.updated_at,
+        }
+
     def _segment_from_dict(self, data: dict[str, Any]) -> MusicApplySegment:
         segment_kwargs: dict[str, Any] = {
             "segment_id": str(data.get("segment_id", "")),
@@ -53,6 +74,39 @@ class MusicApplyTimelineRepository:
         if data.get("updated_at") is not None:
             timeline_kwargs["updated_at"] = str(data["updated_at"])
         return MusicApplyTimeline(**timeline_kwargs)
+
+    def _timeline_to_dict(self, timeline: MusicApplyTimeline) -> dict[str, Any]:
+        return {
+            "timeline_id": timeline.timeline_id,
+            "job_id": timeline.job_id,
+            "channel_type": timeline.channel_type,
+            "segments": [
+                self._segment_to_dict(segment)
+                for segment in timeline.segments
+            ],
+            "timeline_score": timeline.timeline_score,
+            "notes": list(timeline.notes),
+            "created_at": timeline.created_at,
+            "updated_at": timeline.updated_at,
+        }
+
+    def save_timeline(
+        self,
+        export_path: str | Path,
+        timeline: MusicApplyTimeline,
+    ) -> str:
+        file_path = self._file_path(export_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(
+                self._timeline_to_dict(timeline),
+                f,
+                indent=4,
+                ensure_ascii=False,
+            )
+
+        return str(file_path)
 
     def load_timeline(self, export_path: str | Path) -> MusicApplyTimeline | None:
         file_path = self._file_path(export_path)

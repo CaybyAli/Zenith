@@ -1999,6 +1999,7 @@ class FinalRenderDriver:
         """
         from core.dynamic_edit_plan_repository import DynamicEditPlanRepository
         from core.edit_timeline_repository import EditTimelineRepository
+        from core.music_apply_planning import ensure_music_apply_timeline_for_render_export
         from core.music_apply_timeline_repository import MusicApplyTimelineRepository
         from core.reframe_plan_repository import ReframePlanRepository
 
@@ -2010,7 +2011,18 @@ class FinalRenderDriver:
 
         reframe_plan = ReframePlanRepository().load_plan(export_path)
         dynamic_edit_plan = DynamicEditPlanRepository().load_plan(export_path)
-        music_apply_timeline = MusicApplyTimelineRepository().load_timeline(export_path)
+        video_duration_sec = float(edit_timeline.target_duration or 0.0)
+        if video_duration_sec <= 0.0:
+            video_duration_sec = float(edit_timeline.total_selected_duration or 0.0)
+
+        music_apply_planning = ensure_music_apply_timeline_for_render_export(
+            job=job,
+            export_path=export_path,
+            video_duration_sec=video_duration_sec,
+        )
+        music_apply_timeline = None
+        if music_apply_planning.timeline_path is not None:
+            music_apply_timeline = MusicApplyTimelineRepository().load_timeline(export_path)
 
         final_path = self.render(
             job=job,
