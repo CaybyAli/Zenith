@@ -1,4 +1,4 @@
-import os
+﻿import os
 import subprocess
 import tempfile
 from contextlib import contextmanager
@@ -30,7 +30,7 @@ class TranscriptProcessor:
         audio_stream_inspector: AudioStreamInspector | None = None,
         transcription_engine: str | TranscriptionEngine | None = None,
     ) -> None:
-        self.model_name = model_name or os.getenv("ZENITH_WHISPER_MODEL", "base")
+        self.model_name = model_name or os.getenv("ZENITH_WHISPER_MODEL", "large-v3")
         self.allow_test_fallback = (
             allow_test_fallback
             if allow_test_fallback is not None

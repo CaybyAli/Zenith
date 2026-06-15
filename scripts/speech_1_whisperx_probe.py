@@ -357,7 +357,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="SPEECH-1 WhisperX track probe + full word transcript")
     parser.add_argument("--video", required=True, help="Path to Fortnite test video")
     parser.add_argument("--out-dir", default="reports/speech_1_transcript")
-    parser.add_argument("--model", default="base")
+    parser.add_argument("--model", default="large-v3")
     parser.add_argument("--samples", default="60:45,300:45")
     parser.add_argument("--merge-gap", type=float, default=0.3)
     parser.add_argument("--force-stream-index", type=int, default=None)

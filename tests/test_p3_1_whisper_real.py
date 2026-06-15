@@ -12,7 +12,7 @@ FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "whisper_probe.wav
 
 
 def _resolve_model_name() -> str:
-    return os.getenv("ZENITH_WHISPER_MODEL", "base")
+    return os.getenv("ZENITH_WHISPER_MODEL", "large-v3")
 
 
 def _resolve_device() -> str:

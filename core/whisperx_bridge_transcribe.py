@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import json
@@ -138,7 +138,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Zenith WhisperX bridge worker")
     parser.add_argument("--input", required=True, help="Audio/video source path")
     parser.add_argument("--output", required=True, help="JSON report path")
-    parser.add_argument("--model", default="base", help="WhisperX model name")
+    parser.add_argument("--model", default="large-v3", help="WhisperX model name")
     return parser.parse_args(argv)
 
 
