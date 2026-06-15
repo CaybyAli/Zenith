@@ -1,4 +1,4 @@
-﻿import os
+import os
 import subprocess
 import tempfile
 from contextlib import contextmanager
