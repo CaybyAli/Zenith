@@ -1,4 +1,4 @@
-﻿import json
+import json
 from pathlib import Path
 
 
@@ -17,10 +17,10 @@ ROLE_VOCAB = {
 
 EXPECTED_SUMMARY = {
     "ali_clean": 20,
-    "friend_clean": 7,
+    "friend_clean": 6,
     "duos": 15,
     "solos": 5,
-    "game_clean": 12,
+    "game_clean": 11,
 }
 
 

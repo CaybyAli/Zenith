@@ -150,10 +150,10 @@ def test_resolve_track_roles_prefers_pair_truth_for_learning_corpus_pairs(capsys
 
     assert roles is not None
     assert [(role.ffmpeg_audio_index, role.role, role.audio_track, role.speaker) for role in roles] == [
-        (0, "owner", "mic", "ali"),
-        (1, "friend", "discord", "friend"),
-        (2, "game", "ingame", "unknown"),
+        (0, "mix", "mix", "unknown"),
+        (1, "owner", "mic", "ali"),
+        (2, "discord_plus_game", "discord", "unknown"),
         (3, "still", "silent", "unknown"),
     ]
-    assert [role.transcribe_for_captions for role in roles] == [True, True, False, False]
+    assert [role.transcribe_for_captions for role in roles] == [False, True, False, False]
     assert "role_source=legacy_truth" in capsys.readouterr().out

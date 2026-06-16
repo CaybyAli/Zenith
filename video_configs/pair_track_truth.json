@@ -1,4 +1,4 @@
-﻿{
+{
     "schema_version":  "p5_g2_5_pair_track_truth_v1",
     "head":  "f870b3f",
     "source_worksheet":  "reports\\phase5\\g2_5_ear_check\\PER_PAIR_WORKSHEET.md",
@@ -10,10 +10,10 @@
     "summary":  {
                     "total_pairs":  20,
                     "ali_clean":  20,
-                    "friend_clean":  7,
+                    "friend_clean":  6,
                     "duos":  15,
                     "solos":  5,
-                    "game_clean":  12
+                    "game_clean":  11
                 },
     "pairs":  {
                   "pair_001":  {
@@ -151,22 +151,22 @@
                                    "owner_ear_confirmed":  true
                                },
                   "pair_009":  {
-                                   "pair_type":  "duo",
-                                   "track_roles":  {
-                                                       "a0":  "ali",
-                                                       "a1":  "friend_discord",
-                                                       "a2":  "game",
-                                                       "a3":  "still"
-                                                   },
-                                   "ali_source":  "a0",
-                                   "friend_source":  "a1",
-                                   "game_source":  "a2",
-                                   "usable_for_ali_reference":  true,
-                                   "usable_for_friend_reference":  true,
-                                   "usable_for_duo_chemistry":  true,
-                                   "usable_for_game_audio":  true,
-                                   "owner_ear_confirmed":  true
-                               },
+                                    "pair_type":  "duo",
+                                    "track_roles":  {
+                                                        "a0":  "mix",
+                                                        "a1":  "ali",
+                                                        "a2":  "discord_plus_game",
+                                                        "a3":  "still"
+                                                    },
+                                    "ali_source":  "a1",
+                                    "friend_source":  null,
+                                    "game_source":  null,
+                                    "usable_for_ali_reference":  true,
+                                    "usable_for_friend_reference":  false,
+                                    "usable_for_duo_chemistry":  true,
+                                    "usable_for_game_audio":  false,
+                                    "owner_ear_confirmed":  true
+                                },
                   "pair_010":  {
                                    "pair_type":  "duo",
                                    "track_roles":  {
