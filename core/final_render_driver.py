@@ -654,17 +654,25 @@ class FinalRenderDriver:
         src_h: int,
         side: str,
         smooth_zoom_policy: dict | None = None,
+        gameplay_zoom: float | None = None,
         facecam_static_tiny: bool = False,
     ) -> tuple[str, str]:
         base_w = src_w // 2
         base_h = src_h
 
         zoom = 1.0
+        try:
+            zoom = max(zoom, float(gameplay_zoom or 1.0))
+        except (TypeError, ValueError):
+            zoom = 1.0
         if isinstance(smooth_zoom_policy, dict):
             try:
-                zoom = float(smooth_zoom_policy.get("zoom_factor", 1.0) or 1.0)
+                zoom = max(
+                    zoom,
+                    float(smooth_zoom_policy.get("zoom_factor", 1.0) or 1.0),
+                )
             except (TypeError, ValueError):
-                zoom = 1.0
+                pass
 
         zoom = max(1.0, min(2.5, zoom))
 
@@ -917,6 +925,11 @@ class FinalRenderDriver:
                     src_h=src_h,
                     side="right",
                     smooth_zoom_policy=smooth_zoom_policy,
+                    gameplay_zoom=(
+                        focus_policy.get("gameplay_zoom")
+                        if isinstance(focus_policy, dict)
+                        else None
+                    ),
                 )
             
 # ZOOM-FEATURE: Finde Zoom-Momente fuer dieses Segment

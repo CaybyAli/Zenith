@@ -30,6 +30,10 @@ logger = logging.getLogger(__name__)
 
 MAX_CONTEXT_LENGTH = 32768
 DEFAULT_TIMEOUT_SECONDS = 10.0
+MAX_TIMEOUT_SECONDS = 60.0
+REACTION_TEXT_LIMIT = 320
+REACTION_CONTEXT_SEGMENT_LIMIT = 8
+REACTION_CHUNK_SIZE = 10
 
 MODEL_FALLBACK_CHAIN = [
     "qwen3.6-27b:UD-Q4_K_XL",
@@ -53,6 +57,24 @@ class LLMBrainDecision:
     raw_response: dict | None = None
 
 
+@dataclass
+class LLMReactionSelection:
+    candidate_index: int
+    is_real_reaction: bool
+    confidence: float
+    reason: str
+
+
+@dataclass
+class LLMReactionDecision:
+    decision_type: str
+    selections: list[LLMReactionSelection]
+    model_used: str
+    shadow_mode: bool = True
+    warnings: list[str] = field(default_factory=list)
+    raw_response: dict | None = None
+
+
 class LLMBrain:
     """
     LLM-Entscheidungsmodul für Zenith Phase 3.
@@ -70,7 +92,7 @@ class LLMBrain:
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.context_length = min(int(context_length), MAX_CONTEXT_LENGTH)
-        self.timeout_seconds = min(float(timeout_seconds), DEFAULT_TIMEOUT_SECONDS)
+        self.timeout_seconds = min(float(timeout_seconds), MAX_TIMEOUT_SECONDS)
 
     def is_available(self) -> bool:
         """Prüft ob llama-server erreichbar ist. Niemals crashen wenn nicht."""
@@ -215,6 +237,137 @@ class LLMBrain:
         self._log_shadow_decision(decision)
         return decision
 
+    def decide_reactions(
+        self,
+        candidates: list[dict],
+        job_context: dict,
+    ) -> LLMReactionDecision:
+        """
+        Bewertet B2-Freund-Reaktionskandidaten konservativ.
+        Input je Kandidat: start/end, Texte, Evidence und Transcript-Kontext.
+        Output: LLMReactionDecision mit genau einer Selection je Kandidat.
+        Fallback ist immer safe: keine echte Reaktion auswählen.
+        """
+        if len(candidates) > REACTION_CHUNK_SIZE:
+            return self._decide_reaction_chunks(candidates, job_context)
+
+        return self._decide_reactions_once(
+            candidates=candidates,
+            job_context=job_context,
+            candidate_indices=list(range(len(candidates))),
+        )
+
+    def _decide_reaction_chunks(
+        self,
+        candidates: list[dict],
+        job_context: dict,
+    ) -> LLMReactionDecision:
+        selections: list[LLMReactionSelection] = []
+        warnings: list[str] = []
+        raw_chunks: list[dict | None] = []
+        model_used = self.model
+
+        for chunk_start in range(0, len(candidates), REACTION_CHUNK_SIZE):
+            chunk = candidates[chunk_start : chunk_start + REACTION_CHUNK_SIZE]
+            candidate_indices = list(range(chunk_start, chunk_start + len(chunk)))
+            chunk_context = dict(job_context or {})
+            chunk_context.update(
+                {
+                    "reaction_chunk_start": chunk_start,
+                    "reaction_chunk_size": len(chunk),
+                    "reaction_total_candidates": len(candidates),
+                }
+            )
+            chunk_decision = self._decide_reactions_once(
+                candidates=chunk,
+                job_context=chunk_context,
+                candidate_indices=candidate_indices,
+            )
+            selections.extend(chunk_decision.selections)
+            warnings.extend(chunk_decision.warnings)
+            raw_chunks.append(chunk_decision.raw_response)
+            if chunk_decision.model_used != self.model:
+                model_used = chunk_decision.model_used
+
+        decision = LLMReactionDecision(
+            decision_type="friend_reactions",
+            selections=sorted(selections, key=lambda selection: selection.candidate_index),
+            model_used=model_used,
+            shadow_mode=True,
+            warnings=list(dict.fromkeys(warnings)),
+            raw_response={"chunks": raw_chunks},
+        )
+        self._log_shadow_decision(decision)
+        return decision
+
+    def _decide_reactions_once(
+        self,
+        candidates: list[dict],
+        job_context: dict,
+        candidate_indices: list[int],
+    ) -> LLMReactionDecision:
+        cuda_warnings = self._cuda_warnings()
+        payload = {
+            "decision_type": "friend_reactions",
+            "context_length": self.context_length,
+            "job_context": job_context,
+            "candidates": self._reaction_candidate_payload(
+                candidates,
+                candidate_indices=candidate_indices,
+            ),
+            "required_json_schema": {
+                "selections": [
+                    {
+                        "candidate_index": "int",
+                        "is_real_reaction": "bool",
+                        "confidence": "float 0.0-1.0",
+                        "reason": "string",
+                    }
+                ]
+            },
+        }
+
+        try:
+            raw_response = self._chat_completion(
+                system_prompt=(
+                    "Du bist ein Video-Editor und entscheidest, welche "
+                    "Freund-Reaktionsmomente wirklich lustig/markant genug sind, "
+                    "um auf Gameplay zu schneiden (Facecam weg). Sei KONSERVATIV: "
+                    "nur klar echte Momente, im Zweifel NICHT. Nutze den Gesprächskontext. "
+                    "Return only valid JSON. No markdown. No chain-of-thought."
+                ),
+                user_payload=payload,
+                grammar_kind="friend_reactions",
+                max_tokens=4096,
+            )
+            parsed = self._parse_llm_json(raw_response)
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
+            return self._fallback_reaction_decision(
+                candidates_count=len(candidates),
+                candidate_indices=candidate_indices,
+                warnings=[*cuda_warnings, "llm_unavailable"],
+                raw_response=self._error_payload(exc),
+                reason="LLM unavailable; no reaction selected.",
+            )
+        except Exception as exc:
+            return self._fallback_reaction_decision(
+                candidates_count=len(candidates),
+                candidate_indices=candidate_indices,
+                warnings=[*cuda_warnings, "json_parse_error"],
+                raw_response={"error": str(exc)},
+                reason="Invalid LLM JSON response; no reaction selected.",
+            )
+
+        decision = self._build_reaction_decision(
+            parsed=parsed,
+            candidates_count=len(candidates),
+            candidate_indices=candidate_indices,
+            warnings=cuda_warnings,
+            raw_response=raw_response,
+        )
+        self._log_shadow_decision(decision)
+        return decision
+
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
 
@@ -223,6 +376,7 @@ class LLMBrain:
         system_prompt: str,
         user_payload: dict[str, Any],
         grammar_kind: str,
+        max_tokens: int = 512,
     ) -> dict[str, Any]:
         body = {
             "model": self.model,
@@ -235,7 +389,7 @@ class LLMBrain:
             ],
             "temperature": 0.2,
             "top_p": 0.8,
-            "max_tokens": 512,
+            "max_tokens": int(max_tokens),
             "response_format": {"type": "json_object"},
             "grammar": self._json_grammar(grammar_kind),
             "chat_template_kwargs": {"enable_thinking": False},
@@ -256,6 +410,21 @@ class LLMBrain:
             return json.loads(response_body)
 
     def _json_grammar(self, grammar_kind: str) -> str:
+        if grammar_kind == "friend_reactions":
+            return (
+                'root ::= "{" ws "\\"selections\\"" ws ":" ws selections ws "}"\n'
+                'selections ::= "[" ws (selection (ws "," ws selection)*)? ws "]"\n'
+                'selection ::= "{" ws "\\"candidate_index\\"" ws ":" ws integer ws "," '
+                'ws "\\"is_real_reaction\\"" ws ":" ws boolean ws "," '
+                'ws "\\"confidence\\"" ws ":" ws number ws "," '
+                'ws "\\"reason\\"" ws ":" ws string ws "}"\n'
+                'boolean ::= "true" | "false"\n'
+                'string ::= "\\"" ([^"\\\\] | "\\\\" .)* "\\""\n'
+                'integer ::= "-"? [0-9]+\n'
+                'number ::= "-"? [0-9]+ ("." [0-9]+)?\n'
+                'ws ::= [ \\t\\n\\r]*'
+            )
+
         if grammar_kind == "segment_order":
             return (
                 'root ::= "{" ws "\\"recommended_order\\"" ws ":" ws array ws "," '
@@ -301,6 +470,192 @@ class LLMBrain:
             raise ValueError("parsed LLM response is not an object")
 
         return parsed
+
+    def _reaction_candidate_payload(
+        self,
+        candidates: list[dict],
+        candidate_indices: list[int] | None = None,
+    ) -> list[dict[str, Any]]:
+        payload: list[dict[str, Any]] = []
+        for index, candidate in enumerate(candidates):
+            if not isinstance(candidate, dict):
+                candidate = {}
+            candidate_index = (
+                candidate_indices[index]
+                if candidate_indices is not None and index < len(candidate_indices)
+                else index
+            )
+            payload.append(
+                {
+                    "candidate_index": candidate_index,
+                    "start": candidate.get("start"),
+                    "end": candidate.get("end"),
+                    "beat_type": candidate.get("beat_type"),
+                    "friend_text": self._clip_reaction_text(
+                        candidate.get("friend_text", "")
+                    ),
+                    "ali_context_text": self._clip_reaction_text(
+                        candidate.get("ali_context_text", "")
+                    ),
+                    "evidence": self._reaction_evidence_payload(
+                        candidate.get("evidence", {})
+                    ),
+                    "transcript_context": self._reaction_context_payload(
+                        candidate.get("transcript_context", [])
+                    ),
+                }
+            )
+        return payload
+
+    def _clip_reaction_text(self, value: Any) -> str:
+        text = " ".join(str(value or "").split())
+        if len(text) <= REACTION_TEXT_LIMIT:
+            return text
+        return f"{text[:REACTION_TEXT_LIMIT].rstrip()}..."
+
+    def _reaction_evidence_payload(self, evidence: Any) -> dict[str, Any]:
+        if not isinstance(evidence, dict):
+            return {}
+        compact: dict[str, Any] = {}
+        for key in (
+            "pattern",
+            "trigger",
+            "keyword",
+            "gap_seconds",
+            "max_friend_intensity",
+            "friend_loud_rms_dbfs_threshold",
+        ):
+            if key in evidence:
+                compact[key] = evidence[key]
+        return compact
+
+    def _reaction_context_payload(self, transcript_context: Any) -> list[dict[str, Any]]:
+        if not isinstance(transcript_context, list):
+            return []
+        context = []
+        for raw_segment in transcript_context[:REACTION_CONTEXT_SEGMENT_LIMIT]:
+            if not isinstance(raw_segment, dict):
+                continue
+            context.append(
+                {
+                    "start": raw_segment.get("start"),
+                    "end": raw_segment.get("end"),
+                    "speaker": raw_segment.get("speaker"),
+                    "text": self._clip_reaction_text(raw_segment.get("text", "")),
+                }
+            )
+        return context
+
+    def _build_reaction_decision(
+        self,
+        parsed: dict[str, Any],
+        candidates_count: int,
+        candidate_indices: list[int] | None,
+        warnings: list[str],
+        raw_response: dict[str, Any],
+    ) -> LLMReactionDecision:
+        expected_indices = (
+            list(candidate_indices)
+            if candidate_indices is not None
+            else list(range(candidates_count))
+        )
+        expected_index_set = set(expected_indices)
+        raw_selections = parsed.get("selections")
+        if not isinstance(raw_selections, list):
+            return self._fallback_reaction_decision(
+                candidates_count=candidates_count,
+                candidate_indices=expected_indices,
+                warnings=[*warnings, "invalid_reaction_selections"],
+                raw_response=raw_response,
+                reason="LLM response missing selections; no reaction selected.",
+            )
+
+        local_warnings = list(warnings)
+        selections_by_index: dict[int, LLMReactionSelection] = {}
+        for raw_selection in raw_selections:
+            if not isinstance(raw_selection, dict):
+                local_warnings.append("invalid_reaction_selection_item")
+                continue
+            candidate_index = raw_selection.get("candidate_index")
+            if not isinstance(candidate_index, int):
+                local_warnings.append("invalid_reaction_candidate_index")
+                continue
+            if candidate_index not in expected_index_set:
+                local_warnings.append("invalid_reaction_candidate_index")
+                continue
+
+            selections_by_index[candidate_index] = LLMReactionSelection(
+                candidate_index=candidate_index,
+                is_real_reaction=bool(raw_selection.get("is_real_reaction", False)),
+                confidence=self._clamp_confidence(raw_selection.get("confidence", 0.0)),
+                reason=str(raw_selection.get("reason", "")),
+            )
+
+        selections = []
+        for index in expected_indices:
+            selection = selections_by_index.get(index)
+            if selection is None:
+                local_warnings.append("missing_reaction_selection")
+                selection = LLMReactionSelection(
+                    candidate_index=index,
+                    is_real_reaction=False,
+                    confidence=0.0,
+                    reason="Missing LLM verdict; no reaction selected.",
+                )
+            selections.append(selection)
+
+        return LLMReactionDecision(
+            decision_type="friend_reactions",
+            selections=selections,
+            model_used=str(raw_response.get("model", self.model)),
+            shadow_mode=True,
+            warnings=local_warnings,
+            raw_response=raw_response,
+        )
+
+    def _fallback_reaction_decision(
+        self,
+        candidates_count: int,
+        candidate_indices: list[int] | None = None,
+        warnings: list[str] | None = None,
+        raw_response: dict | None = None,
+        reason: str = "Safe fallback; no reaction selected.",
+    ) -> LLMReactionDecision:
+        expected_indices = (
+            list(candidate_indices)
+            if candidate_indices is not None
+            else list(range(candidates_count))
+        )
+        decision = LLMReactionDecision(
+            decision_type="friend_reactions",
+            selections=[
+                LLMReactionSelection(
+                    candidate_index=index,
+                    is_real_reaction=False,
+                    confidence=0.0,
+                    reason=reason,
+                )
+                for index in expected_indices
+            ],
+            model_used=self.model,
+            shadow_mode=True,
+            warnings=list(warnings or []),
+            raw_response=raw_response,
+        )
+        self._log_shadow_decision(decision)
+        return decision
+
+    def _error_payload(self, exc: Exception) -> dict[str, Any]:
+        payload = {"error": str(exc)}
+        if isinstance(exc, urllib.error.HTTPError):
+            try:
+                payload["response_body"] = exc.read().decode(
+                    "utf-8",
+                    errors="replace",
+                )
+            except Exception:
+                pass
+        return payload
 
     def _build_hook_decision(
         self,
@@ -441,9 +796,18 @@ class LLMBrain:
 
     def _log_shadow_decision(self, decision: LLMBrainDecision) -> None:
         if LLM_SHADOW_MODE:
+            confidence = getattr(decision, "confidence", None)
+            if confidence is None and hasattr(decision, "selections"):
+                selections = getattr(decision, "selections", [])
+                confidence_values = [
+                    selection.confidence
+                    for selection in selections
+                    if getattr(selection, "is_real_reaction", False)
+                ]
+                confidence = max(confidence_values, default=0.0)
             logger.info(
                 "[LLM-BRAIN-SHADOW] type=%s confidence=%.3f warnings=%s",
                 decision.decision_type,
-                decision.confidence,
+                confidence,
                 decision.warnings,
             )
