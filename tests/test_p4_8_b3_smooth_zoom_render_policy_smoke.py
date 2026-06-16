@@ -83,7 +83,10 @@ def test_gameplay_focus_uses_smooth_zoom_crop_for_32x9() -> None:
     )
 
     assert label == "[out]"
-    assert "crop=1280:720:2240:180" in fc
+    assert "crop=1920:1080:1920:0" in fc
+    assert "scale=w='1920*(if(lt(t\\,0.15)" in fc
+    assert "1.5" in fc
+    assert "eval=frame" in fc
     assert "overlay=" not in fc
 
 

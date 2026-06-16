@@ -647,6 +647,56 @@ class FinalRenderDriver:
             "reason": "smooth_zoom_curve_interpolated",
         }
 
+    def _format_ffmpeg_float(self, value: float) -> str:
+        return f"{float(value):.6f}".rstrip("0").rstrip(".")
+
+    def _build_gameplay_focus_zoom_expression(
+        self,
+        *,
+        segment_duration: float,
+        target_zoom: float | None = None,
+    ) -> dict[str, float | str]:
+        try:
+            duration = max(0.001, float(segment_duration))
+        except (TypeError, ValueError):
+            duration = 0.001
+
+        try:
+            target = float(target_zoom if target_zoom is not None else 1.4)
+        except (TypeError, ValueError):
+            target = 1.4
+        target = max(1.0, min(2.5, target))
+
+        ease = min(0.15, duration / 3.0)
+        hold_until = max(ease, duration - ease)
+
+        duration_s = self._format_ffmpeg_float(duration)
+        target_s = self._format_ffmpeg_float(target)
+        ease_s = self._format_ffmpeg_float(ease)
+        hold_until_s = self._format_ffmpeg_float(hold_until)
+
+        ramp_in_t = f"(t/{ease_s})"
+        ramp_out_t = f"((t-{hold_until_s})/{ease_s})"
+        ramp_in = f"({ramp_in_t}*{ramp_in_t}*(3-2*{ramp_in_t}))"
+        ramp_out = f"({ramp_out_t}*{ramp_out_t}*(3-2*{ramp_out_t}))"
+        expression = (
+            f"if(lt(t,{ease_s}),"
+            f"1+({target_s}-1)*{ramp_in},"
+            f"if(lt(t,{hold_until_s}),"
+            f"{target_s},"
+            f"1+({target_s}-1)*(1-{ramp_out})"
+            f"))"
+        ).replace(",", r"\,")
+
+        return {
+            "expression": expression,
+            "target_zoom": target,
+            "ease_seconds": ease,
+            "segment_duration": duration,
+            "hold_until_seconds": hold_until,
+            "timebase": "segment_relative_t_from_extract_segment_ss_t",
+        }
+
     def _build_32x9_focus_crop_filter(
         self,
         *,
@@ -655,16 +705,17 @@ class FinalRenderDriver:
         side: str,
         smooth_zoom_policy: dict | None = None,
         gameplay_zoom: float | None = None,
+        segment_duration: float | None = None,
         facecam_static_tiny: bool = False,
     ) -> tuple[str, str]:
         base_w = src_w // 2
         base_h = src_h
 
-        zoom = 1.0
+        zoom = 1.4
         try:
-            zoom = max(zoom, float(gameplay_zoom or 1.0))
+            zoom = float(gameplay_zoom if gameplay_zoom is not None else 1.4)
         except (TypeError, ValueError):
-            zoom = 1.0
+            zoom = 1.4
         if isinstance(smooth_zoom_policy, dict):
             try:
                 zoom = max(
@@ -674,21 +725,18 @@ class FinalRenderDriver:
             except (TypeError, ValueError):
                 pass
 
-        zoom = max(1.0, min(2.5, zoom))
-
-        crop_w = self._safe_even_int(base_w / zoom)
-        crop_h = self._safe_even_int(base_h / zoom)
-
-        crop_x = self._safe_even_int((base_w - crop_w) / 2, minimum=0)
-        crop_y = self._safe_even_int((base_h - crop_h) / 2, minimum=0)
-
-        if side == "right":
-            crop_x += base_w
+        zoom_spec = self._build_gameplay_focus_zoom_expression(
+            segment_duration=float(segment_duration or 0.001),
+            target_zoom=zoom,
+        )
+        zoom_expr = str(zoom_spec["expression"])
+        crop_x = base_w if side == "right" else 0
 
         fc = (
             f"[0:v]hwdownload,format=nv12,format=yuv420p,"
-            f"crop={crop_w}:{crop_h}:{crop_x}:{crop_y},"
-            f"{_cuda_scale_filter(1920, 1080)}[out]"
+            f"crop={base_w}:{base_h}:{crop_x}:0,"
+            f"scale=w='1920*({zoom_expr})':h='1080*({zoom_expr})':eval=frame,"
+            f"crop=1920:1080:x='(iw-1920)/2':y='(ih-1080)/2'[out]"
         )
         return fc, "[out]"
 
@@ -925,6 +973,7 @@ class FinalRenderDriver:
                     src_h=src_h,
                     side="right",
                     smooth_zoom_policy=smooth_zoom_policy,
+                    segment_duration=segment.duration,
                     gameplay_zoom=(
                         focus_policy.get("gameplay_zoom")
                         if isinstance(focus_policy, dict)

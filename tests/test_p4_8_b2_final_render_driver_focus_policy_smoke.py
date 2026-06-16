@@ -80,8 +80,11 @@ def test_focus_decision_gameplay_overrides_reframe_layout_for_32x9() -> None:
     assert policy["policy_source"] == "focus_decision"
     assert policy["focus_target"] == "gameplay"
     assert policy["layout_kind"] == "gameplay_crop"
-    assert "crop=1476:830:2142:124" in fc
-    assert "scale_cuda=1920:1080" in fc
+    assert "crop=1920:1080:1920:0" in fc
+    assert "scale=w='1920*(if(lt(t\\,0.15)" in fc
+    assert ":h='1080*(if(lt(t\\,0.15)" in fc
+    assert "eval=frame" in fc
+    assert "crop=1920:1080:x='(iw-1920)/2':y='(ih-1080)/2'" in fc
     assert "overlay=" not in fc
 
 
