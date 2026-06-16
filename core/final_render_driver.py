@@ -299,6 +299,12 @@ class FinalRenderDriver:
             return "balanced_split"
         return "full_gameplay"
 
+    def _normalise_zoom_mode(self, zoom_mode: object) -> str:
+        mode = str(zoom_mode or "smooth").strip().lower()
+        if mode in {"instant", "smooth"}:
+            return mode
+        return "smooth"
+
     def _resolve_focus_render_policy(
         self,
         segment: TimelineSegment,
@@ -418,6 +424,7 @@ class FinalRenderDriver:
             "segment_focus_counts": dict(focus_counts),
             "facecam_zoom": float(raw.get("facecam_zoom", 1.0) or 1.0),
             "gameplay_zoom": float(raw.get("gameplay_zoom", 1.0) or 1.0),
+            "zoom_mode": self._normalise_zoom_mode(raw.get("zoom_mode")),
             "facecam_opacity": float(raw.get("facecam_opacity", 1.0) or 1.0),
         }
 
@@ -655,6 +662,7 @@ class FinalRenderDriver:
         *,
         segment_duration: float,
         target_zoom: float | None = None,
+        zoom_mode: str = "smooth",
     ) -> dict[str, float | str]:
         try:
             duration = max(0.001, float(segment_duration))
@@ -667,7 +675,9 @@ class FinalRenderDriver:
             target = 1.4
         target = max(1.0, min(2.5, target))
 
-        ease = min(0.15, duration / 3.0)
+        mode = self._normalise_zoom_mode(zoom_mode)
+        max_ease = 0.05 if mode == "instant" else 0.12
+        ease = min(max_ease, duration / 3.0)
         hold_until = max(ease, duration - ease)
 
         duration_s = self._format_ffmpeg_float(duration)
@@ -691,6 +701,7 @@ class FinalRenderDriver:
         return {
             "expression": expression,
             "target_zoom": target,
+            "zoom_mode": mode,
             "ease_seconds": ease,
             "segment_duration": duration,
             "hold_until_seconds": hold_until,
@@ -705,6 +716,7 @@ class FinalRenderDriver:
         side: str,
         smooth_zoom_policy: dict | None = None,
         gameplay_zoom: float | None = None,
+        zoom_mode: str = "smooth",
         segment_duration: float | None = None,
         facecam_static_tiny: bool = False,
     ) -> tuple[str, str]:
@@ -728,15 +740,18 @@ class FinalRenderDriver:
         zoom_spec = self._build_gameplay_focus_zoom_expression(
             segment_duration=float(segment_duration or 0.001),
             target_zoom=zoom,
+            zoom_mode=zoom_mode,
         )
         zoom_expr = str(zoom_spec["expression"])
         crop_x = base_w if side == "right" else 0
+        centered_crop_x = f"2*floor(1920*(({zoom_expr})-1)/4)"
+        centered_crop_y = f"2*floor(1080*(({zoom_expr})-1)/4)"
 
         fc = (
             f"[0:v]hwdownload,format=nv12,format=yuv420p,"
             f"crop={base_w}:{base_h}:{crop_x}:0,"
             f"scale=w='1920*({zoom_expr})':h='1080*({zoom_expr})':eval=frame,"
-            f"crop=1920:1080:x='(iw-1920)/2':y='(ih-1080)/2'[out]"
+            f"crop=1920:1080:x='{centered_crop_x}':y='{centered_crop_y}'[out]"
         )
         return fc, "[out]"
 
@@ -978,6 +993,11 @@ class FinalRenderDriver:
                         focus_policy.get("gameplay_zoom")
                         if isinstance(focus_policy, dict)
                         else None
+                    ),
+                    zoom_mode=(
+                        focus_policy.get("zoom_mode", "smooth")
+                        if isinstance(focus_policy, dict)
+                        else "smooth"
                     ),
                 )
             
