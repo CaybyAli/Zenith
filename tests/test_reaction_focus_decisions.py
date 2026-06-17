@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import wave
 from pathlib import Path
+from types import SimpleNamespace
 
-from core.reaction_focus_decisions import refine_friend_reaction_candidates
+from core.reaction_focus_decisions import (
+    inject_selected_reaction_focus_decisions,
+    refine_friend_reaction_candidates,
+)
 
 
 def _write_pcm_wav(path: Path, *, duration_seconds: float, tones: list[tuple[float, float]]) -> None:
@@ -126,3 +130,106 @@ def test_refine_reaction_candidates_rejects_silence_and_accepts_presence(tmp_pat
     assert required_keys <= accepted[0].keys()
     assert float(rejected_silence[0]["friend_rms_db"]) == -120.0
     assert float(accepted[0]["friend_rms_db"]) > -20.0
+
+
+def test_inject_selected_reaction_focus_decisions_uses_refined_zoom_window_and_mode() -> None:
+    job = SimpleNamespace(focus_decisions=[])
+
+    injected = inject_selected_reaction_focus_decisions(
+        job,
+        [
+            {
+                "is_real_reaction": True,
+                "zoom_mode": "instant",
+                "zoom_start": 10.0,
+                "zoom_end": 11.2,
+                "start": 10.1,
+                "end": 11.1,
+                "confidence": 0.95,
+                "reason": "confirmed",
+                "friend_text": "nice",
+                "ali_context_text": "context",
+            }
+        ],
+    )
+
+    assert len(injected) == 1
+    decision = injected[0]
+    assert decision["zoom_mode"] == "instant"
+    assert decision["focus_start_seconds"] == 10.0
+    assert decision["focus_end_seconds"] == 11.2
+    assert decision["focus_target"] == "gameplay"
+    assert decision["gameplay_zoom"] == 1.4
+    assert decision["facecam_opacity"] == 0.0
+    assert "zoom_mode" in decision
+    assert job.focus_decisions == injected
+    assert job.focus_decisions_count == 1
+
+
+def test_inject_selected_reaction_focus_decisions_skips_non_real_reactions() -> None:
+    job = SimpleNamespace(focus_decisions=[])
+
+    injected = inject_selected_reaction_focus_decisions(
+        job,
+        [
+            {
+                "is_real_reaction": False,
+                "zoom_mode": "instant",
+                "zoom_start": 10.0,
+                "zoom_end": 11.2,
+                "start": 10.1,
+                "end": 11.1,
+                "confidence": 0.95,
+            }
+        ],
+    )
+
+    assert injected == []
+    assert job.focus_decisions == []
+    assert job.focus_decisions_count == 0
+
+
+def test_inject_selected_reaction_focus_decisions_passes_smooth_zoom_mode_through() -> None:
+    job = SimpleNamespace(focus_decisions=[])
+
+    injected = inject_selected_reaction_focus_decisions(
+        job,
+        [
+            {
+                "is_real_reaction": True,
+                "zoom_mode": "smooth",
+                "zoom_start": 20.0,
+                "zoom_end": 22.0,
+                "start": 20.1,
+                "end": 21.9,
+                "confidence": 0.8,
+            }
+        ],
+    )
+
+    assert len(injected) == 1
+    assert injected[0]["zoom_mode"] == "smooth"
+
+
+def test_inject_selected_reaction_focus_decisions_appends_existing_focus_decisions() -> None:
+    existing = {"timestamp": 1.0, "focus_target": "balanced"}
+    job = SimpleNamespace(focus_decisions=[existing])
+
+    injected = inject_selected_reaction_focus_decisions(
+        job,
+        [
+            {
+                "is_real_reaction": True,
+                "zoom_mode": "instant",
+                "zoom_start": 30.0,
+                "zoom_end": 31.0,
+                "start": 30.1,
+                "end": 30.9,
+                "confidence": 0.8,
+            }
+        ],
+    )
+
+    assert len(injected) == 1
+    assert job.focus_decisions == [existing, injected[0]]
+    assert job.focus_decisions_count == 2

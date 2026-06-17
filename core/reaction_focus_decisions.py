@@ -6,8 +6,11 @@ from array import array
 from pathlib import Path
 from typing import Any
 
+from core.focus_switch_engine import FocusDecision
+
 
 GAMEPLAY_ZOOM = 1.4
+DEFAULT_REACTION_GAMEPLAY_ZOOM = 1.4
 ZOOM_PAD_SECONDS = 0.05
 SUBWINDOW_SECONDS = 0.1
 SILENCE_FLOOR_PERCENTILE = 20.0
@@ -15,6 +18,78 @@ LONG_WORD_SECONDS = 1.5
 LONG_WORD_DROP_DB = 6.0
 INSTANT_MAX_WORD_SECONDS = 0.6
 INSTANT_MAX_TOTAL_SECONDS = 1.5
+
+
+def inject_selected_reaction_focus_decisions(
+    job: Any,
+    selections: list[dict[str, Any]],
+    *,
+    gameplay_zoom: float = DEFAULT_REACTION_GAMEPLAY_ZOOM,
+) -> list[dict[str, Any]]:
+    existing = getattr(job, "focus_decisions", None)
+    if not isinstance(existing, list):
+        existing = []
+
+    injected: list[dict[str, Any]] = []
+    for row in selections:
+        if not isinstance(row, dict) or row.get("is_real_reaction") is not True:
+            continue
+
+        try:
+            focus_start = float(row.get("zoom_start"))
+            focus_end = float(row.get("zoom_end"))
+            source_start = float(row.get("start"))
+            source_end = float(row.get("end"))
+        except (TypeError, ValueError):
+            continue
+        if focus_end <= focus_start:
+            continue
+
+        confidence = _clamped_confidence(row.get("confidence"))
+        timestamp = round(focus_start + ((focus_end - focus_start) / 2.0), 3)
+        decision = FocusDecision(
+            timestamp=timestamp,
+            focus_target="gameplay",
+            facecam_zoom=1.0,
+            gameplay_zoom=gameplay_zoom,
+            facecam_opacity=0.0,
+            reasoning=(
+                "llm_selected_friend_reaction "
+                f"source={source_start:.3f}-{source_end:.3f} "
+                f"reason={str(row.get('reason') or '').strip()}"
+            ),
+            confidence=confidence,
+        ).to_dict()
+        decision["zoom_mode"] = str(row.get("zoom_mode") or "smooth")
+        decision.update(
+            {
+                "source_start_seconds": round(source_start, 3),
+                "source_end_seconds": round(source_end, 3),
+                "source_duration_seconds": round(source_end - source_start, 3),
+                "focus_start_seconds": round(focus_start, 3),
+                "focus_end_seconds": round(focus_end, 3),
+                "focus_duration_seconds": round(focus_end - focus_start, 3),
+                "friend_text": str(row.get("friend_text") or ""),
+                "ali_context_text": str(row.get("ali_context_text") or ""),
+                "selection_reason": str(row.get("reason") or ""),
+            }
+        )
+        injected.append(decision)
+
+    job.focus_decisions = [*existing, *injected]
+    try:
+        job.focus_decisions_count = len(job.focus_decisions)
+    except Exception:
+        pass
+    return injected
+
+
+def _clamped_confidence(value: Any) -> float:
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError):
+        confidence = 0.9
+    return max(0.0, min(1.0, confidence))
 
 
 def refine_friend_reaction_candidates(
