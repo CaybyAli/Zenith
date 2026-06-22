@@ -14,6 +14,7 @@ GAMEPLAY_ZOOM = 1.4
 DEFAULT_REACTION_GAMEPLAY_ZOOM = 1.4
 ZOOM_PAD_SECONDS = 0.05
 SUBWINDOW_SECONDS = 0.1
+PCM_SILENCE_DB = -120.0
 SILENCE_FLOOR_PERCENTILE = 20.0
 LONG_WORD_SECONDS = 1.5
 LONG_WORD_DROP_DB = 6.0
@@ -22,6 +23,7 @@ INSTANT_MAX_TOTAL_SECONDS = 1.5
 INTERNAL_WORD_GAP_CLAMP_SECONDS = 0.8
 MAX_WORD_DUR_SECONDS = 0.8
 MAX_REACTION_TAIL_SECONDS = 3.0
+MIN_REACTION_DUR_SECONDS = 0.30
 
 
 def inject_selected_reaction_focus_decisions(
@@ -205,15 +207,32 @@ def _word_boundaries_for_row(
     last_word["duration"] = round(last_word_end - float(last_word["start"]), 3)
     reaction_words[-1] = last_word
 
+    reaction_start = max(0.0, first_word_start - ZOOM_PAD_SECONDS)
+    raw_reaction_end = max(reaction_start, last_word_end + ZOOM_PAD_SECONDS)
+    allow_tail_clamp = not (
+        len(reaction_words) > 1
+        and bool(validation.get("over_hold_clamp_applied"))
+    )
+    tail_validation = _energy_validated_reaction_tail_end(
+        a2_audio_path,
+        reaction_start,
+        last_word_end,
+        raw_reaction_end,
+        silence_floor_db=silence_floor_db,
+        allow_tail_clamp=allow_tail_clamp,
+    )
+    reaction_end = float(tail_validation["energy_validated_reaction_end"])
+    last_word_end = min(
+        last_word_end,
+        max(first_word_start, float(tail_validation["energy_validated_voice_end"])),
+    )
+    last_word["end"] = round(last_word_end, 3)
+    last_word["duration"] = round(last_word_end - float(last_word["start"]), 3)
+    reaction_words[-1] = last_word
+
     max_word_dur = max(float(word["duration"]) for word in reaction_words)
     total_dur = max(0.0, last_word_end - first_word_start)
-    zoom_mode = (
-        "instant"
-        if max_word_dur < INSTANT_MAX_WORD_SECONDS and total_dur <= INSTANT_MAX_TOTAL_SECONDS
-        else "smooth"
-    )
-    reaction_start = max(0.0, first_word_start - ZOOM_PAD_SECONDS)
-    reaction_end = max(reaction_start, last_word_end + ZOOM_PAD_SECONDS)
+    zoom_mode = _zoom_mode_for_word_window(max_word_dur, total_dur)
 
     result = {
         "segment_start": round(segment_start, 3),
@@ -237,10 +256,19 @@ def _word_boundaries_for_row(
         "raw_words": words,
         "energie_voice_end": round(last_word_end, 3),
         "energy_validated_last_word": validation,
+        "reaction_tail_validation": tail_validation,
     }
     if gap_clamp is not None:
         result["internal_word_gap_clamp"] = gap_clamp
     return result
+
+
+def _zoom_mode_for_word_window(max_word_dur: float, total_dur: float) -> str:
+    return (
+        "instant"
+        if max_word_dur < INSTANT_MAX_WORD_SECONDS and total_dur <= INSTANT_MAX_TOTAL_SECONDS
+        else "smooth"
+    )
 
 
 def _words_until_internal_gap(words: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
@@ -259,6 +287,75 @@ def _words_until_internal_gap(words: list[dict[str, Any]]) -> tuple[list[dict[st
         active_words.append(dict(word))
         previous = word
     return active_words, None
+
+
+def _energy_validated_reaction_tail_end(
+    a2_audio_path: Path,
+    reaction_start: float,
+    current_voice_end: float,
+    current_reaction_end: float,
+    *,
+    silence_floor_db: float,
+    allow_tail_clamp: bool = True,
+) -> dict[str, Any]:
+    scan_end = max(reaction_start, current_reaction_end)
+    scan_start = max(reaction_start, scan_end - MAX_REACTION_TAIL_SECONDS)
+    measurement = _measure_track2_window(a2_audio_path, scan_start, scan_end)
+    subwindows = list(measurement.get("subwindows") or [])
+    presence_floor = float(silence_floor_db)
+    threshold = (presence_floor + PCM_SILENCE_DB) / 2.0
+
+    last_voiced: dict[str, Any] | None = None
+    for item in reversed(subwindows):
+        if float(item["rms_db"]) > threshold:
+            last_voiced = item
+            break
+
+    min_reaction_end = min(
+        current_reaction_end,
+        reaction_start + MIN_REACTION_DUR_SECONDS,
+    )
+    if not allow_tail_clamp or last_voiced is None:
+        acoustic_end = current_voice_end
+        reaction_end = current_reaction_end
+    else:
+        acoustic_end = min(current_voice_end, float(last_voiced["end"]))
+        reaction_end = min(current_reaction_end, acoustic_end + ZOOM_PAD_SECONDS)
+
+    min_duration_applied = False
+    if reaction_end < min_reaction_end:
+        reaction_end = min_reaction_end
+        min_duration_applied = True
+
+    clamped = reaction_end < current_reaction_end - 0.001
+    return {
+        "raw_reaction_end": round(current_reaction_end, 3),
+        "scan_start": round(scan_start, 3),
+        "scan_end": round(scan_end, 3),
+        "subwindow_seconds": SUBWINDOW_SECONDS,
+        "silence_floor_db": round(presence_floor, 3),
+        "tail_threshold_db": round(threshold, 3),
+        "tail_threshold_source": "midpoint_between_adaptive_presence_floor_and_pcm_silence_floor",
+        "max_reaction_tail_seconds": MAX_REACTION_TAIL_SECONDS,
+        "tail_buffer_seconds": ZOOM_PAD_SECONDS,
+        "min_reaction_duration_seconds": MIN_REACTION_DUR_SECONDS,
+        "tail_clamp_allowed": allow_tail_clamp,
+        "last_voiced_subwindow": (
+            {
+                "start": round(float(last_voiced["start"]), 3),
+                "end": round(float(last_voiced["end"]), 3),
+                "rms_db": round(float(last_voiced["rms_db"]), 3),
+            }
+            if last_voiced is not None
+            else None
+        ),
+        "energy_validated_voice_end": round(acoustic_end, 3),
+        "energy_validated_reaction_end": round(reaction_end, 3),
+        "min_duration_applied": min_duration_applied,
+        "tail_clamp_suppressed_by_existing_over_hold_clamp": not allow_tail_clamp,
+        "clamped_by_trailing_silence": clamped,
+        "clamped": clamped,
+    }
 
 
 def _first_number(

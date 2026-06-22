@@ -10,15 +10,20 @@ from core.reaction_focus_decisions import (
 )
 
 
-def _write_pcm_wav(path: Path, *, duration_seconds: float, tones: list[tuple[float, float]]) -> None:
+def _write_pcm_wav(path: Path, *, duration_seconds: float, tones: list[tuple[float, ...]]) -> None:
     sample_rate = 1000
-    amplitude = 9000
+    default_amplitude = 9000
     frame_count = int(duration_seconds * sample_rate)
 
     frames = bytearray()
     for frame_index in range(frame_count):
         timestamp = frame_index / sample_rate
-        sample = amplitude if any(start <= timestamp < end for start, end in tones) else 0
+        sample = 0
+        for tone in tones:
+            start, end = tone[0], tone[1]
+            amplitude = int(tone[2]) if len(tone) > 2 else default_amplitude
+            if start <= timestamp < end and abs(amplitude) > abs(sample):
+                sample = amplitude
         frames.extend(int(sample).to_bytes(2, byteorder="little", signed=True))
 
     with wave.open(str(path), "wb") as wav:
@@ -130,6 +135,50 @@ def test_refine_reaction_candidates_rejects_silence_and_accepts_presence(tmp_pat
     assert required_keys <= accepted[0].keys()
     assert float(rejected_silence[0]["friend_rms_db"]) == -120.0
     assert float(accepted[0]["friend_rms_db"]) > -20.0
+
+
+def test_refine_reaction_candidates_trims_trailing_segment_silence(tmp_path: Path) -> None:
+    audio_path = tmp_path / "a2.wav"
+    _write_pcm_wav(
+        audio_path,
+        duration_seconds=3.0,
+        tones=[(0.60, 0.85, 9000), (0.85, 1.15, 50), (2.10, 2.30, 8000)],
+    )
+
+    candidates = [
+        {"source_index": 0, "start": 0.55, "end": 1.95, "friend_text": "Digga."},
+        {"source_index": 1, "start": 2.05, "end": 2.35, "friend_text": "floor row"},
+    ]
+    friend_segments = [
+        {
+            "start": 0.55,
+            "end": 1.95,
+            "words": [{"word": "Digga.", "start": 0.60, "end": 1.80}],
+        },
+        {
+            "start": 2.05,
+            "end": 2.35,
+            "words": [{"word": "floor", "start": 2.10, "end": 2.30}],
+        },
+    ]
+
+    accepted, rejected_silence, _presence_policy = refine_friend_reaction_candidates(
+        candidates,
+        friend_segments,
+        audio_path,
+    )
+
+    assert [row["source_index"] for row in accepted] == [0]
+    assert [row["source_index"] for row in rejected_silence] == [1]
+    row = accepted[0]
+    assert row["start"] == 0.55
+    assert row["end"] == 1.2
+    assert row["zoom_end"] == 1.2
+    assert row["zoom_dauer"] == 0.65
+    assert row["zoom_mode"] == "instant"
+    assert row["reaction_tail_validation"]["last_voiced_subwindow"]["end"] == 1.15
+    assert row["reaction_tail_validation"]["clamped_by_trailing_silence"] is True
+    assert row["reaction_tail_validation"]["min_duration_applied"] is False
 
 
 def test_refine_reaction_candidates_clamps_inflated_last_word_end(tmp_path: Path) -> None:
