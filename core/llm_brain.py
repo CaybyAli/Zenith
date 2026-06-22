@@ -34,6 +34,7 @@ MAX_TIMEOUT_SECONDS = 60.0
 REACTION_TEXT_LIMIT = 320
 REACTION_CONTEXT_SEGMENT_LIMIT = 8
 REACTION_CHUNK_SIZE = 10
+REACTION_DETERMINISTIC_SEED = 42
 
 MODEL_FALLBACK_CHAIN = [
     "qwen3.6-27b:UD-Q4_K_XL",
@@ -346,6 +347,10 @@ class LLMBrain:
                 user_payload=payload,
                 grammar_kind="friend_reactions",
                 max_tokens=4096,
+                temperature=0.0,
+                top_p=1.0,
+                top_k=1,
+                seed=REACTION_DETERMINISTIC_SEED,
             )
             parsed = self._parse_llm_json(raw_response)
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
@@ -384,6 +389,10 @@ class LLMBrain:
         user_payload: dict[str, Any],
         grammar_kind: str,
         max_tokens: int = 512,
+        temperature: float = 0.2,
+        top_p: float = 0.8,
+        top_k: int | None = None,
+        seed: int | None = None,
     ) -> dict[str, Any]:
         body = {
             "model": self.model,
@@ -394,8 +403,8 @@ class LLMBrain:
                     "content": json.dumps(user_payload, ensure_ascii=False),
                 },
             ],
-            "temperature": 0.2,
-            "top_p": 0.8,
+            "temperature": float(temperature),
+            "top_p": float(top_p),
             "max_tokens": int(max_tokens),
             "response_format": {"type": "json_object"},
             "grammar": self._json_grammar(grammar_kind),
@@ -404,6 +413,10 @@ class LLMBrain:
                 "chat_template_kwargs": {"enable_thinking": False},
             },
         }
+        if top_k is not None:
+            body["top_k"] = int(top_k)
+        if seed is not None:
+            body["seed"] = int(seed)
 
         request = urllib.request.Request(
             self._url("/v1/chat/completions"),
