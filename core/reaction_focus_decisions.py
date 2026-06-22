@@ -6,6 +6,7 @@ from array import array
 from pathlib import Path
 from typing import Any
 
+from core.shorts_transcript_caption_builder import _clamp as _caption_timestamp_clamp
 from core.focus_switch_engine import FocusDecision
 
 
@@ -18,6 +19,9 @@ LONG_WORD_SECONDS = 1.5
 LONG_WORD_DROP_DB = 6.0
 INSTANT_MAX_WORD_SECONDS = 0.6
 INSTANT_MAX_TOTAL_SECONDS = 1.5
+INTERNAL_WORD_GAP_CLAMP_SECONDS = 0.8
+MAX_WORD_DUR_SECONDS = 0.8
+MAX_REACTION_TAIL_SECONDS = 3.0
 
 
 def inject_selected_reaction_focus_decisions(
@@ -98,7 +102,13 @@ def refine_friend_reaction_candidates(
     a2_audio_path: Path,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     segments_by_index = _source_segments_by_index(friend_segments)
-    word_annotated = _annotate_word_boundaries(candidates, segments_by_index, a2_audio_path)
+    silence_floor = _candidate_silence_floor(candidates, a2_audio_path)
+    word_annotated = _annotate_word_boundaries(
+        candidates,
+        segments_by_index,
+        a2_audio_path,
+        silence_floor_db=silence_floor,
+    )
     return _annotate_presence_gate(word_annotated, a2_audio_path)
 
 
@@ -138,6 +148,8 @@ def _word_boundaries_for_row(
     row: dict[str, Any],
     segments_by_index: dict[int, dict[str, Any]],
     a2_audio_path: Path,
+    *,
+    silence_floor_db: float,
 ) -> dict[str, Any]:
     source_index = row.get("source_index")
     if not isinstance(source_index, int):
@@ -146,6 +158,8 @@ def _word_boundaries_for_row(
     if not isinstance(segment, dict):
         raise RuntimeError(f"No friend segment for source_index={source_index}")
 
+    segment_start = _first_number(segment, row, "start", "start_seconds")
+    segment_end = _first_number(segment, row, "end", "end_seconds")
     raw_words = segment.get("words")
     if not isinstance(raw_words, list) or not raw_words:
         raise RuntimeError(f"Friend segment source_index={source_index} has no words[]")
@@ -161,6 +175,10 @@ def _word_boundaries_for_row(
             continue
         if end < start:
             continue
+        start = _caption_timestamp_clamp(start, segment_start, segment_end)
+        end = _caption_timestamp_clamp(end, segment_start, segment_end)
+        if end < start:
+            continue
         word = str(raw_word.get("word") or "")
         duration = end - start
         item = {
@@ -174,22 +192,34 @@ def _word_boundaries_for_row(
     if not words:
         raise RuntimeError(f"Friend segment source_index={source_index} has no usable word timestamps")
 
-    first_word_start = float(words[0]["start"])
-    last_word = words[-1]
-    validation = _energy_validated_long_word_end(last_word, a2_audio_path)
+    reaction_words, gap_clamp = _words_until_internal_gap(words)
+    first_word_start = float(reaction_words[0]["start"])
+    last_word = dict(reaction_words[-1])
+    validation = _energy_validated_long_word_end(
+        last_word,
+        a2_audio_path,
+        silence_floor_db=silence_floor_db,
+    )
     last_word_end = float(validation["energy_validated_end"])
+    last_word["end"] = round(last_word_end, 3)
+    last_word["duration"] = round(last_word_end - float(last_word["start"]), 3)
+    reaction_words[-1] = last_word
 
-    max_word_dur = max(float(word["duration"]) for word in words)
+    max_word_dur = max(float(word["duration"]) for word in reaction_words)
     total_dur = max(0.0, last_word_end - first_word_start)
     zoom_mode = (
         "instant"
         if max_word_dur < INSTANT_MAX_WORD_SECONDS and total_dur <= INSTANT_MAX_TOTAL_SECONDS
         else "smooth"
     )
-    zoom_start = max(0.0, first_word_start - ZOOM_PAD_SECONDS)
-    zoom_end = max(zoom_start, last_word_end + ZOOM_PAD_SECONDS)
+    reaction_start = max(0.0, first_word_start - ZOOM_PAD_SECONDS)
+    reaction_end = max(reaction_start, last_word_end + ZOOM_PAD_SECONDS)
 
-    return {
+    result = {
+        "segment_start": round(segment_start, 3),
+        "segment_end": round(segment_end, 3),
+        "start": round(reaction_start, 3),
+        "end": round(reaction_end, 3),
         "first_word_start": round(first_word_start, 3),
         "last_word_end": round(last_word_end, 3),
         "max_word_dur": round(max_word_dur, 3),
@@ -200,19 +230,56 @@ def _word_boundaries_for_row(
             if zoom_mode == "instant"
             else "held_word_or_long_sentence_word_character"
         ),
-        "zoom_start": round(zoom_start, 3),
-        "zoom_end": round(zoom_end, 3),
-        "zoom_dauer": round(zoom_end - zoom_start, 3),
-        "words": words,
+        "zoom_start": round(reaction_start, 3),
+        "zoom_end": round(reaction_end, 3),
+        "zoom_dauer": round(reaction_end - reaction_start, 3),
+        "words": reaction_words,
+        "raw_words": words,
         "energie_voice_end": round(last_word_end, 3),
         "energy_validated_last_word": validation,
     }
+    if gap_clamp is not None:
+        result["internal_word_gap_clamp"] = gap_clamp
+    return result
+
+
+def _words_until_internal_gap(words: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    active_words = [dict(words[0])]
+    previous = words[0]
+    for word in words[1:]:
+        gap_seconds = float(word["start"]) - float(previous["end"])
+        if gap_seconds > INTERNAL_WORD_GAP_CLAMP_SECONDS:
+            return active_words, {
+                "threshold_seconds": INTERNAL_WORD_GAP_CLAMP_SECONDS,
+                "gap_seconds": round(gap_seconds, 3),
+                "last_word_before_gap": str(previous.get("word") or ""),
+                "next_word_after_gap": str(word.get("word") or ""),
+                "next_word_start": round(float(word["start"]), 3),
+            }
+        active_words.append(dict(word))
+        previous = word
+    return active_words, None
+
+
+def _first_number(
+    primary: dict[str, Any],
+    fallback: dict[str, Any],
+    *names: str,
+) -> float:
+    for payload in (primary, fallback):
+        for name in names:
+            value = payload.get(name)
+            if value is not None:
+                return float(value)
+    raise ValueError(f"Missing numeric field {names}")
 
 
 def _annotate_word_boundaries(
     rows: list[dict[str, Any]],
     segments_by_index: dict[int, dict[str, Any]],
     a2_audio_path: Path,
+    *,
+    silence_floor_db: float,
 ) -> list[dict[str, Any]]:
     annotated: list[dict[str, Any]] = []
     for row in rows:
@@ -222,7 +289,12 @@ def _annotate_word_boundaries(
                 "segment_zoom_start": round(float(row["zoom_start"]), 3),
                 "segment_zoom_end": round(float(row["zoom_end"]), 3),
             }
-        word_bounds = _word_boundaries_for_row(row, segments_by_index, a2_audio_path)
+        word_bounds = _word_boundaries_for_row(
+            row,
+            segments_by_index,
+            a2_audio_path,
+            silence_floor_db=silence_floor_db,
+        )
         annotated.append(
             {
                 **row,
@@ -233,7 +305,89 @@ def _annotate_word_boundaries(
     return annotated
 
 
-def _energy_validated_long_word_end(word: dict[str, Any], a2_audio_path: Path) -> dict[str, Any]:
+def _energy_validated_long_word_end(
+    word: dict[str, Any],
+    a2_audio_path: Path,
+    *,
+    silence_floor_db: float | None = None,
+) -> dict[str, Any]:
+    start = float(word["start"])
+    end = float(word["end"])
+    duration = end - start
+    if duration <= MAX_WORD_DUR_SECONDS:
+        legacy_validation = _legacy_energy_validated_word_end(word, a2_audio_path)
+        legacy_validation.update(
+            {
+                "silence_floor_db": round(float(silence_floor_db), 3)
+                if silence_floor_db is not None
+                else None,
+                "silence_gap_threshold_seconds": MAX_WORD_DUR_SECONDS,
+                "max_reaction_tail_seconds": MAX_REACTION_TAIL_SECONDS,
+                "clamped_by_silence_gap": False,
+                "clamped_by_leading_silence_gap": False,
+                "over_hold_clamp_applied": False,
+            }
+        )
+        return legacy_validation
+
+    scan_end = min(end, start + MAX_REACTION_TAIL_SECONDS)
+    measurement = _measure_track2_window(a2_audio_path, start, scan_end)
+    subwindows = list(measurement.get("subwindows") or [])
+    word_peak_rms = max((float(item["rms_db"]) for item in subwindows), default=-120.0)
+    threshold = (
+        float(silence_floor_db) - LONG_WORD_DROP_DB
+        if silence_floor_db is not None
+        else word_peak_rms - LONG_WORD_DROP_DB
+    )
+    voiced_seen = False
+    real_end = min(end, start + MAX_WORD_DUR_SECONDS)
+    quiet_gap_start: float | None = None
+    clamped_by_silence_gap = False
+    clamped_by_leading_silence_gap = False
+    for item in subwindows:
+        item_start = float(item["start"])
+        item_end = float(item["end"])
+        is_voiced = float(item["rms_db"]) > threshold
+        if is_voiced:
+            voiced_seen = True
+            real_end = item_end
+            quiet_gap_start = None
+            continue
+        if not voiced_seen and item_end - start >= MAX_WORD_DUR_SECONDS:
+            real_end = min(end, start + MAX_WORD_DUR_SECONDS)
+            clamped_by_leading_silence_gap = True
+            break
+        if not voiced_seen:
+            continue
+        if quiet_gap_start is None:
+            quiet_gap_start = item_start
+        if item_end - quiet_gap_start >= MAX_WORD_DUR_SECONDS:
+            real_end = min(end, quiet_gap_start + MAX_WORD_DUR_SECONDS)
+            clamped_by_silence_gap = True
+            break
+
+    energy_end = min(end, max(start, real_end))
+    return {
+        "word": str(word.get("word") or ""),
+        "start": round(start, 3),
+        "raw_end": round(end, 3),
+        "duration": round(end - start, 3),
+        "word_peak_rms": round(word_peak_rms, 3),
+        "threshold_db": round(threshold, 3),
+        "silence_floor_db": round(float(silence_floor_db), 3)
+        if silence_floor_db is not None
+        else None,
+        "energy_validated_end": round(energy_end, 3),
+        "silence_gap_threshold_seconds": MAX_WORD_DUR_SECONDS,
+        "max_reaction_tail_seconds": MAX_REACTION_TAIL_SECONDS,
+        "clamped_by_silence_gap": clamped_by_silence_gap,
+        "clamped_by_leading_silence_gap": clamped_by_leading_silence_gap,
+        "over_hold_clamp_applied": True,
+        "clamped": energy_end < end - 0.001,
+    }
+
+
+def _legacy_energy_validated_word_end(word: dict[str, Any], a2_audio_path: Path) -> dict[str, Any]:
     start = float(word["start"])
     end = float(word["end"])
     measurement = _measure_track2_window(a2_audio_path, start, end)
@@ -352,6 +506,14 @@ def _measure_track2_window(a2_audio_path: Path, start: float, end: float) -> dic
 
 def _measure_friend_voice(row: dict[str, Any], a2_audio_path: Path) -> dict[str, Any]:
     return _measure_track2_window(a2_audio_path, float(row["start"]), float(row["end"]))
+
+
+def _candidate_silence_floor(rows: list[dict[str, Any]], a2_audio_path: Path) -> float:
+    peak_sub_values = [
+        float(_measure_friend_voice(row, a2_audio_path)["peak_sub_rms_db"])
+        for row in rows
+    ]
+    return _percentile(peak_sub_values, SILENCE_FLOOR_PERCENTILE)
 
 
 def _percentile(values: list[float], percentile: float) -> float:

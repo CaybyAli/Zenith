@@ -132,6 +132,131 @@ def test_refine_reaction_candidates_rejects_silence_and_accepts_presence(tmp_pat
     assert float(accepted[0]["friend_rms_db"]) > -20.0
 
 
+def test_refine_reaction_candidates_clamps_inflated_last_word_end(tmp_path: Path) -> None:
+    audio_path = tmp_path / "a2.wav"
+    _write_pcm_wav(audio_path, duration_seconds=12.0, tones=[(0.5, 1.3)])
+
+    candidates = [
+        {
+            "source_index": 0,
+            "start": 0.55,
+            "end": 10.0,
+            "friend_text": "Die will ich nie wieder spielen.",
+        },
+    ]
+    friend_segments = [
+        {
+            "start": 0.55,
+            "end": 10.0,
+            "words": [
+                {"word": "Die", "start": 0.60, "end": 0.70},
+                {"word": "will", "start": 0.72, "end": 0.82},
+                {"word": "ich", "start": 0.84, "end": 0.94},
+                {"word": "nie", "start": 0.96, "end": 1.04},
+                {"word": "wieder", "start": 1.06, "end": 1.16},
+                {"word": "spielen.", "start": 1.18, "end": 10.0},
+            ],
+        },
+    ]
+
+    accepted, rejected_silence, _presence_policy = refine_friend_reaction_candidates(
+        candidates,
+        friend_segments,
+        audio_path,
+    )
+
+    assert rejected_silence == []
+    row = accepted[0]
+    assert row["start"] == 0.55
+    assert row["end"] == 2.13
+    assert row["zoom_start"] == 0.55
+    assert row["zoom_end"] == 2.13
+    assert row["last_word_end"] == 2.08
+    assert row["zoom_mode"] == "smooth"
+    assert row["energy_validated_last_word"]["clamped_by_silence_gap"] is True
+
+
+def test_refine_reaction_candidates_stops_before_internal_word_gap(tmp_path: Path) -> None:
+    audio_path = tmp_path / "a2.wav"
+    _write_pcm_wav(audio_path, duration_seconds=4.0, tones=[(0.5, 0.9), (2.0, 2.4)])
+
+    candidates = [
+        {
+            "source_index": 0,
+            "start": 0.55,
+            "end": 2.3,
+            "friend_text": "Nein später",
+        },
+    ]
+    friend_segments = [
+        {
+            "start": 0.55,
+            "end": 2.3,
+            "words": [
+                {"word": "Nein", "start": 0.60, "end": 0.80},
+                {"word": "später", "start": 2.00, "end": 2.20},
+            ],
+        },
+    ]
+
+    accepted, rejected_silence, _presence_policy = refine_friend_reaction_candidates(
+        candidates,
+        friend_segments,
+        audio_path,
+    )
+
+    assert rejected_silence == []
+    row = accepted[0]
+    assert row["start"] == 0.55
+    assert row["end"] == 0.85
+    assert row["zoom_start"] == 0.55
+    assert row["zoom_end"] == 0.85
+    assert row["zoom_mode"] == "instant"
+    assert [word["word"] for word in row["words"]] == ["Nein"]
+    assert row["internal_word_gap_clamp"]["gap_seconds"] == 1.2
+
+
+def test_refine_reaction_candidates_clamps_leading_silence_inside_last_word(tmp_path: Path) -> None:
+    audio_path = tmp_path / "a2.wav"
+    _write_pcm_wav(audio_path, duration_seconds=5.0, tones=[(0.5, 0.95), (3.8, 4.0)])
+
+    candidates = [
+        {
+            "source_index": 0,
+            "start": 0.55,
+            "end": 4.0,
+            "friend_text": "Ich habe ihn gesehen!",
+        },
+    ]
+    friend_segments = [
+        {
+            "start": 0.55,
+            "end": 4.0,
+            "words": [
+                {"word": "Ich", "start": 0.60, "end": 0.70},
+                {"word": "habe", "start": 0.72, "end": 0.82},
+                {"word": "ihn", "start": 0.84, "end": 0.94},
+                {"word": "gesehen!", "start": 0.96, "end": 4.0},
+            ],
+        },
+    ]
+
+    accepted, rejected_silence, _presence_policy = refine_friend_reaction_candidates(
+        candidates,
+        friend_segments,
+        audio_path,
+    )
+
+    assert rejected_silence == []
+    row = accepted[0]
+    assert row["start"] == 0.55
+    assert row["end"] == 1.81
+    assert row["zoom_start"] == 0.55
+    assert row["zoom_end"] == 1.81
+    assert row["last_word_end"] == 1.76
+    assert row["energy_validated_last_word"]["clamped_by_leading_silence_gap"] is True
+
+
 def test_inject_selected_reaction_focus_decisions_uses_refined_zoom_window_and_mode() -> None:
     job = SimpleNamespace(focus_decisions=[])
 
