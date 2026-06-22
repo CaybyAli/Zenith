@@ -332,8 +332,15 @@ class LLMBrain:
                 system_prompt=(
                     "Du bist ein Video-Editor und entscheidest, welche "
                     "Freund-Reaktionsmomente wirklich lustig/markant genug sind, "
-                    "um auf Gameplay zu schneiden (Facecam weg). Sei KONSERVATIV: "
-                    "nur klar echte Momente, im Zweifel NICHT. Nutze den Gesprächskontext. "
+                    "um auf Gameplay zu schneiden (Facecam weg). Ali-Regel 2026-06-22: "
+                    "nahezu jeder starke Freund-Moment zählt, aber streng. Trigger breit "
+                    "werten: Hype, Schock, Siegesschrei, witzig, lost und dry zählen. "
+                    "Generische Sätze und Nicht-Reaktionen raus. Kein Count-Cap, keine "
+                    "Dichte-Begrenzung, nie auf eine Zahl auffüllen und nie genuine "
+                    "Momente wegen Dichte droppen. Sei KONSERVATIV: nur klar echte "
+                    "Momente, im Zweifel NICHT. Nutze den Gesprächskontext. Gib exakt "
+                    "eine Selection für jeden candidate_index zurück, auch wenn "
+                    "is_real_reaction false ist. "
                     "Return only valid JSON. No markdown. No chain-of-thought."
                 ),
                 user_payload=payload,

@@ -23,11 +23,11 @@ from core.reaction_shadow_report import (
 from core.transcript_processor import TranscriptProcessor
 
 
-PAIR_ID = "pair_009"
-RAW_VIDEO_PATH = ROOT / "learning_corpus" / "pairs" / PAIR_ID / "raw.mp4"
-JOB_PATH = ROOT / "exports" / "gaming_main" / "job_f3ed8b2f34d9" / "job.json"
+DEFAULT_PAIR_ID = "pair_009"
+DEFAULT_RAW_VIDEO_PATH = ROOT / "learning_corpus" / "pairs" / DEFAULT_PAIR_ID / "raw.mp4"
+DEFAULT_JOB_PATH = ROOT / "exports" / "gaming_main" / "job_f3ed8b2f34d9" / "job.json"
 OUTPUT_DIR = ROOT / "reports" / "blockd_a2b3a_shadow"
-OUTPUT_PATH = OUTPUT_DIR / f"{PAIR_ID}_shadow_report.json"
+DEFAULT_OUTPUT_PATH = OUTPUT_DIR / f"{DEFAULT_PAIR_ID}_shadow_report.json"
 
 
 def _load_json(path: Path) -> Any:
@@ -42,11 +42,41 @@ def _write_json(path: Path, payload: Any) -> None:
     )
 
 
-def _find_discord_plus_game_role(roles: list[Any] | None) -> Any:
+def _default_raw_path(pair_id: str) -> Path:
+    return ROOT / "learning_corpus" / "pairs" / pair_id / "raw.mp4"
+
+
+def _default_output_path(pair_id: str) -> Path:
+    return OUTPUT_DIR / f"{pair_id}_shadow_report.json"
+
+
+def _default_job_path(pair_id: str) -> Path | None:
+    if pair_id == DEFAULT_PAIR_ID:
+        return DEFAULT_JOB_PATH
+    return None
+
+
+def _resolve_path(path: Path | None, default_path: Path | None) -> Path | None:
+    resolved = path if path is not None else default_path
+    if resolved is None:
+        return None
+    if not resolved.is_absolute():
+        return ROOT / resolved
+    return resolved
+
+
+def _find_discord_plus_game_role(
+    roles: list[Any] | None,
+    *,
+    pair_id: str,
+    required: bool = True,
+) -> Any | None:
     for role in roles or []:
         if getattr(role, "role", None) == "discord_plus_game":
             return role
-    raise RuntimeError("No discord_plus_game track role found for pair_009")
+    if required:
+        raise RuntimeError(f"No discord_plus_game track role found for {pair_id}")
+    return None
 
 
 def _resolve_audio_stream_index(
@@ -62,6 +92,21 @@ def _resolve_audio_stream_index(
             f"{len(inventory.streams)} audio streams"
         )
     return int(inventory.streams[audio_ordinal].index), inventory.to_dict()
+
+
+def _resolve_absolute_audio_stream_index(
+    processor: TranscriptProcessor,
+    raw_video_path: Path,
+    stream_index: int,
+) -> tuple[int, dict[str, Any]]:
+    inventory = processor.audio_stream_inspector.inspect(str(raw_video_path))
+    available = [int(stream.index) for stream in inventory.streams]
+    if int(stream_index) not in available:
+        raise RuntimeError(
+            f"Friend audio stream index {stream_index} not found; "
+            f"available streams: {available}"
+        )
+    return int(stream_index), inventory.to_dict()
 
 
 def _normalize_transcript_segments(segments: list[Any]) -> list[dict[str, Any]]:
@@ -127,22 +172,44 @@ def _number(payload: dict[str, Any], *names: str) -> float:
 
 def _job_context(
     *,
+    pair_id: str,
     job_payload: dict[str, Any],
     raw_video_path: Path,
-    a2_role: Any,
+    a2_role: Any | None,
     a2_audio_stream_index: int,
     accepted_count: int,
 ) -> dict[str, Any]:
     return {
-        "pair_id": PAIR_ID,
+        "pair_id": pair_id,
         "job_id": job_payload.get("job_id"),
         "channel_type": job_payload.get("channel_type", "gaming_main"),
         "raw_video_path": str(raw_video_path),
         "a2_role": getattr(a2_role, "role", None),
-        "a2_ffmpeg_audio_index": int(getattr(a2_role, "ffmpeg_audio_index")),
+        "a2_ffmpeg_audio_index": (
+            int(getattr(a2_role, "ffmpeg_audio_index"))
+            if getattr(a2_role, "ffmpeg_audio_index", None) is not None
+            else None
+        ),
         "a2_audio_stream_index": int(a2_audio_stream_index),
         "accepted_candidate_count": int(accepted_count),
         "shadow_report_chain": "a2_segments_to_presence_refine_to_llm_decide_reactions",
+        "picker_policy": {
+            "version": "Ali 2026-06-22",
+            "mode": "nearly_every_strong_friend_moment_but_strict",
+            "positive_triggers": [
+                "hype",
+                "shock",
+                "victory_shout",
+                "funny",
+                "lost",
+                "dry",
+            ],
+            "reject": "generic_sentences_and_non_reactions",
+            "count_cap": "none",
+            "density_limit": "none",
+            "never_fill_to_target_count": True,
+            "never_drop_genuine_moments_for_density": True,
+        },
     }
 
 
@@ -174,32 +241,52 @@ def _print_summary(report_path: Path, report: dict[str, Any]) -> None:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw", type=Path, default=RAW_VIDEO_PATH)
-    parser.add_argument("--job", type=Path, default=JOB_PATH)
-    parser.add_argument("--out", type=Path, default=OUTPUT_PATH)
+    parser.add_argument("--pair-id", default=DEFAULT_PAIR_ID)
+    parser.add_argument("--friend-stream-index", type=int, default=None)
+    parser.add_argument("--raw", type=Path, default=None)
+    parser.add_argument("--job", type=Path, default=None)
+    parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv[1:])
 
-    raw_video_path = args.raw
-    if not raw_video_path.is_absolute():
-        raw_video_path = ROOT / raw_video_path
+    pair_id = str(args.pair_id).strip()
+    if not pair_id:
+        raise ValueError("--pair-id must not be empty")
+
+    raw_video_path = _resolve_path(args.raw, _default_raw_path(pair_id))
+    assert raw_video_path is not None
     if not raw_video_path.exists():
         raise FileNotFoundError(f"Raw video missing: {raw_video_path}")
 
-    job_path = args.job
-    if not job_path.is_absolute():
-        job_path = ROOT / job_path
-    job_payload = _load_json(job_path) if job_path.exists() else {}
+    job_path = _resolve_path(args.job, _default_job_path(pair_id))
+    job_payload = _load_json(job_path) if job_path is not None and job_path.exists() else {}
 
     profile = ProfileManager().load_profile("gaming_main")
     track_roles = resolve_track_roles(str(raw_video_path), profile)
-    a2_role = _find_discord_plus_game_role(track_roles)
-
     transcript_processor = TranscriptProcessor()
-    a2_audio_stream_index, stream_inventory = _resolve_audio_stream_index(
-        transcript_processor,
-        raw_video_path,
-        a2_role,
-    )
+    if args.friend_stream_index is None:
+        a2_role = _find_discord_plus_game_role(
+            track_roles,
+            pair_id=pair_id,
+            required=True,
+        )
+        a2_audio_stream_index, stream_inventory = _resolve_audio_stream_index(
+            transcript_processor,
+            raw_video_path,
+            a2_role,
+        )
+        stream_index_source = "track_role_discord_plus_game_ffmpeg_audio_index"
+    else:
+        a2_role = _find_discord_plus_game_role(
+            track_roles,
+            pair_id=pair_id,
+            required=False,
+        )
+        a2_audio_stream_index, stream_inventory = _resolve_absolute_audio_stream_index(
+            transcript_processor,
+            raw_video_path,
+            args.friend_stream_index,
+        )
+        stream_index_source = "cli_absolute_friend_stream_index"
 
     transcript = transcript_processor.transcribe(
         str(raw_video_path),
@@ -219,6 +306,7 @@ def main(argv: list[str]) -> int:
         )
 
     job_context = _job_context(
+        pair_id=pair_id,
         job_payload=job_payload,
         raw_video_path=raw_video_path,
         a2_role=a2_role,
@@ -232,16 +320,21 @@ def main(argv: list[str]) -> int:
         presence_policy,
         decision.selections,
         meta={
-            "pair_id": PAIR_ID,
+            "pair_id": pair_id,
             "job_id": job_payload.get("job_id"),
-            "job_path": str(job_path),
+            "job_path": str(job_path) if job_path is not None else None,
             "raw_video_path": str(raw_video_path),
             "transcript_engine": transcript.engine,
             "transcript_language": transcript.language,
             "a2_role": getattr(a2_role, "role", None),
             "a2_audio_track": getattr(a2_role, "audio_track", None),
-            "a2_role_ffmpeg_audio_index": int(getattr(a2_role, "ffmpeg_audio_index")),
+            "a2_role_ffmpeg_audio_index": (
+                int(getattr(a2_role, "ffmpeg_audio_index"))
+                if getattr(a2_role, "ffmpeg_audio_index", None) is not None
+                else None
+            ),
             "a2_audio_stream_index": a2_audio_stream_index,
+            "a2_audio_stream_index_source": stream_index_source,
             "stream_inventory": stream_inventory,
             "candidate_chain": "a2_segments_enumerate_source_index_refine_decide_shadow_report",
             "model_used": decision.model_used,
@@ -249,9 +342,8 @@ def main(argv: list[str]) -> int:
         },
     )
 
-    out_path = args.out
-    if not out_path.is_absolute():
-        out_path = ROOT / out_path
+    out_path = _resolve_path(args.out, _default_output_path(pair_id))
+    assert out_path is not None
     _write_json(out_path, report)
     _print_summary(out_path, report)
     return 0
