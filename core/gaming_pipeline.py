@@ -19,6 +19,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 from shared.enums import ChannelType, JobStatus, TargetFormat, ValidatorStatus
 
@@ -281,6 +282,83 @@ from models.round_phase_result import RoundPhase, RoundPhaseResult
 
 
 logger = logging.getLogger(__name__)
+
+
+def _build_gameplay_vision_observability(
+    gameplay_vision_result,
+    *,
+    analyzer_threshold: float | None = None,
+) -> dict[str, Any]:
+    windows = list(getattr(gameplay_vision_result, "windows", []) or [])
+    action_windows = list(getattr(gameplay_vision_result, "action_windows", []) or [])
+    threshold = float(analyzer_threshold if analyzer_threshold is not None else 0.0)
+
+    if windows:
+        coverage_start = min(
+            float(getattr(window, "start_seconds", 0.0) or 0.0)
+            for window in windows
+        )
+        coverage_end = max(
+            float(getattr(window, "end_seconds", 0.0) or 0.0)
+            for window in windows
+        )
+    else:
+        coverage_start = None
+        coverage_end = None
+
+    buckets = {
+        "lt_0_10": 0,
+        "ge_0_10_lt_analyzer_threshold": 0,
+        "ge_analyzer_threshold_lt_0_30": 0,
+        "ge_0_30_lt_0_55": 0,
+        "ge_0_55": 0,
+    }
+    windows_at_or_above_threshold = 0
+
+    for window in windows:
+        score = float(getattr(window, "action_score", 0.0) or 0.0)
+        if score >= threshold:
+            windows_at_or_above_threshold += 1
+
+        if score < 0.10:
+            buckets["lt_0_10"] += 1
+        elif score < threshold:
+            buckets["ge_0_10_lt_analyzer_threshold"] += 1
+        elif score < 0.30:
+            buckets["ge_analyzer_threshold_lt_0_30"] += 1
+        elif score < 0.55:
+            buckets["ge_0_30_lt_0_55"] += 1
+        else:
+            buckets["ge_0_55"] += 1
+
+    coverage_span = (
+        round(float(coverage_end) - float(coverage_start), 3)
+        if coverage_start is not None and coverage_end is not None
+        else 0.0
+    )
+
+    return {
+        "engine": getattr(gameplay_vision_result, "engine", None),
+        "skipped_reason": getattr(gameplay_vision_result, "skipped_reason", None),
+        "analyzer_action_threshold": round(threshold, 3),
+        "window_count": len(windows),
+        "action_window_count": len(action_windows),
+        "windows_at_or_above_analyzer_threshold": windows_at_or_above_threshold,
+        "coverage_start_seconds": (
+            round(float(coverage_start), 3) if coverage_start is not None else None
+        ),
+        "coverage_end_seconds": (
+            round(float(coverage_end), 3) if coverage_end is not None else None
+        ),
+        "coverage_span_seconds": coverage_span,
+        "average_action_score": getattr(
+            gameplay_vision_result,
+            "average_action_score",
+            0.0,
+        ),
+        "max_action_score": getattr(gameplay_vision_result, "max_action_score", 0.0),
+        "action_score_buckets": buckets,
+    }
 
 
 def _safe_log_decision(
@@ -9928,6 +10006,16 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 f"[gaming_pipeline] VISION   {job.job_id} "
                 f"skipped reason={gameplay_vision_result.skipped_reason}"
             )
+        job.debug_context["checkpoint_a_gameplay_vision_result"] = (
+            _build_gameplay_vision_observability(
+                gameplay_vision_result,
+                analyzer_threshold=getattr(
+                    gameplay_vision_analyzer,
+                    "action_threshold",
+                    None,
+                ),
+            )
+        )
     gameplay_event_result = GameplayEventIndicatorBuilder().build(
         gameplay_vision_result=gameplay_vision_result,
         energy_curve_result=energy_curve_result,

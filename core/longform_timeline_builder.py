@@ -60,6 +60,18 @@ class LongformTimelineBuilder:
     def _clamp_score(self, value: float) -> float:
         return round(max(0.0, min(1.0, float(value))), 3)
 
+    def _ensure_debug_context(self, job: Job) -> dict[str, Any]:
+        debug_context = getattr(job, "debug_context", None)
+        if isinstance(debug_context, dict):
+            return debug_context
+
+        debug_context = {}
+        try:
+            job.debug_context = debug_context
+        except Exception:
+            return {}
+        return debug_context
+
     def _extract_style_dna_target_clip_seconds(
         self,
         style_dna_pacing_profile: dict[str, Any] | None = None,
@@ -895,6 +907,7 @@ class LongformTimelineBuilder:
             else None
         )
         _fusion_stats: list[dict] = []
+        _checkpoint_a_candidates: list[dict[str, Any]] = []
 
         for candidate in highlight_candidates:
             selection_score, notes = self._score_candidate_for_longform(
@@ -919,6 +932,26 @@ class LongformTimelineBuilder:
                 notes = notes + fusion_result["notes"]
                 _fusion_stats.append(fusion_result)
 
+            weak_overlap = 0.0
+            for weak_zone in weak_zones:
+                weak_overlap = max(
+                    weak_overlap,
+                    self._overlap_ratio(
+                        candidate.start_time,
+                        candidate.end_time,
+                        weak_zone.start_time,
+                        weak_zone.end_time,
+                    ),
+                )
+            vision_overlap = self._max_gameplay_action_overlap(
+                candidate,
+                gameplay_vision_result,
+            )
+            cap_notes = [
+                note
+                for note in notes
+                if str(note).startswith("owner_no_go_")
+            ]
             item = {
                 "candidate": candidate,
                 "selection_score": selection_score,
@@ -928,9 +961,55 @@ class LongformTimelineBuilder:
             if selection_score < LONGFORM_PRIMARY_SCORE_FLOOR:
                 item["notes"] = list(notes) + ["duration_floor_reserve"]
                 reserve_scored_candidates.append(item)
+                _checkpoint_a_candidates.append(
+                    {
+                        "candidate_id": candidate.candidate_id,
+                        "start_time": round(float(candidate.start_time), 3),
+                        "end_time": round(float(candidate.end_time), 3),
+                        "duration": round(float(candidate.duration), 3),
+                        "candidate_kind": str(candidate.candidate_kind),
+                        "highlight_score": round(float(candidate.highlight_score), 3),
+                        "confidence": round(float(candidate.confidence), 3),
+                        "weak_overlap": round(float(weak_overlap), 3),
+                        "vision_overlap": round(float(vision_overlap), 3),
+                        "cap_note": cap_notes[0] if cap_notes else None,
+                        "cap_notes": cap_notes,
+                        "selection_score": round(float(selection_score), 3),
+                        "primary_floor": LONGFORM_PRIMARY_SCORE_FLOOR,
+                        "pool": "reserve",
+                        "notes": list(item["notes"])[:20],
+                    }
+                )
                 continue
 
             scored_candidates.append(item)
+            _checkpoint_a_candidates.append(
+                {
+                    "candidate_id": candidate.candidate_id,
+                    "start_time": round(float(candidate.start_time), 3),
+                    "end_time": round(float(candidate.end_time), 3),
+                    "duration": round(float(candidate.duration), 3),
+                    "candidate_kind": str(candidate.candidate_kind),
+                    "highlight_score": round(float(candidate.highlight_score), 3),
+                    "confidence": round(float(candidate.confidence), 3),
+                    "weak_overlap": round(float(weak_overlap), 3),
+                    "vision_overlap": round(float(vision_overlap), 3),
+                    "cap_note": cap_notes[0] if cap_notes else None,
+                    "cap_notes": cap_notes,
+                    "selection_score": round(float(selection_score), 3),
+                    "primary_floor": LONGFORM_PRIMARY_SCORE_FLOOR,
+                    "pool": "primary",
+                    "notes": list(notes)[:20],
+                }
+            )
+
+        self._ensure_debug_context(job)["checkpoint_a_longform_candidates"] = {
+            "primary_floor": LONGFORM_PRIMARY_SCORE_FLOOR,
+            "candidate_count": len(_checkpoint_a_candidates),
+            "primary_count": len(scored_candidates),
+            "reserve_count": len(reserve_scored_candidates),
+            "candidates": _checkpoint_a_candidates,
+        }
 
         if _fusion_stats:
             _f_boosted = sum(1 for r in _fusion_stats if r["positive_delta"] > 0)
