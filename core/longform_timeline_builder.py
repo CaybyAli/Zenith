@@ -19,6 +19,7 @@ from core.final_timeline_guard import FinalTimelineGuard
 from core.final_cut_safety_guard import FinalCutSafetyGuard
 from core.final_timeline_quality_guard import FinalTimelineQualityGuard
 from core.final_cut_seam_guard import FinalCutSeamGuard
+from core.gameplay_vision_analyzer import DEFAULT_ACTION_THRESHOLD
 from core.hard_speech_lock_guard import HardSpeechLockGuard
 from core.speech_safe_pacing_guard import SpeechSafePacingGuard
 from core.round_wait_deadtime_guard import RoundWaitDeadtimeGuard
@@ -46,6 +47,7 @@ from shared.errors import ValidationError
 YOUTUBE_MIN_DURATION = 480.0
 YOUTUBE_DURATION_FLOOR_TOLERANCE_SECONDS = 5.0
 LONGFORM_PRIMARY_SCORE_FLOOR = 0.45
+LONGFORM_GAMEPLAY_ACTION_OVERLAP_THRESHOLD = DEFAULT_ACTION_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -475,7 +477,7 @@ class LongformTimelineBuilder:
                     window.end_seconds,
                 )
                 for window in gameplay_vision_result.action_windows
-                if window.action_score >= 0.55
+                if window.action_score >= LONGFORM_GAMEPLAY_ACTION_OVERLAP_THRESHOLD
             ),
             default=0.0,
         )

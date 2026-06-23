@@ -283,6 +283,9 @@ from models.round_phase_result import RoundPhase, RoundPhaseResult
 
 logger = logging.getLogger(__name__)
 
+GAMEPLAY_VISION_MAX_COVERAGE_FRAMES = 4000
+GAMEPLAY_VISION_LEGACY_MAX_FRAMES = 160
+
 
 def _build_gameplay_vision_observability(
     gameplay_vision_result,
@@ -358,6 +361,40 @@ def _build_gameplay_vision_observability(
         ),
         "max_action_score": getattr(gameplay_vision_result, "max_action_score", 0.0),
         "action_score_buckets": buckets,
+    }
+
+
+def _gameplay_vision_full_coverage_sampling(
+    duration_seconds: float | None,
+    gameplay_vision_analyzer,
+) -> dict[str, float | int]:
+    try:
+        duration = float(duration_seconds or 0.0)
+    except (TypeError, ValueError):
+        duration = 0.0
+
+    sample_seconds = max(
+        0.1,
+        float(getattr(gameplay_vision_analyzer, "sample_every_seconds", 0.5) or 0.5),
+    )
+    if duration <= 0.0:
+        return {
+            "sample_every_seconds": sample_seconds,
+            "max_frames": GAMEPLAY_VISION_LEGACY_MAX_FRAMES,
+        }
+
+    needed_frames = max(2, int(duration / sample_seconds) + 2)
+    if needed_frames <= GAMEPLAY_VISION_MAX_COVERAGE_FRAMES:
+        return {
+            "sample_every_seconds": sample_seconds,
+            "max_frames": needed_frames,
+        }
+
+    max_frames = GAMEPLAY_VISION_MAX_COVERAGE_FRAMES
+    adaptive_sample_seconds = max(sample_seconds, duration / float(max_frames - 1))
+    return {
+        "sample_every_seconds": round(adaptive_sample_seconds, 3),
+        "max_frames": max_frames,
     }
 
 
@@ -9980,9 +10017,18 @@ def run_gaming_pipeline_for_job(job, services: dict) -> dict:
                 ensure_visual_analysis_proxy_for_job(job, str(job.raw_video_path))
                 or str(job.raw_video_path)
             )
+            gameplay_vision_sampling = _gameplay_vision_full_coverage_sampling(
+                getattr(
+                    analysis_result,
+                    "duration_seconds",
+                    getattr(job, "duration_seconds", None),
+                ),
+                gameplay_vision_analyzer,
+            )
             gameplay_vision_result = gameplay_vision_analyzer.analyze_video(
                 video_path=gameplay_vision_source_path,
-                max_frames=160,
+                sample_every_seconds=float(gameplay_vision_sampling["sample_every_seconds"]),
+                max_frames=int(gameplay_vision_sampling["max_frames"]),
             )
             _postcut_timer = _log_postcut_timing(job, "gameplay_vision", _postcut_timer)
 
