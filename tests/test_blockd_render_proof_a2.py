@@ -94,3 +94,100 @@ def test_filtered_candidates_and_cluster_are_artifact_driven():
             "friend_text": "B",
         },
     ]
+
+
+def test_pair_006_track_truth_maps_to_expected_raw_streams():
+    module = _load_module()
+
+    roles = module._resolve_pair_audio_roles("pair_006")
+
+    assert roles == {
+        "ali": {
+            "track_name": "a0",
+            "audio_index": 0,
+            "global_stream_spec": "0:1",
+            "audio_selector": "0:a:0",
+        },
+        "discord": {
+            "track_name": "a1",
+            "audio_index": 1,
+            "global_stream_spec": "0:2",
+            "audio_selector": "0:a:1",
+        },
+        "game": {
+            "track_name": "a2",
+            "audio_index": 2,
+            "global_stream_spec": "0:3",
+            "audio_selector": "0:a:2",
+        },
+    }
+
+
+def test_select_dual_speaker_window_uses_full_render_window_when_both_speakers_are_present():
+    module = _load_module()
+
+    def point(timestamp: float, rms_dbfs: float, speaker: str):
+        return module.VoiceIntensityPoint(
+            timestamp=timestamp,
+            intensity=0,
+            lufs=rms_dbfs - 5.0,
+            rms_dbfs=rms_dbfs,
+            speaker=speaker,
+        )
+
+    ali_points = [
+        point(10.0, -20.0, "ali"),
+        point(11.0, -19.5, "ali"),
+        point(12.0, -80.0, "ali"),
+        point(13.0, -18.0, "ali"),
+    ]
+    discord_points = [
+        point(10.0, -70.0, "discord"),
+        point(11.0, -21.0, "discord"),
+        point(12.0, -22.0, "discord"),
+        point(13.0, -20.0, "discord"),
+    ]
+
+    selected = module._select_dual_speaker_window(
+        ali_points,
+        discord_points,
+        render_window_start=10.0,
+        render_window_end=14.0,
+    )
+
+    assert selected["start"] == 10.0
+    assert selected["end"] == 14.0
+    assert selected["duration_seconds"] == 4.0
+    assert selected["ali_active_seconds"] == 3.0
+    assert selected["discord_active_seconds"] == 3.0
+    assert selected["window_origin"] == "full_render_window"
+
+
+def test_longest_active_window_reports_contiguous_speech_run():
+    module = _load_module()
+
+    def point(timestamp: float, rms_dbfs: float, speaker: str):
+        return module.VoiceIntensityPoint(
+            timestamp=timestamp,
+            intensity=0,
+            lufs=rms_dbfs - 5.0,
+            rms_dbfs=rms_dbfs,
+            speaker=speaker,
+        )
+
+    ali_points = [
+        point(20.0, -80.0, "ali"),
+        point(21.0, -20.0, "ali"),
+        point(22.0, -19.0, "ali"),
+        point(23.0, -80.0, "ali"),
+        point(24.0, -21.0, "ali"),
+        point(25.0, -20.5, "ali"),
+    ]
+
+    selected = module._longest_active_window(ali_points, speaker="ali")
+
+    assert selected["start"] == 21.0
+    assert selected["end"] == 23.0
+    assert selected["duration_seconds"] == 2.0
+    assert selected["active_seconds"] == 2.0
+    assert selected["speaker"] == "ali"
