@@ -123,6 +123,45 @@ def test_pair_006_track_truth_maps_to_expected_raw_streams():
     }
 
 
+def test_runtime_audio_roles_allow_absolute_friend_stream_override():
+    module = _load_module()
+
+    roles = module._resolve_runtime_audio_roles(pair_id="pair_007", friend_stream_index=2)
+
+    assert roles["ali"] == {
+        "track_name": "a0",
+        "audio_index": 0,
+        "global_stream_spec": "0:1",
+        "audio_selector": "0:a:0",
+    }
+    assert roles["discord"] == {
+        "track_name": "abs_stream_2",
+        "audio_index": 1,
+        "global_stream_spec": "0:2",
+        "audio_selector": "0:a:1",
+    }
+    assert roles["game"] == {
+        "track_name": "a2",
+        "audio_index": 2,
+        "global_stream_spec": "0:3",
+        "audio_selector": "0:a:2",
+    }
+
+
+def test_default_pair_paths_can_be_derived_for_non_pair_006_runtime():
+    module = _load_module()
+
+    assert module._default_raw_path("pair_007") == (
+        Path(__file__).resolve().parents[1] / "learning_corpus" / "pairs" / "pair_007" / "raw.mp4"
+    )
+    assert module._default_picks_json_path("pair_007") == (
+        Path(__file__).resolve().parents[1]
+        / "reports"
+        / "blockd_a2b3a_shadow"
+        / "pair_007_shadow_LOCKED.json"
+    )
+
+
 def test_select_dual_speaker_window_uses_full_render_window_when_both_speakers_are_present():
     module = _load_module()
 

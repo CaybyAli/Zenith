@@ -31,8 +31,8 @@ from models.timeline_segment import TimelineSegment
 from shared.enums import ChannelType
 
 
-PAIR_ID = "pair_006"
-RAW_PATH = ROOT / "learning_corpus" / "pairs" / PAIR_ID / "raw.mp4"
+DEFAULT_PAIR_ID = "pair_006"
+DEFAULT_RAW_PATH = ROOT / "learning_corpus" / "pairs" / DEFAULT_PAIR_ID / "raw.mp4"
 DEFAULT_PICKS_JSON = ROOT / "reports" / "blockd_a2b3a_shadow" / "pair_006_shadow_LOCKED.json"
 OUTPUT_DIR = ROOT / "reports" / "blockd_a2b3b_render"
 DEFAULT_OUTPUT_PATH = OUTPUT_DIR / "pair_006_a2b3b_proof_v3.mp4"
@@ -53,7 +53,15 @@ VOICE_ANALYSIS_SAMPLE_RATE = 16000
 VOICE_ANALYSIS_WINDOW_SECONDS = 1.0
 
 
-def _truth_pair_config(pair_id: str = PAIR_ID) -> dict[str, Any]:
+def _default_raw_path(pair_id: str) -> Path:
+    return ROOT / "learning_corpus" / "pairs" / pair_id / "raw.mp4"
+
+
+def _default_picks_json_path(pair_id: str) -> Path:
+    return ROOT / "reports" / "blockd_a2b3a_shadow" / f"{pair_id}_shadow_LOCKED.json"
+
+
+def _truth_pair_config(pair_id: str = DEFAULT_PAIR_ID) -> dict[str, Any]:
     truth = load_truth()
     pair = truth.get(pair_id)
     if not isinstance(pair, dict):
@@ -82,7 +90,7 @@ def _track_name_to_audio_selector(track_name: str) -> str:
     return f"0:a:{_track_name_to_audio_index(track_name)}"
 
 
-def _resolve_pair_audio_roles(pair_id: str = PAIR_ID) -> dict[str, dict[str, Any]]:
+def _resolve_pair_audio_roles(pair_id: str = DEFAULT_PAIR_ID) -> dict[str, dict[str, Any]]:
     pair = _truth_pair_config(pair_id)
     roles = {
         "ali": pair.get("ali_source"),
@@ -100,6 +108,29 @@ def _resolve_pair_audio_roles(pair_id: str = PAIR_ID) -> dict[str, dict[str, Any
             "audio_selector": _track_name_to_audio_selector(track_name),
         }
     return resolved
+
+
+def _audio_role_from_absolute_stream_index(stream_index: int) -> dict[str, Any]:
+    if int(stream_index) <= 0:
+        raise RuntimeError(f"Absolute audio stream index must be >= 1, got {stream_index}")
+    audio_index = int(stream_index) - 1
+    return {
+        "track_name": f"abs_stream_{stream_index}",
+        "audio_index": audio_index,
+        "global_stream_spec": f"0:{int(stream_index)}",
+        "audio_selector": f"0:a:{audio_index}",
+    }
+
+
+def _resolve_runtime_audio_roles(
+    *,
+    pair_id: str,
+    friend_stream_index: int | None = None,
+) -> dict[str, dict[str, Any]]:
+    roles = _resolve_pair_audio_roles(pair_id)
+    if friend_stream_index is not None:
+        roles["discord"] = _audio_role_from_absolute_stream_index(friend_stream_index)
+    return roles
 
 
 def _load_json(path: Path) -> Any:
@@ -231,6 +262,7 @@ def _segment(segment_id: str, job_id: str, start: float, end: float, role: str) 
 
 def _build_timeline(
     *,
+    pair_id: str,
     job_id: str,
     window_start: float,
     window_end: float,
@@ -247,7 +279,7 @@ def _build_timeline(
             role = "context_before_reaction" if not segments else "context_between_reactions"
             segments.append(
                 _segment(
-                    f"{PAIR_ID}_context_{index:02d}",
+                    f"{pair_id}_context_{index:02d}",
                     job_id,
                     cursor,
                     focus_start,
@@ -257,7 +289,7 @@ def _build_timeline(
 
         segments.append(
             _segment(
-                f"{PAIR_ID}_reaction_{candidate_index}",
+                f"{pair_id}_reaction_{candidate_index}",
                 job_id,
                 max(cursor, focus_start),
                 focus_end,
@@ -269,7 +301,7 @@ def _build_timeline(
     if window_end > cursor:
         segments.append(
             _segment(
-                f"{PAIR_ID}_post_context",
+                f"{pair_id}_post_context",
                 job_id,
                 cursor,
                 window_end,
@@ -278,7 +310,7 @@ def _build_timeline(
         )
 
     return EditTimeline(
-        timeline_id=f"{PAIR_ID}_a2b3b_proof_window",
+        timeline_id=f"{pair_id}_a2b3b_proof_window",
         job_id=job_id,
         target_duration=round(window_end - window_start, 3),
         selected_segments=[segment for segment in segments if segment.duration > 0.0],
@@ -781,20 +813,23 @@ def _build_loudness_post_step(
     *,
     proof: dict[str, Any],
     output_path: Path,
+    pair_id: str,
+    raw_path: Path,
+    friend_stream_index: int | None = None,
 ) -> dict[str, Any]:
-    audio_roles = _resolve_pair_audio_roles(PAIR_ID)
+    audio_roles = _resolve_runtime_audio_roles(pair_id=pair_id, friend_stream_index=friend_stream_index)
     render_window_start = float(proof["window_start"])
     render_window_end = float(proof["window_end"])
 
     ali_points = _analyze_voice_points_for_window(
-        source_path=RAW_PATH,
+        source_path=raw_path,
         speaker="ali",
         stream_spec=str(audio_roles["ali"]["global_stream_spec"]),
         start_seconds=render_window_start,
         end_seconds=render_window_end,
     )
     discord_points = _analyze_voice_points_for_window(
-        source_path=RAW_PATH,
+        source_path=raw_path,
         speaker="discord",
         stream_spec=str(audio_roles["discord"]["global_stream_spec"]),
         start_seconds=render_window_start,
@@ -817,14 +852,14 @@ def _build_loudness_post_step(
     )
 
     ali_lufs_before = _extract_lufs_from_stream_window(
-        source_path=RAW_PATH,
+        source_path=raw_path,
         speaker="ali_before",
         stream_spec=str(audio_roles["ali"]["global_stream_spec"]),
         start_seconds=float(ali_measure_window["start"]),
         end_seconds=float(ali_measure_window["end"]),
     )
     discord_lufs_before = _extract_lufs_from_stream_window(
-        source_path=RAW_PATH,
+        source_path=raw_path,
         speaker="discord_before",
         stream_spec=str(audio_roles["discord"]["global_stream_spec"]),
         start_seconds=float(discord_measure_window["start"]),
@@ -840,7 +875,7 @@ def _build_loudness_post_step(
         trimmed_video_path = temp_dir / "trimmed_visual.mp4"
 
         first_mix = _render_window_mix_audio(
-            source_path=RAW_PATH,
+            source_path=raw_path,
             output_path=first_mix_audio_path,
             window_start=float(hearing_window["start"]),
             window_end=float(hearing_window["end"]),
@@ -855,7 +890,7 @@ def _build_loudness_post_step(
             common_mix_gain_db = round(TRUE_PEAK_CEILING_DB - first_true_peak_db - 0.1, 3)
             limiter_enabled = True
             final_mix = _render_window_mix_audio(
-                source_path=RAW_PATH,
+                source_path=raw_path,
                 output_path=final_mix_audio_path,
                 window_start=float(hearing_window["start"]),
                 window_end=float(hearing_window["end"]),
@@ -936,8 +971,8 @@ def _build_loudness_post_step(
 
 def _make_runtime_job(tag: str) -> SimpleNamespace:
     return SimpleNamespace(
-        job_id=f"pair_006_a2b3b_proof_{tag}",
-        raw_video_path=str(RAW_PATH),
+        job_id=f"{DEFAULT_PAIR_ID}_a2b3b_proof_{tag}",
+        raw_video_path=str(DEFAULT_RAW_PATH),
         channel_type=ChannelType.GAMING_MAIN,
         power_profile=PowerProfile.BALANCED,
         focus_decisions=[],
@@ -1001,6 +1036,8 @@ def _render_window(
     cluster: dict[str, Any],
     output_path: Path,
     tag: str,
+    pair_id: str,
+    raw_path: Path,
 ) -> dict[str, Any]:
     picks = list(cluster["picks"])
     window_start = float(cluster["window_start"])
@@ -1008,8 +1045,11 @@ def _render_window(
     planned_segments = _planned_cut_segments(picks)
 
     job = _make_runtime_job(tag)
+    job.job_id = f"{pair_id}_a2b3b_proof_{tag}"
+    job.raw_video_path = str(raw_path)
     injected = _inject_runtime_focus_decisions(job, picks)
     timeline = _build_timeline(
+        pair_id=pair_id,
         job_id=job.job_id,
         window_start=window_start,
         window_end=window_end,
@@ -1021,7 +1061,7 @@ def _render_window(
     rendered_path = Path(
         FinalRenderDriver().render(
             job=job,
-            source_path=str(RAW_PATH),
+            source_path=str(raw_path),
             edit_timeline=timeline,
             reframe_plan=reframe_plan,
             dynamic_edit_plan=None,
@@ -1068,13 +1108,22 @@ def _render_window(
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--pair-id", default=DEFAULT_PAIR_ID)
+    parser.add_argument("--raw-path", type=Path, default=None)
+    parser.add_argument("--friend-stream-index", type=int, default=None)
     parser.add_argument("--picks-json", type=Path, default=DEFAULT_PICKS_JSON)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUTPUT_PATH)
     parser.add_argument("--tag", default="v3")
     parser.add_argument("--apply-loudness", action="store_true")
     args = parser.parse_args(argv[1:])
 
-    picks_json = args.picks_json if args.picks_json.is_absolute() else ROOT / args.picks_json
+    pair_id = str(args.pair_id).strip() or DEFAULT_PAIR_ID
+    raw_path = args.raw_path if args.raw_path is not None else _default_raw_path(pair_id)
+    if not raw_path.is_absolute():
+        raw_path = ROOT / raw_path
+    default_picks_requested = args.picks_json == DEFAULT_PICKS_JSON
+    picks_json_arg = _default_picks_json_path(pair_id) if default_picks_requested else args.picks_json
+    picks_json = picks_json_arg if picks_json_arg.is_absolute() else ROOT / picks_json_arg
     tag = str(args.tag).strip() or "v3"
     default_out_requested = args.out == DEFAULT_OUTPUT_PATH
     requested_output_path = args.out if args.out.is_absolute() else ROOT / args.out
@@ -1082,11 +1131,11 @@ def main(argv: list[str]) -> int:
     render_output_path = output_path
     if args.apply_loudness:
         if default_out_requested:
-            output_path = DEFAULT_LOUDNESS_OUTPUT_PATH
-        render_output_path = OUTPUT_DIR / f"{PAIR_ID}_a2b3b_proof_{tag}_visual.mp4"
+            output_path = OUTPUT_DIR / f"{pair_id}_loudness_v1.mp4"
+        render_output_path = OUTPUT_DIR / f"{pair_id}_a2b3b_proof_{tag}_visual.mp4"
 
-    if not RAW_PATH.exists():
-        raise RuntimeError(f"Raw video missing: {RAW_PATH}")
+    if not raw_path.exists():
+        raise RuntimeError(f"Raw video missing: {raw_path}")
     if not picks_json.exists():
         raise RuntimeError(f"Shadow report missing: {picks_json}")
 
@@ -1098,13 +1147,14 @@ def main(argv: list[str]) -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("A2b-3b Artifact-Locked Proof Render")
-    print(f"pair_id={PAIR_ID}")
-    print(f"raw_path={RAW_PATH}")
+    print(f"pair_id={pair_id}")
+    print(f"raw_path={raw_path}")
     print(f"picks_json={picks_json}")
     print(f"output_path={output_path}")
     print(f"render_output_path={render_output_path}")
     print(f"render_tag={tag}")
     print(f"apply_loudness={args.apply_loudness}")
+    print(f"friend_stream_index={args.friend_stream_index}")
     print(f"confidence_floor={CONFIDENCE_FLOOR:.2f}")
     print(f"scoped_apply_flag=APPLY_LLM_PICKS_FOR_PROOF_RENDER:{APPLY_LLM_PICKS_FOR_PROOF_RENDER}")
     print(f"filter_counters={json.dumps(counters, ensure_ascii=False, sort_keys=True)}")
@@ -1128,13 +1178,25 @@ def main(argv: list[str]) -> int:
     for row in cluster["picks"]:
         print(json.dumps(_pick_report(row), ensure_ascii=False, sort_keys=True))
 
-    proof = _render_window(cluster=cluster, output_path=render_output_path, tag=tag)
+    proof = _render_window(
+        cluster=cluster,
+        output_path=render_output_path,
+        tag=tag,
+        pair_id=pair_id,
+        raw_path=raw_path,
+    )
     print("planned_cut_segments=")
     print(json.dumps(proof["planned_cut_segments"], indent=2, ensure_ascii=False, sort_keys=True))
     print("render_proof=")
     print(json.dumps(proof, indent=2, ensure_ascii=False, sort_keys=True))
     if args.apply_loudness:
-        loudness_proof = _build_loudness_post_step(proof=proof, output_path=output_path)
+        loudness_proof = _build_loudness_post_step(
+            proof=proof,
+            output_path=output_path,
+            pair_id=pair_id,
+            raw_path=raw_path,
+            friend_stream_index=args.friend_stream_index,
+        )
         print("loudness_post_step=")
         print(json.dumps(loudness_proof, indent=2, ensure_ascii=False, sort_keys=True))
     return 0
